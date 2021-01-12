@@ -114,7 +114,7 @@ install:
     fi
 
 script:
-  - make all && if [[ "$MAKE_TEST" = "true" ]]; then make test; fi
+  - make all && if [[ "$MAKE_TEST" = "true" ]]; then make test; fi && if [[ "$R_TEST" = "true" ]]; then make rtest; fi
 
 after_success:
     # Generate the docs only if master, the travis_build_docs is true and we can use secure variables
@@ -123,8 +123,4 @@ after_success:
       cd $TRAVIS_BUILD_DIR
       chmod +x resources/sh/generate-doxygen.sh
       resources/sh/generate-doxygen.sh
-    fi
-  - |
-    if [[ "$TRAVIS_OS_NAME" == "linux" ]] && [[ "$R_TEST" == "true" ]]; then
-      CMD R ./bin/rStride_gtester_covid19.R
     fi

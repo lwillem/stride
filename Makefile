@@ -125,6 +125,10 @@ test: install
 gtest: install
 	cd $(CMAKE_INSTALL_PREFIX); bin/gtester $(TESTARGS) --gtest_output=xml:tests/gtester_all.xml
 
+rtest: install
+	cd $(CMAKE_INSTALL_PREFIX); Rscript bin/rStride_gtester_covid19.R
+	
+
 format:
 	resources/bash/clang-format-all .
 	resources/bash/remove_trailing_space

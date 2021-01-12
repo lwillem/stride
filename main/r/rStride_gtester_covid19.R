@@ -218,7 +218,7 @@ exp_design$rng_seed[grepl('covid_fitting',exp_design$gtester_label)] <- exp_desi
 
 
 # # selection? ----
-# exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base'),]
+ exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base'),]
 #exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_suscept','covid_suscept_adapt'),]
 #exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_fitting_base','covid_fitting_adapt'),]
 #exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_transm','covid_transm_gamma'),]
