@@ -35,6 +35,11 @@ matrix:
       env: MATRIX_EVAL="CC=clang && CXX=clang++ && MAKE_TEST=true"
       addons: {apt: { packages: [*default_packages], sources: [*default_sources]}}
 
+    - os: linux
+      compiler: gcc
+      env: MATRIX_EVAL="CC=gcc-7 && CXX=g++-7 && MAKE_TEST_R=true"
+      addons: {apt: { packages: [*default_packages, g++-7], sources: [*default_sources]}}
+  
     #- os: osx
     #  osx_image: xcode10.1
     #  compiler: clang
@@ -78,6 +83,10 @@ before_install:
     if [[ "$TRAVIS_OS_NAME" == "linux" ]] && [[ "$CC" == "clang" ]]; then
       export LD_LIBRARY_PATH="/usr/local/clang/lib:$LD_LIBRARY_PATH"
     fi
+  - |
+    if [[ "$TRAVIS_OS_NAME" == "linux" ]] && [[ "$MAKE_TEST_R" == "true" ]]; then
+      brew install R
+    fi
 
 install:
     #--------- All platforms
@@ -116,4 +125,8 @@ after_success:
       cd $TRAVIS_BUILD_DIR
       chmod +x resources/sh/generate-doxygen.sh
       resources/sh/generate-doxygen.sh
+    fi
+  - |
+    if [[ "$TRAVIS_OS_NAME" == "linux" ]] && [[ "$MAKE_TEST_R" == "true" ]]; then
+      CMD R ./bin/rStride_gtester_covid19.R
     fi
