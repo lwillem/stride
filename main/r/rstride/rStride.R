@@ -24,6 +24,9 @@
 if(!'simid.rtools' %in% installed.packages()[,1] || 
       !all(unlist(packageVersion("simid.rtools")) >= list(0,1,43))){ # at least 0.1.43 is required
   
+  if(!'devtools' %in% installed.packages()[,1]){
+    install.packages('devtools')
+  }
   require(devtools,quietly = T)
   devtools::install_github("lwillem/simid_rtools",force=F,quiet=T)
   #devtools::uninstall(simid.rtools)
