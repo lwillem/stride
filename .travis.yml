@@ -6,6 +6,9 @@ cache:
     - $HOME/.ccache
     - $HOME/deps
 
+r_github_packages:
+    - jimhester/covr
+
 addons:
   apt:
     update: true
