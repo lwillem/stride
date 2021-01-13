@@ -41,8 +41,25 @@ matrix:
       compiler: gcc
       env: MATRIX_EVAL="CC=gcc-8 && CXX=g++-8 && R_TEST=true"
       addons: {apt: { packages: [*default_packages, g++-8], sources: [*default_sources]}}
-      r_packages: [buildtools, XML]
-      r_github_packaes: lwillem/simid_rtools
+      r_packages:
+                - buildtools
+                - XML
+                - doParallel
+                - ggplot2
+                - gridExtra
+                - mgcv
+                - data.table
+                - openxlsx
+                - scales
+                - tidyr
+                - lhs
+                - corrplot
+                - wpp2019
+      r_github_packages:
+                - lwillem/simid_rtools
+      cran: http://cran.rstudio.com
+      warnings_are_errors: true
+      
   
     #- os: osx
     #  osx_image: xcode10.1
