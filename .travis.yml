@@ -40,7 +40,18 @@ matrix:
       language: r
       env: MATRIX_EVAL="CC=gcc-8 && CXX=g++-8 && R_TEST=true"
       addons: {apt: { packages: [*default_packages, g++-8], sources: [*default_sources]}}
-      r_packages: devtools
+      r_packages:
+        - XML
+        - ggplot2
+        - gridExtra
+        - mgcv
+        - data.table
+        - openxlsx
+        - scales
+        - tidyr
+        - lhs
+        - corrplot
+        - wpp2019
       r_github_packages: lwillem/simid_rtools
 
       
