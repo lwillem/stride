@@ -17,6 +17,7 @@ addons:
       - doxygen
       - graphviz
       - libgit2-dev
+      - libxml2-dev
 
 matrix:
   include:
@@ -39,7 +40,7 @@ matrix:
     - os: linux
       compiler: gcc
       language: r
-      env: MATRIX_EVAL="CC=gcc-8 && CXX=g++-8 && R_TEST=true"
+      env: MATRIX_EVAL="CC=gcc-8 && CXX=g++-8 && R_TEST=false"
       addons: {apt: { packages: [*default_packages, g++-8], sources: [*default_sources]}}
       r_packages:
         - XML
@@ -53,6 +54,9 @@ matrix:
         - lhs
         - corrplot
         - wpp2019
+        - iterators
+        - foreach
+        - doParallel
       r_github_packages: lwillem/simid_rtools
 
       
