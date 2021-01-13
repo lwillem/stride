@@ -49,8 +49,7 @@ inspect_contact_data <- function(project_dir){
   i_exp <- 1
   # parallel processing issues to pass .rstride environment
   foreach(i_exp = 1:nrow(project_summary),
-          .packages = 'simid.rtools',
-          .export = '.rstride') %do% 
+          .export = c('.rstride',rStride_functions)) %do% 
   {  
     # plot contacts
     .rstride$plot_contacts(project_dir,project_summary[i_exp,],'./data')

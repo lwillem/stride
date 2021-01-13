@@ -25,11 +25,17 @@
 
 # load required R package
 require(doParallel,quietly = TRUE)
-require(simid.rtools,quietly = TRUE)
 
 if(!(exists('.rstride'))){
   .rstride <- new.env()
 }
+
+if(!exists('smd_print')){
+  smd_print <- function(...){
+    print(paste(list(...)))
+  }
+}
+
 
 # ############################# #
 # ## COMMAND LINE MESSAGES   ####
@@ -272,6 +278,7 @@ if(!(exists('.rstride'))){
     # loop over all experiments, rbind
     i_file <- 2
     data_all <- foreach(i_file = 1:length(data_filenames),
+    					.export = rStride_functions,
                         .combine=.rstride$rbind_fill) %do%
     {
       # get file name

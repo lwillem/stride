@@ -57,10 +57,10 @@ matrix:
         - iterators
         - foreach
         - doParallel
-      r_github_packages: lwillem/simid_rtools
+        - easyABC
+        - socialmixr
+        - countrycode
 
-      
-  
     #- os: osx
     #  osx_image: xcode10.1
     #  compiler: clang

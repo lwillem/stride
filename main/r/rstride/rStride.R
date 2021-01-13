@@ -20,22 +20,14 @@
 #
 ############################################################################ #
 
-# # load simid.rtools package (and install if not yet installed)
-if(!'simid.rtools' %in% installed.packages()[,1] || 
-      !all(unlist(packageVersion("simid.rtools")) >= list(0,1,43))){ # at least 0.1.43 is required
-  
-  if(!'devtools' %in% installed.packages()[,1]){
-    install.packages('devtools')
-  }
-  require(devtools,quietly = T)
-  devtools::install_github("lwillem/simid_rtools",force=F,quiet=T)
-  #devtools::uninstall(simid.rtools)
-}
-library('simid.rtools',quietly = T)
+
+xx <- lapply(dir('./bin/rstride/lib/simid_rtools/R',full.names = T),source)
 
 # LOAD R PACKAGES
 smd_load_packages(c('XML',           # to parse and write XML files
                     'doParallel',    # to use parallel foreach
+                    'foreach',
+                    'iterators',
                     'ggplot2',       # to plot contact matrices
                     'gridExtra',     # to plot contact matrices
                     'mgcv',          # to sample uncertain parameters from distributions
@@ -312,7 +304,7 @@ run_rStride <- function(exp_design               = exp_design,
   # run all experiments (in parallel)
   par_out <- foreach(i_exp=1:nrow(exp_design),
                      .combine='rbind',
-                     .packages=c('XML','simid.rtools','data.table',
+                     .packages=c('XML','data.table',
                                  'tidyr', # to use the 'replace_na' function
                                  'mgcv'), # to use the 'gam' function
                      .export = c('par_nodes_info',
@@ -320,6 +312,8 @@ run_rStride <- function(exp_design               = exp_design,
                      .verbose=FALSE) %dopar%
                      {  
                       
+                       xx <- lapply(dir('./bin/rstride/lib/simid_rtools/R',full.names = T),source)
+                       
                        # print progress (only slave1)
                        smd_print_progress(i_exp,nrow(exp_design),time_stamp_loop,par_nodes_info)
                        .rstride$print_system_memory_info(par_nodes_info)
@@ -388,7 +382,7 @@ run_rStride <- function(exp_design               = exp_design,
                      }
   
   # print final statement
-  smd_print('COMPLETE:',nrow(exp_design),'/',nrow(exp_design))
+  #smd_print('COMPLETE:',nrow(exp_design),'/',nrow(exp_design))
   
   # save overal summary
   write.table(par_out,file=file.path(project_dir,paste0(run_tag,'_summary.csv')),sep=',',row.names=F)
