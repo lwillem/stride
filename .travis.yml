@@ -97,7 +97,7 @@ install:
       export STRIDE_FORCE_NO_BOOST=ON
       export STRIDE_BOOST_NO_SYSTEM_PATHS=ON
     else
-      export BOOST_ROOT=$HOME/deps/boost_1_69_0
+      export BOOST_ROOT=$HOME/deps/boost_1_71_0
       if [[ -z "$(ls -A $BOOST_ROOT)" ]]; then
         cd /tmp/
         wget https://dl.bintray.com/boostorg/release/1.71.0/source/boost_1_71_0.tar.gz -q
