@@ -16,6 +16,7 @@ addons:
       # - libhdf5-dev
       - doxygen
       - graphviz
+      - libgit2-dev
 
 matrix:
   include:
