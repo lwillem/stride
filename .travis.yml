@@ -40,10 +40,7 @@ matrix:
     - os: linux
       compiler: gcc
       env: MATRIX_EVAL="CC=gcc-8 && CXX=g++-8 && R_TEST=true"
-      addons: {apt: { packages: [*default_packages, g++-8, r-cran-buildtools, r-cran-XML,
-                                     r-cran-doParallel, r-cran-ggplot2, r-cran-gridExtra,
-                                     r-cran-mgcv, r-cran-data.table,r-cran-openxlsx, r-cran-scales,
-                                     r-cran-tidyr, r-cran-lhs, r-cran-corrplot, r-cran-wpp2019], sources: [*default_sources]}}
+      addons: {apt: { packages: [*default_packages, g++-8, r-cran-devtools, r-cran-ggplot2, r-cran-lhs], sources: [*default_sources]}}
       cran: http://cran.rstudio.com
       warnings_are_errors: true
       
