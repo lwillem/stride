@@ -1,0 +1,9 @@
+Package: rStride
+Version: 0.1.0
+Date: 2021-01-13
+Title: R-interface of STRIDE
+Depends: R (>= 3.5.0)
+Imports: devtools, XML, doParallel, ggplot2, gridExtra, mgcv, data.table, 
+		openxlsx, scales, tidyr, lhs, corrplot, wpp2019
+VignetteBuilder: knitr
+NeedsCompilation: no
