@@ -37,7 +37,6 @@ matrix:
     #  addons: {apt: { packages: [*default_packages], sources: [*default_sources]}}
 
     - os: linux
-      language: r
       compiler: gcc
       env: MATRIX_EVAL="CC=gcc-8 && CXX=g++-8 && R_TEST=true"
       addons: {apt: { packages: [*default_packages, g++-8], sources: [*default_sources]}}
