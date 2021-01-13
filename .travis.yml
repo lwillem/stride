@@ -40,7 +40,7 @@ matrix:
     - os: linux
       compiler: gcc
       language: r
-      env: MATRIX_EVAL="CC=gcc-8 && CXX=g++-8 && R_TEST=false"
+      env: MATRIX_EVAL="CC=gcc-8 && CXX=g++-8 && R_TEST=true"
       addons: {apt: { packages: [*default_packages, g++-8], sources: [*default_sources]}}
       r_packages:
         - XML
