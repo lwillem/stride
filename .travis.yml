@@ -37,7 +37,7 @@ matrix:
     #  addons: {apt: { packages: [*default_packages], sources: [*default_sources]}}
 
     - os: linux
-      languag: R
+      language: r
       compiler: gcc
       env: MATRIX_EVAL="CC=gcc-8 && CXX=g++-8 && R_TEST=true"
       addons: {apt: { packages: [*default_packages, g++-8], sources: [*default_sources]}}
@@ -100,10 +100,10 @@ install:
       export BOOST_ROOT=$HOME/deps/boost_1_69_0
       if [[ -z "$(ls -A $BOOST_ROOT)" ]]; then
         cd /tmp/
-        wget https://dl.bintray.com/boostorg/release/1.69.0/source/boost_1_69_0.tar.gz -q
-        tar xf boost_1_69_0.tar.gz > /dev/null 2>&1
-        cd boost_1_69_0/
-        ./bootstrap.sh --prefix=$BOOST_ROOT --with-libraries=chrono,date_time,filesystem,iostreams,locale,regex,system,thread
+        wget https://dl.bintray.com/boostorg/release/1.71.0/source/boost_1_71_0.tar.gz -q
+        tar xf boost_1_71_0.tar.gz > /dev/null 2>&1
+        cd boost_1_71_0/
+        ./bootstrap.sh --prefix=$BOOST_ROOT --with-libraries=chrono,date_time,filesystem,iostreams,locale,regex,system,thread,math
         ./b2 -q -a -j2 -d0 --disable-filesystem2 cxxflags="-v -std=c++11" threading=multi install
         cd $TRAVIS_BUILD_DIR;
       else
