@@ -42,9 +42,9 @@ matrix:
       language: r
       env: MATRIX_EVAL="CC=gcc-8 && CXX=g++-8 && R_TEST=true"
       addons: {apt: { packages: [*default_packages, g++-8], sources: [*default_sources]}}
-      r-packages= devtools XML ggplot2
-      cran: http://cran.rstudio.com
-      warnings_are_errors: true
+      r_packages= devtools XML ggplot2
+      r_github_packages: lwillem/simid_rtools
+
       
   
     #- os: osx
