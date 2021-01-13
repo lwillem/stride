@@ -16,8 +16,6 @@ addons:
       # - libhdf5-dev
       - doxygen
       - graphviz
-      - r-base
-      - libxml2-dev
 
 matrix:
   include:
@@ -42,7 +40,7 @@ matrix:
       language: r
       env: MATRIX_EVAL="CC=gcc-8 && CXX=g++-8 && R_TEST=true"
       addons: {apt: { packages: [*default_packages, g++-8], sources: [*default_sources]}}
-      r_packages: devtools XML ggplot2
+      r_packages: devtools, XML, ggplot2
       r_github_packages: lwillem/simid_rtools
 
       
