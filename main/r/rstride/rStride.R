@@ -30,6 +30,8 @@ if(!'simid.rtools' %in% installed.packages()[,1] ||
   # require(devtools,quietly = T)
   # devtools::install_github("lwillem/simid_rtools",force=F,quiet=T)
   #devtools::uninstall(simid.rtools)
+  install.packages('doParallel')
+  install.packages('rstudioapi')
   
   install.packages('./bin/rstride/lib/simid_rtools-master/',
                    repos = NULL, 
