@@ -57,7 +57,8 @@ matrix:
         - iterators
         - foreach
         - doParallel
-        - easyABC
+        - rstudioapi
+        - EasyABC
         - socialmixr
         - countrycode
 
