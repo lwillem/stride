@@ -417,6 +417,11 @@ if(setequal(data_incidence[,names(data_incidence) != 'exp_id'],
     smd_print(names(diff_incidence),WARNING = T)
     
     if(all(dim(data_incidence) == dim(ref_data_incidence))){
+      
+      # capture issue for rowSums if only one column has changed...
+      if(ncol(diff_incidence)==1){
+        diff_incidence <- cbind(diff_incidence,diff_incidence)
+      }
       flag <- rowSums(data_incidence[,names(diff_incidence)] != ref_data_incidence[,names(diff_incidence)],na.rm=T)>0
       smd_print('EXP_ID with changes:', paste(unique(data_incidence$exp_id[flag]),collapse = ','))
       # data_incidence[flag,names(diff_incidence)]

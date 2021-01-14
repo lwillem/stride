@@ -98,7 +98,7 @@ if(num_other_households == 0){
     i_community <- community_opt[1]
     # add household cluster, based on the primary community of each household senior
     foreach(i_community = community_opt,
-            .export = c('smd_print_progress',rStride_functions),
+            .export = c('smd_print_progress'),
             .combine = rbind) %dopar%
     {
             # print progress        

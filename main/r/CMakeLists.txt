@@ -24,6 +24,7 @@ INSTALL(DIRECTORY
 	DESTINATION ${BIN_INSTALL_LOCATION}
 	PATTERN "*.Rproj*" EXCLUDE
 	PATTERN "*.Rhistory" EXCLUDE
+	PATTERN "*.zip" EXCLUDE
 )
 
 
@@ -49,5 +50,26 @@ INSTALL( FILES
 	DESTINATION ${BIN_INSTALL_LOCATION}  
 	PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_WRITE GROUP_READ
 )
+
+#============================================================================
+# UNZIP R-packages from rstride/lib to ${BIN_INSTALL_LOCATION}/bin/rstride/lib
+#============================================================================
+# Create build folder to unzip all compressed files
+set(UNZIP_FOLDER ${CMAKE_BINARY_DIR}/main/r/package_zip/)
+execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${UNZIP_FOLDER})
+
+# Unzip all ZIP files
+file(GLOB ZIP_FILES "rstride/lib/*.zip")
+foreach( file_i ${ZIP_FILES} )
+	execute_process(COMMAND ${CMAKE_COMMAND} -E tar xzf ${file_i}
+                    WORKING_DIRECTORY ${UNZIP_FOLDER})
+endforeach()
+
+# Install unzipped files
+
+INSTALL(DIRECTORY ${UNZIP_FOLDER}
+	    DESTINATION ${BIN_INSTALL_LOCATION}/rstride/lib
+)
+unset(UNZIP_FOLDER)
 
 #############################################################################

@@ -21,6 +21,7 @@ create_symptomatic_profile <- function()
 {
         # load packages
         library(wpp2019)                                      # to obtain population data
+        suppressPackageStartupMessages(library(simid.rtools)) # to save a list as XML
         
         # set overall fraction symptomatic to 50% (of something else...)
         reference_proportion <- 0.5

@@ -20,14 +20,31 @@
 #
 ############################################################################ #
 
-
-xx <- lapply(dir('./bin/rstride/lib/simid_rtools/R',full.names = T),source)
+# # load simid.rtools package (and install if not yet installed)
+if(!'simid.rtools' %in% installed.packages()[,1] || 
+   !all(unlist(packageVersion("simid.rtools")) >= list(0,1,43))){ # at least 0.1.43 is required
+  
+  # if(!'devtools' %in% installed.packages()[,1]){
+  #   install.packages('devtools')
+  # }
+  # require(devtools,quietly = T)
+  # devtools::install_github("lwillem/simid_rtools",force=F,quiet=T)
+  #devtools::uninstall(simid.rtools)
+  
+  install.packages('./bin/rstride/lib/simid_rtools-master/',
+                   repos = NULL, 
+                   type = "source")
+  
+}
+library('simid.rtools',quietly = T)
 
 # LOAD R PACKAGES
 smd_load_packages(c('XML',           # to parse and write XML files
                     'doParallel',    # to use parallel foreach
                     'foreach',
                     'iterators',
+                    'socialmixr',
+                    'EasyABC',
                     'ggplot2',       # to plot contact matrices
                     'gridExtra',     # to plot contact matrices
                     'mgcv',          # to sample uncertain parameters from distributions
@@ -47,6 +64,8 @@ source('./bin/rstride/Misc.R')
 rStride_files <- dir('./bin/rstride',recursive = T,pattern = '\\.R',full.names = T)
 rStride_files <- rStride_files[rStride_files != "./bin/rstride/rStride.R"]
 rStride_files <- rStride_files[! grepl('\\.Rmd',rStride_files)]
+rStride_files <- rStride_files[! grepl('-master',rStride_files)]  #exclude packages
+
 
 
 # load all (remaining files)
@@ -304,7 +323,7 @@ run_rStride <- function(exp_design               = exp_design,
   # run all experiments (in parallel)
   par_out <- foreach(i_exp=1:nrow(exp_design),
                      .combine='rbind',
-                     .packages=c('XML','data.table',
+                     .packages=c('XML','simid.rtools','data.table',
                                  'tidyr', # to use the 'replace_na' function
                                  'mgcv'), # to use the 'gam' function
                      .export = c('par_nodes_info',
@@ -312,7 +331,6 @@ run_rStride <- function(exp_design               = exp_design,
                      .verbose=FALSE) %dopar%
                      {  
                       
-                       xx <- lapply(dir('./bin/rstride/lib/simid_rtools/R',full.names = T),source)
                        
                        # print progress (only slave1)
                        smd_print_progress(i_exp,nrow(exp_design),time_stamp_loop,par_nodes_info)
@@ -382,7 +400,7 @@ run_rStride <- function(exp_design               = exp_design,
                      }
   
   # print final statement
-  #smd_print('COMPLETE:',nrow(exp_design),'/',nrow(exp_design))
+  smd_print('COMPLETE:',nrow(exp_design),'/',nrow(exp_design))
   
   # save overal summary
   write.table(par_out,file=file.path(project_dir,paste0(run_tag,'_summary.csv')),sep=',',row.names=F)
