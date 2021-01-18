@@ -81,7 +81,7 @@ model_param_update <- get_exp_param_default(bool_revised_model_param = T,
                                             bool_min_restrictive = T)
 
 # TEMP
-model_param_update$population_file <- "pop_belgium600k_c500_teachers_censushh.csv"
+#model_param_update$population_file <- "pop_belgium600k_c500_teachers_censushh.csv"
 model_param_update$num_days        <- 74
 #model_param_update$logparsing_cases_upperlimit <- 2.5e6
 
@@ -106,11 +106,11 @@ table(sum_stat_obs$category)
 
 # set priors
 stride_prior <- list(#r0                         = c("unif",3.0,4.0),
-                     num_infected_seeds         = c("unif",200,300),
+                     num_infected_seeds         = c("unif",200,400),
                      #hosp_probability_factor    = c("unif",0.3,0.5),
-                     cnt_reduction_workplace    = c("unif",0.70,0.85),
+                     cnt_reduction_workplace    = c("unif",0.70,0.90),
                      compliance_delay_workplace = c("unif",4.51,7.49),  # rounded: 5-7
-                     cnt_reduction_other        = c("unif",0.70,0.85),
+                     cnt_reduction_other        = c("unif",0.70,0.95),
                      compliance_delay_other     = c("unif",4.51,7.49), # rounded: 5-7
                      
                      disease_susceptibility_age_opt1 = c("unif",0.01,0.20),
@@ -120,7 +120,7 @@ stride_prior <- list(#r0                         = c("unif",3.0,4.0),
                      disease_susceptibility_age_opt5 = c("unif",0.01,0.20),
                      disease_susceptibility_age_opt6 = c("unif",0.01,0.30),
                      disease_susceptibility_age_opt7 = c("unif",0.01,0.30),
-                     disease_susceptibility_age_opt8 = c("unif",0.01,0.30),
+                     disease_susceptibility_age_opt8 = c("unif",0.01,0.40),
                      disease_susceptibility_age_opt9 = c("unif",0.01,0.50),
                      
                      hospital_probability_age_opt1 = c("unif",0.01,0.90),

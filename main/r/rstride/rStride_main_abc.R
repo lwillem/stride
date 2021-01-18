@@ -437,7 +437,13 @@ plot_abc_correlation <- function(ABC_out,project_dir){
 get_abc_reference_data <- function(ref_period ,
                                    bool_age  = FALSE,
                                    bool_doubling_time = TRUE,
-                                   bool_hospital = TRUE){
+                                   bool_hospital = TRUE,
+                                   rel_importance_hosp_data = NA){
+   
+   # set contribution hospital data vs other data sources
+   # if 1: number of hospital admission data points == number of (e.g.) seroprevalence data points
+   # if 2: importance of hospital addmission data increases...
+   rel_factor_hosp_data <- ifelse(!is.na(rel_importance_hosp_data),1/rel_importance_hosp_data,1)
    
    ## hospital reference data ----
    # use (local version of) most recent SCIENSANO data (or backup version)
@@ -519,7 +525,7 @@ get_abc_reference_data <- function(ref_period ,
 
    # duplicate serology data to give it the same weight in the reference data
    if(!is.null(abc_hosp_stat)){
-      sero_rep_factor   <- floor(nrow(abc_hosp_stat) / nrow(abc_sero_stat))
+      sero_rep_factor   <- floor(nrow(abc_hosp_stat) / nrow(abc_sero_stat) * rel_factor_hosp_data)
       for(i in 2:sero_rep_factor){
          sum_stat_obs <- rbind(sum_stat_obs,abc_sero_stat[, bool_orig := FALSE])
       }
@@ -528,7 +534,7 @@ get_abc_reference_data <- function(ref_period ,
    
    
    if(!is.null(abc_hosp_stat) && !is.null(abc_dtime_stat)){
-      sero_dtime_factor   <- floor(nrow(abc_hosp_stat) / nrow(abc_dtime_stat))
+      sero_dtime_factor   <- floor(nrow(abc_hosp_stat) / nrow(abc_dtime_stat) * rel_factor_hosp_data )
       for(i in 2:sero_dtime_factor){
          sum_stat_obs <- rbind(sum_stat_obs,abc_dtime_stat[,bool_orig := FALSE])
       }
@@ -702,6 +708,7 @@ load_partial_results_abc <- function(project_dir){
    
    # reformat: ABC_out$intermediate
    ABC_out$intermediary <- list(1:nrow(tolerance_step))
+   output_step$step_id <- as.numeric(output_step$step_id)
    i_step <- 1
    for(i_step in 1:max(output_step$step_id)){
       posterior <- list2double(output_step[output_step$step_id == i_step,-1])
@@ -750,7 +757,7 @@ string2label <- function(name_list){
 process_partial_results <- function(output_folders = NA){
    
    if(any(is.na(output_folders))){
-      output_folders <- dir('sim_output',pattern = 'abc',full.names = T)
+      output_folders <- dir('sim_output/tmp',pattern = 'abc',full.names = T)
       output_folders <- output_folders[!grepl('.csv',output_folders)]
    } else {
       
@@ -774,4 +781,97 @@ process_partial_results <- function(output_folders = NA){
    }
    
 }
+
+
+# project_dir <- 'sim_output/tmp/20210117_11068_abc_age1_n120_c40_p010/'
+get_final_best <- function(project_dir){
+   
+   # model output
+   ABC_out <- load_partial_results_abc(project_dir)
+   
+   # model parameters and reference
+   stride_prior       <- readRDS(dir(project_dir,pattern = 'stride_prior',full.names = T))
+   sum_stat_obs       <- readRDS(dir(project_dir,pattern = 'sum_stat_obs',full.names = T))
+   
+   # names(ABC_out)
+   # dim(ABC_out$param)
+   # dim(ABC_out$stats)
+   # colnames(ABC_out$intermediary[[1]]$posterior)
+   # 
+   
+   dim(ABC_out$stats)
+   dim(sum_stat_obs)
+   get_binom_poisson(sum_stat_obs$value,ABC_out$stats[1,])
+   
+   foreach(i_run = 1:nrow(ABC_out$stats),
+           .combine='rbind') %do% {
+              get_binom_poisson(sum_stat_obs$value,ABC_out$stats[i_run,])
+           } -> ABC_binom_poisson
+   
+   hist(ABC_binom_poisson)
+   sel_poisson <- which(ABC_binom_poisson == min(ABC_binom_poisson))
+   
+   # copy/paste...
+   # get categories
+   output_cat <- as.character(unique(sum_stat_obs$category))
+   par(mfrow=c(3,3))
+   # iterate over categories
+   for(i_cat in output_cat){
+      flag_out <- sum_stat_obs$category == i_cat & sum_stat_obs$bool_orig == TRUE
+      sum(flag_out)
+      dim(sum_stat_obs)
+      dim(ABC_out$stats[sel_poisson,])
+      
+      # if over time
+      if(sum(flag_out)>1){
+         y_lim <- range(pretty(c(sum_stat_obs$value[flag_out],
+                                 sum_stat_obs$value_low[flag_out],
+                                 sum_stat_obs$value_high[flag_out],
+                                 ABC_out$stats[sel_poisson,flag_out])),
+                        na.rm=T)
+         
+         plot(sum_stat_obs$date[flag_out],
+              sum_stat_obs$value[flag_out],
+              ylim = y_lim,
+              main = string2label(i_cat),
+              ylab = i_cat)
+         
+         if(all(!is.na(sum_stat_obs$value_low[flag_out]))){
+            add_interval(x = sum_stat_obs$date[flag_out],
+                         y1 = sum_stat_obs$value_low[flag_out],
+                         y2 = sum_stat_obs$value_high[flag_out])
+         }
+         
+         # for(i_out in 1:nrow(ABC_out$stats)){
+            i_out <- sel_poisson
+            lines(sum_stat_obs$date[flag_out],
+                  ABC_out$stats[i_out,flag_out],
+                  col=alpha(4,0.8))
+         # }
+       } else{ # else: hist + reference
+   #       
+   #       # initial doubling time
+   #       x_lim <- range(0,pretty(sum_stat_obs$value_high[flag_out]*1.1))
+   #       hist(ABC_out$stats[,flag_out],40,
+   #            xlim=x_lim,
+   #            xlab=i_cat,
+   #            main=i_cat,
+   #            col=alpha(4,0.2),
+   #            border = alpha(4,0.2))
+   #       #   abline(v=mean(sum_stat_obs$value[flag_out]),col=1)
+   #       add_interval_hor(x1  = sum_stat_obs$value_low[flag_out],
+   #                        x2  = sum_stat_obs$value_high[flag_out],
+   #                        x_mean = sum_stat_obs$value[flag_out],
+   #                        col = 1)
+   #    }
+   #    
+       }
+   }
+   
+   
+   
+   
+}
+
+
 
