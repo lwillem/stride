@@ -14,7 +14,7 @@
 #  see http://www.gnu.org/licenses/.
 #
 #
-#  Copyright 2020, Willem L
+#  Copyright 2021, Willem L
 ############################################################################ #
 #
 # Call this script from the main project folder (containing bin, config, lib, ...)
@@ -24,20 +24,13 @@
 #
 ############################################################################ #
 
-args = commandArgs(trailingOnly=TRUE)
-if(length(args)>0){
-  job_id <- paste0(format(Sys.time(), format="%Y%m%d_"),args[1])
-} else{
-  job_id <-''
-}
-
 # lw's developing option
-if(any(grepl('lwillem',dir('~',full.names=T)))){
+if(any(grepl('lwillem',dir('~',full.names=T))) && exists('.rstride')){
   .rstride$set_wd()
 }
 
 # Clear work environment
-rm(list=ls()[ls() != 'job_id'])
+rm(list=ls())
 
 # Load rStride
 source('./bin/rstride/rStride.R')
@@ -55,18 +48,29 @@ n_sample = n_cluster * 4 #24
 # set acceptance level
 pacc=0.7
 
-# set directory postfix (optional)
-dir_postfix <- paste0('_abc_age_n',n_sample,'_c',n_cluster,'_p',formatC(pacc*100,flag = 0,digits = 2))
+# weight of hospital data as reference
+rel_importance_hosp_data <- 5
+
+# command line arguments?
+args = commandArgs(trailingOnly=TRUE)
+if(length(args)>0){
+  job_id <- paste0(format(Sys.time(), format="%Y%m%d_"),args[1])
+} else{
+  job_id <-format(Sys.time(), format="%Y%m%d_%H%M_abc_age")
+}
+if(length(args)>=3){
+  n_cluster = as.numeric(args[2])
+  n_sample = n_cluster * as.numeric(args[3])
+  pacc= as.numeric(args[4])
+  rel_importance_hosp_data= as.numeric(args[5])
+} 
+
+# set directory postfix (== run tag)
+dir_postfix <- paste0(job_id,'_c',n_cluster,'_n',n_sample,'_p',formatC(pacc*100,flag = 0,digits = 2),'_h',rel_importance_hosp_data)
 dir_postfix
 
-# create run tag using the current time if use_date_prefix == TRUE
-# use_date_prefix <- TRUE
-use_date_prefix <- job_id ==''
-run_tag <- ifelse(use_date_prefix,format(Sys.time(), format="%Y%m%d_%H%M%S"),job_id)
-run_tag_data <- paste0(run_tag,dir_postfix)
-
 # set project directory
-project_dir <- smd_file_path('./sim_output',run_tag_data)
+project_dir <- smd_file_path('./sim_output',dir_postfix)
 
 ################################################ #
 ## DESIGN OF EXPERIMENTS  ----
@@ -77,7 +81,7 @@ model_param_update <- get_exp_param_default(bool_revised_model_param = T,
                                             bool_min_restrictive = T)
 
 # TEMP
-#model_param_update$population_file <- "pop_belgium600k_c500_teachers_censushh.csv"
+model_param_update$population_file <- "pop_belgium600k_c500_teachers_censushh.csv"
 model_param_update$num_days        <- 74
 #model_param_update$logparsing_cases_upperlimit <- 2.5e6
 
@@ -89,10 +93,11 @@ ref_period <- seq(as.Date('2020-03-15'),
 ## REFERENCE DATA  ----
 ################################################ #
 
-sum_stat_obs <- get_abc_reference_data(ref_period,
-                                       bool_age = TRUE,
-                                       bool_doubling_time = FALSE,
-                                       bool_hospital = TRUE)
+sum_stat_obs <- get_abc_reference_data(ref_period               = ref_period,
+                                       bool_age                 = TRUE,
+                                       bool_doubling_time       = FALSE,
+                                       bool_hospital            = TRUE,
+                                       rel_importance_hosp_data = rel_importance_hosp_data)
 table(sum_stat_obs$category)
 
 ################################## #
@@ -106,28 +111,51 @@ stride_prior <- list(#r0                         = c("unif",3.0,4.0),
                      cnt_reduction_workplace    = c("unif",0.70,0.85),
                      compliance_delay_workplace = c("unif",4.51,7.49),  # rounded: 5-7
                      cnt_reduction_other        = c("unif",0.70,0.85),
-                     compliance_delay_other     = c("unif",4.51,7.49))  # rounded: 5-7
+                     compliance_delay_other     = c("unif",4.51,7.49), # rounded: 5-7
+                     
+                     disease_susceptibility_age_opt1 = c("unif",0.01,0.20),
+                     disease_susceptibility_age_opt2 = c("unif",0.01,0.20),
+                     disease_susceptibility_age_opt3 = c("unif",0.01,0.20),
+                     disease_susceptibility_age_opt4 = c("unif",0.01,0.20),
+                     disease_susceptibility_age_opt5 = c("unif",0.01,0.20),
+                     disease_susceptibility_age_opt6 = c("unif",0.01,0.30),
+                     disease_susceptibility_age_opt7 = c("unif",0.01,0.30),
+                     disease_susceptibility_age_opt8 = c("unif",0.01,0.30),
+                     disease_susceptibility_age_opt9 = c("unif",0.01,0.50),
+                     
+                     hospital_probability_age_opt1 = c("unif",0.01,0.90),
+                     hospital_probability_age_opt2 = c("unif",0.01,0.90),
+                     hospital_probability_age_opt3 = c("unif",0.01,0.90),
+                     hospital_probability_age_opt4 = c("unif",0.01,0.90),
+                     hospital_probability_age_opt5 = c("unif",0.01,0.90),
+                     hospital_probability_age_opt6 = c("unif",0.01,0.90),
+                     hospital_probability_age_opt7 = c("unif",0.01,0.90),
+                     hospital_probability_age_opt8 = c("unif",0.01,0.90),
+                     hospital_probability_age_opt9 = c("unif",0.01,0.90)
+                     
+                     )  
 
-#model_param_update$hospital_category_age <- "0,10,20,30,40,50,60,70,80"
- model_param_update$disease_susceptibility_agecat <- model_param_update$hospital_category_age
- model_param_update$transmission_probability <- 1
-for(i_age in 1:9){
-  stride_prior[[paste0('disease_susceptibility_age_opt',i_age)]] <- c("unif",0.07,0.09) # 0.0831236
-  stride_prior[[paste0('hospital_probability_age_opt',i_age)]]   <- c("unif",0.1,0.8)   # various levels
-}
+model_param_update$disease_susceptibility_agecat <- model_param_update$hospital_category_age
+model_param_update$transmission_probability <- 1
+model_param_update$hosp_probability_factor <- 1
+
+# other options...
+#model_param_update$compliance_delay_workplace <- 7
+#model_param_update$compliance_delay_other <- 7
+#model_param_update$disease_susceptibility_agecat <- "0,10,20,30,40,50,60,70,80"
 length(stride_prior)
 
 # create output folder and set workdir
-run_file_path <- dirname(smd_file_path('./sim_output',run_tag_data,'test'))
+run_file_path <- dirname(smd_file_path(project_dir,'test'))
 setwd(run_file_path)
 saveRDS(model_param_update,'model_param_update.rds')
 saveRDS(sum_stat_obs,'sum_stat_obs.rds')
 saveRDS(stride_prior,'stride_prior.rds')
 
-# run_param  <- sample_param_from_prior(stride_prior)
-# stride_out <- run_rStride_abc(run_param)
-# length(stride_out)
-# dim(sum_stat_obs)
+run_param  <- sample_param_from_prior(stride_prior)
+stride_out <- run_rStride_abc(run_param)
+length(stride_out)
+dim(sum_stat_obs)
 # 
 # ABC_stride<-ABC_rejection(model     = run_rStride_abc,
 #                            prior    = stride_prior,
@@ -148,11 +176,10 @@ ABC_stride<-ABC_sequential(model=run_rStride_abc,
                            verbose = T,
                            n_cluster=n_cluster,
                            use_seed=TRUE,
-                           progress_bar=T)
+                           progress_bar=F)
 
 # set back workdir
 setwd('../..')
-
 
 
 # par(mfrow=c(3,2))
@@ -188,21 +215,5 @@ plot_abc_correlation(ABC_stride,project_dir)
 
 # # intermediate results
 # plot_abc_intermediate(ABC_stride,project_dir)
-
-
-## debug
-if(0==1){
-  
-  abc_out <- read.table(smd_file_path('./sim_output',run_tag_data,'output'),sep=' ')
-  dim(abc_out)
-  length(sum_stat_obs)
-  
-  abc_out[,1]
-  head(abc_out)
-  abc_out$V55
-  abc_out$V54
-  abc_out$V146
-  
-}
 
 
