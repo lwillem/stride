@@ -27,24 +27,26 @@ namespace stride {
 Health::Health(unsigned short int start_infectiousness, unsigned short int start_symptomatic,
                unsigned short int time_infectious, unsigned short int time_symptomatic,
 				double sympt_cnt_reduction_work_school, double sympt_cnt_reduction_community,
-				double relative_infectiousness, double relative_susceptibility)
+				double relative_susceptibility)
     : m_disease_counter(0U), m_status(HealthStatus::Susceptible), m_start_infectiousness(start_infectiousness),
       m_start_symptomatic(start_symptomatic), m_end_infectiousness(start_infectiousness + time_infectious),
       m_end_symptomatic(start_symptomatic + time_symptomatic), m_id_index_case(0U), m_id_infector(0U),
 		m_sympt_cnt_reduction_work_school(sympt_cnt_reduction_work_school),
 		m_sympt_cnt_reduction_community(sympt_cnt_reduction_community),
-		m_relative_infectiousness(relative_infectiousness),m_relative_susceptibility(relative_susceptibility)
+        m_relative_infectiousness(0U),
+		m_relative_susceptibility(relative_susceptibility)
 {
 }
 
 
-void Health::StartInfection(unsigned int id_index_case, unsigned int id_infector)
+void Health::StartInfection(unsigned int id_index_case, unsigned int id_infector, double relative_infectiousness)
 {
         AssertThrow(m_status == HealthStatus::Susceptible, "Inconsistent Health change", nullptr);
         m_status = HealthStatus::Exposed;
         ResetDiseaseCounter();
         m_id_index_case = id_index_case;
         m_id_infector   = id_infector;
+        m_relative_infectiousness = relative_infectiousness;
 }
 
 bool Health::NumberDaysSymptomatic(unsigned int days_before) const

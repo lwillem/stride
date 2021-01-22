@@ -309,7 +309,8 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
 								if (h1.IsInfectious() && h2.IsSusceptible() &&
 									rnHandler.Binomial(tProb_p1_p2)) {
 
-										h2.StartInfection(h1.GetIdIndexCase(),p1->GetId());
+										double rel_inf = transProfile.GetIndividualInfectiousness(rnHandler);
+										h2.StartInfection(h1.GetIdIndexCase(),p1->GetId(),rel_inf);
 
 										if (TIC)
 												h2.StopInfection();
@@ -320,7 +321,8 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
 								if (h2.IsInfectious() && h1.IsSusceptible() &&
 									rnHandler.Binomial(tProb_p2_p1)) {
 
-									h1.StartInfection(h2.GetIdIndexCase(),p2->GetId());
+									double rel_inf = transProfile.GetIndividualInfectiousness(rnHandler);
+									h1.StartInfection(h2.GetIdIndexCase(),p2->GetId(), rel_inf);
 
 										if (TIC)
 												h1.StopInfection();
@@ -385,7 +387,8 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
 
                                         auto& h2 = p2->GetHealth();
                                         if (h1.IsInfectious() && h2.IsSusceptible()) {
-                                                h2.StartInfection(h1.GetIdIndexCase(),p1->GetId());
+                                                double rel_inf = transProfile.GetIndividualInfectiousness(rnHandler);
+                                                h2.StartInfection(h1.GetIdIndexCase(),p1->GetId(), rel_inf);
 
                                                 // if track&trace is in place, option to register (both) contact(s)
                                                 p1->RegisterContact(p2); //TODO: make use of "log policy" template

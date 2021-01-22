@@ -102,7 +102,7 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         // --------------------------------------------------------------
         // Seed population with infection.
         // --------------------------------------------------------------
-        DiseaseSeeder(m_config, sim->m_rn_man).Seed(sim->m_population);
+        DiseaseSeeder(m_config, sim->m_rn_man).Seed(sim->m_population, sim->m_transmission_profile, sim->m_rn_handlers[0]);
         sim->m_num_daily_imported_cases = m_config.get<double>("run.num_daily_imported_cases",0);
 
         // --------------------------------------------------------------

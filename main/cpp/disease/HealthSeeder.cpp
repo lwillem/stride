@@ -112,13 +112,12 @@ void HealthSeeder::Seed(const std::shared_ptr<stride::Population>& pop, const Tr
                         	timeSymptomatic = 0;
                         }
 
-                        double relative_infectiousness = transProfile.GetIndividualInfectiousness(gen01);
 						double relative_susceptibility = transProfile.GetIndividualSusceptibility(population[i].GetAge());
 
                         population[i].GetHealth() =
                             Health(startInfectiousness, startSymptomatic, timeInfectious, timeSymptomatic,
                             		m_sympt_cnt_reduction_work_school,m_sympt_cnt_reduction_community,
-                            		relative_infectiousness,relative_susceptibility);
+                            		relative_susceptibility);
                 }
         }
 }

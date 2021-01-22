@@ -393,13 +393,22 @@ plot_calendar(d_calendar_exit_subset,show_plots)
 
 }
 
-
+# note: variable "b_school_repopening" is not used anymore... but still here for backward compatibility
 plot_calendar <- function(dt_calendar, show_plots = TRUE, b_school_repopening=TRUE){
   if(show_plots){
     category_opt <- unique(dt_calendar$category)
     par(mfrow=c(4,2))
     
+    # check if dt_calendar is data.table
+    if(!is.data.table(dt_calendar)){
+      dt_calendar <- data.table(dt_calendar)
+    }
+
+    # make sure that "date" is in date format
+    dt_calendar$date <- as.Date(dt_calendar$date)
+    
     x_lim <- range(dt_calendar$date)
+    x_lab_year <- paste(unique(year(dt_calendar$date)),sep='-')
     i_cat <- category_opt[1]
     for(i_cat in category_opt){
       plot(x   = dt_calendar[category == i_cat,date],
@@ -410,7 +419,7 @@ plot_calendar <- function(dt_calendar, show_plots = TRUE, b_school_repopening=TR
            pch  = 15,
            main = i_cat,
            bty='n',
-           xlab = '',
+           xlab = x_lab_year,
            ylab = unique(dt_calendar[,type]),
            xaxt = 'n'
       )
@@ -418,9 +427,7 @@ plot_calendar <- function(dt_calendar, show_plots = TRUE, b_school_repopening=TR
     }
     
     if("schools_closed" %in% dt_calendar$category){
-      if(b_school_repopening) x_lim <- range(as.Date(c('2020-05-01','2020-07-01')))
       i_cat <- "schools_closed"
-      #par(mfrow=c(1,1))
       plot(x   = dt_calendar[category == i_cat & value == 1,date],
            y   = dt_calendar[category == i_cat & value == 1,age],
            xlim = x_lim,
@@ -429,7 +436,7 @@ plot_calendar <- function(dt_calendar, show_plots = TRUE, b_school_repopening=TR
            pch  = 15,
            main = i_cat,
            bty='n',
-           xlab = '',
+           xlab = x_lab_year,
            ylab = 'age',
            xaxt = 'n'
       )
