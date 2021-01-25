@@ -218,8 +218,11 @@ get_population_data <- function(country,year,age_breaks=NA){
 
 
 # function to combine the reported hospital admissions and age-specific proportions over time
-get_hospital_incidence_age <- function(age_breaks_str){
-  
+get_hospital_incidence_age <- function(age_breaks_str = NA){
+
+  # if function argument is NA => use 10-year age groups from 0 up to 80+
+  age_breaks_str <- ifelse(is.na(age_breaks_str),paste(seq(0,80,10),collapse=','),age_breaks_str)
+
   ## hospital admissions by age----
   # note: we cannot include this data in the public repository (yet)
   # solution: use local version of real data or "dummy" backup to prevent fatal errors
@@ -230,6 +233,7 @@ get_hospital_incidence_age <- function(age_breaks_str){
     ref_data <- read.csv(ref_data_file_name,header = T)
   } else{
     ref_data <- read.csv(backup_file,header = T)
+    smd_print("!! USING DUMMY FILE FOR AGE SPECIFIC HOSPITAL ADMISSIONS !!")
   }
   
   # reformat
@@ -241,7 +245,7 @@ get_hospital_incidence_age <- function(age_breaks_str){
   ref_data     <- ref_data[,-10]
   
   # get ages and dates
-  age_min    <- seq(0,80,10)
+  age_min    <- as.numeric(unlist(strsplit(age_breaks_str,",")))
   date_start <- as.Date('2020-03-09')
   date_end   <- date_start + (nrow(ref_data)-1)*7
   date_weeks <- seq(date_start,date_end,7)
@@ -262,7 +266,7 @@ get_hospital_incidence_age <- function(age_breaks_str){
   hosp_age_full <- hosp_age_full/100
   
   # get reported hospital admissions over time
-  hosp_incidence <- get_observed_incidence_data()
+  hosp_incidence          <- get_observed_incidence_data()
   hosp_incidence$sim_date <- as.Date(hosp_incidence$sim_date)
   
   # calculate age-specific hospital admissions over time

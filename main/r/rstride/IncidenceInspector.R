@@ -69,14 +69,16 @@ inspect_incidence_data <- function(project_dir, num_selection = 4, bool_add_para
   
   ## REFERENCE DATA COVID-19: new hospital admissions ----
   # use (local version of) most recent SCIENSANO data (or backup version)
-  ref_data          <- get_observed_incidence_data()
+  #ref_data          <- get_observed_incidence_data()
+  ref_data          <- get_hospital_incidence_age()
   ref_data$sim_date <- as.Date(ref_data$sim_date)
   dim(ref_data)
   
   # reformat reference data
   hosp_adm_data <- data.frame(date = ref_data$sim_date,
                               num_adm = ref_data$hospital_admissions,
-                              cum_adm = ref_data$cumulative_hospital_admissions)
+                              cum_adm = ref_data$cumulative_hospital_admissions,
+                              ref_data[,grepl('admissions_',names(ref_data))])
   
   # remove reference data if simulation period is shorter
   flag_compare  <- hosp_adm_data$date %in% data_incidence_all$sim_date
@@ -115,6 +117,7 @@ inspect_incidence_data <- function(project_dir, num_selection = 4, bool_add_para
   # add R0 to input opt design if not present
   if(any(is.null(input_opt_design$r0))){ 
     input_opt_design$r0 <- unique(project_summary$r0)
+    
   }
   
   ## PER R0: plot temporal patterns
@@ -132,7 +135,11 @@ inspect_incidence_data <- function(project_dir, num_selection = 4, bool_add_para
       opt_config_id <- unique(input_opt_design$config_id[input_opt_design$r0 ==  i_r0])
 
       # select subset
-      data_incidence_sel <- data_incidence_all[data_incidence_all$config_id %in% opt_config_id,]
+      if(is.null(opt_config_id)){
+        data_incidence_sel <- data_incidence_all
+      } else{
+        data_incidence_sel <- data_incidence_all[data_incidence_all$config_id %in% opt_config_id,]
+      }
       dim(data_incidence_sel)
       
       # check selection
@@ -227,6 +234,36 @@ inspect_incidence_data <- function(project_dir, num_selection = 4, bool_add_para
     
     
   }
+  
+  ## AGE-SPECIFIC PLOTS
+  
+  par(mfrow=c(3,3))
+  i_age <- 4
+  names(data_incidence_sel)
+  col_ind_hosp_age <- which(grepl('hospital_admissions',names(hosp_adm_data)))
+  
+  for(i_age in 1:9){
+    
+    data_incidence_sel <- data_incidence_all
+    for(i_col in c('new_hospital_admissions','new_infections')){
+      data_incidence_sel[,i_col] <- data_incidence_sel[,grepl(paste0(i_col,'_age',i_age),names(data_incidence_sel))]
+    }
+    
+    hosp_adm_data_sel <- hosp_adm_data
+    hosp_adm_data_sel$num_adm <- hosp_adm_data_sel[,col_ind_hosp_age[i_age]]
+    
+    data_incidence_sel$new_hospital_admissions
+    
+    plot_incidence_data(data_incidence_sel,
+                        project_summary,
+                        hosp_adm_data_sel,
+                        input_opt_design,
+                        prevalence_ref,
+                        bool_add_param,
+                        bool_only_hospital_adm = TRUE) 
+  }
+  
+  
   
   
    # command line message

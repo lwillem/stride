@@ -252,8 +252,6 @@ plot_abc_results <- function(ABC_out,project_dir,bool_pdf=TRUE){
    ## output statistics ----
    par(mfrow=c(4,3))
    
-   ## if  over time
-   
    # get categories
    output_cat <- as.character(unique(sum_stat_obs$category))
    
@@ -287,7 +285,7 @@ plot_abc_results <- function(ABC_out,project_dir,bool_pdf=TRUE){
          for(i_out in 1:nrow(ABC_out$stats)){
             lines(sum_stat_obs$date[flag_out],
                   ABC_out$stats[i_out,flag_out],
-                  col=alpha(4,0.8))
+                  col=alpha(4,0.2))
          }
       } else{ # else: hist + reference
          
@@ -341,7 +339,11 @@ plot_abc_posterior <- function(ABC_out,project_dir,bool_pdf=TRUE){
    
    # if intermediate results present ==>> plot
    if( 'intermediary' %in% names(ABC_out)){
+   
+      # model output
+      #ABC_out <- load_partial_results_abc(project_dir)
       
+      # stride prior
       stride_prior       <- readRDS(dir(project_dir,pattern = 'stride_prior',full.names = T))
 
       ## open pdf steam
@@ -415,6 +417,27 @@ plot_abc_posterior <- function(ABC_out,project_dir,bool_pdf=TRUE){
       
       # close pdf stream
       if(bool_pdf) dev.off()
+      
+      
+      foreach(i = 1:length(stride_prior),
+              .combine='rbind') %do%{
+         par_values_iter  <- db_abc[,paste0(param_names[i],'_',1:5)]
+         par_values_start <- range(as.numeric(stride_prior[[i]][-1]))
+         
+         c(i,as.double((unlist(par_values_iter[nrow(par_values_iter),]))),unlist(par_values_start))
+      } -> abc_param_summary
+      
+      abc_param_summary <- data.frame(abc_param_summary)
+      abc_param_summary <- round(abc_param_summary,digits=3)
+      names(abc_param_summary) <- c('param_name','q0025','q0250','mean','q0750','q0975','prior_min','prior_max')
+      abc_param_summary$param_name <- param_names[abc_param_summary$param_name]
+      abc_param_summary
+      
+      write.table(abc_param_summary, 
+                file = file.path(project_dir,paste0(basename(project_dir),'_results_ABC_posterior.csv')),
+                row.names=F,
+                sep=",")
+      
    }
 }
 
@@ -434,52 +457,73 @@ plot_abc_correlation <- function(ABC_out,project_dir){
 ## REFERENCE DATA  ----
 ################################################ #
 
-get_abc_reference_data <- function(ref_period ,
+get_abc_reference_data <- function(ref_period,
                                    bool_age  = FALSE,
                                    bool_doubling_time = TRUE,
                                    bool_hospital = TRUE,
-                                   rel_importance_hosp_data = NA){
+                                   rel_importance_hosp_data = NA,
+                                   age_cat_hosp_str = NA,
+                                   bool_add_pop_stat = FALSE){
    
    # set contribution hospital data vs other data sources
    # if 1: number of hospital admission data points == number of (e.g.) seroprevalence data points
    # if 2: importance of hospital addmission data increases...
    rel_factor_hosp_data <- ifelse(!is.na(rel_importance_hosp_data),1/rel_importance_hosp_data,1)
    
-   ## hospital reference data ----
-   # use (local version of) most recent SCIENSANO data (or backup version)
-   hosp_ref_data          <- get_hospital_incidence_age(config_exp$hospital_category_age)
-   hosp_ref_data$sim_date <- as.Date(hosp_ref_data$sim_date)
-   dim(hosp_ref_data)
-   hosp_ref_data          <- hosp_ref_data[hosp_ref_data$sim_date %in% ref_period,]
+   # use default age cat, if not given
+   age_cat_hosp_str <- ifelse(is.na(age_cat_hosp_str),paste(seq(0,80,10),collapse=','),age_cat_hosp_str)
    
-   if(bool_hospital){
+   ## hospital reference data ----
+   if(!bool_hospital){
+      abc_hosp_stat <- NULL
+      
+   } else{ 
+      # use (local version of) most recent SCIENSANO data (or backup version)
+      hosp_ref_data          <- get_hospital_incidence_age(age_cat_hosp_str)
+      hosp_ref_data$sim_date <- as.Date(hosp_ref_data$sim_date)
+      dim(hosp_ref_data)
+      hosp_ref_data          <- hosp_ref_data[hosp_ref_data$sim_date %in% ref_period,]
+      
+      abc_hosp_stat     <- data.table(value      = hosp_ref_data$hospital_admissions,
+                                      value_low  = NA,
+                                      value_high = NA,
+                                      date       = hosp_ref_data$sim_date,
+                                      age_min    = NA,
+                                      category   = 'new_hospital_admissions',
+                                      bool_orig  = TRUE)
+      
       if(bool_age){
-         abc_age_cat       <- seq(0,80,10) #TODO: make generic
-         abc_hosp_stat     <- data.table(value      = unlist(hosp_ref_data[,grepl('hospital_admissions_',names(hosp_ref_data))]),
+         abc_age_cat       <- as.numeric(unlist(strsplit(age_cat_hosp_str,',')))
+         abc_hosp_stat_age <- data.table(value      = unlist(hosp_ref_data[,grepl('hospital_admissions_',names(hosp_ref_data))]),
                                          value_low  = NA,
                                          value_high = NA,
                                          date       = rep(hosp_ref_data$sim_date,length(abc_age_cat)),
                                          age_min    = rep(abc_age_cat,each=nrow(hosp_ref_data)),
                                          category   = rep(paste0('new_hospital_admissions_age',1:length(abc_age_cat)),each=length(hosp_ref_data$sim_date)),
                                          bool_orig  = TRUE)
-      } else{
-         abc_hosp_stat     <- data.table(value      = hosp_ref_data$hospital_admissions,
-                                         value_low  = NA,
-                                         value_high = NA,
-                                         date       = hosp_ref_data$sim_date,
-                                         age_min    = NA,
-                                         category   = 'new_hospital_admissions',
-                                         bool_orig  = TRUE)
-      }  
-   } else{
-      abc_hosp_stat <- NULL
-   }
-    
+         if(bool_add_pop_stat){
+            abc_hosp_stat <- rbind(abc_hosp_stat,
+                                       abc_hosp_stat_age)
+         } else{
+            abc_hosp_stat <- abc_hosp_stat_age
+         }
+      }
+   } 
+      
    dim(abc_hosp_stat)
+   table(abc_hosp_stat$category)
    
    ## seroprevalence data ----
    prevalence_ref <- load_observed_seroprevalence_data(ref_period = ref_period,
                                                        analysis = ifelse(bool_age,'age','overall'))
+   
+   if(bool_age & bool_add_pop_stat){
+      prevalence_ref <- rbind(prevalence_ref,
+                              load_observed_seroprevalence_data(ref_period = ref_period,
+                                                                analysis = 'overall')
+                              )
+   }
+   
    # temporary fix for 80-90 year olds
    prevalence_ref <- prevalence_ref[prevalence_ref$age_min!=90,]
    
@@ -492,10 +536,12 @@ get_abc_reference_data <- function(ref_period ,
                                    date       = prevalence_ref$seroprevalence_date,
                                    age_min    = prevalence_ref$age_min,
                                    category   = 'cumulative_infections',
-                                   bool_orig  = TRUE)
+                                   bool_orig  = TRUE,
+                                   level = prevalence_ref$level) # tmp
    if(bool_age){
-      abc_sero_stat[,category := paste0('cumulative_infections_age', as.numeric(prevalence_ref$level))]
+      abc_sero_stat[level != 'all',category := paste0('cumulative_infections_age', as.numeric(level))]
    }
+   abc_sero_stat$level <- NULL # remove tmp column
    
    ## doubling time 3.1 (2.4-4.4) \cite{pellis2020challenges} ----
    ref_doubling_time <- data.frame(dates    = seq(as.Date('2020-02-24'),as.Date('2020-03-08'),1),
@@ -532,28 +578,16 @@ get_abc_reference_data <- function(ref_period ,
       dim(sum_stat_obs); table(sum_stat_obs$bool_orig)
    }
    
-   
+   # duplicate doubling time data to give it the same weight in the reference data
    if(!is.null(abc_hosp_stat) && !is.null(abc_dtime_stat)){
-      sero_dtime_factor   <- floor(nrow(abc_hosp_stat) / nrow(abc_dtime_stat) * rel_factor_hosp_data )
-      for(i in 2:sero_dtime_factor){
+      dtime_rep_factor   <- floor(nrow(abc_hosp_stat) / nrow(abc_dtime_stat) * rel_factor_hosp_data )
+      for(i in 2:dtime_rep_factor){
          sum_stat_obs <- rbind(sum_stat_obs,abc_dtime_stat[,bool_orig := FALSE])
       }
       dim(sum_stat_obs); table(sum_stat_obs$bool_orig)
    }
    
    return(sum_stat_obs)
-   
-   # nrow(abc_hosp_stat) / nrow(abc_sero_stat)
-   # 
-   # sero_rep_factor   <- floor(nrow(abc_hosp_stat) / nrow(abc_sero_stat))
-   # sum_stat_obs      <- rbind(abc_hosp_stat,abc_sero_stat)
-   # sum_stat_obs['bool_orig'] <- TRUE
-   # for(i in 2:sero_rep_factor){
-   #    sum_stat_obs <- rbind(sum_stat_obs,
-   #                          cbind(abc_sero_stat,
-   #                                bool_orig = FALSE))
-   # }
-   
 }
 
 
@@ -592,13 +626,7 @@ collapse_age_param <- function(param_list){
    param_general  <- param_names_all[!grepl('_opt',param_names_all)]
    param_list_out <- param_list[param_general]
    param_list_out <- as.list(param_list_out)
-   cat('****',file = 'function_out.txt',append = T,fill = T)
-   cat(typeof(param_list),file = 'function_out.txt',append = T,fill = T)
-   cat(typeof(param_list_out),file = 'function_out.txt',append = T,fill = T)
-   cat(length(param_list_out),file = 'function_out.txt',append = T,fill = T)
-   cat('****',file = 'function_out.txt',append = T,fill = T)
-   
-   
+
    # age specific parameters
    param_age <- param_names_all[!param_names_all %in% param_general]
    param_age_main  <- gsub('_opt.','',param_age)
@@ -637,6 +665,12 @@ load_partial_results_abc <- function(project_dir){
    
    # model step
    model_step_files <- dir(project_dir,pattern = 'model_step',full.names = T)
+   
+   if(length(model_step_files)==0){
+      return(NULL)
+   }
+   
+   # load files
    foreach(i_file = 1:length(model_step_files),
            .combine = 'rbind') %do%{
               step_id <- unlist(strsplit(model_step_files[i_file],'model_step'))[2]
@@ -754,14 +788,19 @@ string2label <- function(name_list){
 }
 
 
-process_partial_results <- function(output_folders = NA){
-   
-   if(any(is.na(output_folders))){
-      output_folders <- dir('sim_output/tmp',pattern = 'abc',full.names = T)
-      output_folders <- output_folders[!grepl('.csv',output_folders)]
-   } else {
-      
+#dirname_output <- "/Users/lwillem/Documents/university/research/stride/ABC/20210125_abc_age"
+#process_partial_results(dirname_output)
+process_partial_results <- function(dirname_output = NA){
+
+   current_wd <- getwd()
+   if(!is.na(dirname_output)){
+      setwd(dirname_output)
    }
+
+   dirname_output <- ifelse(is.na(dirname_output),'sim_output',dirname_output)
+   output_folders <- dir(dirname_output,pattern = 'abc',full.names = T)
+   output_folders <- output_folders[!grepl('\\.',output_folders)] # files
+   output_folders
    
    for(project_dir in output_folders){
       
@@ -778,38 +817,52 @@ process_partial_results <- function(output_folders = NA){
       
       # plot parameter correlation
       plot_abc_correlation(ABC_stride,project_dir)
+      
+      # plot 'final' set
+      plot_abc_singleton(project_dir)
+      
    }
    
+   setwd(current_wd)
 }
-
+#process_partial_results()
 
 # project_dir <- 'sim_output/tmp/20210117_11068_abc_age1_n120_c40_p010/'
-get_final_best <- function(project_dir){
+plot_abc_singleton <- function(project_dir,bool_pdf=TRUE){
    
    # model output
    ABC_out <- load_partial_results_abc(project_dir)
+   
+   if(any(is.null(ABC_out))){
+      ABC_out <- readRDS(dir(project_dir,pattern = 'ABC_stride.rds',full.names = T))
+   }
    
    # model parameters and reference
    stride_prior       <- readRDS(dir(project_dir,pattern = 'stride_prior',full.names = T))
    sum_stat_obs       <- readRDS(dir(project_dir,pattern = 'sum_stat_obs',full.names = T))
    
-   # names(ABC_out)
-   # dim(ABC_out$param)
-   # dim(ABC_out$stats)
-   # colnames(ABC_out$intermediary[[1]]$posterior)
-   # 
+   flag_hosp <- grepl('hosp',sum_stat_obs$category)
+   flag_fit <- sum_stat_obs$bool_orig
+   table(sum_stat_obs$category[flag_fit])
    
-   dim(ABC_out$stats)
-   dim(sum_stat_obs)
-   get_binom_poisson(sum_stat_obs$value,ABC_out$stats[1,])
-   
+   flag_fit <- grepl('new_hospital_admissions',sum_stat_obs$category)
    foreach(i_run = 1:nrow(ABC_out$stats),
            .combine='rbind') %do% {
-              get_binom_poisson(sum_stat_obs$value,ABC_out$stats[i_run,])
-           } -> ABC_binom_poisson
+              get_binom_poisson(sum_stat_obs$value[flag_fit],ABC_out$stats[i_run,flag_fit])
+           } -> ABC_binom_poisson_hosp
    
-   hist(ABC_binom_poisson)
-   sel_poisson <- which(ABC_binom_poisson == min(ABC_binom_poisson))
+   flag_fit <- grepl('cumulative_infections',sum_stat_obs$category)
+   foreach(i_run = 1:nrow(ABC_out$stats),
+           .combine='rbind') %do% {
+              get_binom_poisson(sum_stat_obs$value[flag_fit],ABC_out$stats[i_run,flag_fit])
+           } -> ABC_binom_poisson_incidence
+   
+   # knee of pareto front
+   sel_poisson   <- which(get_pareto_front(ABC_binom_poisson_hosp,ABC_binom_poisson_incidence))[1]
+   
+   
+   # open pdf stream
+   if(bool_pdf){ .rstride$create_pdf(project_dir = project_dir,file_name = 'results_ABC_singleton') }
    
    # copy/paste...
    # get categories
@@ -842,36 +895,109 @@ get_final_best <- function(project_dir){
                          y2 = sum_stat_obs$value_high[flag_out])
          }
          
-         # for(i_out in 1:nrow(ABC_out$stats)){
-            i_out <- sel_poisson
+          for(i_out in sel_poisson){
             lines(sum_stat_obs$date[flag_out],
                   ABC_out$stats[i_out,flag_out],
                   col=alpha(4,0.8))
-         # }
-       } else{ # else: hist + reference
-   #       
-   #       # initial doubling time
-   #       x_lim <- range(0,pretty(sum_stat_obs$value_high[flag_out]*1.1))
-   #       hist(ABC_out$stats[,flag_out],40,
-   #            xlim=x_lim,
-   #            xlab=i_cat,
-   #            main=i_cat,
-   #            col=alpha(4,0.2),
-   #            border = alpha(4,0.2))
-   #       #   abline(v=mean(sum_stat_obs$value[flag_out]),col=1)
-   #       add_interval_hor(x1  = sum_stat_obs$value_low[flag_out],
-   #                        x2  = sum_stat_obs$value_high[flag_out],
-   #                        x_mean = sum_stat_obs$value[flag_out],
-   #                        col = 1)
-   #    }
-   #    
-       }
+          }
+       } 
    }
    
+   if(bool_pdf){ dev.off() }
+   
+   # save parameters
+   write.table(t(t(collapse_age_param(ABC_out$param[sel_poisson,]))),
+               file= file.path(project_dir,paste0(basename(project_dir),'_results_ABC_singleton.txt')),
+               sep=' ',
+               quote = T,
+               row.names=T)
+
+
+   
+}
+
+
+if(0==1){
+   
+   
+   # tab_ini = .ABC_rejection_lhs(model, prior, prior_test, nb_simul, use_seed, 
+   #                              seed_count)
+   # seed_count = seed_count + nb_simul
+   tab_ini <- ABC_stride$intermediary[[1]]$posterior
+   nparam <- length(stride_prior)
+   summary_stat_target <- sum_stat_obs$value
+   nstat <- length(summary_stat_target)
+   dist_weights <- NULL
+   dim(tab_ini)
+   
+   sd_simul = sapply(as.data.frame(tab_ini[, (nparam + 1):(nparam + nstat)]), 
+                     sd)  # determination of the normalization constants in each dimension associated to each summary statistic, this normalization will not change during all the algorithm
+   # write.table(as.matrix(cbind(array(1, nb_simul), as.matrix(tab_ini))), file = "output_all", 
+   #             row.names = F, col.names = F, quote = F)
+   # selection of the alpha quantile closest simulations
+   simul_below_tol = NULL
+   simul_below_tol = rbind(simul_below_tol, .selec_simul_alpha(summary_stat_target, 
+                                                               as.matrix(as.matrix(tab_ini)[, 1:nparam]), as.matrix(as.matrix(tab_ini)[, 1:nparam]), as.matrix(as.matrix(tab_ini)[, 
+                                                                                                                                                                                  (nparam + 1):(nparam + nstat)]), sd_simul, alpha, dist_weights=dist_weights))
+   simul_below_tol = simul_below_tol[1:n_alpha, ]  # to be sure that there are not two or more simulations at a distance equal to the tolerance determined by the quantile
+   # initially, weights are equal
+   tab_weight = array(1, n_alpha)
+   tab_dist = .compute_dist(summary_stat_target, as.matrix(as.matrix(simul_below_tol)[, 
+                                                                                      (nparam + 1):(nparam + nstat)]), sd_simul, dist_weights=dist_weights)
+   tol_next = max(tab_dist)
+   
+   
+   param = as.matrix(as.matrix(tab_ini)[, 1:nparam])
+   simul = as.matrix(as.matrix(tab_ini)[, (nparam + 1):(nparam + nstat)])
+   dist = .compute_dist(summary_stat_target, simul, sd_simul)
+   
+   hist(dist)
+   
+   order(dist)
    
    
    
 }
+
+get_pareto_front <- function(x,y){
+   d = data.frame(x,y)
+   D = d[order(d$x,d$y,decreasing=FALSE),]
+   front = D[which(!duplicated(cummin(D$y))),]
+   
+   # return(which(d$x %in% front$x & d$y %in% front$y))
+   return(d$x %in% front$x & d$y %in% front$y)
+}
+
+# x_out <- ABC_binom_poisson_hosp;y_out <- ABC_binom_poisson_incidence
+get_pareto_knee <- function(x_out,y_out){
+   
+   pareto_front <- get_pareto_front(x_out,y_out)
+   
+   pareto_knee <- rep(FALSE,length(x_out))
+   q_value <- 0.13
+   q_increase <- 0.02
+   while((q_value+q_increase < 1) && sum(pareto_knee)<1){
+      
+      q_value <- q_value+q_increase
+      x_pq <- quantile(x_out,q_value,na.rm=T)
+      y_pq <- quantile(y_out,q_value,na.rm=T)
+     
+      pareto_knee <- x_out <= x_pq &
+                     y_out <= y_pq &
+                     pareto_front
+      
+      pareto_knee[is.na(pareto_knee)] <- FALSE
+      
+      table(pareto_knee)   
+   }
+   
+   q_value <- round(q_value,digits=2)
+   table(pareto_knee)
+   
+   return(which(pareto_knee))
+}
+
+
 
 
 

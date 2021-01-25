@@ -89,19 +89,8 @@ ref_period <- seq(as.Date('2020-03-15'),
                   as.Date(model_param_update$start_date) + model_param_update$num_days-1,
                   1)
 
-################################################ #
-## REFERENCE DATA  ----
-################################################ #
-
-sum_stat_obs <- get_abc_reference_data(ref_period               = ref_period,
-                                       bool_age                 = TRUE,
-                                       bool_doubling_time       = FALSE,
-                                       bool_hospital            = TRUE,
-                                       rel_importance_hosp_data = rel_importance_hosp_data)
-table(sum_stat_obs$category)
-
 ################################## #
-## RUN ABC  ----
+## ABC PARAMETERS  ----
 ################################## #
 
 # set priors
@@ -145,6 +134,25 @@ model_param_update$hosp_probability_factor <- 1
 #model_param_update$disease_susceptibility_agecat <- "0,10,20,30,40,50,60,70,80"
 length(stride_prior)
 
+
+################################################ #
+## REFERENCE DATA  ----
+################################################ #
+
+sum_stat_obs <- get_abc_reference_data(ref_period               = ref_period,
+                                       bool_age                 = TRUE,
+                                       bool_doubling_time       = FALSE,
+                                       bool_hospital            = TRUE,
+                                       rel_importance_hosp_data = rel_importance_hosp_data,
+                                       age_cat_hosp_str         = model_param_update$hospital_category_age,
+                                       bool_add_pop_stat        = TRUE)
+table(sum_stat_obs$category)
+
+
+################################################ #
+## RUN ABC   ----
+################################################ #
+
 # create output folder and set workdir
 run_file_path <- dirname(smd_file_path(project_dir,'test'))
 setwd(run_file_path)
@@ -152,10 +160,10 @@ saveRDS(model_param_update,'model_param_update.rds')
 saveRDS(sum_stat_obs,'sum_stat_obs.rds')
 saveRDS(stride_prior,'stride_prior.rds')
 
-run_param  <- sample_param_from_prior(stride_prior)
-stride_out <- run_rStride_abc(run_param)
-length(stride_out)
-dim(sum_stat_obs)
+# run_param  <- sample_param_from_prior(stride_prior)
+# stride_out <- run_rStride_abc(run_param)
+# length(stride_out)
+# dim(sum_stat_obs)
 # 
 # ABC_stride<-ABC_rejection(model     = run_rStride_abc,
 #                            prior    = stride_prior,
@@ -166,7 +174,7 @@ dim(sum_stat_obs)
 #                            n_cluster=n_cluster,
 #                            use_seed=TRUE,
 #                            progress_bar=T)
-#
+# 
 ABC_stride<-ABC_sequential(model=run_rStride_abc,
                            prior=stride_prior,
                            nb_simul=n_sample,
@@ -176,7 +184,7 @@ ABC_stride<-ABC_sequential(model=run_rStride_abc,
                            verbose = T,
                            n_cluster=n_cluster,
                            use_seed=TRUE,
-                           progress_bar=F)
+                           progress_bar=T)
 
 # set back workdir
 setwd('../..')
@@ -212,6 +220,9 @@ plot_abc_posterior(ABC_stride,project_dir)
 
 # plot parameter correlation
 plot_abc_correlation(ABC_stride,project_dir)
+
+# plot single best 
+plot_abc_singleton(project_dir)
 
 # # intermediate results
 # plot_abc_intermediate(ABC_stride,project_dir)
