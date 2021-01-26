@@ -572,6 +572,7 @@ get_abc_reference_data <- function(ref_period,
    # duplicate serology data to give it the same weight in the reference data
    if(!is.null(abc_hosp_stat)){
       sero_rep_factor   <- floor(nrow(abc_hosp_stat) / nrow(abc_sero_stat) * rel_factor_hosp_data)
+      if(sero_rep_factor>1)
       for(i in 2:sero_rep_factor){
          sum_stat_obs <- rbind(sum_stat_obs,abc_sero_stat[, bool_orig := FALSE])
       }
@@ -581,6 +582,7 @@ get_abc_reference_data <- function(ref_period,
    # duplicate doubling time data to give it the same weight in the reference data
    if(!is.null(abc_hosp_stat) && !is.null(abc_dtime_stat)){
       dtime_rep_factor   <- floor(nrow(abc_hosp_stat) / nrow(abc_dtime_stat) * rel_factor_hosp_data )
+      if(dtime_rep_factor>1)
       for(i in 2:dtime_rep_factor){
          sum_stat_obs <- rbind(sum_stat_obs,abc_dtime_stat[,bool_orig := FALSE])
       }
