@@ -82,14 +82,14 @@ run_rStride_abc <- function(abc_function_param,
      names(abc_function_param) <- c('rng_seed',names(readRDS(file.path('./sim_output',run_tag,'stride_prior.rds'))))
   }
 
-  # aggregate age-specific parameters
-  abc_param_aggr <- collapse_age_param(abc_function_param)
-
-  # copy parameter values
+   # copy parameter values
    for(i_param in names(abc_param_aggr)){
       config_exp[i_param]  <- abc_param_aggr[i_param]
    }
   
+  # aggregate age-specific parameters
+  config_exp <- collapse_age_param(config_exp)
+
   # make sure some input parameters are coded as integer value
   config_exp$num_infected_seeds         <- round(config_exp$num_infected_seeds )
   config_exp$compliance_delay_workplace <- round(config_exp$compliance_delay_workplace)
@@ -463,7 +463,8 @@ get_abc_reference_data <- function(ref_period,
                                    bool_hospital = TRUE,
                                    rel_importance_hosp_data = NA,
                                    age_cat_hosp_str = NA,
-                                   bool_add_pop_stat = FALSE){
+                                   bool_add_pop_stat = FALSE,
+                                   bool_truncate_serology = FALSE){
    
    # set contribution hospital data vs other data sources
    # if 1: number of hospital admission data points == number of (e.g.) seroprevalence data points
@@ -538,10 +539,26 @@ get_abc_reference_data <- function(ref_period,
                                    category   = 'cumulative_infections',
                                    bool_orig  = TRUE,
                                    level = prevalence_ref$level) # tmp
+   
    if(bool_age){
       abc_sero_stat[level != 'all',category := paste0('cumulative_infections_age', as.numeric(level))]
    }
    abc_sero_stat$level <- NULL # remove tmp column
+   
+   
+   # correction for decreasing serology estimaties
+   if(bool_truncate_serology){
+      for(i_age in 1:9){
+         flag_cat   <- abc_sero_stat$category == paste0('cumulative_infections_age',i_age)
+         flag_level <- c(FALSE,FALSE,abc_sero_stat$value[flag_cat][-(1:2)] < abc_sero_stat$value[flag_cat][2])
+         
+         if(any(flag_level)){
+            abc_sero_stat$value[flag_cat][flag_level] <- abc_sero_stat$value[flag_cat][2]
+            abc_sero_stat$value_low[flag_cat][flag_level] <- NA
+            abc_sero_stat$value_high[flag_cat][flag_level] <- NA
+         }
+      }
+   }
    
    ## doubling time 3.1 (2.4-4.4) \cite{pellis2020challenges} ----
    ref_doubling_time <- data.frame(dates    = seq(as.Date('2020-02-24'),as.Date('2020-03-08'),1),

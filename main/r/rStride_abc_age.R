@@ -124,16 +124,21 @@ stride_prior <- list(#r0                         = c("unif",3.0,4.0),
                      
                      )  
 
-model_param_update$disease_susceptibility_agecat <- model_param_update$hospital_category_age
-model_param_update$transmission_probability <- 1
-model_param_update$hosp_probability_factor <- 1
-
 # other options...
 #model_param_update$compliance_delay_workplace <- 7
 #model_param_update$compliance_delay_other <- 7
 #model_param_update$disease_susceptibility_agecat <- "0,10,20,30,40,50,60,70,80"
-length(stride_prior)
 
+# make sure that the population-based transmission and hospital probability is enabled/disabled correctly
+model_param_update$disease_susceptibility_agecat <- model_param_update$hospital_category_age
+if(any(grepl('disease_susceptibility_age',names(stride_prior)))){
+  model_param_update$transmission_probability  <- 1
+}
+if(any(grepl('hospital_probability_age',names(stride_prior)))){
+  model_param_update$hosp_probability_factor   <- 1
+}
+
+length(stride_prior)
 
 ################################################ #
 ## REFERENCE DATA  ----
@@ -145,7 +150,8 @@ sum_stat_obs <- get_abc_reference_data(ref_period               = ref_period,
                                        bool_hospital            = TRUE,
                                        rel_importance_hosp_data = rel_importance_hosp_data,
                                        age_cat_hosp_str         = model_param_update$hospital_category_age,
-                                       bool_add_pop_stat        = TRUE)
+                                       bool_add_pop_stat        = TRUE,
+                                       bool_truncate_serology   = FALSE)
 table(sum_stat_obs$category)
 
 
