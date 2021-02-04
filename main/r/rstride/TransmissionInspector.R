@@ -51,7 +51,7 @@ inspect_transmission_dynamics <- function(project_dir,save_pdf = TRUE)
   # open pdf stream
   if(save_pdf) .rstride$create_pdf(project_dir,'transmission_inspection',10,7)
 
-  i_config <- 2
+  i_config <- 1
   for(i_config in 1:nrow(input_opt_design)){
     
     # reset figure arrangements... and start new plot
@@ -131,33 +131,44 @@ inspect_transmission_dynamics <- function(project_dir,save_pdf = TRUE)
     
     new_infections_age <- colSums(data_incidence[,paste0('new_infections_age',1:length(age_labels))])
     names(new_infections_age) <- age_labels
-    barplot(new_infections_age / sum(new_infections_age),
-            xlab='Age category (years)',
-            ylim = c(0,1),
-            ylab= 'Relative incidence',
-            main = 'Total incidence: all')
+    bplot <- barplot(new_infections_age / sum(new_infections_age),
+                    xlab='Age category (years)',
+                    ylim = c(0,1),
+                    ylab= 'Relative incidence',
+                    main = 'Total incidence: all')
+    grid()
+    text(bplot, new_infections_age / sum(new_infections_age),
+         round(new_infections_age / sum(new_infections_age),digits=2),
+         pos=3)
     
     # AGE: SYMPTOMATIC     ----
     data_incidence$new_symptomatic_cases_age1
     new_symptomatic_cases_age <- colSums(data_incidence[,paste0('new_symptomatic_cases_age',1:length(age_labels))],na.rm = T)
     names(new_symptomatic_cases_age) <- age_labels
-    barplot(new_symptomatic_cases_age / sum(new_symptomatic_cases_age),
+    bplot <- barplot(new_symptomatic_cases_age / sum(new_symptomatic_cases_age),
             xlab='Age category (years)',
             ylim = c(0,1),
             ylab= 'Relative incidence symptomatic cases',
             main = 'Total incidence: symptomatic')
+    grid()
+    text(bplot, new_symptomatic_cases_age / sum(new_symptomatic_cases_age),
+         round(new_symptomatic_cases_age / sum(new_symptomatic_cases_age),digits=2),
+         pos=3)
     
     # AGE: HOSPITAL ADMISSIONS     ----
     data_incidence$new_hospital_admissions_age1
     new_hospital_admissions_age_all <- data_incidence[,paste0('new_hospital_admissions_age',1:length(age_labels))]
     names(new_hospital_admissions_age_all) <- age_labels
     new_hospital_admissions_age <- colSums(new_hospital_admissions_age_all,na.rm = T)
-    barplot(new_hospital_admissions_age / sum(new_hospital_admissions_age),
+    bplot <- barplot(new_hospital_admissions_age / sum(new_hospital_admissions_age),
             xlab='Age category (years)',
             ylim = c(0,1),
             ylab= 'Proportion hospital admissions',
             main = 'Total hospital admissions')
-    
+    grid()
+    text(bplot, new_hospital_admissions_age / sum(new_hospital_admissions_age),
+         round(new_hospital_admissions_age / sum(new_hospital_admissions_age),digits=2),
+         pos=3)
     
     ## RELATIVE HOSPITAL ADMISSIONS OVER TIME BY AGE
     data_incidence[,paste0('relative_hospital_admissions_age',1:length(age_labels))] <- data_incidence[,paste0('new_hospital_admissions_age',1:length(age_labels))] / data_incidence[,paste0('new_hospital_admissions')]
@@ -190,9 +201,13 @@ inspect_transmission_dynamics <- function(project_dir,save_pdf = TRUE)
     # overall
     summary_location <- colSums(data_incidence[,col_location],na.rm=T) / sum(data_incidence[,col_location],na.rm=T)
     names(summary_location) <- loc_names
-    barplot(summary_location,las=2,
+    bplot <- barplot(summary_location,las=2,
             ylim=0:1,
             ylab='Relavive incidence')  
+    grid()
+    text(bplot, summary_location ,
+         round(summary_location,digits=2),
+         pos=3)
     
     # over time
     y_lim <- range(0,data_incidence[,col_location]*1.1,na.rm=T)
@@ -332,7 +347,7 @@ get_transmission_statistics <- function(data_transm,
   
   ## LOCATION ----
   pool_type_opt <- c("College","Household","HouseholdCluster",
-                     "K12School","PrimaryCommunity","SecondaryCommunity","Workplace") # TODO: make this flexible?
+                     "K12School","PrimaryCommunity","SecondaryCommunity","Workplace",'Collectivity') # TODO: make this flexible?
   summary_location <- get_summary_table(data_transm,'infection_date','pool_type','location',pool_type_opt) 
   summary_location$location    <- NULL # remove
   if('location_NA' %in% names(summary_location)) {

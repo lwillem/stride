@@ -102,7 +102,7 @@ public:
                             ContactType::Id type, unsigned short int sim_day, const double cProb, const double tProb)
         {
                 if (p1->IsSurveyParticipant()) {
-                        logger->info("[CONT] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}", p1->GetId(), p1->GetAge(),
+                        logger->info("[CONT] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}", p1->GetId(), p1->GetAge(),
                                      p2->GetAge(), static_cast<unsigned int>(type == ContactType::Id::Household),
                                      static_cast<unsigned int>(type == ContactType::Id::K12School),
                                      static_cast<unsigned int>(type == ContactType::Id::College),
@@ -110,6 +110,7 @@ public:
                                      static_cast<unsigned int>(type == ContactType::Id::PrimaryCommunity),
                                      static_cast<unsigned int>(type == ContactType::Id::SecondaryCommunity),
 									 static_cast<unsigned int>(type == ContactType::Id::HouseholdCluster),
+									 static_cast<unsigned int>(type == ContactType::Id::Collectivity),
 									 sim_day,
 									 cProb, tProb,p2->GetHealth().IsSymptomatic(),p1->GetHealth().IsSymptomatic());
                 }
@@ -137,14 +138,14 @@ using namespace stride::util;
 
 inline double GetContactProbability(const AgeContactProfile& profile, const Person* p1, const Person* p2,
 		size_t pool_size, const ContactType::Id pType, double cnt_reduction_work, double cnt_reduction_other,
-		double cnt_reduction_school, double cnt_reduction_intergeneration, unsigned int cnt_reduction_intergeneration_cutoff,
+		double cnt_reduction_school, double cnt_reduction_collectivity, double cnt_reduction_intergeneration, unsigned int cnt_reduction_intergeneration_cutoff,
 		std::shared_ptr<Population>& population, double cnt_intensity_householdCluster)
 {
 
 		// initiate a contact adjustment factor, to account for physical distancing and/or contact intensity
     	double cnt_adjustment_factor = 1;
 
-    		// Chek if one of the persons is a non-complier to social distancing measures
+    		// Check if one of the persons is a non-complier to social distancing measures
     		// in this particular pooltype
     		if ((not p1->IsNonComplier(pType)) and (not p2->IsNonComplier(pType))) {
     			// account for physical distancing at work and in the community
@@ -167,6 +168,11 @@ inline double GetContactProbability(const AgeContactProfile& profile, const Pers
     			if(pType == Id::K12School){
     				cnt_adjustment_factor = (1-cnt_reduction_school);
     			}
+    			// account for physical distancing in the collectivity
+				if(pType == Id::Collectivity){
+					cnt_adjustment_factor = (1-cnt_reduction_collectivity);
+				}
+
     		}
 
 
@@ -254,6 +260,7 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
                                  const TransmissionProfile& transProfile, util::RnHandler& rnHandler,
                                  unsigned short int simDay, shared_ptr<spdlog::logger> eventLogger,
 								 double cnt_reduction_work, double cnt_reduction_other, double cnt_reduction_school,
+								 double cnt_reduction_collectivity,
 								 double cnt_reduction_intergeneration, unsigned int cnt_reduction_intergeneration_cutoff,
 								 std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster)
 {
@@ -284,7 +291,7 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
                         }
                         // check for contact
                         const double cProb = GetContactProbability(profile, p1, p2, pSize, pType,
-                        		cnt_reduction_work, cnt_reduction_other,cnt_reduction_school,cnt_reduction_intergeneration,
+                        		cnt_reduction_work, cnt_reduction_other,cnt_reduction_school, cnt_reduction_collectivity, cnt_reduction_intergeneration,
 								cnt_reduction_intergeneration_cutoff,population,m_cnt_intensity_householdCluster);
                         if (rnHandler.Binomial(cProb)) {
 								const auto  tProb_p1_p2    = transProfile.GetProbability(p1,p2);
@@ -342,6 +349,7 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                                    const TransmissionProfile& transProfile, util::RnHandler& rnHandler,
                                    unsigned short int simDay, shared_ptr<spdlog::logger> eventLogger,
 								   double cnt_reduction_work, double cnt_reduction_other, double cnt_reduction_school,
+								   double cnt_reduction_collectivity,
 								   double cnt_reduction_intergeneration, unsigned int cnt_reduction_intergeneration_cutoff,
 								   std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster)
 {
@@ -380,7 +388,7 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                                 }
                                 const double cProb_p1 = GetContactProbability(profile, p1, p2, pSize, pType,
                                 								cnt_reduction_work, cnt_reduction_other,cnt_reduction_school,
-															cnt_reduction_intergeneration, cnt_reduction_intergeneration_cutoff,
+																cnt_reduction_collectivity, cnt_reduction_intergeneration, cnt_reduction_intergeneration_cutoff,
 															population, m_cnt_intensity_householdCluster);
                                 const auto  tProb_p1_p2   = transProfile.GetProbability(p1,p2);
                                 if (rnHandler.Binomial(cProb_p1, tProb_p1_p2)) {

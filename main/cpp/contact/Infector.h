@@ -83,6 +83,7 @@ public:
         static void Exec(ContactPool& pool, const AgeContactProfile& profile, const TransmissionProfile& transProfile,
         				 util::RnHandler& rnHandler, unsigned short int simDay, std::shared_ptr<spdlog::logger> eventLogger,
 						 double cnt_reduction_work, double cnt_reduction_other, double cnt_reduction_school,
+						 double cnt_reduction_collectivity,
 						 double cnt_reduction_intergenearion, unsigned int cnt_reduction_intergeneration_cutoff,
 						 std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster);
 };
@@ -98,6 +99,7 @@ public:
         static void Exec(ContactPool& pool, const AgeContactProfile& profile, const TransmissionProfile& transProfile,
         				 util::RnHandler& rnHandler, unsigned short int simDay, std::shared_ptr<spdlog::logger> eventLogger,
 						 double cnt_reduction_work, double cnt_reduction_other, double cnt_reduction_school,
+						 double cnt_reduction_collectivity,
 						 double cnt_reduction_intergeneration, unsigned int cnt_reduction_intergeneration_cutoff,
 						 std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster);
 };

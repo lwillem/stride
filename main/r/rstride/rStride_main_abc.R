@@ -83,8 +83,8 @@ run_rStride_abc <- function(abc_function_param,
   }
 
    # copy parameter values
-   for(i_param in names(abc_param_aggr)){
-      config_exp[i_param]  <- abc_param_aggr[i_param]
+   for(i_param in names(abc_function_param)){
+      config_exp[i_param]  <- abc_function_param[i_param]
    }
   
   # aggregate age-specific parameters

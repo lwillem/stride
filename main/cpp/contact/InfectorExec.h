@@ -40,6 +40,7 @@ typedef void(InfectorExec)(ContactPool& pool, const AgeContactProfile& profile,
                            const TransmissionProfile& trans_profile, util::RnHandler& rnHandler,
                            unsigned short int sim_day, std::shared_ptr<spdlog::logger> event_logger,
 						   double cnt_reduction_work, double cnt_reduction_other, double cnt_reduction_school,
+						   double collectivity_distancing_factor,
 						   double cnt_reduction_intergeneration, unsigned int cnt_reduction_intergeneration_cutoff,
 						   std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster);
 

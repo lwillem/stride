@@ -31,6 +31,7 @@ INSTALL(DIRECTORY
 INSTALL( FILES 			
             rStride_abc.R
             rStride_abc_age.R
+            rStride_abc_collectivity.R
             rStride_all.R
             rStride_contacts.R
             rStride_create_config.R

@@ -321,7 +321,7 @@ if(!(exists('.rstride'))){
       if(length(names_id_columns)>0) {
         for(i_id_column in names_id_columns){
           row_is_id  <- !is.na(data_all[,i_id_column])
-          if(i_id_column %in% c('household_id','school_id','college_id','workplace_id')){
+          if(i_id_column %in% c('household_id','school_id','college_id','workplace_id','household_cluster_id','collectivity_id')){
             row_is_id <- row_is_id & data_all[,i_id_column] != 0
           } 
           data_all[row_is_id,i_id_column] <- as.numeric(sprintf(paste0('%d%0',num_exp_id_digits,'d'),

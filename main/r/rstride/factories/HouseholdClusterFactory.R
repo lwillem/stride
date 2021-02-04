@@ -7,7 +7,7 @@
 # TO OBTAIN AGE-SPECIFIC HOUSEHOLD CLUSTERS  
 #
 # APPROACH:
-# 1. Use pre-computed populaitn data
+# 1. Use pre-computed population data
 # 2. Match households by the age the oldest member
 # 3. Save new population data
 #

@@ -105,6 +105,8 @@ private:
         double                      m_cnt_reduction_workplace_exit;
         double                      m_cnt_reduction_other_exit;
         double                      m_cnt_reduction_school_exit;
+        double          			m_cnt_reduction_collectivity;
+        double          			m_cnt_baseline_collectivity;       // temporary factor to capture the collectivity behaviour
         double                      m_cnt_reduction_intergeneration;
         unsigned int                m_cnt_reduction_intergeneration_cutoff;
         unsigned int                m_compliance_delay_workplace;

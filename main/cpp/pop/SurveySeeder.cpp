@@ -97,8 +97,10 @@ void SurveySeeder::RegisterParticipant(std::shared_ptr<Population> pop, Person& 
 		const auto pPC  = p.GetPoolId(Id::PrimaryCommunity);
 		const auto pSC  = p.GetPoolId(Id::SecondaryCommunity);
 		const auto pHC  = p.GetPoolId(Id::HouseholdCluster);
-		logger->info("[PART] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}", p.GetId(),
-			 p.GetAge(), pHH, pK12, pC, pW, pHC, h.IsSusceptible(), h.IsInfected(), h.IsInfectious(),
+		const auto pCol = p.GetPoolId(Id::Collectivity);
+
+		logger->info("[PART] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}", p.GetId(),
+			 p.GetAge(), pHH, pK12, pC, pW, pHC, pCol, h.IsSusceptible(), h.IsInfected(), h.IsInfectious(),
 			 h.IsRecovered(), h.IsImmune(), h.GetStartInfectiousness(), h.GetStartSymptomatic(),
 			 h.GetEndInfectiousness(), h.GetEndSymptomatic(),
 			 poolSys.CRefPools<Id::Household>()[pHH].GetPool().size(),

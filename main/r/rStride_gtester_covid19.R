@@ -169,7 +169,7 @@ exp_design_transm_adapt$transmission_probability_distribution   <- 'Gamma'
 exp_design_transm_adapt$transmission_probability_distribution_overdispersion   <- 0.8
 
 
-# fitting transmission and susceptibility: baseline
+# fitting transmission and susceptibility: baseline ----
 exp_design_fitting <- exp_design
 exp_design_fitting$gtester_label            <- 'covid_fitting'
 # b0 <- 0.124492138353664; b1 <- 39.6458896077442            # from: disease_covid19_lognormal 
@@ -194,6 +194,21 @@ t_base <- unique(exp_design_fitting$r0 - b0) / b1
 exp_design_fitting_agegroup$disease_susceptibility_age <- paste(c(0.02,t_base,0.08,t_base),collapse=',')
 exp_design_fitting_agegroup$disease_susceptibility_agecat <- c('0,18,59,70')
 
+# collectivity ----
+exp_design_collectivity <- exp_design
+exp_design_collectivity$population_file              <- 'pop_belgium600k_c500_teachers_censushh_collectivity.csv'
+exp_design_collectivity$age_contact_matrix_file      <- 'contact_matrix_flanders_conditional_teachers_collectivity20.xml'
+exp_design_collectivity$gtester_label                <- 'covid_collectivity'
+
+# collectivity population, but in strict isolation
+exp_design_collectivity_isolation <- exp_design
+exp_design_collectivity_isolation$population_file    <- 'pop_belgium600k_c500_teachers_censushh_collectivity.csv'
+exp_design_collectivity_isolation$gtester_label      <- 'covid_collectivity_isolation'
+
+# collectivity mixing, default population
+exp_design_collectivity_mixing <- exp_design
+exp_design_collectivity_mixing$age_contact_matrix_file  <- 'contact_matrix_flanders_conditional_teachers_collectivity20.xml'
+exp_design_collectivity_mixing$gtester_label            <- 'covid_collectivity_mixing'
 
 # rbind all designs
 exp_design <- rbind(exp_design, exp_design_all,
@@ -203,7 +218,9 @@ exp_design <- rbind(exp_design, exp_design_all,
                     exp_design_susceptible,exp_design_susceptible_adapt,
                     exp_design_transm,exp_design_transm_adapt,
                     exp_design_fitting,exp_design_fitting_adapt,
-                    exp_design_fitting_agegroup)
+                    exp_design_fitting_agegroup,
+                    exp_design_collectivity,exp_design_collectivity_isolation,
+                    exp_design_collectivity_mixing)
 
 
 # add a unique seed for each run
@@ -219,12 +236,12 @@ exp_design$rng_seed[grepl('covid_fitting',exp_design$gtester_label)] <- exp_desi
 
 # # selection? ----
 # exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base'),]
-#exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_suscept','covid_suscept_adapt'),]
+#exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_collectivity','covid_collectivity_isolation','covid_collectivity_mixing'),]
 #exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_fitting_base','covid_fitting_adapt'),]
 #exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_transm','covid_transm_gamma'),]
-# exp_design <- exp_design[grepl('_base',exp_design$gtester_label) |
-#                            grepl('_transm',exp_design$gtester_label) |
-#                            grepl('_fitting',exp_design$gtester_label),]
+ # exp_design <- exp_design[grepl('_base',exp_design$gtester_label) |
+ #                            grepl('_collectivity',exp_design$gtester_label) |
+ #                            grepl('_fitting',exp_design$gtester_label),]
 
 
 table(exp_design$gtester_label)
@@ -321,6 +338,7 @@ plot_final_sizes <- function(project_summary){
          ncol=2)
   grid()
 }
+par(mfrow=c(1,1))
 plot_final_sizes(project_summary)
 
 # load the incidence output

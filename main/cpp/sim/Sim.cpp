@@ -41,8 +41,8 @@ Sim::Sim()
     : m_config(), m_event_log_mode(Id::None), m_num_threads(1U), m_track_index_case(false),
       m_calendar(nullptr), m_contact_profiles(), m_rn_handlers(), m_infector_default(),m_infector_tracing(),
       m_population(nullptr), m_rn_man(), m_transmission_profile(), m_cnt_reduction_workplace(0), m_cnt_reduction_other(0),
-	  m_cnt_reduction_workplace_exit(0),m_cnt_reduction_other_exit(0), m_cnt_reduction_school_exit(0), m_cnt_reduction_intergeneration(0),
-	  m_cnt_reduction_intergeneration_cutoff(0), m_compliance_delay_workplace(0), m_compliance_delay_other(0),
+	  m_cnt_reduction_workplace_exit(0), m_cnt_reduction_other_exit(0), m_cnt_reduction_school_exit(0), m_cnt_reduction_collectivity(0),m_cnt_baseline_collectivity(0),
+	  m_cnt_reduction_intergeneration(0), m_cnt_reduction_intergeneration_cutoff(0), m_compliance_delay_workplace(0), m_compliance_delay_other(0),
 	  m_day_of_community_distancing(0), m_day_of_workplace_distancing(0), m_day_of_community_distancing_exit(0),m_cnt_intensity_householdCluster(0),
       m_is_isolated_from_household(false),
 	  m_public_health_agency(),m_universal_testing(),m_num_daily_imported_cases(0)
@@ -101,11 +101,13 @@ void Sim::TimeStep()
 		 // increment the number of days in lock-down and account for compliance
 		double community_distancing_factor = 0.0;
 		double intergeneration_distancing_factor = 0.0;
+		double collectivity_distancing_factor = m_cnt_baseline_collectivity;
 		if(isCommunityDistancingEnforced){
 			m_day_of_community_distancing += 1;
 
 			community_distancing_factor = m_cnt_reduction_other;
 			intergeneration_distancing_factor = m_cnt_reduction_intergeneration;
+			collectivity_distancing_factor    = m_cnt_reduction_collectivity;
 
 			if(m_day_of_community_distancing < m_compliance_delay_other){
 				community_distancing_factor *= 1.0 * m_day_of_community_distancing / m_compliance_delay_other;
@@ -114,6 +116,7 @@ void Sim::TimeStep()
 
 			community_distancing_factor       = m_cnt_reduction_other_exit;
 			intergeneration_distancing_factor = m_cnt_reduction_intergeneration;
+			collectivity_distancing_factor    = m_cnt_reduction_collectivity;
 		}
 
 		// get distancing at school
@@ -193,6 +196,7 @@ void Sim::TimeStep()
 									 workplace_distancing_factor,
 									 community_distancing_factor,
 									 school_distancing_factor,
+									 collectivity_distancing_factor,
 									 intergeneration_distancing_factor,m_cnt_reduction_intergeneration_cutoff,
 									 m_population,cnt_intensity_householdCluster);
 					}
