@@ -85,7 +85,8 @@ public:
 						 double cnt_reduction_work, double cnt_reduction_other, double cnt_reduction_school,
 						 double cnt_reduction_collectivity,
 						 double cnt_reduction_intergenearion, unsigned int cnt_reduction_intergeneration_cutoff,
-						 std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster);
+						 std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster,
+						 std::shared_ptr<Calendar> calendar);
 };
 
 /// Time-optimized version (For None || Transmission logging).
@@ -101,7 +102,8 @@ public:
 						 double cnt_reduction_work, double cnt_reduction_other, double cnt_reduction_school,
 						 double cnt_reduction_collectivity,
 						 double cnt_reduction_intergeneration, unsigned int cnt_reduction_intergeneration_cutoff,
-						 std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster);
+						 std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster,
+						 std::shared_ptr<Calendar> calendar);
 };
 
 /// Explicit instantiations in cpp file.

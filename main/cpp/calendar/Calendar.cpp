@@ -38,7 +38,7 @@ Calendar::Calendar(const ptree& configPt,unsigned int num_days) :
 		m_date(), m_date_start(), m_date_end(), m_public_holidays(num_days),
 		m_workplace_distancing(num_days), m_community_distancing(num_days), m_contact_tracing(num_days),
 		m_universal_testing(num_days), m_household_clustering(num_days), m_imported_cases(num_days,0U),
-		m_school_closures(100, vector<bool>(num_days))
+		m_school_closures(100, vector<double>(num_days))
 {
         // Set start date
         m_date = boost::gregorian::from_simple_string(configPt.get<string>("run.start_date", "2020-01-01"));
@@ -262,7 +262,7 @@ void Calendar::Initialize_csv(const ptree& configPt)
 				const auto calendar_item        = Split(line, line_sep);
 				const auto category             = FromString<string>(calendar_item[0]);
 				const auto date_str             = FromString<string>(calendar_item[1]);
-				const auto value                = FromString<bool>(calendar_item[2]);
+				const double value              = FromString<double>(calendar_item[2]);
 				//const auto type                 = FromString<string>(calendar_item[3]);
 				const auto age                  = FromString<unsigned int>(calendar_item[4]);
 
@@ -277,8 +277,8 @@ void Calendar::Initialize_csv(const ptree& configPt)
 
 					if(category == "general")              {  m_public_holidays[GetDayIndex(date)] = value_boolean; }
 					if(category == "schools_closed")       {  m_school_closures[age][GetDayIndex(date)] = value; }
-					if(category == "workplace_distancing") {  m_workplace_distancing[GetDayIndex(date)] = value_boolean; }
-					if(category == "community_distancing") {  m_community_distancing[GetDayIndex(date)] = value_boolean; }
+					if(category == "workplace_distancing") {  m_workplace_distancing[GetDayIndex(date)] = value; }
+					if(category == "community_distancing") {  m_community_distancing[GetDayIndex(date)] = value; }
 					if(category == "household_clustering") {  m_household_clustering[GetDayIndex(date)] = value_boolean; }
 					if(category == "contact_tracing")      {  m_contact_tracing[GetDayIndex(date)] = value_boolean; }
 					if(category == "universal_testing")    {  m_universal_testing[GetDayIndex(date)] = value_boolean; }

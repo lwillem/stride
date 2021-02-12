@@ -24,6 +24,7 @@
 
 namespace stride {
 
+class Calendar;
 class ContactPool;
 class AgeContactProfile;
 class TransmissionProfile;
@@ -42,6 +43,7 @@ typedef void(InfectorExec)(ContactPool& pool, const AgeContactProfile& profile,
 						   double cnt_reduction_work, double cnt_reduction_other, double cnt_reduction_school,
 						   double collectivity_distancing_factor,
 						   double cnt_reduction_intergeneration, unsigned int cnt_reduction_intergeneration_cutoff,
-						   std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster);
+						   std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster,
+						   std::shared_ptr<Calendar> calendar);
 
 } // namespace stride

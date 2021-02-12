@@ -135,7 +135,7 @@ model_param_update$compliance_delay_other <- 7
 
 # make sure that the population-based transmission and hospital probability are enabled/disabled correctly
 model_param_update$disease_susceptibility_agecat <- model_param_update$hospital_category_age
-if(any(grepl('disease_susceptibility_age',names(stride_prior)))){
+if(any(grepl('disease_susceptibility_age',c(names(stride_prior),names(model_param_update))))){
   model_param_update$transmission_probability  <- 1
 }
 if(any(grepl('hospital_probability_age',names(stride_prior)))){

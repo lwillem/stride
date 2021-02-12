@@ -74,19 +74,45 @@ public:
 			if(age >= m_school_closures.size()){ return false; }
 
 			// else check calendar
-			return IsWeekend() || IsPublicHoliday() || m_school_closures[age][GetDayIndex(m_date)];
+			return GetSchoolDistancingFactor(age) == 1.0;
 		}
 
-        /// Check if quarantine measures are in place
+		double GetSchoolDistancingFactor(unsigned int age) const
+		{
+			// if the age is not part of school ages, or the current day is
+			// not a regular weekday, return 1 ( == full distancing)
+			if(age >= m_school_closures.size() || !IsRegularWeekday()){
+				return 1.0;
+			}
+
+			// else, return numerical value
+			return m_school_closures[age][GetDayIndex(m_date)];
+		}
+
+
+
+        /// Check if distancing measures are in place for workplaces
         bool IsWorkplaceDistancingEnforced() const
         {
+        	return m_workplace_distancing[GetDayIndex(m_date)] > 0.0;
+		}
+
+        /// Get distancing factor for workplaces
+		double GetWorkplaceDistancingFactor() const
+		{
 			 return m_workplace_distancing[GetDayIndex(m_date)];
 		}
 
-        /// Check if quarantine measures are in place
+        /// Check if distancing measures are in place for communities
 		bool IsCommunityDistancingEnforced() const
 		{
-			 return m_community_distancing[GetDayIndex(m_date)];
+			 return m_community_distancing[GetDayIndex(m_date)] > 0.0;
+		}
+
+		/// Get distancing factor for community contacts
+		double GetCommunityDistancingFactor() const
+		{
+  			return m_community_distancing[GetDayIndex(m_date)];
 		}
 
 		/// Check if contact tracing is place
@@ -99,7 +125,6 @@ public:
 		bool IsUniversalTestingActivated() const
 		{
 			 return m_universal_testing[GetDayIndex(m_date)];
-
 		}
 
 		/// Check if household clustering is allowed
@@ -152,15 +177,15 @@ private:
         boost::gregorian::date              m_date_start;                 ///< Start simulation.
         boost::gregorian::date              m_date_end;                   ///< End simulation.
         std::vector<bool> m_public_holidays;            ///< Vector of public holidays
-        std::vector<bool> m_workplace_distancing;       ///< Vector of days with social distancing enforcement for work places
-        std::vector<bool> m_community_distancing;       ///< Vector of days with social distancing enforcement in the community
+        std::vector<double> m_workplace_distancing;     ///< Vector with social distancing level enforcement at work places
+        std::vector<double> m_community_distancing;     ///< Vector with social distancing level enforcement in the community
         std::vector<bool> m_contact_tracing;            ///< Vector of days with case finding measures
         std::vector<bool> m_universal_testing;          ///< Vector of days with universal testing measures
         std::vector<bool> m_household_clustering;       ///< Vector of days when household clusters are allowed
 
         std::vector<unsigned int>m_imported_cases; ///<Vector of days when cases are imported (~daily seeding activated)
 
-        std::vector<std::vector<bool>> m_school_closures; /// Matrix for [age x boolean school closure over time]
+        std::vector<std::vector<double>> m_school_closures; /// Matrix for [age x time] with social distancing at school]
 
 };
 

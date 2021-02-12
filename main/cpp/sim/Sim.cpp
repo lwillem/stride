@@ -85,11 +85,11 @@ void Sim::TimeStep()
 
 
         // increment the number of days in lock-down and account for compliance
-		double workplace_distancing_factor = 0.0;
+		double workplace_distancing_factor = m_calendar->GetWorkplaceDistancingFactor();
 		if(isWorkplaceDistancingEnforced){
 			m_day_of_workplace_distancing += 1;
 
-			workplace_distancing_factor = m_cnt_reduction_workplace;
+			workplace_distancing_factor *= m_cnt_reduction_workplace;
 
 			if(m_day_of_workplace_distancing < m_compliance_delay_workplace){
 				workplace_distancing_factor *= 1.0 * m_day_of_workplace_distancing / m_compliance_delay_workplace;
@@ -99,13 +99,13 @@ void Sim::TimeStep()
 		}
 
 		 // increment the number of days in lock-down and account for compliance
-		double community_distancing_factor = 0.0;
+		double community_distancing_factor = m_calendar->GetCommunityDistancingFactor();
 		double intergeneration_distancing_factor = 0.0;
 		double collectivity_distancing_factor = m_cnt_baseline_collectivity;
 		if(isCommunityDistancingEnforced){
 			m_day_of_community_distancing += 1;
 
-			community_distancing_factor = m_cnt_reduction_other;
+			community_distancing_factor *= m_cnt_reduction_other;
 			intergeneration_distancing_factor = m_cnt_reduction_intergeneration;
 			collectivity_distancing_factor    = m_cnt_reduction_collectivity;
 
@@ -121,6 +121,13 @@ void Sim::TimeStep()
 
 		// get distancing at school
 		double school_distancing_factor = (m_day_of_workplace_distancing > 0) ? m_cnt_reduction_school_exit : 0 ;
+//		double school_distancing_factor = m_calendar->GetCommunityDistancingFactor();
+//		school_distancing_factor = (m_day_of_workplace_distancing > 0 && m_cnt_reduction_school_exit != 1.0) ? m_cnt_reduction_school_exit : school_distancing_factor ;
+
+
+//std::cout << m_calendar->GetDay() << " d" << m_calendar->GetDayOfTheWeek() <<  " - " << isRegularWeekday << ": " << community_distancing_factor << " " << workplace_distancing_factor << " " << school_distancing_factor << std::endl;
+		std::cout << m_calendar->GetDay() << " d" << m_calendar->GetDayOfTheWeek() << "cl" <<(m_calendar->IsSchoolClosed(6)) << " fixed: " << school_distancing_factor << "cal:" << (m_calendar->GetSchoolDistancingFactor(6)) << " adult:" << (m_calendar->GetSchoolDistancingFactor(40)) << std::endl;
+
 
 		// To be used in update of population & contact pools.
         Population& population    = *m_population;
@@ -198,7 +205,7 @@ void Sim::TimeStep()
 									 school_distancing_factor,
 									 collectivity_distancing_factor,
 									 intergeneration_distancing_factor,m_cnt_reduction_intergeneration_cutoff,
-									 m_population,cnt_intensity_householdCluster);
+									 m_population,cnt_intensity_householdCluster,m_calendar);
 					}
 			}
         } // end pragma openMP
