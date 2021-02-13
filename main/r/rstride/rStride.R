@@ -328,6 +328,13 @@ run_rStride <- function(exp_design               = exp_design,
                        config_exp_filename = paste0(output_prefix,".xml")
                        config_exp          = create_config_exp(config_default, output_prefix, exp_design, i_exp)
                        
+                       # Temporary fix to include the lockdown/exit parameters into the calendar (backward compatibility)
+                       if(any(config_exp[grepl('cnt_reduction_workplace',names(config_exp)) | 
+                                         grepl('cnt_reduction_other',names(config_exp))] > 0)){
+                         config_exp  <- integrate_lockdown_parameters_into_calendar(config_exp)
+                         smd_print("Depricated lockdown and exit parameters merged into the calendar. Please make use of the updated calendar features",WARNING = T)
+                       }
+                       
                        # # to debug
                        # config_exp          = .rstride$read_config_xml(config_exp_filename)
                        

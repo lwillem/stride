@@ -102,8 +102,8 @@ exp_design_dist <- exp_design
 exp_design_dist$holidays_file              <- 'calendar_belgium_2020_covid19_exit_school_adjusted.csv'
 exp_design_dist$cnt_reduction_workplace    <- 0.3;
 exp_design_dist$cnt_reduction_other        <- 0.4;
-exp_design_dist$compliance_delay_workplace <- 3;
-exp_design_dist$compliance_delay_other     <- 4;
+exp_design_dist$compliance_delay_workplace <- 3;  # cpp tester: 2
+exp_design_dist$compliance_delay_other     <- 4;  # cpp tester: 3
 exp_design_dist$gtester_label              <- 'covid_distancing'
 
 

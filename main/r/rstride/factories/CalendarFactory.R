@@ -30,10 +30,12 @@ if(0==1){
 
 
 # create calendar files if they do not exist, else re-use them
-create_calendar_file <- function(file_name_tag='2020_2021',show_plots = FALSE)
+create_calendar_file <- function(file_name_tag='2020_2021',show_plots = FALSE,file_name=NA)
 {
   
-  filename_calendar_full <- paste('sim_output/calendar_belgium',file_name_tag,'covid19.csv',sep='_')
+  filename_calendar_full <- ifelse(is.na(file_name),
+                                   paste('sim_output/calendar_belgium',file_name_tag,'covid19.csv',sep='_'),
+                                   file_name)
 
   ########################################### #
   ## INITIATE DATA                       ####
@@ -417,6 +419,56 @@ adjust_calendar_file <- function(db_category, db_update, file_name, db_age = 'NA
   
 }
 
+# create calendar file comparable to the original lockdown/exit parameter structure
+integrate_lockdown_parameters_into_calendar <- function(config_exp){
+
+  file_name <- smd_file_path(config_exp$output_prefix,'calendar_belgium_covid19_v1_1_param.csv')
+  config_exp$holidays_file <- create_calendar_file(file_name = file_name, show_plots = T)
+  
+  # set dates
+  date_t0               <- as.Date('2020-03-13')
+  date_compliance_wp    <- date_t0 + config_exp$compliance_delay_workplace
+  date_compliance_other <- date_t0 + config_exp$compliance_delay_other
+  date_exit_wp          <- as.Date('2020-05-04')
+  date_exit_other       <- as.Date('2020-05-25')
+  date_end              <- as.Date('2020-12-31')
+  
+  # integreate workplace distancing
+  adjust_calendar_file(db_category =  "workplace_distancing",
+                       db_update = data.frame(c(as.character(date_t0),0),
+                                              c(as.character(date_compliance_wp),config_exp$cnt_reduction_workplace),
+                                              c(as.character(date_exit_wp-1),config_exp$cnt_reduction_workplace),
+                                              c(as.character(date_exit_wp),config_exp$cnt_reduction_workplace_exit),
+                                              c(as.character(date_end),config_exp$cnt_reduction_workplace_exit)),
+                       file_name = config_exp$holidays_file )
+  config_exp$cnt_reduction_workplace <- 1
+  config_exp$compliance_delay_workplace <- 0
+  config_exp$cnt_reduction_workplace_exit <- 0
+  
+  # integreate community distancing
+  adjust_calendar_file(db_category =  "community_distancing",
+                       db_update = data.frame(c(as.character(date_t0),0),
+                                              c(as.character(date_compliance_other),config_exp$cnt_reduction_other),
+                                              c(as.character(date_exit_other-1),config_exp$cnt_reduction_other),
+                                              c(as.character(date_exit_other),config_exp$cnt_reduction_other_exit),
+                                              c(as.character(date_end),config_exp$cnt_reduction_other_exit)),
+                       file_name = config_exp$holidays_file,
+                       show_plots = T)
+  config_exp$cnt_reduction_other <- 1
+  config_exp$compliance_delay_other <- 0
+  config_exp$cnt_reduction_other_exit <- 0
+  
+  #TODO: add school distancing
+  
+  #TODO: add household clusters
+  
+  # # fix for calendar path
+  config_exp$holidays_file <- paste0('../',config_exp$holidays_file)
+  
+  # return list
+  return(config_exp)
+}
+
 
 if(0==1){ # debug----
   
@@ -427,7 +479,5 @@ if(0==1){ # debug----
                                    c('2020-05-03',0.5))
   
   adjust_calendar_file(db_category =  "workplace_distancing",db_update = dcal_wp_distancing, file_name = dcal_file)
-  
-  
 }
 

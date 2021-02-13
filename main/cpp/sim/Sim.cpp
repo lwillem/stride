@@ -126,7 +126,7 @@ void Sim::TimeStep()
 
 
 //std::cout << m_calendar->GetDay() << " d" << m_calendar->GetDayOfTheWeek() <<  " - " << isRegularWeekday << ": " << community_distancing_factor << " " << workplace_distancing_factor << " " << school_distancing_factor << std::endl;
-		std::cout << m_calendar->GetDay() << " d" << m_calendar->GetDayOfTheWeek() << "cl" <<(m_calendar->IsSchoolClosed(6)) << " fixed: " << school_distancing_factor << "cal:" << (m_calendar->GetSchoolDistancingFactor(6)) << " adult:" << (m_calendar->GetSchoolDistancingFactor(40)) << std::endl;
+//		std::cout << m_calendar->GetDay() << " d" << m_calendar->GetDayOfTheWeek() << "cl" <<(m_calendar->IsSchoolClosed(6)) << " fixed: " << school_distancing_factor << "cal:" << (m_calendar->GetSchoolDistancingFactor(6)) << " adult:" << (m_calendar->GetSchoolDistancingFactor(40)) << std::endl;
 
 
 		// To be used in update of population & contact pools.

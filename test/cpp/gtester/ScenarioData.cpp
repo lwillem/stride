@@ -121,11 +121,15 @@ tuple<ptree, unsigned int, double> ScenarioData::Get(string tag)
 			pt.put("run.num_daily_imported_cases", 10U);
 	}
 	if (tag == "covid19_distancing") {
-			pt.put("run.holidays_file","calendar_belgium_2020_covid19_exit_school_adjusted.csv");
-			pt.put("run.cnt_reduction_workplace",0.3);
-			pt.put("run.cnt_reduction_other",0.4);
-			pt.put("run.compliance_delay_workplace",2);
-			pt.put("run.compliance_delay_other",3);
+			pt.put("run.holidays_file","calendar_gtester_covid19_distancing.csv");
+			pt.put("run.cnt_reduction_workplace",1);
+			pt.put("run.cnt_reduction_other",1);
+//			pt.put("run.holidays_file","calendar_belgium_2020_covid19_exit_school_adjusted.csv");
+//			pt.put("run.cnt_reduction_workplace",0.3);
+//			pt.put("run.cnt_reduction_other",0.4);
+//			pt.put("run.compliance_delay_workplace",2);
+//			pt.put("run.compliance_delay_other",3);
+
 	}
 	if (tag == "covid19_age_15min") {
 			pt.put("run.disease_config_file", "disease_covid19_age_15min.xml");
