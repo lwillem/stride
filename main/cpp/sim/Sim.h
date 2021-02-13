@@ -91,7 +91,7 @@ private:
 
         std::shared_ptr<Calendar>   m_calendar;         ///< Management of calendar.
         AgeContactProfiles          m_contact_profiles; ///< Contact profiles w.r.t age.
-        std::vector<util::RnHandler> m_rn_handlers;         ///< Random number handlers (random numbers & binomial trials).
+        std::vector<util::RnHandler> m_rn_handlers;     ///< Random number handlers (random numbers & binomial trials).
         InfectorExec*               m_infector_default; ///< Executes optimized transmission loops in contact pools.
         InfectorExec*               m_infector_tracing; ///< Executes all or optimized transmission loops in contact pools.
         std::shared_ptr<Population> m_population;       ///< Pointer to the Population.
@@ -100,19 +100,11 @@ private:
         TransmissionProfile         m_transmission_profile; ///< Profile of disease.
 
         // temporary...
-        double                      m_cnt_reduction_workplace;
-        double                      m_cnt_reduction_other;
-        double                      m_cnt_reduction_workplace_exit;
-        double                      m_cnt_reduction_other_exit;
         double                      m_cnt_reduction_school_exit;
         double          			m_cnt_reduction_collectivity;
         double          			m_cnt_baseline_collectivity;       // temporary factor to capture the collectivity behaviour
         double                      m_cnt_reduction_intergeneration;
         unsigned int                m_cnt_reduction_intergeneration_cutoff;
-        unsigned int                m_compliance_delay_workplace;
-        unsigned int                m_compliance_delay_other;
-        unsigned int                m_day_of_community_distancing;
-        unsigned int     	        m_day_of_workplace_distancing;
         unsigned int     			m_day_of_community_distancing_exit;
         double                      m_cnt_intensity_householdCluster;
         bool                        m_is_isolated_from_household;

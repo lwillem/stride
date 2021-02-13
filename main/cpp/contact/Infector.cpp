@@ -137,7 +137,7 @@ using namespace stride::ContactType;
 using namespace stride::util;
 
 inline double GetContactProbability(const AgeContactProfile& profile, const Person* p1, const Person* p2,
-		size_t pool_size, const ContactType::Id pType, double cnt_reduction_work, double cnt_reduction_other,
+		size_t pool_size, const ContactType::Id pType,
 		double cnt_reduction_school, double cnt_reduction_collectivity, double cnt_reduction_intergeneration, unsigned int cnt_reduction_intergeneration_cutoff,
 		std::shared_ptr<Population>& population, double cnt_intensity_householdCluster,std::shared_ptr<Calendar> calendar)
 {
@@ -145,15 +145,20 @@ inline double GetContactProbability(const AgeContactProfile& profile, const Pers
 		// initiate a contact adjustment factor, to account for physical distancing and/or contact intensity
     	double cnt_adjustment_factor = 1;
 
-    		// Check if one of the persons is a non-complier to social distancing measures
-    		// in this particular pooltype
+    		// Check if one of the persons is a non-complier to social distancing measures in this particular pooltype
     		if ((not p1->IsNonComplier(pType)) and (not p2->IsNonComplier(pType))) {
-    			// account for physical distancing at work and in the community
+
+    			// account for physical distancing at work
     			if(pType == Id::Workplace){
-    				cnt_adjustment_factor = (1-cnt_reduction_work);
+
+    				double workplace_distancing_factor = calendar->GetWorkplaceDistancingFactor();
+    				cnt_adjustment_factor = (1-workplace_distancing_factor);
     			}
+
     			// account for physical distancing in the community
     			if((pType == Id::PrimaryCommunity || pType == Id::SecondaryCommunity)){
+
+    				double community_distancing_factor = calendar->GetCommunityDistancingFactor();
 
     				// apply inter-generation distancing factor if age cutoff is > 0 and at least one age is > cutoff
     				if((cnt_reduction_intergeneration > 0) &&
@@ -161,7 +166,7 @@ inline double GetContactProbability(const AgeContactProfile& profile, const Pers
     					cnt_adjustment_factor = (1-cnt_reduction_intergeneration);
     				} else {
     					// apply uniform community distancing
-    					cnt_adjustment_factor = (1-cnt_reduction_other);
+    					cnt_adjustment_factor = (1-community_distancing_factor);
     				}
     			}
     			// account for physical distancing at school
@@ -275,7 +280,7 @@ template <EventLogMode::Id LL, bool TIC, bool TO>
 void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& profile,
                                  const TransmissionProfile& transProfile, util::RnHandler& rnHandler,
                                  unsigned short int simDay, shared_ptr<spdlog::logger> eventLogger,
-								 double cnt_reduction_work, double cnt_reduction_other, double cnt_reduction_school,
+								 double cnt_reduction_school,
 								 double cnt_reduction_collectivity,
 								 double cnt_reduction_intergeneration, unsigned int cnt_reduction_intergeneration_cutoff,
 								 std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster,
@@ -308,7 +313,7 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
                         }
                         // check for contact
                         const double cProb = GetContactProbability(profile, p1, p2, pSize, pType,
-                        		cnt_reduction_work, cnt_reduction_other,cnt_reduction_school, cnt_reduction_collectivity, cnt_reduction_intergeneration,
+                        		cnt_reduction_school, cnt_reduction_collectivity, cnt_reduction_intergeneration,
 								cnt_reduction_intergeneration_cutoff,population,m_cnt_intensity_householdCluster,calendar);
                         if (rnHandler.Binomial(cProb)) {
 								const auto  tProb_p1_p2    = transProfile.GetProbability(p1,p2);
@@ -365,7 +370,7 @@ template <EventLogMode::Id LL, bool TIC>
 void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& profile,
                                    const TransmissionProfile& transProfile, util::RnHandler& rnHandler,
                                    unsigned short int simDay, shared_ptr<spdlog::logger> eventLogger,
-								   double cnt_reduction_work, double cnt_reduction_other, double cnt_reduction_school,
+								   double cnt_reduction_school,
 								   double cnt_reduction_collectivity,
 								   double cnt_reduction_intergeneration, unsigned int cnt_reduction_intergeneration_cutoff,
 								   std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster,
@@ -405,7 +410,7 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                                         continue;
                                 }
                                 const double cProb_p1 = GetContactProbability(profile, p1, p2, pSize, pType,
-                                								cnt_reduction_work, cnt_reduction_other,cnt_reduction_school,
+                                								cnt_reduction_school,
 																cnt_reduction_collectivity, cnt_reduction_intergeneration, cnt_reduction_intergeneration_cutoff,
 															population, m_cnt_intensity_householdCluster,calendar);
                                 const auto  tProb_p1_p2   = transProfile.GetProbability(p1,p2);

@@ -332,7 +332,7 @@ run_rStride <- function(exp_design               = exp_design,
                        if(any(config_exp[grepl('cnt_reduction_workplace',names(config_exp)) | 
                                          grepl('cnt_reduction_other',names(config_exp))] > 0)){
                          config_exp  <- integrate_lockdown_parameters_into_calendar(config_exp)
-                         smd_print("Depricated lockdown and exit parameters merged into the calendar. Please make use of the updated calendar features",WARNING = T)
+                         smd_print("Deprecated lockdown and exit parameters merged into the calendar. Please make use of the updated calendar features",WARNING = T)
                        }
                        
                        # # to debug
