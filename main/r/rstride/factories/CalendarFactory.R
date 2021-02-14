@@ -282,13 +282,9 @@ create_calendar_file <- function(file_name_tag='2020_2021',show_plots = FALSE,fi
   ## EXPLORE DATA                         ####
   ########################################### #
   
-  # open pdf stream
-  pdf(file=gsub('.csv','.pdf',filename_calendar_full),6,6)
-  
-  plot_calendar(d_calendar_all,show_plots)
-  
-  # close pdf stream
-  dev.off()
+  plot_calendar(dt_calendar            = d_calendar_all,
+                filename_calendar_full = filename_calendar_full,
+                show_plots             = show_plots)
   
   ########################################### #
   ## SAVE AS CSV	 	         ####
@@ -308,8 +304,13 @@ create_calendar_file <- function(file_name_tag='2020_2021',show_plots = FALSE,fi
 }
 
 # note: variable "b_school_repopening" is not used anymore... but still here for backward compatibility
-plot_calendar <- function(dt_calendar, show_plots = TRUE, b_school_repopening=TRUE){
+plot_calendar <- function(dt_calendar, filename_calendar_full, show_plots = TRUE, b_school_repopening=TRUE){
+  
   if(show_plots){
+    
+    # open pdf stream
+    pdf(file=gsub('.csv','.pdf',filename_calendar_full),6,6)
+    
     category_opt <- unique(dt_calendar$category)
     par(mfrow=c(4,2))
     
@@ -363,6 +364,9 @@ plot_calendar <- function(dt_calendar, show_plots = TRUE, b_school_repopening=TR
       )
       add_x_axis(x_lim)
     }
+    
+    # close pdf stream
+    dev.off()
   }
 }
 
@@ -411,11 +415,37 @@ adjust_calendar_file <- function(db_category, db_update, file_name, db_age = 'NA
   }
 
   # explore
-  plot_calendar(d_calendar_all,show_plots = show_plots)
+  plot_calendar(dt_calendar            = d_calendar_all,
+                filename_calendar_full = file_name,
+                show_plots             = show_plots)
   
   # save as csv 
   write.table(d_calendar_all,
               file = file_name,sep=',',row.names=F,quote=F)
+  
+}
+
+replace_calendar_value <- function(file_name,db_category,value_orig,value_new,show_plots){
+  
+  # read calendar file
+  d_calendar_all <- data.table(read.table(file=file_name,sep=',',header=T))
+  
+  # make sure the value is stored as double
+  d_calendar_all$value <- as.double(d_calendar_all$value)
+  
+  d_calendar_all[category == db_category &
+                   value == value_orig, value:= value_new]
+  
+  # explore
+  plot_calendar(dt_calendar            = d_calendar_all,
+                filename_calendar_full = file_name,
+                show_plots             = show_plots)
+  
+  # save as csv 
+  write.table(d_calendar_all,
+              file = file_name,sep=',',row.names=F,quote=F)
+  
+  
   
 }
 
@@ -441,9 +471,9 @@ integrate_lockdown_parameters_into_calendar <- function(config_exp){
                                               c(as.character(date_exit_wp),config_exp$cnt_reduction_workplace_exit),
                                               c(as.character(date_end),config_exp$cnt_reduction_workplace_exit)),
                        file_name = config_exp$holidays_file )
-  config_exp$cnt_reduction_workplace <- 1
-  config_exp$compliance_delay_workplace <- 0
-  config_exp$cnt_reduction_workplace_exit <- 0
+  # config_exp$cnt_reduction_workplace <- 1
+  # config_exp$compliance_delay_workplace <- 0
+  # config_exp$cnt_reduction_workplace_exit <- 0
   
   # integreate community distancing
   adjust_calendar_file(db_category =  "community_distancing",
@@ -454,13 +484,18 @@ integrate_lockdown_parameters_into_calendar <- function(config_exp){
                                               c(as.character(date_end),config_exp$cnt_reduction_other_exit)),
                        file_name = config_exp$holidays_file,
                        show_plots = T)
-  config_exp$cnt_reduction_other <- 1
-  config_exp$compliance_delay_other <- 0
-  config_exp$cnt_reduction_other_exit <- 0
+  # config_exp$cnt_reduction_other <- 1
+  # config_exp$compliance_delay_other <- 0
+  # config_exp$cnt_reduction_other_exit <- 0
   
   #TODO: add school distancing
+  replace_calendar_value(file_name = config_exp$holidays_file,
+                         db_category =  "schools_closed",
+                         value_orig = 0.5,
+                         value_new = config_exp$cnt_reduction_school_exit,
+                         show_plots = T)
   
-  #TODO: add household clusters
+  #TODO: add household cluster mixing
   
   # # fix for calendar path
   config_exp$holidays_file <- paste0('../',config_exp$holidays_file)

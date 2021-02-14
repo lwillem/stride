@@ -137,8 +137,8 @@ using namespace stride::ContactType;
 using namespace stride::util;
 
 inline double GetContactProbability(const AgeContactProfile& profile, const Person* p1, const Person* p2,
-		size_t pool_size, const ContactType::Id pType,
-		double cnt_reduction_school, double cnt_reduction_collectivity, double cnt_reduction_intergeneration, unsigned int cnt_reduction_intergeneration_cutoff,
+		size_t pool_size, const ContactType::Id pType, const unsigned min_age_members,
+		double cnt_reduction_collectivity, double cnt_reduction_intergeneration, unsigned int cnt_reduction_intergeneration_cutoff,
 		std::shared_ptr<Population>& population, double cnt_intensity_householdCluster,std::shared_ptr<Calendar> calendar)
 {
 
@@ -169,26 +169,16 @@ inline double GetContactProbability(const AgeContactProfile& profile, const Pers
     					cnt_adjustment_factor = (1-community_distancing_factor);
     				}
     			}
+
     			// account for physical distancing at school
-    			if(pType == Id::K12School){
+    			if(pType == Id::K12School || pType == Id::College){
 
     				// get distancing at school
-    				double school_distancing_factor = cnt_reduction_school ;
-
-//    				// work in progress //TODO
-//    				double school_distancing_factor = calendar->GetSchoolDistancingFactor(p1->GetAge()) ;
-//    				double school_distancing_factor2 = calendar->GetSchoolDistancingFactor(p2->GetAge()) ;
-//					if(school_distancing_factor < school_distancing_factor2){
-//						school_distancing_factor = school_distancing_factor2;
-//					}
-//
-//					if(cnt_reduction_school != school_distancing_factor){
-//						cout << cnt_reduction_school << " - "<< school_distancing_factor  << " - "<< school_distancing_factor2<< endl;
-//
-//					}
+    				double school_distancing_factor = calendar->GetSchoolDistancingFactor(min_age_members) ;
 
     				cnt_adjustment_factor = (1-school_distancing_factor);
     			}
+
     			// account for physical distancing in the collectivity
 				if(pType == Id::Collectivity){
 					cnt_adjustment_factor = (1-cnt_reduction_collectivity);
@@ -280,7 +270,6 @@ template <EventLogMode::Id LL, bool TIC, bool TO>
 void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& profile,
                                  const TransmissionProfile& transProfile, util::RnHandler& rnHandler,
                                  unsigned short int simDay, shared_ptr<spdlog::logger> eventLogger,
-								 double cnt_reduction_school,
 								 double cnt_reduction_collectivity,
 								 double cnt_reduction_intergeneration, unsigned int cnt_reduction_intergeneration_cutoff,
 								 std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster,
@@ -292,6 +281,9 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
         const auto  pType    = pool.m_pool_type;
         const auto& pMembers = pool.m_members;
         const auto  pSize    = pMembers.size();
+
+        // get minimum age of the members (relevant for school settings)
+        const unsigned int min_age_members = pool.GetMinAge();
 
         // check all contacts
         for (size_t i_person1 = 0; i_person1 < pSize; i_person1++) {
@@ -312,8 +304,8 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
                                 continue;
                         }
                         // check for contact
-                        const double cProb = GetContactProbability(profile, p1, p2, pSize, pType,
-                        		cnt_reduction_school, cnt_reduction_collectivity, cnt_reduction_intergeneration,
+                        const double cProb = GetContactProbability(profile, p1, p2, pSize, pType, min_age_members,
+                        		cnt_reduction_collectivity, cnt_reduction_intergeneration,
 								cnt_reduction_intergeneration_cutoff,population,m_cnt_intensity_householdCluster,calendar);
                         if (rnHandler.Binomial(cProb)) {
 								const auto  tProb_p1_p2    = transProfile.GetProbability(p1,p2);
@@ -370,7 +362,6 @@ template <EventLogMode::Id LL, bool TIC>
 void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& profile,
                                    const TransmissionProfile& transProfile, util::RnHandler& rnHandler,
                                    unsigned short int simDay, shared_ptr<spdlog::logger> eventLogger,
-								   double cnt_reduction_school,
 								   double cnt_reduction_collectivity,
 								   double cnt_reduction_intergeneration, unsigned int cnt_reduction_intergeneration_cutoff,
 								   std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster,
@@ -393,6 +384,9 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
         const auto& pMembers = pool.m_members;
         const auto  pSize    = pMembers.size();
 
+        // get minimum age of the members (relevant for school settings)
+        const unsigned int min_age_members = pool.GetMinAge();
+
         // match infectious and susceptible members, skip last part (immune members)
         for (size_t i_infected = 0; i_infected < num_cases; i_infected++) {
                 // check if member is present today
@@ -409,9 +403,8 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                                 if (!p2->IsInPool(pType)) {
                                         continue;
                                 }
-                                const double cProb_p1 = GetContactProbability(profile, p1, p2, pSize, pType,
-                                								cnt_reduction_school,
-																cnt_reduction_collectivity, cnt_reduction_intergeneration, cnt_reduction_intergeneration_cutoff,
+                                const double cProb_p1 = GetContactProbability(profile, p1, p2, pSize, pType, min_age_members,
+                                							cnt_reduction_collectivity, cnt_reduction_intergeneration, cnt_reduction_intergeneration_cutoff,
 															population, m_cnt_intensity_householdCluster,calendar);
                                 const auto  tProb_p1_p2   = transProfile.GetProbability(p1,p2);
                                 if (rnHandler.Binomial(cProb_p1, tProb_p1_p2)) {

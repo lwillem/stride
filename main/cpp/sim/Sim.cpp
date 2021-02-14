@@ -73,12 +73,10 @@ void Sim::TimeStep()
 
 		double intergeneration_distancing_factor = 0.0;
 		double collectivity_distancing_factor = m_cnt_baseline_collectivity;
-		double school_distancing_factor = 0 ;
 
 		if(m_calendar->GetCommunityDistancingFactor()>0){
 			intergeneration_distancing_factor = m_cnt_reduction_intergeneration;
 			collectivity_distancing_factor    = m_cnt_reduction_collectivity;
-			school_distancing_factor          = m_cnt_reduction_school_exit;
 		}
 
 		// To be used in update of population & contact pools.
@@ -119,7 +117,12 @@ void Sim::TimeStep()
 //						m_calendar->IsSchoolClosed(11), //isSecondarySchoolOff,
 //						m_calendar->IsSchoolClosed(20)); //isCollegeOff);
 
-				bool isK12SchoolOff = m_calendar->IsSchoolClosed(population[i].GetAge());
+				unsigned int school_id = population[i].GetPoolId(ContactType::Id::K12School);
+				unsigned int school_age = population[i].GetAge();
+				if(school_id>0){
+					school_age = poolSys.RefPools(ContactType::Id::K12School)[school_id].GetMinAge();
+				}
+				bool isK12SchoolOff = m_calendar->IsSchoolClosed(school_age);
 				bool isCollegeOff   = m_calendar->IsSchoolClosed(population[i].GetAge());
 				// update health and presence at different contact pools
 				population[i].Update(isRegularWeekday, isK12SchoolOff, isCollegeOff,
@@ -152,7 +155,6 @@ void Sim::TimeStep()
 					for (size_t i = 1; i < poolSys.RefPools(typ).size(); i++) { // NOLINT
 							infector(poolSys.RefPools(typ)[i], m_contact_profiles[typ], m_transmission_profile,
 									 m_rn_handlers[thread_num], simDay, eventLogger,
-									 school_distancing_factor,
 									 collectivity_distancing_factor,
 									 intergeneration_distancing_factor,m_cnt_reduction_intergeneration_cutoff,
 									 m_population,cnt_intensity_householdCluster,m_calendar);
