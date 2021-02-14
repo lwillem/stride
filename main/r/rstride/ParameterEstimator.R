@@ -65,10 +65,6 @@ estimate_parameters <- function(project_dir)
   project_summary$config_id  <- .rstride$get_config_id(project_summary)
   input_opt_design$config_id <- .rstride$get_config_id(input_opt_design)
   
-  # remove string based input parameters (e.g. different calendars)
-  flag_character   <- unlist(lapply(input_opt_design,is.character)) & names(input_opt_design) != "config_id"
-  input_opt_design <- input_opt_design[,!flag_character]
-  
   # add config_id to incidence data
   data_incidence_all            <- merge(data_incidence_all,project_summary[,c('exp_id','config_id')] )
   

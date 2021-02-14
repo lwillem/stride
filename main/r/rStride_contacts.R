@@ -125,8 +125,6 @@ dim(exp_design)
 #                           compliance_delay_workplace    = c(0),
 #                           compliance_delay_other        = c(0),
 #                           num_daily_imported_cases      = c(0),
-#                           cnt_reduction_intergeneration = 0.95,
-#                           cnt_reduction_intergeneration_cutoff = 65,
 #                           cnt_intensity_householdCluster = c(0,0.99),
 #                           stringsAsFactors = F)
 # 

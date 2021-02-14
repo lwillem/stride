@@ -548,6 +548,20 @@ if(!(exists('.rstride'))){
   return(TRUE)
 }
 
+.rstride$check_population_contact_combination <- function(exp_design){
+  
+  bool_population <- any(grepl("collectivity",exp_design$population_file))
+  bool_contacts   <- any(grepl("collectivity",exp_design$age_contact_matrix_file))
+  
+  if((bool_population || bool_contacts) &&
+     !(bool_population && bool_contacts)){
+   
+    smd_print(c("WARNING: no uniformity on collectivities in population and contact input files.\n\t\t\t- ",
+                exp_design$population_file,'\n\t\t\t- ',exp_design$age_contact_matrix_file),WARNING = T,FORCED = T)
+    
+  }
+}
+
 ############################### #
 ## DEVELOPMENT FUNCTIONS     ####
 ############################### #

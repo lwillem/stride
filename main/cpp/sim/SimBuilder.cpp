@@ -115,11 +115,6 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
 		// --------------------------------------------------------------
         sim->m_public_health_agency.Initialize(m_config);
 		sim->m_public_health_agency.SetTelework(sim->m_population,sim->m_rn_man);
-		sim->m_cnt_reduction_school_exit            = m_config.get<double>("run.cnt_reduction_school_exit",0);
-		sim->m_cnt_reduction_collectivity           = m_config.get<double>("run.cnt_reduction_collectivity",0);
-		sim->m_cnt_baseline_collectivity            = m_config.get<double>("run.cnt_baseline_collectivity",0);
-		sim->m_cnt_reduction_intergeneration        = m_config.get<double>("run.cnt_reduction_intergeneration",0);
-		sim->m_cnt_reduction_intergeneration_cutoff = m_config.get<unsigned int>("run.cnt_reduction_intergeneration_cutoff",0);
 		sim->m_cnt_intensity_householdCluster       = m_config.get<double>("run.cnt_intensity_householdCluster",0);
 		sim->m_is_isolated_from_household           = m_config.get<bool>("run.is_isolated_from_household",false);
 

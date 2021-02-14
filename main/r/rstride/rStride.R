@@ -335,6 +335,9 @@ run_rStride <- function(exp_design               = exp_design,
                          smd_print("Deprecated lockdown and exit parameters merged into the calendar. Please make use of the updated calendar features",WARNING = T)
                        }
                        
+                       # check collectivity info
+                       .rstride$check_population_contact_combination(config_exp)
+                       
                        # # to debug
                        # config_exp          = .rstride$read_config_xml(config_exp_filename)
                        

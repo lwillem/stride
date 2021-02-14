@@ -115,6 +115,12 @@ public:
   			return m_community_distancing[GetDayIndex(m_date)];
 		}
 
+		/// Get distancing factor for collectivities
+		double GetCollectivityDistancingFactor() const
+		{
+			return m_collectivity_distancing[GetDayIndex(m_date)];
+		}
+
 		/// Check if contact tracing is place
 		bool IsContactTracingActivated() const
 		{
@@ -179,6 +185,7 @@ private:
         std::vector<bool> m_public_holidays;            ///< Vector of public holidays
         std::vector<double> m_workplace_distancing;     ///< Vector with social distancing level enforcement at work places
         std::vector<double> m_community_distancing;     ///< Vector with social distancing level enforcement in the community
+        std::vector<double> m_collectivity_distancing;  ///< Vector with social distancing level enforcement in collectivities
         std::vector<bool> m_contact_tracing;            ///< Vector of days with case finding measures
         std::vector<bool> m_universal_testing;          ///< Vector of days with universal testing measures
         std::vector<bool> m_household_clustering;       ///< Vector of days when household clusters are allowed
@@ -186,6 +193,8 @@ private:
         std::vector<unsigned int>m_imported_cases; ///<Vector of days when cases are imported (~daily seeding activated)
 
         std::vector<std::vector<double>> m_school_closures; /// Matrix for [age x time] with social distancing at school]
+
+
 
 };
 

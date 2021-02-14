@@ -164,6 +164,11 @@ inspect_summary <- function(project_dir)
 
 ## HELP FUNCTION ####
 .rstride$get_unique_param_list <- function(project_summary){
+
+  # option to select "holidays_calendar" basic file name by excluding the relative path, to overcome (experiment-specific) file names 
+  if('holidays_file' %in% names(project_summary)){
+    project_summary$holidays_file <- basename(project_summary$holidays_file)
+  }
   
   col_output <- c('run_time', 'total_time', 'num_cases', 'AR' )
   col_extra  <- c('rng_seed','output_prefix','transmission_probability','exp_id','config_id','contact_id')

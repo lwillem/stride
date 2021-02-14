@@ -100,12 +100,6 @@ private:
         TransmissionProfile         m_transmission_profile; ///< Profile of disease.
 
         // temporary...
-        double                      m_cnt_reduction_school_exit;
-        double          			m_cnt_reduction_collectivity;
-        double          			m_cnt_baseline_collectivity;       // temporary factor to capture the collectivity behaviour
-        double                      m_cnt_reduction_intergeneration;
-        unsigned int                m_cnt_reduction_intergeneration_cutoff;
-        unsigned int     			m_day_of_community_distancing_exit;
         double                      m_cnt_intensity_householdCluster;
         bool                        m_is_isolated_from_household;
 

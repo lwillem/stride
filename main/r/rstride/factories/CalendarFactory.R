@@ -214,6 +214,15 @@ create_calendar_file <- function(file_name_tag='2020_2021',show_plots = FALSE,fi
   ) -> dcal_community_distancing
   dcal_community_distancing[date %in% seq(as.Date('2020-03-14'),as.Date('2020-05-24'),1),value := 1.0]
   
+  # collectivity distancing
+  data.table(category = "collectivity_distancing",
+             date     = seq(as.Date(date_start),as.Date(date_end),1),
+             value    = 0.0,
+             type = 'double',
+             age = NA_integer_,
+             stringsAsFactors = F
+  ) -> dcal_collectivity_distancing
+  
   # household clustering
   data.table(category = "household_clustering",
              date     = seq(as.Date('2020-05-11'),as.Date('2020-08-31'),1),
@@ -312,7 +321,7 @@ plot_calendar <- function(dt_calendar, filename_calendar_full, show_plots = TRUE
     pdf(file=gsub('.csv','.pdf',filename_calendar_full),6,6)
     
     category_opt <- unique(dt_calendar$category)
-    par(mfrow=c(4,2))
+    par(mfrow=c(3,2))
     
     # check if dt_calendar is data.table
     if(!is.data.table(dt_calendar)){
@@ -341,6 +350,7 @@ plot_calendar <- function(dt_calendar, filename_calendar_full, show_plots = TRUE
            xaxt = 'n'
       )
       add_x_axis(x_lim)
+      abline(h=1,lty=3,col='grey')
     }
     
     if("schools_closed" %in% dt_calendar$category){
@@ -456,6 +466,7 @@ integrate_lockdown_parameters_into_calendar <- function(config_exp){
   config_exp$holidays_file <- create_calendar_file(file_name = file_name, show_plots = T)
   
   # set dates
+  date_start            <- config_exp$start_date
   date_t0               <- as.Date('2020-03-13')
   date_compliance_wp    <- date_t0 + config_exp$compliance_delay_workplace
   date_compliance_other <- date_t0 + config_exp$compliance_delay_other
@@ -488,7 +499,18 @@ integrate_lockdown_parameters_into_calendar <- function(config_exp){
   # config_exp$compliance_delay_other <- 0
   # config_exp$cnt_reduction_other_exit <- 0
   
-  #TODO: add school distancing
+  # integreate collectivity distancing
+  if(!any(is.null(c(config_exp$cnt_baseline_collectivity,config_exp$cnt_reduction_collectivity)))){
+    adjust_calendar_file(db_category =  "collectivity_distancing",
+                         db_update = data.frame(c(as.character(date_start),config_exp$cnt_baseline_collectivity),
+                                                c(as.character(date_t0),config_exp$cnt_baseline_collectivity),
+                                                c(as.character(date_t0+1),config_exp$cnt_reduction_collectivity),
+                                                c(as.character(date_end),config_exp$cnt_reduction_collectivity)),
+                         file_name = config_exp$holidays_file,
+                         show_plots = T)
+  }
+  
+  #school distancing
   replace_calendar_value(file_name = config_exp$holidays_file,
                          db_category =  "schools_closed",
                          value_orig = 0.5,

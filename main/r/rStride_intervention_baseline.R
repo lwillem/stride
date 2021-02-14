@@ -54,8 +54,6 @@ get_exp_param_default <- function(bool_child_param = FALSE,
                 cnt_reduction_school_exit     = 0.5,
                 cnt_reduction_collectivity    = 0.0, # no reduction, during lockdown
                 cnt_baseline_collectivity     = 0.0, # no reduction, by default
-                cnt_reduction_intergeneration = 0.9,  
-                cnt_reduction_intergeneration_cutoff = 65,
                 cnt_intensity_householdCluster = 0,
                 detection_probability          = 0,
                 tracing_efficiency_household   = 0.9, 
@@ -111,8 +109,6 @@ get_exp_param_default <- function(bool_child_param = FALSE,
 
       #out$num_seeds <- NA
       
-      out$cnt_reduction_intergeneration <- 0
-      
    }
    
    # change parameters if childrens infectiousness is 1/2 compared to adults
@@ -132,8 +128,6 @@ get_exp_param_default <- function(bool_child_param = FALSE,
       out$cnt_reduction_other     <- 0.86
       out$compliance_delay_workplace <- 6
       out$compliance_delay_other  <- 7
-
-      out$cnt_reduction_intergeneration <- 0
    }
    
    # select least stringent social mixing assumptions
