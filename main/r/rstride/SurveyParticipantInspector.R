@@ -158,21 +158,7 @@ inspect_participant_data <- function(project_dir, save_pdf = TRUE)
     # 
     # names(data_part)
     
-    # ## TELEWORKING
-    # data_part$is_teleworking   <- data_part$is_teleworking == "TRUE"
-    # 
-    # telework_age <- data.frame(table(is_teleworking = data_part$is_teleworking, part_age = data_part$part_age),stringsAsFactors = F)
-    # telework_age$part_age <- as.numeric(levels(telework_age$part_age)[(telework_age$part_age)])
-    # names(telework_age)
-    # flag <- telework_age$is_teleworking == FALSE
-    # plot(telework_age$part_age[flag],
-    #      telework_age$Freq[flag]/population_age$Freq,
-    #      xlab='age',
-    #      ylab='population fraction',
-    #      main='population teleworking',
-    #      pch=19, lwd=3, ylim=0:1
-    # )
-    
+   
     ## SCHOOLING ----
     data_part$enrolled_school <- data_part$school_id != 0 | data_part$college_id != 0
     school_age <- data.frame(table(school_enrolled = data_part$enrolled_school,part_age = data_part$part_age))

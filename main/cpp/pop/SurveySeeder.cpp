@@ -99,7 +99,7 @@ void SurveySeeder::RegisterParticipant(std::shared_ptr<Population> pop, Person& 
 		const auto pHC  = p.GetPoolId(Id::HouseholdCluster);
 		const auto pCol = p.GetPoolId(Id::Collectivity);
 
-		logger->info("[PART] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}", p.GetId(),
+		logger->info("[PART] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}", p.GetId(),
 			 p.GetAge(), pHH, pK12, pC, pW, pHC, pCol, h.IsSusceptible(), h.IsInfected(), h.IsInfectious(),
 			 h.IsRecovered(), h.IsImmune(), h.GetStartInfectiousness(), h.GetStartSymptomatic(),
 			 h.GetEndInfectiousness(), h.GetEndSymptomatic(),
@@ -108,8 +108,8 @@ void SurveySeeder::RegisterParticipant(std::shared_ptr<Population> pop, Person& 
 			 poolSys.CRefPools<Id::College>()[pC].GetPool().size(),
 			 poolSys.CRefPools<Id::Workplace>()[pW].GetPool().size(),
 			 poolSys.CRefPools<Id::PrimaryCommunity>()[pPC].GetPool().size(),
-			 poolSys.CRefPools<Id::SecondaryCommunity>()[pSC].GetPool().size(),
-			 p.IsAbleToTelework());
+			 poolSys.CRefPools<Id::SecondaryCommunity>()[pSC].GetPool().size()
+			 );
 	 }
 }
 

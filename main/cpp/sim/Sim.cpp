@@ -66,7 +66,6 @@ void Sim::TimeStep()
         // Logic where you compute (on the basis of input/config for initial day or on the basis of
         // number of sick persons, duration of epidemic etc) what kind of DaysOff scheme you apply.
         const bool isRegularWeekday     = m_calendar->IsRegularWeekday();
-        const bool isWorkplaceDistancingEnforced   = m_calendar->IsWorkplaceDistancingEnforced();
         const bool isHouseholdClusteringAllowed    = m_calendar->IsHouseholdClusteringAllowed();
 
 		// To be used in update of population & contact pools.
@@ -116,7 +115,7 @@ void Sim::TimeStep()
 				bool isCollegeOff   = m_calendar->IsSchoolClosed(population[i].GetAge());
 				// update health and presence at different contact pools
 				population[i].Update(isRegularWeekday, isK12SchoolOff, isCollegeOff,
-						isWorkplaceDistancingEnforced, isHouseholdClusteringAllowed,
+						isHouseholdClusteringAllowed,
 						m_is_isolated_from_household,
                         m_rn_handlers[thread_num], 
                         m_calendar);

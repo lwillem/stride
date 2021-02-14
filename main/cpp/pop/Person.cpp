@@ -70,7 +70,7 @@ void Person::Isolate(unsigned int simDay, unsigned int from, unsigned int to)
 
 //TODO: boolean args can be obtained from the calendar
 void Person::Update(bool isRegularWeekday, bool isK12SchoolOff, bool isCollegeOff,
-		bool isTeleworkEnforced, bool isHouseholdClusteringAllowed,
+		bool isHouseholdClusteringAllowed,
         bool isIsolatedFromHousehold,
 		util::RnHandler& rnHandler,
         const std::shared_ptr<Calendar> calendar)
@@ -127,10 +127,6 @@ void Person::Update(bool isRegularWeekday, bool isK12SchoolOff, bool isCollegeOf
 			m_in_pools[Id::HouseholdCluster]   = false;
 
         }
-
-        if(isTeleworkEnforced && IsAbleToTelework()){
-			m_in_pools[Id::Workplace]          = false;
-		}
 
         // Update presence in contact pools if person is in quarantine
         if(InIsolation()){

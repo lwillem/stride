@@ -47,9 +47,6 @@ public:
         /// Initializing PublicHealthAgency.
 		void Initialize(const boost::property_tree::ptree& config);
 
-        /// set telework features.
-        void SetTelework(std::shared_ptr<Population> pop, util::RnMan& rnMan);
-
         /// Public Health Strategy: look for contacts of infected cases and quarantine infected cases
 		void PerformContactTracing(std::shared_ptr<Population> pop, util::RnHandler& rnHandler, const std::shared_ptr<Calendar> calendar);
 
@@ -65,7 +62,6 @@ public:
                 const std::shared_ptr<Calendar> calendar);
 
 private:
-        double m_telework_probability;    ///< Probability to perform telework (or equivalent) //TODO rename "telework"
         //contact tracing configuration
         double m_detection_probability;   ///< Detection probability of symptomatic cases.
         double m_tracing_efficiency_household;  ///< Tracing probability for household members

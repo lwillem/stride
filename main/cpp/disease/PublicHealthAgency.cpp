@@ -37,13 +37,12 @@ using namespace stride::util;
 using namespace std;
 
 // Default constructor
-PublicHealthAgency::PublicHealthAgency(): m_telework_probability(0),m_detection_probability(0),
+PublicHealthAgency::PublicHealthAgency(): m_detection_probability(0),
 		m_tracing_efficiency_household(0),m_tracing_efficiency_other(0),m_case_finding_capacity(0),m_delay_isolation_index(0),m_delay_contact_tracing(0),
 		m_test_false_negative(0)
 	{}
 
 void PublicHealthAgency::Initialize(const ptree& config){
-	m_telework_probability        = config.get<double>("run.telework_probability",0);
 	m_detection_probability       = config.get<double>("run.detection_probability",0);
 
 	m_tracing_efficiency_household = config.get<double>("run.tracing_efficiency_household",0);
@@ -59,16 +58,6 @@ void PublicHealthAgency::Initialize(const ptree& config){
 	m_detection_probability        *= (1.0 - m_test_false_negative);
 	m_tracing_efficiency_household  *= (1.0 - m_test_false_negative);
 	m_tracing_efficiency_other      *= (1.0 - m_test_false_negative);
-}
-
-void PublicHealthAgency::SetTelework(std::shared_ptr<Population> pop, util::RnMan& rnMan)
-{
-	auto       generator   = rnMan.GetUniform01Generator();
-	for (auto& p : *pop) {
-		if(p.GetPoolId(ContactType::Id::Workplace) != 0 &&  generator() < m_telework_probability){
-			p.SetTeleworkAbility();
-		}
-	}
 }
 
 bool PublicHealthAgency::IsContactTracingActive(const std::shared_ptr<Calendar> calendar) const {
