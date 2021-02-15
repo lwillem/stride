@@ -46,6 +46,8 @@ run_rStride_abc <- function(abc_function_param,
 
   # load functions within parallel worker  
   source('./bin/rstride/rStride.R')
+  source('./bin/rstride/factories/CalendarFactory.R')
+  
 
   ################################## #
   ## GENERAL OPTIONS              ####
@@ -94,7 +96,7 @@ run_rStride_abc <- function(abc_function_param,
   config_exp$num_infected_seeds         <- round(config_exp$num_infected_seeds )
   config_exp$compliance_delay_workplace <- round(config_exp$compliance_delay_workplace)
   config_exp$compliance_delay_other     <- round(config_exp$compliance_delay_other)
-  config_exp$num_infected_seeds         <- round(config_exp$num_infected_seeds)
+  config_exp$num_daily_imported_cases   <- round(config_exp$num_daily_imported_cases)
   
   
 

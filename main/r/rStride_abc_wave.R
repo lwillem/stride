@@ -166,26 +166,26 @@ saveRDS(stride_prior,'stride_prior.rds')
 # length(stride_out)
 # dim(sum_stat_obs)
 
-ABC_stride<-ABC_rejection(model     = run_rStride_abc,
-                           prior    = stride_prior,
-                           nb_simul = n_sample,
-                           summary_stat_target=sum_stat_obs$value,
-                           tol=pacc,
-                           verbose = F,
-                           n_cluster=n_cluster,
-                           use_seed=TRUE,
-                           progress_bar=T)
-# 
-# ABC_stride<-ABC_sequential(model=run_rStride_abc,
-#                            prior=stride_prior,
-#                            nb_simul=n_sample,
+# ABC_stride<-ABC_rejection(model     = run_rStride_abc,
+#                            prior    = stride_prior,
+#                            nb_simul = n_sample,
 #                            summary_stat_target=sum_stat_obs$value,
-#                            method = "Lenormand",
-#                            p_acc_min=pacc,
-#                            verbose = T,
+#                            tol=pacc,
+#                            verbose = F,
 #                            n_cluster=n_cluster,
 #                            use_seed=TRUE,
 #                            progress_bar=T)
+# 
+ABC_stride<-ABC_sequential(model=run_rStride_abc,
+                           prior=stride_prior,
+                           nb_simul=n_sample,
+                           summary_stat_target=sum_stat_obs$value,
+                           method = "Lenormand",
+                           p_acc_min=pacc,
+                           verbose = T,
+                           n_cluster=n_cluster,
+                           use_seed=TRUE,
+                           progress_bar=T)
 # 
 # set back workdir
 setwd('../..')
