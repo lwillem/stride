@@ -94,6 +94,8 @@ run_rStride_abc <- function(abc_function_param,
   config_exp$num_infected_seeds         <- round(config_exp$num_infected_seeds )
   config_exp$compliance_delay_workplace <- round(config_exp$compliance_delay_workplace)
   config_exp$compliance_delay_other     <- round(config_exp$compliance_delay_other)
+  config_exp$num_infected_seeds         <- round(config_exp$num_infected_seeds)
+  
   
 
   ################################## #
@@ -104,19 +106,21 @@ run_rStride_abc <- function(abc_function_param,
   i_exp   <- rng_seed
   exp_tag <- .rstride$create_exp_tag(i_exp)
   
-   #save the config as XML file
+   # set output files prefix
    output_prefix       = smd_file_path(project_dir,exp_tag,.verbose=FALSE)
    config_exp$output_prefix <- output_prefix 
    
-   config_exp_filename = paste0(output_prefix,".xml")
-   save_config_xml(config_exp, config_exp_filename)
-
    # Temporary fix to include the lockdown/exit parameters into the calendar (backward compatibility)
    if(any(config_exp[grepl('cnt_reduction_workplace',names(config_exp)) | 
                      grepl('cnt_reduction_other',names(config_exp))] > 0)){
       config_exp  <- integrate_lockdown_parameters_into_calendar(config_exp)
-      smd_print("Deprecated lockdown and exit parameters merged into the calendar. Please make use of the updated calendar features",WARNING = T)
+      #smd_print("Deprecated lockdown and exit parameters merged into the calendar. Please make use of the updated calendar features",WARNING = T)
    }
+   
+   # save the config as XML file
+   config_exp_filename = paste0(output_prefix,".xml")
+   save_config_xml(config_exp, config_exp_filename)
+   
    # run stride (using the C++ Controller)
    cmd = paste(stride_bin,config_opt, paste0("../", config_exp_filename))
    system(cmd,ignore.stdout = TRUE)
@@ -467,6 +471,7 @@ get_abc_reference_data <- function(ref_period,
                                    bool_age  = FALSE,
                                    bool_doubling_time = TRUE,
                                    bool_hospital = TRUE,
+                                   bool_serology = TRUE,
                                    rel_importance_hosp_data = NA,
                                    age_cat_hosp_str = NA,
                                    bool_add_pop_stat = FALSE,
@@ -521,49 +526,53 @@ get_abc_reference_data <- function(ref_period,
    table(abc_hosp_stat$category)
    
    ## seroprevalence data ----
-   prevalence_ref <- load_observed_seroprevalence_data(ref_period = ref_period,
-                                                       analysis = ifelse(bool_age,'age','overall'))
-   
-   if(bool_age & bool_add_pop_stat){
-      prevalence_ref <- rbind(prevalence_ref,
-                              load_observed_seroprevalence_data(ref_period = ref_period,
-                                                                analysis = 'overall')
-                              )
-   }
-   
-   # temporary fix for 80-90 year olds
-   prevalence_ref <- prevalence_ref[prevalence_ref$age_min!=90,]
-   
-   # set "level" as factor
-   prevalence_ref$level <- as.factor(prevalence_ref$level)
-   
-   abc_sero_stat     <- data.table(value      = prevalence_ref$point_incidence_mean,
-                                   value_low  = prevalence_ref$point_incidence_low,
-                                   value_high = prevalence_ref$point_incidence_high,
-                                   date       = prevalence_ref$seroprevalence_date,
-                                   age_min    = prevalence_ref$age_min,
-                                   category   = 'cumulative_infections',
-                                   bool_orig  = TRUE,
-                                   level = prevalence_ref$level) # tmp
-   
-   if(bool_age){
-      abc_sero_stat[level != 'all',category := paste0('cumulative_infections_age', as.numeric(level))]
-   }
-   abc_sero_stat$level <- NULL # remove tmp column
-   
-   
-   # correction for decreasing serology estimaties
-   if(bool_truncate_serology){
-      for(i_age in 1:9){
-         flag_cat   <- abc_sero_stat$category == paste0('cumulative_infections_age',i_age)
-         flag_level <- c(FALSE,FALSE,abc_sero_stat$value[flag_cat][-(1:2)] < abc_sero_stat$value[flag_cat][2])
-         
-         if(any(flag_level)){
-            abc_sero_stat$value[flag_cat][flag_level] <- abc_sero_stat$value[flag_cat][2]
-            abc_sero_stat$value_low[flag_cat][flag_level] <- NA
-            abc_sero_stat$value_high[flag_cat][flag_level] <- NA
+   if(bool_serology){
+      prevalence_ref <- load_observed_seroprevalence_data(ref_period = ref_period,
+                                                          analysis = ifelse(bool_age,'age','overall'))
+      
+      if(bool_age & bool_add_pop_stat){
+         prevalence_ref <- rbind(prevalence_ref,
+                                 load_observed_seroprevalence_data(ref_period = ref_period,
+                                                                   analysis = 'overall')
+         )
+      }
+      
+      # temporary fix for 80-90 year olds
+      prevalence_ref <- prevalence_ref[prevalence_ref$age_min!=90,]
+      
+      # set "level" as factor
+      prevalence_ref$level <- as.factor(prevalence_ref$level)
+      
+      abc_sero_stat     <- data.table(value      = prevalence_ref$point_incidence_mean,
+                                      value_low  = prevalence_ref$point_incidence_low,
+                                      value_high = prevalence_ref$point_incidence_high,
+                                      date       = prevalence_ref$seroprevalence_date,
+                                      age_min    = prevalence_ref$age_min,
+                                      category   = 'cumulative_infections',
+                                      bool_orig  = TRUE,
+                                      level = prevalence_ref$level) # tmp
+      
+      if(bool_age){
+         abc_sero_stat[level != 'all',category := paste0('cumulative_infections_age', as.numeric(level))]
+      }
+      abc_sero_stat$level <- NULL # remove tmp column
+      
+      # correction for decreasing serology estimaties
+      if(bool_truncate_serology){
+         for(i_age in 1:9){
+            flag_cat   <- abc_sero_stat$category == paste0('cumulative_infections_age',i_age)
+            flag_level <- c(FALSE,FALSE,abc_sero_stat$value[flag_cat][-(1:2)] < abc_sero_stat$value[flag_cat][2])
+            
+            if(any(flag_level)){
+               abc_sero_stat$value[flag_cat][flag_level] <- abc_sero_stat$value[flag_cat][2]
+               abc_sero_stat$value_low[flag_cat][flag_level] <- NA
+               abc_sero_stat$value_high[flag_cat][flag_level] <- NA
+            }
          }
       }
+      
+   } else { # bool_serology
+      abc_sero_stat <- NULL
    }
    
    ## doubling time 3.1 (2.4-4.4) \cite{pellis2020challenges} ----
@@ -593,7 +602,7 @@ get_abc_reference_data <- function(ref_period,
    dim(sum_stat_obs)
 
    # duplicate serology data to give it the same weight in the reference data
-   if(!is.null(abc_hosp_stat)){
+   if(!is.null(abc_hosp_stat) && !is.null(abc_sero_stat)){
       sero_rep_factor   <- floor(nrow(abc_hosp_stat) / nrow(abc_sero_stat) * rel_factor_hosp_data)
       if(sero_rep_factor>1)
       for(i in 2:sero_rep_factor){

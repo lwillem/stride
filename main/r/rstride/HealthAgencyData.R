@@ -226,7 +226,7 @@ get_hospital_incidence_age <- function(age_breaks_str = NA){
   ## hospital admissions by age----
   # note: we cannot include this data in the public repository (yet)
   # solution: use local version of real data or "dummy" backup to prevent fatal errors
-  ref_data_file_name <- smd_file_path('data',paste0('covid19_hospital_age_2020.csv'))      
+  ref_data_file_name <- smd_file_path('data',paste0('covid19_hospital_age_2020_full.csv'))      
   backup_file        <- smd_file_path('data',paste0('covid19_hospital_age_dummy.csv'))
   
   if(file.exists(ref_data_file_name)){

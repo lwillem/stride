@@ -63,7 +63,7 @@ exp_param_list$dates_distancing_collectivity    <- NA
 
 exp_param_list$temporal_imported_cases          <- c_str(0,1,1,0)
 exp_param_list$dates_imported_cases             <- c_str('2020-06-01','2020-07-31','2020-08-01','2020-08-31','2020-09-01')
-exp_param_list$num_infected_seeds               <- 50
+exp_param_list$num_daily_imported_cases         <- 50
 
 exp_param_list$cnt_reduction_school_exit           <- 0.8
 exp_param_list$cnt_reduction_school_exit_secondary <- 0.1
