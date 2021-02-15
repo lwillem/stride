@@ -28,7 +28,8 @@
 # get default parameter values to combine in a full-factorial grid
 get_exp_param_default <- function(bool_child_param = FALSE, 
                                   bool_min_restrictive = FALSE,
-                                  bool_revised_model_param = FALSE){
+                                  bool_revised_model_param = FALSE,
+                                  bool_age_specific_param = FALSE){
    
    # create calendar files
    create_calendar_files()
@@ -127,6 +128,32 @@ get_exp_param_default <- function(bool_child_param = FALSE,
       out$cnt_reduction_other     <- 0.86
       out$compliance_delay_workplace <- 6
       out$compliance_delay_other  <- 7
+   }
+   
+   if(bool_age_specific_param){
+      
+      # updated parameters
+      out$population_file               <- "pop_belgium11M_c500_teachers_censushh_collectivity.csv"
+      out$age_contact_matrix_file       <- "contact_matrix_flanders_conditional_teachers_collectivity20.xml"
+      out$hospital_category_age         <- paste(c(seq(0,80,10)),collapse=',')
+      out$hospital_mean_delay_age       <- paste(3,3,7,7,7,7,6,6,1,sep=',')
+      out$disease_config_file           <- 'disease_covid19_lognorm.xml'
+      
+      # based on: "20210208_13971_col2b_c35_n140_p010_h1"
+      out$compliance_delay_workplace  <- 7
+      out$compliance_delay_other      <- 7
+      out$num_infected_seeds          <- 282
+      out$cnt_reduction_workplace     <- 0.8360346
+      out$cnt_reduction_other         <- 0.8967415
+      out$cnt_baseline_collectivity   <- 0.5
+      out$cnt_reduction_collectivity  <- 0.6798729
+      
+      out$disease_susceptibility_age <- "0.1350161,0.05944434,0.07522878,0.05647995,0.06748651,0.12283459,0.11295802,0.1587878,0.1036569"
+      out$disease_susceptibility_agecat <- out$hospital_category_age
+      out$transmission_probability      <- 1
+  
+      out$hospital_probability_age   <- "0.015851401,0.001003837,0.011986269,0.034452738,0.015600265,0.02167275,0.051827537,0.0636896,0.11244045"
+      out$hosp_probability_factor    <- 1
    }
    
    # select least stringent social mixing assumptions

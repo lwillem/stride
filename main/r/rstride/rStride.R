@@ -548,6 +548,12 @@ get_prevalence_data <- function(config_exp,file_name){
 
 }
 
+# help function to combine numerical values into a string format
+c_str <- function(...){
+  values <- unlist(list(...))
+  return(paste(values,sep=',',collapse=','))
+}
+
 ## STORE ALL FUNCTIONS ----
 rStride_functions <- ls(all.names = T)
 

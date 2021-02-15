@@ -184,6 +184,24 @@ create_calendar_file <- function(file_name_tag='2020_2021',show_plots = FALSE,fi
   d_school_reopening_1d <- d_school_reopening[d_school_reopening_wday %in% 3]
   d_calendar_holiday[date %in% d_school_reopening_1d & age %in% c(17),value:=0.5]
   
+  # school reopening September 2020
+  # up to primary school
+  d_calendar_holiday[date >= as.Date('2020-09-01') &
+                       age <= 12 &
+                     value == 0, value := 0.5]
+  # secondary school
+  d_calendar_holiday[date >= as.Date('2020-05-01') &
+                       age > 12 & age < 18 &
+                       value != 1, value := 0.2]
+  # tertiary eduction
+  d_calendar_holiday[date >= as.Date('2020-09-01') &
+                       age >= 18 &
+                       value == 0, value := 0.3]
+  
+  # tertiary eduction: closed from November 1st
+  d_calendar_holiday[date >= as.Date('2020-11-01') &
+                       age >= 18 , value := 1]
+
   ########################################### #
   ##  2b. Contact reductions: other        ####
   ########################################### #
@@ -237,12 +255,14 @@ create_calendar_file <- function(file_name_tag='2020_2021',show_plots = FALSE,fi
   ########################################### #
   
   data.table(category = "imported_cases",
-             date     = seq(as.Date('2020-07-01'),as.Date('2020-08-31'),1),
-             value    = 1,
+             # date     = seq(as.Date('2020-07-01'),as.Date('2020-08-31'),1),
+             date     = seq(as.Date(date_start),as.Date(date_end),1),
+             value    = 0,
              type = 'boolean',
              age = NA_integer_,
              stringsAsFactors = F
   ) -> dcal_imported_cases
+  dcal_imported_cases[date %in% seq(as.Date('2020-07-01'),as.Date('2020-08-31'),1),value := 1]
   
   ########################################### #
   ##  4. Contact tracing                 ####
@@ -331,14 +351,15 @@ plot_calendar <- function(dt_calendar, filename_calendar_full, show_plots = TRUE
     # make sure that "date" is in date format
     dt_calendar$date <- as.Date(dt_calendar$date)
     
-    x_lim <- range(dt_calendar$date)
+    # x_lim      <- range(dt_calendar$date)
+    x_lim      <- as.Date(c('2020-02-01','2020-12-31'))
     x_lab_year <- paste(unique(year(dt_calendar$date)),sep='-')
     i_cat <- category_opt[2]
     for(i_cat in category_opt){
       plot(x   = dt_calendar[category == i_cat,date],
            y   = dt_calendar[category == i_cat,value],
            xlim = x_lim,
-           ylim = range(0,1,dt_calendar$value),
+           ylim = range(0,1,dt_calendar$value[dt_calendar$category == i_cat]),
            col  = 1,
            #type='l',
            pch  = 15,
@@ -354,7 +375,34 @@ plot_calendar <- function(dt_calendar, filename_calendar_full, show_plots = TRUE
     }
     
     if("schools_closed" %in% dt_calendar$category){
+      
       i_cat <- "schools_closed"
+
+      # convert value into numeric factors (to use as color)
+      value_levels            <- c(unique(dt_calendar[category == i_cat & value > 0,'value']))
+      dt_calendar$value_level <- factor(dt_calendar$value,levels=unlist(value_levels))
+      dt_calendar$value_col   <- as.numeric(dt_calendar$value_level)
+      
+      plot(x   = dt_calendar[category == i_cat,date],
+           y   = dt_calendar[category == i_cat,value],
+           xlim = x_lim,
+           ylim = range(0,1,dt_calendar$value[dt_calendar$category == i_cat]),
+           col  = dt_calendar[category == i_cat,value_col],
+           #type='l',
+           pch  = 15,
+           #lwd=2,
+           main = i_cat,
+           bty='n',
+           xlab = x_lab_year,
+           ylab = unique(dt_calendar[,type]),
+           xaxt = 'n'
+      )
+      add_x_axis(x_lim)
+      abline(h=1,lty=3,col='grey')
+      
+     
+      
+      # plot by age
       plot(x   = dt_calendar[category == i_cat & value == 1,date],
            y   = dt_calendar[category == i_cat & value == 1,age],
            xlim = x_lim,
@@ -367,10 +415,10 @@ plot_calendar <- function(dt_calendar, filename_calendar_full, show_plots = TRUE
            ylab = 'age',
            xaxt = 'n'
       )
-      points(x   = dt_calendar[category == i_cat & !value %in% 0:1,date],
-           y   = dt_calendar[category == i_cat & !value %in% 0:1,age],
-           col  = 13,
-           pch  = 15
+      points(x    = dt_calendar[category == i_cat ,date],
+             y    = dt_calendar[category == i_cat ,age],
+             col  = dt_calendar[category == i_cat ,value_col],
+             pch  = 15
       )
       add_x_axis(x_lim)
     }
@@ -389,6 +437,9 @@ plot_calendar <- function(dt_calendar, filename_calendar_full, show_plots = TRUE
 # c('2020-05-03',0.75)); db_cat <- "workplace_distancing";db_age = 'NA'; file_name <- "sim_output/calendar_belgium_wp_fitting_covid19.csv"
 # db_category =  "workplace_distancing";db_update = dcal_wp_distancing; file_name = dcal_file
 adjust_calendar_file <- function(db_category, db_update, file_name, db_age = 'NA', show_plots=FALSE){
+  
+  # file_name fix, exclude '../'
+  file_name <- gsub('\\.\\.','\\.',file_name)
   
   # read calendar file
   d_calendar_all <- data.table(read.table(file=file_name,sep=',',header=T))
@@ -411,11 +462,13 @@ adjust_calendar_file <- function(db_category, db_update, file_name, db_age = 'NA
   # extrapolate given dates and values
   db_update  <- data.frame(t(db_update))
   date_out   <- seq(min(as.Date(db_update[,1])),max(as.Date(db_update[,1])),1) 
+  date_out   <- date_out[date_out<=max(d_calendar_all$date)]
   db_update  <- approx(x=as.Date(db_update[,1]),
                       y=db_update[,2],
                       xout = date_out)
   names(db_update) <- c('date','value')
 
+  
   # update values for all given date and ages
   for(i_db_age in as.character(db_age)){
     d_calendar_all[as.character(date) %in% as.character(db_update$date) &
@@ -424,6 +477,10 @@ adjust_calendar_file <- function(db_category, db_update, file_name, db_age = 'NA
                    value := db_update$value ]
   }
 
+  d_calendar_all[as.character(date) %in% as.character(db_update$date) &
+                   category == db_category &
+                   age_char == db_age]
+  
   # explore
   plot_calendar(dt_calendar            = d_calendar_all,
                 filename_calendar_full = file_name,
@@ -474,6 +531,33 @@ integrate_lockdown_parameters_into_calendar <- function(config_exp){
   date_exit_other       <- as.Date('2020-05-25')
   date_end              <- as.Date('2020-12-31')
   
+  # integrate school distancing (general: K6)
+  replace_calendar_value(file_name = config_exp$holidays_file,
+                         db_category =  "schools_closed",
+                         value_orig = 0.5,
+                         value_new = config_exp$cnt_reduction_school_exit,
+                         show_plots = T)
+  
+  # integrate school distancing: secondary
+  replace_calendar_value(file_name = config_exp$holidays_file,
+                         db_category =  "schools_closed",
+                         value_orig = 0.2,
+                         value_new = ifelse('cnt_reduction_school_exit_secondary' %in% names(config_exp),
+                                            config_exp$cnt_reduction_school_exit_secondary,
+                                            config_exp$cnt_reduction_school_exit),
+                         show_plots = T)
+
+  
+  # integrate school distancing: tertiary)
+  replace_calendar_value(file_name = config_exp$holidays_file,
+                         db_category =  "schools_closed",
+                         value_orig = 0.3,
+                         value_new = ifelse('cnt_reduction_school_exit_tertiary' %in% names(config_exp),
+                                            config_exp$cnt_reduction_school_exit_tertiary,
+                                            config_exp$cnt_reduction_school_exit),
+                         show_plots = T)
+
+  
   # integreate workplace distancing
   adjust_calendar_file(db_category =  "workplace_distancing",
                        db_update = data.frame(c(as.character(date_t0),0),
@@ -510,12 +594,40 @@ integrate_lockdown_parameters_into_calendar <- function(config_exp){
                          show_plots = T)
   }
   
-  #school distancing
-  replace_calendar_value(file_name = config_exp$holidays_file,
-                         db_category =  "schools_closed",
-                         value_orig = 0.5,
-                         value_new = config_exp$cnt_reduction_school_exit,
-                         show_plots = T)
+  if('temporal_distancing_workplace' %in% names(config_exp)){
+    include_temporal_distancing_factors(db_category    = 'workplace_distancing',
+                                        db_values_char = paste(config_exp$cnt_reduction_workplace,config_exp$temporal_distancing_workplace,sep=','),
+                                        file_name      = config_exp$holidays_file,
+                                        show_plots     = T,
+                                        db_dates_char       = config_exp$dates_distancing_workplace)
+  }
+  
+  if('temporal_distancing_community' %in% names(config_exp)){
+    include_temporal_distancing_factors(db_category    = 'community_distancing',
+                                        db_values_char = paste(config_exp$cnt_reduction_other,config_exp$temporal_distancing_community,sep=','),
+                                        file_name      = config_exp$holidays_file,
+                                        show_plots     = T,
+                                        db_dates_char       = config_exp$dates_distancing_community)
+  }
+  
+  if('temporal_distancing_collectivity' %in% names(config_exp)){
+    include_temporal_distancing_factors(db_category    = 'collectivity_distancing',
+                                        db_values_char = paste(config_exp$cnt_reduction_collectivity,config_exp$temporal_distancing_collectivity,sep=','),
+                                        file_name      = config_exp$holidays_file,
+                                        show_plots     = T,
+                                        db_dates_char  = config_exp$dates_distancing_collectivity)
+  }
+  
+  if('temporal_imported_cases' %in% names(config_exp)){
+    include_temporal_distancing_factors(db_category    = 'imported_cases',
+                                        db_values_char = paste(0,config_exp$temporal_imported_cases,sep=','),
+                                        file_name      = config_exp$holidays_file,
+                                        show_plots     = T,
+                                        db_dates_char  = config_exp$dates_imported_cases)
+  }
+  
+  
+
   
   #TODO: add household cluster mixing
   
@@ -524,6 +636,42 @@ integrate_lockdown_parameters_into_calendar <- function(config_exp){
   
   # return list
   return(config_exp)
+}
+
+# db_category <- 'distancing_workplace'
+# db_values <- seq(0.8,0.9,length=12)
+include_temporal_distancing_factors <- function(db_category,db_values_char,file_name,show_plots=T,db_dates_char=NA){
+  
+  # split given value string, into numerical values
+  db_values <- as.numeric(unlist(strsplit(db_values_char,',')))
+  
+  if(is.na(db_dates_char)){
+    # Start with May 1st using the lockdown measure
+    date_start <- as.Date('2020-05-01') # use lockdown values
+    
+    # Create list with eligible dates for given values (flexible, constant day of the month)
+    # note: max number of days per month = 31, max period = 31*number of values
+    date_day_select <- 1
+    date_all      <- seq(date_start,date_start+(31*length(db_values)),1)
+    db_dates      <- date_all[as.numeric(format(date_all,'%d')) == date_day_select]
+    
+    # safety check!
+    if(length(db_values) < length(db_dates)){
+      db_dates <- db_dates[1:(length(db_values))]
+    }
+    
+  } else{
+    db_dates <- as.Date(unlist(strsplit(db_dates_char,',')))
+  }
+  
+  # add right tail
+  db_dates <- c(db_dates,db_dates[length(db_dates)]+365)
+  db_values <- c(db_values,db_values[length(db_values)])
+  
+  adjust_calendar_file(db_category = db_category,
+                       db_update   = rbind(as.character(db_dates),db_values),
+                       file_name   = file_name,
+                       show_plots  = T)
 }
 
 

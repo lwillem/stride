@@ -111,6 +111,12 @@ run_rStride_abc <- function(abc_function_param,
    config_exp_filename = paste0(output_prefix,".xml")
    save_config_xml(config_exp, config_exp_filename)
 
+   # Temporary fix to include the lockdown/exit parameters into the calendar (backward compatibility)
+   if(any(config_exp[grepl('cnt_reduction_workplace',names(config_exp)) | 
+                     grepl('cnt_reduction_other',names(config_exp))] > 0)){
+      config_exp  <- integrate_lockdown_parameters_into_calendar(config_exp)
+      smd_print("Deprecated lockdown and exit parameters merged into the calendar. Please make use of the updated calendar features",WARNING = T)
+   }
    # run stride (using the C++ Controller)
    cmd = paste(stride_bin,config_opt, paste0("../", config_exp_filename))
    system(cmd,ignore.stdout = TRUE)
@@ -807,7 +813,7 @@ string2label <- function(name_list){
 }
 
 
-#dirname_output <- "/Users/lwillem/Documents/university/research/stride/ABC/20210125_abc_age"
+#dirname_output <- "/Users/lwillem/Documents/university/research/stride/ABC/20210205_collectivity/"
 #process_partial_results(dirname_output)
 process_partial_results <- function(dirname_output = NA){
 
@@ -817,7 +823,8 @@ process_partial_results <- function(dirname_output = NA){
    }
 
    dirname_output <- ifelse(is.na(dirname_output),'sim_output',dirname_output)
-   output_folders <- dir(dirname_output,pattern = 'abc',full.names = T)
+   # output_folders <- dir(dirname_output,pattern = 'abc',full.names = T)
+   output_folders <- dir(dirname_output,pattern = '_h',full.names = T)
    output_folders <- output_folders[!grepl('\\.',output_folders)] # files
    output_folders
    
