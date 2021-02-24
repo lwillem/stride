@@ -137,21 +137,21 @@ get_exp_param_default <- function(bool_child_param = FALSE,
       out$hospital_mean_delay_age       <- paste(3,3,7,7,7,7,6,6,1,sep=',')
       out$disease_config_file           <- 'disease_covid19_lognorm.xml'
       
-      # based on: "20210208_13971_col2b_c35_n140_p010_h1"
+      # based on: "20210224_16276_col3a_c35_n105_p010_h1"
       out$compliance_delay_workplace  <- 7
       out$compliance_delay_other      <- 7
-      out$compliance_delay_collectivity <- 1
-      out$num_infected_seeds          <- 282
-      out$cnt_reduction_workplace     <- 0.8360346
-      out$cnt_reduction_other         <- 0.8967415
+      out$compliance_delay_collectivity <- 7
+      out$num_infected_seeds          <- 307
+      out$cnt_reduction_workplace     <- 0.7682221
+      out$cnt_reduction_other         <- 0.8793729
       out$cnt_baseline_collectivity   <- 0.5
-      out$cnt_reduction_collectivity  <- 0.6798729
+      out$cnt_reduction_collectivity  <- 0.7009966
       
-      out$disease_susceptibility_age <- "0.1350161,0.05944434,0.07522878,0.05647995,0.06748651,0.12283459,0.11295802,0.1587878,0.1036569"
+      out$disease_susceptibility_age <- "0.1176923,0.05574399,0.06930532,0.07327394,0.06308314,0.11793085,0.08956135,0.1710099,0.08928561"
       out$disease_susceptibility_agecat <- out$hospital_category_age
       out$transmission_probability      <- 1
   
-      out$hospital_probability_age   <- "0.015851401,0.001003837,0.011986269,0.034452738,0.015600265,0.02167275,0.051827537,0.0636896,0.11244045"
+      out$hospital_probability_age   <- "0.029185022,0.015756289,0.023497016,0.018588676,0.018792145,0.026975605,0.047568101,0.0624074,0.10151618"
       out$hosp_probability_factor    <- 1
    }
    
