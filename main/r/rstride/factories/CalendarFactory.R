@@ -527,6 +527,7 @@ integrate_lockdown_parameters_into_calendar <- function(config_exp){
   date_t0               <- as.Date('2020-03-13')
   date_compliance_wp    <- date_t0 + config_exp$compliance_delay_workplace
   date_compliance_other <- date_t0 + config_exp$compliance_delay_other
+  date_compliance_collectivity <- date_t0 + config_exp$compliance_delay_collectivity
   date_exit_wp          <- as.Date('2020-05-04')
   date_exit_other       <- as.Date('2020-05-25')
   date_end              <- as.Date('2020-12-31')
@@ -588,7 +589,7 @@ integrate_lockdown_parameters_into_calendar <- function(config_exp){
     adjust_calendar_file(db_category =  "collectivity_distancing",
                          db_update = data.frame(c(as.character(date_start),config_exp$cnt_baseline_collectivity),
                                                 c(as.character(date_t0),config_exp$cnt_baseline_collectivity),
-                                                c(as.character(date_t0+1),config_exp$cnt_reduction_collectivity),
+                                                c(as.character(date_compliance_collectivity),config_exp$cnt_reduction_collectivity),
                                                 c(as.character(date_end),config_exp$cnt_reduction_collectivity)),
                          file_name = config_exp$holidays_file,
                          show_plots = T)

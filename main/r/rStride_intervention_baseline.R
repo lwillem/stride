@@ -31,9 +31,6 @@ get_exp_param_default <- function(bool_child_param = FALSE,
                                   bool_revised_model_param = FALSE,
                                   bool_age_specific_param = FALSE){
    
-   # create calendar files
-   create_calendar_files()
-   
    out <- list(r0                            = seq(3.4,3.4,0.1),
                 num_days                      = 196,
                 num_seeds                     = 10,
@@ -48,6 +45,7 @@ get_exp_param_default <- function(bool_child_param = FALSE,
                 cnt_reduction_other           = 0.85,
                 compliance_delay_workplace    = 6,
                 compliance_delay_other        = 6,
+                compliance_delay_collectivity = 1, # dummy, since not used in original setting
                 num_daily_imported_cases      = 0,
                 cnt_reduction_workplace_exit  = c(0.50,0.75),  
                 cnt_reduction_other_exit      = c(0.70,0.85),
@@ -142,6 +140,7 @@ get_exp_param_default <- function(bool_child_param = FALSE,
       # based on: "20210208_13971_col2b_c35_n140_p010_h1"
       out$compliance_delay_workplace  <- 7
       out$compliance_delay_other      <- 7
+      out$compliance_delay_collectivity <- 1
       out$num_infected_seeds          <- 282
       out$cnt_reduction_workplace     <- 0.8360346
       out$cnt_reduction_other         <- 0.8967415

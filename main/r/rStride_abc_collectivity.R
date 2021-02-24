@@ -132,6 +132,7 @@ stride_prior <- list(#r0                         = c("unif",3.0,4.0),
 # other options...
 model_param_update$compliance_delay_workplace <- 7
 model_param_update$compliance_delay_other <- 7
+model_param_update$compliance_delay_community <- 7
 
 # make sure that the population-based transmission and hospital probability are enabled/disabled correctly
 model_param_update$disease_susceptibility_agecat <- model_param_update$hospital_category_age

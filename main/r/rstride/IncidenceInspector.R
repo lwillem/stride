@@ -235,8 +235,8 @@ inspect_incidence_data <- function(project_dir, num_selection = 4, bool_add_para
     
   }
   
-  ## AGE-SPECIFIC PLOTS
-  
+  ## AGE-SPECIFIC PLOTS ####
+  .rstride$create_pdf(project_dir,'incidence_hospital_age',width = 12, height = 12)
   par(mfrow=c(3,3))
   i_age <- 4
   names(data_incidence_sel)
@@ -263,7 +263,7 @@ inspect_incidence_data <- function(project_dir, num_selection = 4, bool_add_para
                         bool_only_hospital_adm = TRUE) 
   }
   
-  
+  dev.off()
   
   
    # command line message
