@@ -31,7 +31,6 @@ enum class HealthStatus : unsigned short int
         Symptomatic              = 3U,
         InfectiousAndSymptomatic = 4U,
         Recovered                = 5U,
-        Immune                   = 6U
 };
 
 /// Holds a person's health data.
@@ -61,9 +60,6 @@ public:
 
         ///
         unsigned int GetIdInfector() const { return m_id_infector; }
-
-        /// Is this person immune?
-        bool IsImmune() const { return m_status == HealthStatus::Immune; }
 
         /// Is this person infected?
         bool IsInfected() const
@@ -104,9 +100,6 @@ public:
 
         /// Is infected X days before?
         bool NumberDaysInfected(unsigned int days_before) const;
-
-        /// Set health state to immune.
-        void SetImmune() { m_status = HealthStatus::Immune; }
 
         /// Set health state to susceptible
         void SetSusceptible() { m_status = HealthStatus::Susceptible; }

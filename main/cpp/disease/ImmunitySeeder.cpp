@@ -21,6 +21,7 @@
 #include "ImmunitySeeder.h"
 
 #include "pop/Person.h"
+#include "pop/ConstantVaccine.h"
 #include "util/RnMan.h"
 #include "util/FileSys.h"
 #include "util/LogUtils.h"
@@ -146,6 +147,9 @@ void ImmunitySeeder::Random(const SegmentedVector<ContactPool>& pools, vector<do
 
         }
 
+        //Simple vaccine immunity
+        shared_ptr<ConstantVaccine::Properties> properties(new ConstantVaccine::Properties{"immunity", 1.0,1.0,1.0});
+
         // Sample immune individuals, until all age-dependent quota are reached.
         while (numImmune > 0) {
                 // random pool, random order of members
@@ -160,7 +164,8 @@ void ImmunitySeeder::Random(const SegmentedVector<ContactPool>& pools, vector<do
                         Person& p = *p_pool[indices[i_p]];
                         // if p is susceptible and his/her age class has not reached the quota => make immune
                         if (p.GetHealth().IsSusceptible() && populationBrackets[p.GetAge()] > 0) {
-                                p.GetHealth().SetImmune();
+                                auto vaccine = std::unique_ptr<Vaccine>(new ConstantVaccine(properties));
+                                p.SetVaccine(vaccine);
 
                                 populationBrackets[p.GetAge()]--;
                                 numImmune--;

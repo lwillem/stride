@@ -25,6 +25,7 @@
 #include "contact/IdSubscriptArray.h"
 #include "disease/Health.h"
 #include "util/RnHandler.h"
+#include "pop/Vaccine.h"
 
 #include <cstddef>
 #include <queue>
@@ -147,6 +148,29 @@ public:
 
         bool IsNonComplier(const ContactType::Id& poolType) const { return m_non_complier[poolType]; }
 
+        /// Vaccinate
+        void SetVaccine(std::unique_ptr<Vaccine> &v) { m_vaccine = std::move(v); }
+
+        // Is the individual vaccinated?
+        bool IsVaccinated() { return (bool)m_vaccine; }
+
+        /// Get the last vaccine that was administered.
+        Vaccine& GetVaccine() 
+        {
+            if (!m_vaccine)
+                throw std::runtime_error("No vaccine administered");
+            else
+                return *m_vaccine.get();
+        }
+
+        bool IsImmune() const 
+        {
+            if (m_vaccine)
+                return m_vaccine->GetVeSusceptible() == 1.0;
+            else
+                return false;
+        }
+
 private:
         ///< Schedule an event, if the event should take place on simDay, it is executed right away.
         void ScheduleEvent(unsigned int simDay, const Event &event);
@@ -156,6 +180,8 @@ private:
 private:
         float        m_age; ///< The age.
         unsigned int m_id;  ///< The id.
+
+        std::unique_ptr<Vaccine> m_vaccine; ///< Vaccination profile, can be empty
 
         ///< Ids (school, work, etc) of pools you belong to Id value 0 means you do not belong to any
         ///< pool of that type (e.g. school and work are mutually exclusive).

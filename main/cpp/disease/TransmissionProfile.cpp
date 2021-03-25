@@ -151,6 +151,14 @@ double TransmissionProfile::GetProbability(Person* p_infected, Person* p_suscept
 	double adjustment_susceptible_child = (p_susceptible->GetAge() < 18) ? m_rel_susceptibility_children : 1;
 
 	double adjustment_susceptible_age = p_susceptible->GetHealth().GetRelativeSusceptibility();
+    
+    // Reduce the susceptibility wrt the administered vaccine.
+    if (p_susceptible->IsVaccinated())
+        adjustment_susceptible_age *= p_susceptible->GetVaccine().GetVeSusceptible();
+
+    //Take into account vaccine efficacy wrt infectiousness
+    if (p_infected->IsVaccinated())
+        transmission_probability_infector *= p_infected->GetVaccine().GetVeInfectiousness();
 
 	return transmission_probability_infector * adjustment_asymptomatic * adjustment_susceptible_child * adjustment_susceptible_age;
 }

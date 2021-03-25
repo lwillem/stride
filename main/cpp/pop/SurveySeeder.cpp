@@ -101,7 +101,7 @@ void SurveySeeder::RegisterParticipant(std::shared_ptr<Population> pop, Person& 
 
 		logger->info("[PART] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}", p.GetId(),
 			 p.GetAge(), pHH, pK12, pC, pW, pHC, pCol, h.IsSusceptible(), h.IsInfected(), h.IsInfectious(),
-			 h.IsRecovered(), h.IsImmune(), h.GetStartInfectiousness(), h.GetStartSymptomatic(),
+			 h.IsRecovered(), p.IsImmune(), h.GetStartInfectiousness(), h.GetStartSymptomatic(),
 			 h.GetEndInfectiousness(), h.GetEndSymptomatic(),
 			 poolSys.CRefPools<Id::Household>()[pHH].GetPool().size(),
 			 poolSys.CRefPools<Id::K12School>()[pK12].GetPool().size(),
