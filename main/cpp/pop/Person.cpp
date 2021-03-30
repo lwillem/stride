@@ -78,6 +78,9 @@ void Person::Update(bool isRegularWeekday, bool isK12SchoolOff, bool isCollegeOf
 {
         const unsigned int simDay = calendar->GetSimulationDay();
 
+        if (m_vaccine)
+            m_vaccine->AddDayToCounter();
+
         UpdateEvents(simDay);
 
         // Update health and disease status
