@@ -129,10 +129,10 @@ void ImmunitySeeder::Random(const SegmentedVector<ContactPool>& pools, vector<do
         auto       uniform01Generator = m_rn_man.GetUniform01Generator(0U);
         auto&      logger             = pop->RefEventLogger();
 
-        // Count susceptible individuals per age class
+        // Count unvaccinated individuals per age class
         for (auto& c : pools) {
                 for (const auto& p : c.GetPool()) {
-                        if (p->GetHealth().IsSusceptible()) {
+                        if (!p->IsVaccinated()) {
                                 populationBrackets[p->GetAge()]++;
                         }
                 }
@@ -163,7 +163,7 @@ void ImmunitySeeder::Random(const SegmentedVector<ContactPool>& pools, vector<do
                 for (unsigned int i_p = 0; i_p < size && numImmune > 0; i_p++) {
                         Person& p = *p_pool[indices[i_p]];
                         // if p is susceptible and his/her age class has not reached the quota => make immune
-                        if (p.GetHealth().IsSusceptible() && populationBrackets[p.GetAge()] > 0) {
+                        if (!p.IsVaccinated() && populationBrackets[p.GetAge()] > 0) {
                                 auto vaccine = std::unique_ptr<Vaccine>(new ConstantVaccine(properties));
                                 p.SetVaccine(vaccine);
 
