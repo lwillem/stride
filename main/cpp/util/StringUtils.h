@@ -21,6 +21,7 @@
 #pragma once
 
 #include <boost/algorithm/string.hpp>
+#include <boost/lexical_cast.hpp>
 #include <algorithm>
 #include <cctype>
 #include <iomanip>
@@ -65,9 +66,11 @@ inline std::vector<std::string> Split(const std::string& s, const std::string& d
 
 /// Tokenize a string (in order of occurence) with the given delimiters.
 /// Multiple consecutive delimiters do NOT define "empty" tokens; they are skipped.
-inline std::vector<std::string> Tokenize(const std::string& str, const std::string& delimiters)
+/// @throws bad_lexical_cast if the token val can't be converted to T
+template <typename T>
+inline std::vector<T> Tokenize(const std::string& str, const std::string& delimiters)
 {
-        std::vector<std::string> tokens;
+        std::vector<T> tokens;
 
         // Skip delimiters at beginning.
         std::string::size_type lastPos = str.find_first_not_of(delimiters, 0);
@@ -76,7 +79,7 @@ inline std::vector<std::string> Tokenize(const std::string& str, const std::stri
 
         while (std::string::npos != pos || std::string::npos != lastPos) {
                 // Found a token, add it to the vector.
-                tokens.push_back(str.substr(lastPos, pos - lastPos));
+                tokens.push_back(boost::lexical_cast<T>(str.substr(lastPos, pos - lastPos)));
                 // Skip delimiters.
                 lastPos = str.find_first_not_of(delimiters, pos);
                 // Find next non-delimiter.
