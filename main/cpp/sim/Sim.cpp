@@ -27,6 +27,7 @@
 #include "pop/Population.h"
 #include "sim/SimBuilder.h"
 #include "util/RunConfigManager.h"
+#include "util/StringUtils.h"
 
 #include <omp.h>
 #include <utility>
@@ -43,8 +44,7 @@ Sim::Sim()
       m_population(nullptr), m_rn_man(), m_transmission_profile(),
 	  m_cnt_intensity_householdCluster(0),
       m_is_isolated_from_household(false),
-	  m_public_health_agency(),m_universal_testing(),m_num_daily_imported_cases(0)
-
+	  m_public_health_agency(),m_universal_testing(),m_num_daily_imported_cases(0),m_hospitalisation_config()
 {
 }
 

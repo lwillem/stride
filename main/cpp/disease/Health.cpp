@@ -27,14 +27,17 @@ namespace stride {
 Health::Health(unsigned short int start_infectiousness, unsigned short int start_symptomatic,
                unsigned short int time_infectious, unsigned short int time_symptomatic,
 				double sympt_cnt_reduction_work_school, double sympt_cnt_reduction_community,
-				double relative_susceptibility)
+				double relative_susceptibility,
+                std::optional<double> start_hospitalisation)
     : m_disease_counter(0U), m_status(HealthStatus::Susceptible), m_start_infectiousness(start_infectiousness),
       m_start_symptomatic(start_symptomatic), m_end_infectiousness(start_infectiousness + time_infectious),
       m_end_symptomatic(start_symptomatic + time_symptomatic), m_id_index_case(0U), m_id_infector(0U),
 		m_sympt_cnt_reduction_work_school(sympt_cnt_reduction_work_school),
 		m_sympt_cnt_reduction_community(sympt_cnt_reduction_community),
         m_relative_infectiousness(0U),
-		m_relative_susceptibility(relative_susceptibility)
+		m_relative_susceptibility(relative_susceptibility),
+        m_start_hospitalisation(start_hospitalisation),
+        m_hospitalised(false)
 {
 }
 
@@ -64,6 +67,7 @@ void Health::StopInfection()
 {
         AssertThrow(IsInfected(), "Person not infected", nullptr);
         m_status = HealthStatus::Recovered;
+        m_hospitalised = false;
         ResetDiseaseCounter();
 }
 
@@ -99,6 +103,11 @@ void Health::Update()
 						StopInfection();
 				}
 			}
+            //check whether a hospitalisation start date was defined, if so, 
+            //compare it to the disease counter
+            if (m_start_hospitalisation && GetDiseaseCounter() == m_start_hospitalisation) {
+                m_hospitalised = true;
+            }
         }
 }
 

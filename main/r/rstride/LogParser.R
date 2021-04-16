@@ -86,11 +86,13 @@ parse_event_logfile <- function(event_logfile,exp_id,
                              'sim_day',
                              'start_infectiousness',
                              'start_symptoms',
-                             'end_symptoms')
+                             'end_symptoms',
+                             'hospital_admission_start')
   } else {
     header_transm       <- c('local_id', 'infector_id','part_age',
                              'infector_age','pool_type','sim_day','id_index_case',
                              'start_infectiousness','end_infectiousness','start_symptoms','end_symptoms',
+                             'hospital_admission_start',
                              'infector_is_symptomatic','part_rel_infectiousness','part_rel_susceptibility')
   }
   

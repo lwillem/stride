@@ -29,6 +29,7 @@
 #include "disease/PublicHealthAgency.h"
 #include "pop/SurveySeeder.h"
 #include "sim/Sim.h"
+#include "util/StringUtils.h"
 #include "util/FileSys.h"
 #include "util/RnMan.h"
 
@@ -54,6 +55,11 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         sim->m_calendar                      = make_shared<Calendar>(m_config,num_days);
         sim->m_event_log_mode                = EventLogMode::ToMode(m_config.get<string>("run.event_log_level", "None"));
         sim->m_rn_man                        = std::move(rnMan);
+
+        auto ageCategories = Tokenize<unsigned int>(m_config.get<string>("run.hospital_category_age"), ",");
+        auto probabilities = Tokenize<double>(m_config.get<string>("run.hospital_probability_age"), ",");
+        auto delays = Tokenize<double>(m_config.get<string>("run.hospital_mean_delay_age"), ",");
+        sim->m_hospitalisation_config = HospitalisationConfig(ageCategories, probabilities, delays);
 
         // --------------------------------------------------------------
         // Contact handlers, each with generator bound to different
@@ -91,7 +97,7 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         // --------------------------------------------------------------
         // Seed the population with health data.
         // --------------------------------------------------------------
-        HealthSeeder(diseasePt).Seed(sim->m_population, sim->m_transmission_profile, sim->m_rn_handlers);
+        HealthSeeder(diseasePt).Seed(sim->m_population, sim->m_hospitalisation_config, sim->m_transmission_profile, sim->m_rn_handlers);
 
         // --------------------------------------------------------------
 		// Seed population with immunity: naturally or vaccine-induced.

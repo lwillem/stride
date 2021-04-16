@@ -83,9 +83,11 @@ unsigned short int HealthSeeder::Sample(const vector<double>& distribution, doub
         return ret;
 }
 
-void HealthSeeder::Seed(const std::shared_ptr<stride::Population>& pop, const TransmissionProfile& transProfile, vector<util::RnHandler>& handlers)
+void HealthSeeder::Seed(const std::shared_ptr<stride::Population>& pop, const HospitalisationConfig &hc, const TransmissionProfile& transProfile, vector<util::RnHandler>& handlers)
 {
         auto& population = *pop;
+
+        vector<double> hospitalisationVariance = {-1.0, 0.0, 1.0};
 
 #pragma omp parallel num_threads(handlers.size())
         {
@@ -108,8 +110,15 @@ void HealthSeeder::Seed(const std::shared_ptr<stride::Population>& pop, const Tr
 
 
                         const bool isSymptomatic = gen01() <= m_probability_symptomatic[population[i].GetAge()];
+                        std::optional<double> daysToHospitalisation = {};
                         if(!isSymptomatic){
                         	timeSymptomatic = 0;
+                        } else {
+                            const bool isHospitalised = gen01() <= hc.GetProbability(population[i].GetAge());
+                            if (isHospitalised) {
+                                double variance = Sample(hospitalisationVariance, gen01());
+                                daysToHospitalisation = startSymptomatic + hc.GetDelay(population[i].GetAge()) + variance;
+                            } 
                         }
 
 						double relative_susceptibility = transProfile.GetIndividualSusceptibility(population[i].GetAge());
@@ -117,7 +126,8 @@ void HealthSeeder::Seed(const std::shared_ptr<stride::Population>& pop, const Tr
                         population[i].GetHealth() =
                             Health(startInfectiousness, startSymptomatic, timeInfectious, timeSymptomatic,
                             		m_sympt_cnt_reduction_work_school,m_sympt_cnt_reduction_community,
-                            		relative_susceptibility);
+                            		relative_susceptibility,
+                                    daysToHospitalisation);
                 }
         }
 }
