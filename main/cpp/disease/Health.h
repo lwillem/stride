@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include <optional>
+#include <boost/optional.hpp>
 
 namespace stride {
 
@@ -44,7 +44,7 @@ public:
                         unsigned short int time_infectious = 0U, unsigned short int time_symptomatic = 0U,
 						double sympt_cnt_reduction_work_school = 0U, double sympt_cnt_reduction_community=0U,
 						double relative_susceptibility = 0U,
-                        std::optional<double> start_hospitalisation = {});
+                        boost::optional<double> start_hospitalisation = {});
 
         ///
         unsigned short int GetEndInfectiousness() const { return m_end_infectiousness; }
@@ -59,7 +59,7 @@ public:
         unsigned short int GetStartSymptomatic() const { return m_start_symptomatic; }
         
         ///
-        std::optional<unsigned short int> GetStartHospitalisation() const { return m_start_hospitalisation; }
+        boost::optional<unsigned short int> GetStartHospitalisation() const { return m_start_hospitalisation; }
 
         ///
         unsigned int GetIdIndexCase() const { return m_id_index_case; }
@@ -168,7 +168,7 @@ private:
         double			   m_relative_infectiousness;   ///< Relative probability of transmission when infected [0-1]
         double			   m_relative_susceptibility;   ///< Relative probability of acquiring infection upon exposure [0-1]
 
-        std::optional<unsigned short int> m_start_hospitalisation; ///<Days after the individual needs to be hospitalised (optional, not all individuals end up in the hospital).
+        boost::optional<unsigned short int> m_start_hospitalisation; ///<Days after the individual needs to be hospitalised (optional, not all individuals end up in the hospital).
         bool               m_hospitalised;    ///< Is the individual currently hospitalised?
 };
 

@@ -110,7 +110,7 @@ void HealthSeeder::Seed(const std::shared_ptr<stride::Population>& pop, const Ho
 
 
                         const bool isSymptomatic = gen01() <= m_probability_symptomatic[population[i].GetAge()];
-                        std::optional<double> daysToHospitalisation = {};
+                        boost::optional<double> daysToHospitalisation = {};
                         if(!isSymptomatic){
                         	timeSymptomatic = 0;
                         } else {
