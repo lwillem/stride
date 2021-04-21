@@ -34,8 +34,8 @@ public:
         };
 
         ///
-        explicit ConstantVaccine(std::shared_ptr<Properties> properties) {
-            m_properties = properties;
+        explicit ConstantVaccine(std::shared_ptr<Properties> properties) : m_properties(properties)
+        {
         }
 
         ~ConstantVaccine() {}
