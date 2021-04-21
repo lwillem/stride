@@ -30,7 +30,7 @@ void HospitalisationConfig::NoHospitalisationInit()
     }   
 }
 
-HospitalisationConfig::HospitalisationConfig() 
+HospitalisationConfig::HospitalisationConfig() : m_probabilities(), m_delays() 
 {
     NoHospitalisationInit();
 }
@@ -38,6 +38,7 @@ HospitalisationConfig::HospitalisationConfig()
 HospitalisationConfig::HospitalisationConfig(
     std::vector<unsigned int> ageCategories,
     std::vector<double> probabilities, std::vector<double> delays)
+    : m_probabilities(), m_delays()
 {
     if (ageCategories.empty()) {
         NoHospitalisationInit();

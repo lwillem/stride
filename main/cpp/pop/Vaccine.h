@@ -26,9 +26,8 @@ class Vaccine
 {
 public:
         ///
-        explicit Vaccine() 
+        explicit Vaccine() : m_counter(0) 
         {
-            m_counter = 0;
         }
         
         virtual ~Vaccine() {}
