@@ -40,15 +40,11 @@ HospitalisationConfig::HospitalisationConfig(
     std::vector<double> probabilities, std::vector<double> delays)
     : m_probabilities(), m_delays()
 {
-    if (ageCategories.empty()) {
-        NoHospitalisationInit();
-    } else {
-        if (ageCategories[0] > 0) {
-            for (unsigned int i=0; i <= ageCategories[0]; ++i) {
-                m_probabilities[i] = 0.0;
-                m_delays[i] = 0.0;
-            }
-        }
+    //default initialisation
+    NoHospitalisationInit();
+    
+    //parse the age category probabilities/delays
+    if (!ageCategories.empty()) {
         for (unsigned int i=0; i <= ageCategories.size() - 1; ++i) {
             unsigned int max = MaximumAge();
             if (i < ageCategories.size() - 1)
