@@ -160,7 +160,7 @@ double TransmissionProfile::GetProbability(Person* p_infected, Person* p_suscept
     if (p_infected->IsVaccinated())
         transmission_probability_infector *= (1.0 - p_infected->GetVaccine().GetVeInfectiousness());
 
-	return transmission_probability_infector * adjustment_asymptomatic * adjustment_susceptible_child * adjustment_susceptible_age;
+    return transmission_probability_infector * adjustment_asymptomatic * adjustment_susceptible_child * adjustment_susceptible_age;
 }
 
 double TransmissionProfile::GetIndividualInfectiousness(RnHandler& generator) const {
