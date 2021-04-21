@@ -50,7 +50,10 @@ HospitalisationConfig::HospitalisationConfig(
             }
         }
         for (unsigned int i=0; i <= ageCategories.size() - 1; ++i) {
-            for (unsigned int j=ageCategories[i]; j <= ageCategories[i+1]; ++j) {
+            unsigned int max = MaximumAge();
+            if (i < ageCategories.size() - 1)
+		        max = ageCategories[i+1] - 1;
+            for (unsigned int j=ageCategories[i]; j <= max; ++j) {
                 m_probabilities[j] = probabilities[i];
                 m_delays[j] = delays[i];
             } 
