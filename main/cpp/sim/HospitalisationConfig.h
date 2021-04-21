@@ -41,17 +41,17 @@ public:
                 std::vector<double> probabilities, std::vector<double> delays);
 
         /// Get the hospitalisation probability for an age.
-        double GetProbability(const int age) const { return m_probabilities[EffectiveAge(age)-1]; }
+        double GetProbability(const int age) const { return m_probabilities[EffectiveAge(age)]; }
 
         /// Get the hospitalisation delay for an age.
-        double GetDelay(const int age) const { return m_delays[EffectiveAge(age)-1]; }
+        double GetDelay(const int age) const { return m_delays[EffectiveAge(age)]; }
 
 private:
         void NoHospitalisationInit();
 
 private:
-        std::array<double, MaximumAge()> m_probabilities; ///< Hospitalisation probabilities per age. 
-        std::array<double, MaximumAge()> m_delays;        ///< Hospitalisation probabilities per age. 
+        std::array<double, MaximumAge() + 1> m_probabilities; ///< Hospitalisation probabilities per age. 
+        std::array<double, MaximumAge() + 1> m_delays;        ///< Hospitalisation delays per age. 
 };
 
 } // namespace stride
