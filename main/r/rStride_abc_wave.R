@@ -77,66 +77,60 @@ project_dir <- smd_file_path('./sim_output',dir_postfix)
 ################################################ #
 
 # add default parameters and values to combine in a full-factorial grid
-model_param_update <- get_exp_param_default(bool_revised_model_param = T,
+model_param_update <- get_exp_param_default(bool_age_specific_param = T,
                                             bool_min_restrictive = T)
 
-# TEMP
-#model_param_update$population_file <- "pop_belgium600k_c500_teachers_censushh.csv"
-model_param_update$num_days        <- 74
-#model_param_update$logparsing_cases_upperlimit <- 2.5e6
+# additional model parameters
+#model_param_update$population_file <- "pop_belgium600k_c500_teachers_censushh_collectivity.csv"
+model_param_update$num_days        <- 319
 
 ref_period <- seq(as.Date('2020-03-15'),
                   as.Date(model_param_update$start_date) + model_param_update$num_days-1,
                   1)
-
+range(ref_period)
 ################################## #
 ## ABC PARAMETERS  ----
 ################################## #
-
+model_param_update
 # set priors
-stride_prior <- list(#r0                         = c("unif",3.0,4.0),
-                     num_infected_seeds         = c("unif",200,400),
-                     #hosp_probability_factor    = c("unif",0.3,0.5),
-                     cnt_reduction_workplace    = c("unif",0.70,0.90),
-                     compliance_delay_workplace = c("unif",4.51,7.49),  # rounded: 5-7
-                     cnt_reduction_other        = c("unif",0.70,0.95),
-                     compliance_delay_other     = c("unif",4.51,7.49), # rounded: 5-7
-                     
-                     disease_susceptibility_age_opt1 = c("unif",0.01,0.20),
-                     disease_susceptibility_age_opt2 = c("unif",0.01,0.20),
-                     disease_susceptibility_age_opt3 = c("unif",0.01,0.20),
-                     disease_susceptibility_age_opt4 = c("unif",0.01,0.20),
-                     disease_susceptibility_age_opt5 = c("unif",0.01,0.20),
-                     disease_susceptibility_age_opt6 = c("unif",0.01,0.30),
-                     disease_susceptibility_age_opt7 = c("unif",0.01,0.30),
-                     disease_susceptibility_age_opt8 = c("unif",0.01,0.40),
-                     disease_susceptibility_age_opt9 = c("unif",0.01,0.50),
-                     
-                     hospital_probability_age_opt1 = c("unif",0.01,0.90),
-                     hospital_probability_age_opt2 = c("unif",0.01,0.90),
-                     hospital_probability_age_opt3 = c("unif",0.01,0.90),
-                     hospital_probability_age_opt4 = c("unif",0.01,0.90),
-                     hospital_probability_age_opt5 = c("unif",0.01,0.90),
-                     hospital_probability_age_opt6 = c("unif",0.01,0.90),
-                     hospital_probability_age_opt7 = c("unif",0.01,0.90),
-                     hospital_probability_age_opt8 = c("unif",0.01,0.90),
-                     hospital_probability_age_opt9 = c("unif",0.01,0.90)
-                     
+stride_prior <- list( num_daily_imported_cases     = c("unif",0,50),
+                      
+                      temporal_distancing_workplace_opt1 = c("unif",0.5,0.80),  # 0.8360346
+                      temporal_distancing_workplace_opt2 = c("unif",0.5,0.80),
+                      temporal_distancing_workplace_opt3 = c("unif",0.5,0.80),
+                      
+                      temporal_distancing_community_opt1 = c("unif",0.7,0.9),  # 0.8967415
+                      temporal_distancing_community_opt2 = c("unif",0.7,0.9),
+                      temporal_distancing_community_opt3 = c("unif",0.7,0.9),
+                      
+                      temporal_distancing_collectivity_opt1 = c("unif",0.5,0.9),  # 0.6798729
+                      temporal_distancing_collectivity_opt2 = c("unif",0.5,0.9),
+                      temporal_distancing_collectivity_opt3 = c("unif",0.5,0.9),
+                      
+                      cnt_reduction_school_exit             = c("unif",0.0,0.50),
+                      cnt_reduction_school_exit_secondary   = c("unif",0.0,0.50),
+                      cnt_reduction_school_exit_tertiary    = c("unif",0.0,0.50)
                      )  
 
-# other options...
-#model_param_update$compliance_delay_workplace <- 7
-#model_param_update$compliance_delay_other <- 7
-#model_param_update$disease_susceptibility_agecat <- "0,10,20,30,40,50,60,70,80"
 
-# make sure that the population-based transmission and hospital probability is enabled/disabled correctly
-model_param_update$disease_susceptibility_agecat <- model_param_update$hospital_category_age
-if(any(grepl('disease_susceptibility_age',names(stride_prior)))){
-  model_param_update$transmission_probability  <- 1
-}
-if(any(grepl('hospital_probability_age',names(stride_prior)))){
-  model_param_update$hosp_probability_factor   <- 1
-}
+temporal_parameters_timepoints <- c_str('2020-05-01','2020-08-15','2020-10-01','2020-11-01')
+# exp_param_list$temporal_distancing_workplace    <- c_str(seq(0.85,0.75,length=8))
+model_param_update$dates_distancing_workplace       <- temporal_parameters_timepoints
+
+# exp_param_list$temporal_distancing_community      <- c_str(0.70,0.4,0.8)
+model_param_update$dates_distancing_community         <- temporal_parameters_timepoints
+
+# exp_param_list$temporal_distancing_collectivity <- c_str(seq(0.70,0.60,length=8))
+model_param_update$dates_distancing_collectivity    <- temporal_parameters_timepoints
+
+#exp_param_list$num_infected_seeds                  <- 50
+model_param_update$temporal_imported_cases          <- c_str(0,1,1,0)
+model_param_update$dates_imported_cases             <- c_str('2020-06-01','2020-07-31','2020-08-01','2020-08-31','2020-09-01')
+
+# exp_param_list$cnt_reduction_school_exit           <- 0.8
+# exp_param_list$cnt_reduction_school_exit_secondary <- 0.1
+# exp_param_list$cnt_reduction_school_exit_tertiary  <- 0.6
+
 
 length(stride_prior)
 
@@ -148,12 +142,13 @@ sum_stat_obs <- get_abc_reference_data(ref_period               = ref_period,
                                        bool_age                 = TRUE,
                                        bool_doubling_time       = FALSE,
                                        bool_hospital            = TRUE,
+                                       bool_serology            = FALSE,
                                        rel_importance_hosp_data = rel_importance_hosp_data,
                                        age_cat_hosp_str         = model_param_update$hospital_category_age,
                                        bool_add_pop_stat        = TRUE,
                                        bool_truncate_serology   = FALSE)
 table(sum_stat_obs$category)
-
+table(is.na(sum_stat_obs$value))
 
 ################################################ #
 ## RUN ABC   ----
@@ -167,10 +162,10 @@ saveRDS(sum_stat_obs,'sum_stat_obs.rds')
 saveRDS(stride_prior,'stride_prior.rds')
 
 # run_param  <- sample_param_from_prior(stride_prior)
-# stride_out <- run_rStride_abc(run_param)
+# stride_out <- run_rStride_abc(run_param,remove_run_output = F)
 # length(stride_out)
 # dim(sum_stat_obs)
-# 
+
 # ABC_stride<-ABC_rejection(model     = run_rStride_abc,
 #                            prior    = stride_prior,
 #                            nb_simul = n_sample,
@@ -191,7 +186,7 @@ ABC_stride<-ABC_sequential(model=run_rStride_abc,
                            n_cluster=n_cluster,
                            use_seed=TRUE,
                            progress_bar=T)
-
+# 
 # set back workdir
 setwd('../..')
 

@@ -41,7 +41,8 @@ public:
         ///
         explicit Health(unsigned short int start_infectiousness = 0U, unsigned int short start_symptomatic = 0U,
                         unsigned short int time_infectious = 0U, unsigned short int time_symptomatic = 0U,
-						double sympt_cnt_reduction_work_school = 0U, double sympt_cnt_reduction_community=0U);
+						double sympt_cnt_reduction_work_school = 0U, double sympt_cnt_reduction_community=0U,
+						double relative_susceptibility = 0U);
 
         ///
         unsigned short int GetEndInfectiousness() const { return m_end_infectiousness; }
@@ -111,7 +112,8 @@ public:
         void SetSusceptible() { m_status = HealthStatus::Susceptible; }
 
         /// Start the infection.
-        void StartInfection(unsigned int id_index_case, unsigned int id_infector, double individual_transmission_probability);
+        void StartInfection(unsigned int id_index_case, unsigned int id_infector, 
+                double relative_infectiousness);
 
         /// Stop the infection.
         void StopInfection();
@@ -128,10 +130,16 @@ public:
 		/// Is this individual PCR detectable?
 		bool IsPcrDetectable(unsigned int detectable_delay) const { return GetDiseaseCounter() >= detectable_delay; }
 
-        /// Get individual transmission probability
-        double GetIndividualTransmissionProbability() const {
-        		return m_individual_transmission_probability;
+        /// Get relative infectiousness
+        double GetRelativeInfectiousness() const {
+        		return m_relative_infectiousness;
         }
+
+        /// Get relative probability to acquire infection
+		double GetRelativeSusceptibility() const {
+				return m_relative_susceptibility;
+		}
+
 
 private:
         /// Get the disease counter.
@@ -158,7 +166,9 @@ private:
         double             m_sympt_cnt_reduction_work_school;  ///< Proportional reduction of presence in work/school pool when symptomatic
         double             m_sympt_cnt_reduction_community;    ///< Proportional reduction of presence in the community pools when symptomatic
 
-        double			  m_individual_transmission_probability; ///< Probability of transmission when this individual is infectious & contacts a susceptible individual
+        double			   m_relative_infectiousness;   ///< Relative probability of transmission when infected [0-1]
+        double			   m_relative_susceptibility;   ///< Relative probability of acquiring infection upon exposure [0-1]
+
 };
 
 } // namespace stride

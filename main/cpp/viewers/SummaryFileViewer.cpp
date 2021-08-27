@@ -43,7 +43,7 @@ void SummaryFileViewer::Update(const sim_event::Id id)
 
                 output::SummaryFile  summary_file(m_output_prefix);
                 summary_file.Print(configPt, static_cast<unsigned int>(pop->size()), pop->GetTotalInfected(),
-                                     sim->RefTransmissionProfile().GetProbability(), milli, milli);
+                                     sim->RefTransmissionProfile().GetHomogeneousProbability(), milli, milli);
                 break;
         }
         default: break;

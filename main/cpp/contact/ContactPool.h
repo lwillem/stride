@@ -61,7 +61,10 @@ public:
         ContactType::Id GetType() const { return m_pool_type; }
 
         /// Inspect whether this pool contains an infant
-        bool HasInfant() const { return m_has_infant; }
+        bool HasInfant() const { return m_min_age < 1; }
+
+        /// Get the minimum age of the members
+        unsigned int GetMinAge() const {return m_min_age;}
 
 public:
         // To iterate over the members.
@@ -92,7 +95,7 @@ private:
         unsigned int         m_pool_id;      ///< The ID of the ContactPool (for logging purposes).
         ContactType::Id      m_pool_type;    ///< The type of the ContactPool (for logging and testing purposes).
         std::vector<Person*> m_members;      ///< Pointers to contactpool members (raw pointers intentional).
-        bool                 m_has_infant;   ///< Boolean whether this contact pool contains infants between 0-1 years of age
+        unsigned int         m_min_age;      ///< The minimum age of the members
 };
 
 } // namespace stride

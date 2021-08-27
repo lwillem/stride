@@ -21,18 +21,18 @@
 #pragma once
 
 #include "contact/AgeContactProfiles.h"
-#include "contact/ContactHandler.h"
+#include "contact/EventLogMode.h"
 #include "contact/InfectorExec.h"
-#include "contact/TransmissionProfile.h"
 #include "disease/PublicHealthAgency.h"
+#include "disease/TransmissionProfile.h"
 #include "disease/UniversalTesting.h"
-
 #include "util/RnMan.h"
-
+#include "util/RnHandler.h"
 
 #include <boost/property_tree/ptree.hpp>
 #include <string>
-#include "../contact/EventLogMode.h"
+
+
 
 namespace stride {
 
@@ -41,6 +41,7 @@ class Population;
 
 namespace util {
 class RnMan;
+class RnHandler;
 }
 
 /**
@@ -65,7 +66,7 @@ public:
         std::shared_ptr<Population> GetPopulation() { return m_population; }
 
         /// Get the stored transmission probability.
-        double GetTransmissionProbability() const { return m_transmission_profile.GetProbability(); }
+        double GetTransmissionProbability() const { return m_transmission_profile.GetHomogeneousProbability(); }
 
         /// Get the random number manager.
         util::RnMan& RefRnManager() { return m_rn_man; }
@@ -90,7 +91,7 @@ private:
 
         std::shared_ptr<Calendar>   m_calendar;         ///< Management of calendar.
         AgeContactProfiles          m_contact_profiles; ///< Contact profiles w.r.t age.
-        std::vector<ContactHandler> m_handlers;         ///< Contact handlers (random numbers & probabilities).
+        std::vector<util::RnHandler> m_rn_handlers;     ///< Random number handlers (random numbers & binomial trials).
         InfectorExec*               m_infector_default; ///< Executes optimized transmission loops in contact pools.
         InfectorExec*               m_infector_tracing; ///< Executes all or optimized transmission loops in contact pools.
         std::shared_ptr<Population> m_population;       ///< Pointer to the Population.
@@ -99,18 +100,6 @@ private:
         TransmissionProfile         m_transmission_profile; ///< Profile of disease.
 
         // temporary...
-        double                      m_cnt_reduction_workplace;
-        double                      m_cnt_reduction_other;
-        double                      m_cnt_reduction_workplace_exit;
-        double                      m_cnt_reduction_other_exit;
-        double                      m_cnt_reduction_school_exit;
-        double                      m_cnt_reduction_intergeneration;
-        unsigned int                m_cnt_reduction_intergeneration_cutoff;
-        unsigned int                m_compliance_delay_workplace;
-        unsigned int                m_compliance_delay_other;
-        unsigned int                m_day_of_community_distancing;
-        unsigned int     	        m_day_of_workplace_distancing;
-        unsigned int     			m_day_of_community_distancing_exit;
         double                      m_cnt_intensity_householdCluster;
         bool                        m_is_isolated_from_household;
 

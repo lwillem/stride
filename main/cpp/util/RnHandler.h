@@ -11,11 +11,12 @@
  *  along with the software. If not, see <http://www.gnu.org/licenses/>.
  *
  *  Copyright 2019, Willem L, Kuylen E, Broeckhove J
+ *  Copyright 2021, Willem L, Kuylen E, Libin P
  */
 
 /**
  * @file
- * Header for the ContactHandler class.
+ * Header for the RnHandler class.
  */
 
 #pragma once
@@ -24,40 +25,39 @@
 #include <functional>
 
 namespace stride {
+namespace util {
 
 /**
- * Processes the contacts between persons and determines whether transmission occurs.
+ * Draw random numbers [0,1] and perform binomial trials (or Bernouilli trials).
  */
-class ContactHandler
+class RnHandler
 {
 public:
         /// Constructor sets the transmission probability and random number generator.
-        explicit ContactHandler(std::function<double()> gen) : m_uniform01_generator(std::move(gen)) {}
+        explicit RnHandler(std::function<double()> gen) : m_uniform01_generator(std::move(gen)) {}
 
         /// Make a draw on the uniform generator.
         double operator()() { return m_uniform01_generator(); }
 
-        /// Check if two individuals have contact and transmission occurs.
-        bool HasContactAndTransmission(double contact_probability, double transmission_probability)
-        {
-                return m_uniform01_generator() < transmission_probability * contact_probability;
-        }
+        /// Perform binomial trial with given probability.
+		bool Binomial(double probability_a)
+		{
+				return m_uniform01_generator() < probability_a;
+		}
 
-        /// Check if two individuals have contact.
-        bool HasContact(double contact_probability) { return m_uniform01_generator() < contact_probability; }
-
-        /// Check whether transmission occurs.
-        bool HasTransmission(double transmission_probability)
+		/// Perform binomial trial with given the product of the given probabilities.
+        bool Binomial(double probability_a, double probability_b)
         {
-                return m_uniform01_generator() < transmission_probability;
+                return m_uniform01_generator() < probability_a * probability_b;
         }
 
 private:
-        /// Convert rate into probability
+        /// Convert (exponential) rate into probability
         double RateToProbability(double rate) { return 1.0 - std::exp(-rate); }
 
 private:
         std::function<double()> m_uniform01_generator; ///< Random number generator: double in [0.0, 1.0)
 };
 
+} // namespace util
 } // namespace stride

@@ -31,7 +31,7 @@ using namespace std;
 using namespace boost::property_tree;
 using namespace stride::util;
 
-void TransmissionProfile::Initialize(const ptree& configPt, const ptree& diseasePt, util::RnMan& rnMan)
+void TransmissionProfile::Initialize(const ptree& configPt, const ptree& diseasePt)
 {
     // 1. setup general transmission aspects
     m_rel_transmission_asymptomatic   = diseasePt.get<double>("disease.rel_transmission_asymptomatic", 1);
@@ -42,7 +42,7 @@ void TransmissionProfile::Initialize(const ptree& configPt, const ptree& disease
     boost::optional<double> transmission_probability_as_input = configPt.get_optional<double>("run.transmission_probability");
     boost::optional<double> r0_as_input = configPt.get_optional<double>("run.r0");
 
-    // If available, use mean transmission probability as input
+    // If available, use mean transmission probability as input (dominates an input value for R0)
     if (transmission_probability_as_input) {
     		m_transmission_probability = *transmission_probability_as_input;
 
@@ -83,14 +83,25 @@ void TransmissionProfile::Initialize(const ptree& configPt, const ptree& disease
     // Check if age-dependent susceptibility vector is available
     // Otherwise, susceptibility adjustment factor for all ages is 1.
     boost::optional<std::string> susceptibility_by_age_as_input = configPt.get_optional<std::string>("run.disease_susceptibility_age");
-    if (susceptibility_by_age_as_input) {
+    boost::optional<std::string> susceptibility_agecat_as_input = configPt.get_optional<std::string>("run.disease_susceptibility_agecat");
+    if (susceptibility_by_age_as_input && susceptibility_agecat_as_input) {
+
     		auto susceptibility_string = Split(*susceptibility_by_age_as_input, ",");
-    		for (unsigned int index_age = 0; index_age < m_susceptibility_age.size(); index_age++) {
-    			if (index_age < susceptibility_string.size()) {
-    				m_susceptibility_age[index_age] = stod(susceptibility_string[index_age]);
-    			} else {
-    				m_susceptibility_age[index_age] = 0;
-    			}
+    		auto agecat_string = Split(*susceptibility_agecat_as_input, ",");
+
+    		if(susceptibility_string.size() != agecat_string.size()){
+    			throw runtime_error("TransmissionProfile::Initialize> Illegal input values for susceptibility_agecat: should be open ended with size susceptibility_age.size() ");
+    		}
+
+    		for (unsigned int index_agecat = 0; index_agecat < agecat_string.size(); index_agecat++) {
+    			auto age_min = stod(agecat_string[index_agecat]);
+    			auto age_max = (index_agecat == agecat_string.size()-1) ?
+									m_susceptibility_age.size() :
+									stod(agecat_string[index_agecat+1]) ;
+
+ 				for (unsigned int index_age = age_min; index_age < age_max; index_age++) {
+						m_susceptibility_age[index_age] = stod(susceptibility_string[index_agecat]);
+				}
     		}
     } else {
     		for (unsigned int index_age = 0; index_age < m_susceptibility_age.size(); index_age++) {
@@ -106,12 +117,10 @@ void TransmissionProfile::Initialize(const ptree& configPt, const ptree& disease
     		m_transmission_probability_distribution_overdispersion = configPt.get<double>("run.transmission_probability_distribution_overdispersion");
     }
 
-    // Save pointer to RnMan
-    m_rn_man_p = std::make_unique<util::RnMan>(rnMan);
 
 }
 
-double TransmissionProfile::GetProbability() const {
+double TransmissionProfile::GetHomogeneousProbability() const {
 	return m_transmission_probability;
 }
 
@@ -121,7 +130,7 @@ double TransmissionProfile::GetSusceptibilityFactor() const {
 	return susceptibility_mean;
 }
 
-double TransmissionProfile::GetSusceptibilityFactor(unsigned int age) const {
+double TransmissionProfile::GetIndividualSusceptibility(unsigned int age) const {
 	if (age < m_susceptibility_age.size()) {
 		return m_susceptibility_age[age];
 	} else {
@@ -131,7 +140,7 @@ double TransmissionProfile::GetSusceptibilityFactor(unsigned int age) const {
 
 double TransmissionProfile::GetProbability(Person* p_infected, Person* p_susceptible) const {
 	// Get individual transmission probability of infector
-	double transmission_probability_infector = p_infected->GetHealth().GetIndividualTransmissionProbability();
+	double transmission_probability_infector = p_infected->GetHealth().GetRelativeInfectiousness();
 
 	// Adjustment for asymptomatic cases
 	double adjustment_asymptomatic = (p_infected->GetHealth().IsSymptomatic()) ? 1 : m_rel_transmission_asymptomatic;
@@ -141,12 +150,13 @@ double TransmissionProfile::GetProbability(Person* p_infected, Person* p_suscept
 	// deprecated... this binary option will be removed in the future
 	double adjustment_susceptible_child = (p_susceptible->GetAge() < 18) ? m_rel_susceptibility_children : 1;
 
-	double adjustment_susceptible_age = GetSusceptibilityFactor(p_susceptible->GetAge());
+	double adjustment_susceptible_age = p_susceptible->GetHealth().GetRelativeSusceptibility();
 
 	return transmission_probability_infector * adjustment_asymptomatic * adjustment_susceptible_child * adjustment_susceptible_age;
 }
 
-double TransmissionProfile::DrawIndividualProbability() const {
+double TransmissionProfile::GetIndividualInfectiousness(RnHandler& generator) const {
+
 	// If mean transmission probability is 0, return 0.
 	// FIXME Is this ok?
 	if (m_transmission_probability == 0) {
@@ -161,12 +171,11 @@ double TransmissionProfile::DrawIndividualProbability() const {
 		double shape = m_transmission_probability_distribution_overdispersion;
 		double scale = m_transmission_probability / shape;
 
-		boost::math::gamma_distribution gamma_dist = boost::math::gamma_distribution<double>(shape, scale);
+		boost::math::gamma_distribution<double> gamma_dist = boost::math::gamma_distribution<double>(shape, scale);
 
 		double cdf1 = cdf(gamma_dist, 0.0);
 		double cdf2 = cdf(gamma_dist, 1.0);
 
-		auto generator = m_rn_man_p->GetUniform01Generator();
 		double individual_probability = quantile(gamma_dist, cdf1 + generator() * (cdf2 - cdf1));
 
 		return individual_probability;

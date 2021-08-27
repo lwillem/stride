@@ -70,14 +70,8 @@ void UniversalTesting::Initialize(const ptree& config){
     Replace(m_unitest_pool_allocation, "$unitest_pool_size", std::to_string(m_unitest_pool_size));
 }
 
-bool UniversalTesting::Bernoulli(ContactHandler& cHandler, double prob_of_success)
-{
-  double rnd_uni_01 = cHandler();
-  return rnd_uni_01 < prob_of_success; 
-}
-
 void UniversalTesting::PerformUniversalTesting(std::shared_ptr<Population> pop, 
-        ContactHandler& cHandler, const std::shared_ptr<Calendar> calendar,
+        RnHandler& rnHandler, const std::shared_ptr<Calendar> calendar,
         PublicHealthAgency& pha)
 {
   if (!calendar->IsUniversalTestingActivated())
@@ -207,7 +201,7 @@ void UniversalTesting::PerformUniversalTesting(std::shared_ptr<Population> pop,
     bool pool_positive_and_detectable = false;
     std::vector<std::vector<Person*>> tested_households;
     for (const auto& household : pool.GetHouseholds()) {
-      bool compliant = Bernoulli(cHandler, m_unitest_test_compliance);
+      bool compliant = rnHandler.Binomial(m_unitest_test_compliance);
      
       if (compliant) {
         tested_households.push_back(household);
@@ -220,11 +214,11 @@ void UniversalTesting::PerformUniversalTesting(std::shared_ptr<Population> pop,
       }
     }
 
-    bool pcr_test_positive = pool_positive_and_detectable && Bernoulli(cHandler, 1-m_unitest_fnr);
+    bool pcr_test_positive = pool_positive_and_detectable && rnHandler.Binomial(1-m_unitest_fnr);
     if (pcr_test_positive) {
       for (auto& household : tested_households) {
         if (m_unitest_isolation_strategy == "isolate-pool") {
-          bool isolation_compliance = Bernoulli(cHandler, m_unitest_isolation_compliance);
+          bool isolation_compliance = rnHandler.Binomial(m_unitest_isolation_compliance);
           if (isolation_compliance) {
             for (const auto& indiv : household) {
                 unsigned int start = simDay + 1 + m_unitest_isolation_delay;
@@ -243,9 +237,9 @@ void UniversalTesting::PerformUniversalTesting(std::shared_ptr<Population> pop,
           for (Person* indiv : household) {
             auto h = indiv->GetHealth();
             if (h.IsInfected() && h.IsPcrDetectable(m_unitest_detectable_delay)) {
-              bool pcr_test_positive = Bernoulli(cHandler, 1-m_unitest_fnr);
+              bool pcr_test_positive = rnHandler.Binomial(1-m_unitest_fnr);
               if (pcr_test_positive)
-                pha.Trace(*indiv, pop, cHandler, calendar);
+                pha.Trace(*indiv, pop, rnHandler, calendar);
             }
           }
         } else {

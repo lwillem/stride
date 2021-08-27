@@ -36,7 +36,7 @@ namespace stride {
 
 using namespace boost::property_tree;
 using namespace std;
-using namespace util;
+using namespace stride::util;
 using namespace ContactType;
 
 SimBuilder::SimBuilder(const ptree& config) : m_config(config) {}
@@ -61,7 +61,7 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         // --------------------------------------------------------------
         for (unsigned int i = 0; i < sim->m_num_threads; i++) {
                 auto gen = sim->m_rn_man.GetUniform01Generator(i);
-                sim->m_handlers.emplace_back(ContactHandler(gen));
+                sim->m_rn_handlers.emplace_back(util::RnHandler(gen));
         }
         const auto& select = make_tuple(sim->m_event_log_mode, sim->m_track_index_case);
         sim->m_infector_default    = InfectorMap().at(select);
@@ -86,12 +86,12 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         // Initialize the transmission profile (fixes rates).
         // --------------------------------------------------------------
         const auto diseasePt = ReadDiseasePtree();
-        sim->m_transmission_profile.Initialize(m_config, diseasePt, sim->m_rn_man);
+        sim->m_transmission_profile.Initialize(m_config, diseasePt);
 
         // --------------------------------------------------------------
         // Seed the population with health data.
         // --------------------------------------------------------------
-        HealthSeeder(diseasePt).Seed(sim->m_population, sim->m_handlers);
+        HealthSeeder(diseasePt).Seed(sim->m_population, sim->m_transmission_profile, sim->m_rn_handlers);
 
         // --------------------------------------------------------------
 		// Seed population with immunity: naturally or vaccine-induced.
@@ -102,7 +102,7 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         // --------------------------------------------------------------
         // Seed population with infection.
         // --------------------------------------------------------------
-        DiseaseSeeder(m_config, sim->m_rn_man).Seed(sim->m_population, sim->m_transmission_profile);
+        DiseaseSeeder(m_config, sim->m_rn_man).Seed(sim->m_population, sim->m_transmission_profile, sim->m_rn_handlers[0]);
         sim->m_num_daily_imported_cases = m_config.get<double>("run.num_daily_imported_cases",0);
 
         // --------------------------------------------------------------
@@ -114,16 +114,6 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
 		// Set Public Health Agency
 		// --------------------------------------------------------------
         sim->m_public_health_agency.Initialize(m_config);
-		sim->m_public_health_agency.SetTelework(sim->m_population,sim->m_rn_man);
-		sim->m_cnt_reduction_workplace              = m_config.get<double>("run.cnt_reduction_workplace",0);
-		sim->m_cnt_reduction_other                  = m_config.get<double>("run.cnt_reduction_other",0);
-		sim->m_cnt_reduction_workplace_exit         = m_config.get<double>("run.cnt_reduction_workplace_exit",0);
-		sim->m_cnt_reduction_other_exit             = m_config.get<double>("run.cnt_reduction_other_exit",0);
-		sim->m_cnt_reduction_school_exit            = m_config.get<double>("run.cnt_reduction_school_exit",0);
-		sim->m_cnt_reduction_intergeneration        = m_config.get<double>("run.cnt_reduction_intergeneration",0);
-		sim->m_cnt_reduction_intergeneration_cutoff = m_config.get<unsigned int>("run.cnt_reduction_intergeneration_cutoff",0);
-		sim->m_compliance_delay_workplace           = m_config.get<unsigned int>("run.compliance_delay_workplace",0);
-		sim->m_compliance_delay_other               = m_config.get<unsigned int>("run.compliance_delay_other",0);
 		sim->m_cnt_intensity_householdCluster       = m_config.get<double>("run.cnt_intensity_householdCluster",0);
 		sim->m_is_isolated_from_household           = m_config.get<bool>("run.is_isolated_from_household",false);
 

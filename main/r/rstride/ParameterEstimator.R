@@ -186,6 +186,7 @@ estimate_parameters <- function(project_dir)
   # GET RESULTS ####
   df_loglike_orig <- df_loglike
   # all results (including stochastic error)
+  if(length(unique(df_loglike_orig$config_id))>1)
   select_ensemble_and_plot(df_loglike_orig,input_opt_design,hosp_adm_data,
                            data_incidence_all,project_summary,prevalence_ref)
   

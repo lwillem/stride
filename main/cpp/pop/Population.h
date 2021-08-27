@@ -56,7 +56,7 @@ public:
         /// Create Person in the population.
         Person* CreatePerson(unsigned int id, double age, unsigned int householdId, unsigned int k12SchoolId,
                              unsigned int collegeId, unsigned int workId, unsigned int primaryCommunityId,
-                             unsigned int secondaryCommunityId, unsigned int householdClusterId);
+                             unsigned int secondaryCommunityId, unsigned int householdClusterId, unsigned int collectivityId);
 
         /// Get the cumulative number of cases.
         unsigned int GetTotalInfected() const;

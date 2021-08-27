@@ -1,3 +1,34 @@
+Skip to content
+Why GitHub? 
+  Team
+Enterprise
+Explore 
+Marketplace
+Pricing 
+Search
+Sign in
+Sign up
+elisekaa
+/
+  stride
+forked from lwillem/stride
+06
+Code
+Pull requests
+1
+Actions
+Projects
+Wiki
+Security
+Insights
+stride/main/r/rStride_superspreading.R
+@elisekaa
+elisekaa Cleaned up scripts for superspreading paper.
+Latest commit ede8cf6 on 5 Apr
+History
+1 contributor
+313 lines (275 sloc)  18.4 KB
+
 #!/usr/bin/env Rscript
 ############################################################################ #
 #  This file is part of the Stride software. 
@@ -49,7 +80,7 @@ run_simulations <- function(scenario_name,                # Label for output
                             num_days,                     # Number of days to run simulation
                             num_infected_seeds,           # Number of infected to seed at beginning of simulation
                             num_runs                      # Number of simulations to run
-                            ) {
+) {
   
   exp_design <- expand.grid(
     
@@ -311,3 +342,16 @@ run_simulations(
 #   cnt_reduction_workplace_exit = 0, cnt_reduction_other_exit = 0, cnt_reduction_school_exit = 0,
 #   disease_config_file = "disease_covid19_lognorm_nocntreduction.xml", holidays_file = "holidays_none.json",
 #   num_days = 40, num_infected_seeds = 1, num_runs = 200)
+© 2021 GitHub, Inc.
+Terms
+Privacy
+Security
+Status
+Docs
+Contact GitHub
+Pricing
+API
+Training
+Blog
+About
+Loading complete

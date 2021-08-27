@@ -112,3 +112,4 @@ vignettes/*.pdf
 rsconnect/
 README.html
 main/r/rstride/rmarkdown/covid19_stride_disease_files/figure-latex
+regression_rstride_summary.pdf

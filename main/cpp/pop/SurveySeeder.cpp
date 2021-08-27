@@ -20,6 +20,7 @@
 
 #include "SurveySeeder.h"
 
+#include "contact/EventLogMode.h"
 #include "pop/Population.h"
 #include "util/Exception.h"
 #include "util/RnMan.h"
@@ -38,47 +39,47 @@ SurveySeeder::SurveySeeder(const ptree& config, RnMan& rnMan) : m_config(config)
 
 shared_ptr<Population> SurveySeeder::Seed(shared_ptr<Population> pop)
 {
-        const string logLevel = m_config.get<string>("run.event_log_level", "None");
-        if (logLevel != "None") {
-                Population& population  = *pop;
-                const auto  popCount    = static_cast<unsigned int>(population.size() - 1);
-                auto  numSurveyed = m_config.get<unsigned int>("run.num_participants_survey");
+	const EventLogMode::Id logLevel   = EventLogMode::ToMode(m_config.get<string>("run.event_log_level", "None"));
+	if (logLevel != EventLogMode::Id::None) {
+		Population& population  = *pop;
+		const auto  popCount    = static_cast<unsigned int>(population.size() - 1);
+		auto  numSurveyed = m_config.get<unsigned int>("run.num_participants_survey");
 
-                assert((popCount >= 1U) && "SurveySeeder> Population count zero unacceptable.");
-                assert((popCount >= numSurveyed) && "SurveySeeder> Pop count has to exceed the number of survey participants.");
+		assert((popCount >= 1U) && "SurveySeeder> Population count zero unacceptable.");
+		assert((popCount >= numSurveyed) && "SurveySeeder> Pop count has to exceed the number of survey participants.");
 
-                // Make sure the number of survey participants does not outnumber the population size (else no survey)
-                if(popCount < numSurveyed){
-                	numSurveyed = 1;
+		// Make sure the number of survey participants does not outnumber the population size (else no survey)
+		if(popCount < numSurveyed){
+			numSurveyed = 1;
 
-                }
+		}
 
-                // Use while-loop to get 'participants' unique participants (default sampling is with replacement).
-                // A for loop will not do because we might draw the same person twice.
-                auto numSamples = 0U;
-                auto generator  = m_rn_man.GetUniformIntGenerator(0, static_cast<int>(popCount), 0U);
+		// Use while-loop to get 'participants' unique participants (default sampling is with replacement).
+		// A for loop will not do because we might draw the same person twice.
+		auto numSamples = 0U;
+		auto generator  = m_rn_man.GetUniformIntGenerator(0, static_cast<int>(popCount), 0U);
 
-                while (numSamples < numSurveyed) {
-                        Person& p = population[generator()];
-                        if (p.IsSurveyParticipant()) {
-                                continue;
-                        }
+		while (numSamples < numSurveyed) {
+				Person& p = population[generator()];
+				if (p.IsSurveyParticipant()) {
+						continue;
+				}
 
-                        // register new participant
-                        RegisterParticipant(pop,p);
+				// register new participant
+				RegisterParticipant(pop,p);
 
-                        // update number of remaining samples
-                        numSamples++;
-                }
-        }
-        return pop;
+				// update number of remaining samples
+				numSamples++;
+		}
+	}
+	return pop;
 }
 
 void SurveySeeder::RegisterParticipant(std::shared_ptr<Population> pop, Person& p)
 {
 
-	const string logLevel = m_config.get<string>("run.event_log_level", "None");
-	if (logLevel != "None") {
+	const EventLogMode::Id logLevel   = EventLogMode::ToMode(m_config.get<string>("run.event_log_level", "None"));
+	if (logLevel != EventLogMode::Id::None) {
 		Population& population  = *pop;
 
 		auto&       poolSys     = population.CRefPoolSys();
@@ -96,8 +97,10 @@ void SurveySeeder::RegisterParticipant(std::shared_ptr<Population> pop, Person& 
 		const auto pPC  = p.GetPoolId(Id::PrimaryCommunity);
 		const auto pSC  = p.GetPoolId(Id::SecondaryCommunity);
 		const auto pHC  = p.GetPoolId(Id::HouseholdCluster);
+		const auto pCol = p.GetPoolId(Id::Collectivity);
+
 		logger->info("[PART] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}", p.GetId(),
-			 p.GetAge(), pHH, pK12, pC, pW, pHC, h.IsSusceptible(), h.IsInfected(), h.IsInfectious(),
+			 p.GetAge(), pHH, pK12, pC, pW, pHC, pCol, h.IsSusceptible(), h.IsInfected(), h.IsInfectious(),
 			 h.IsRecovered(), h.IsImmune(), h.GetStartInfectiousness(), h.GetStartSymptomatic(),
 			 h.GetEndInfectiousness(), h.GetEndSymptomatic(),
 			 poolSys.CRefPools<Id::Household>()[pHH].GetPool().size(),
@@ -105,8 +108,8 @@ void SurveySeeder::RegisterParticipant(std::shared_ptr<Population> pop, Person& 
 			 poolSys.CRefPools<Id::College>()[pC].GetPool().size(),
 			 poolSys.CRefPools<Id::Workplace>()[pW].GetPool().size(),
 			 poolSys.CRefPools<Id::PrimaryCommunity>()[pPC].GetPool().size(),
-			 poolSys.CRefPools<Id::SecondaryCommunity>()[pSC].GetPool().size(),
-			 p.IsAbleToTelework());
+			 poolSys.CRefPools<Id::SecondaryCommunity>()[pSC].GetPool().size()
+			 );
 	 }
 }
 

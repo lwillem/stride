@@ -28,10 +28,8 @@
 # get default parameter values to combine in a full-factorial grid
 get_exp_param_default <- function(bool_child_param = FALSE, 
                                   bool_min_restrictive = FALSE,
-                                  bool_revised_model_param = FALSE){
-   
-   # create calendar files
-   create_calendar_files()
+                                  bool_revised_model_param = FALSE,
+                                  bool_age_specific_param = FALSE){
    
    out <- list(r0                            = seq(3.4,3.4,0.1),
                 num_days                      = 196,
@@ -43,17 +41,17 @@ get_exp_param_default <- function(bool_child_param = FALSE,
                 age_contact_matrix_file       = "contact_matrix_flanders_conditional_teachers.xml",
                 start_date                    = c('2020-02-17'),
                 holidays_file                 = 'calendar_belgium_2020_covid19_exit_school_adjusted.csv',
-                telework_probability          = 0,
                 cnt_reduction_workplace       = 0.8,
                 cnt_reduction_other           = 0.85,
                 compliance_delay_workplace    = 6,
                 compliance_delay_other        = 6,
+                compliance_delay_collectivity = 1, # dummy, since not used in original setting
                 num_daily_imported_cases      = 0,
                 cnt_reduction_workplace_exit  = c(0.50,0.75),  
                 cnt_reduction_other_exit      = c(0.70,0.85),
                 cnt_reduction_school_exit     = 0.5,
-                cnt_reduction_intergeneration = 0.9,  
-                cnt_reduction_intergeneration_cutoff = 65,
+                cnt_reduction_collectivity    = 0.0, # no reduction, during lockdown
+                cnt_baseline_collectivity     = 0.0, # no reduction, by default
                 cnt_intensity_householdCluster = 0,
                 detection_probability          = 0,
                 tracing_efficiency_household   = 0.9, 
@@ -109,8 +107,6 @@ get_exp_param_default <- function(bool_child_param = FALSE,
 
       #out$num_seeds <- NA
       
-      out$cnt_reduction_intergeneration <- 0
-      
    }
    
    # change parameters if childrens infectiousness is 1/2 compared to adults
@@ -130,8 +126,33 @@ get_exp_param_default <- function(bool_child_param = FALSE,
       out$cnt_reduction_other     <- 0.86
       out$compliance_delay_workplace <- 6
       out$compliance_delay_other  <- 7
-
-      out$cnt_reduction_intergeneration <- 0
+   }
+   
+   if(bool_age_specific_param){
+      
+      # updated parameters
+      out$population_file               <- "pop_belgium11M_c500_teachers_censushh_collectivity.csv"
+      out$age_contact_matrix_file       <- "contact_matrix_flanders_conditional_teachers_collectivity20.xml"
+      out$hospital_category_age         <- paste(c(seq(0,80,10)),collapse=',')
+      out$hospital_mean_delay_age       <- paste(3,3,7,7,7,7,6,6,1,sep=',')
+      out$disease_config_file           <- 'disease_covid19_lognorm.xml'
+      
+      # based on: "20210224_16276_col3a_c35_n105_p010_h1"
+      out$compliance_delay_workplace  <- 7
+      out$compliance_delay_other      <- 7
+      out$compliance_delay_collectivity <- 7
+      out$num_infected_seeds          <- 307
+      out$cnt_reduction_workplace     <- 0.7682221
+      out$cnt_reduction_other         <- 0.8793729
+      out$cnt_baseline_collectivity   <- 0.5
+      out$cnt_reduction_collectivity  <- 0.7009966
+      
+      out$disease_susceptibility_age <- "0.1176923,0.05574399,0.06930532,0.07327394,0.06308314,0.11793085,0.08956135,0.1710099,0.08928561"
+      out$disease_susceptibility_agecat <- out$hospital_category_age
+      out$transmission_probability      <- 1
+  
+      out$hospital_probability_age   <- "0.029185022,0.015756289,0.023497016,0.018588676,0.018792145,0.026975605,0.047568101,0.0624074,0.10151618"
+      out$hosp_probability_factor    <- 1
    }
    
    # select least stringent social mixing assumptions

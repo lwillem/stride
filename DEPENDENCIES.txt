@@ -12,7 +12,7 @@
 #  along with the software. If not, see <http://www.gnu.org/licenses/>.
 #  see http://www.gnu.org/licenses/.
 #
-#  Copyright 2019, 2018 Willem L, Kuylen E & Broeckhove J
+#  Copyright 2021, 2019, 2018 Willem L, Kuylen E & Broeckhove J
 #############################################################################
 
 The project depends on a number of resources. Non-included dependencies need
@@ -82,4 +82,25 @@ A C++ unit test framwework developed by Gooogle and available at
 https://github.com/google/googletest.
 
 
+
 #############################################################################
+#     rSTRIDE: ABC package (optional)
+#############################################################################
+
+To run the sequential ABC function within the rStride fitting procedure, the
+start a PSOC cluster might freeze on MacOS with R version 4.x.x If so, you 
+need to revert the setup of PSOCK cluster to 'sequential' to your ~/.Rprofile 
+until this is fixed in R/RStudio:
+
+	## WORKAROUND: https://github.com/rstudio/rstudio/issues/6692
+	## Revert to 'sequential' setup of PSOCK cluster in RStudio Console on macOS and R 4.0.0
+	if (Sys.getenv("RSTUDIO") == "1" && !nzchar(Sys.getenv("RSTUDIO_TERM")) && 
+	    Sys.info()["sysname"] == "Darwin" && getRversion() >= "4.0.0") {
+	  parallel:::setDefaultClusterOptions(setup_strategy = "sequential")
+	}
+
+
+Reference: https://github.com/rstudio/rstudio/issues/6692
+
+
+

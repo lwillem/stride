@@ -21,7 +21,9 @@
 ############################################################################ #
 
 # # load simid.rtools package (and install if not yet installed)
-if(!'simid.rtools' %in% installed.packages()[,1]){
+if(!'simid.rtools' %in% installed.packages()[,1] || 
+      !all(unlist(packageVersion("simid.rtools")) >= list(0,1,43))){ # at least 0.1.43 is required
+  
   require(devtools,quietly = T)
   devtools::install_github("lwillem/simid_rtools",force=F,quiet=T)
   #devtools::uninstall(simid.rtools)
@@ -81,6 +83,11 @@ create_default_config <- function(config_default_filename, run_tag)
 
 save_config_xml <- function(config_exp, xml_filename)
 {
+  
+  # remove NA's
+  config_exp[is.na(config_exp)] <- NULL
+  
+  # save as xml
   .rstride$save_config_xml(config_exp,'run',xml_filename)
 }
 
@@ -107,8 +114,7 @@ parse_log_file <- function(config_exp,
                            # get_burden_rdata, 
                            get_transmission_rdata, 
                            get_tracing_rdata, 
-                           project_dir_exp,
-                           bool_transmission_all = TRUE)
+                           project_dir_exp)
 {
   output_prefix <- config_exp$output_prefix
 
@@ -122,8 +128,7 @@ parse_log_file <- function(config_exp,
     
     rstride_out <- parse_event_logfile(event_log_filename,
                                        i_exp,
-                                       get_tracing_rdata,
-                                       bool_transmission_all)
+                                       get_tracing_rdata)
     
     # account for non-symptomatic cases
     flag <- rstride_out$data_transmission$start_symptoms == rstride_out$data_transmission$end_symptoms
@@ -140,23 +145,7 @@ parse_log_file <- function(config_exp,
     # get incidence data
     rstride_out$data_transmission[,infection_date  := as.Date(config_exp$start_date,'%Y-%m-%d') + sim_day]
     rstride_out$data_incidence <- get_transmission_statistics(rstride_out$data_transmission,
-                                                              bool_transmission_all,
                                                               sim_date_range)
-    
-    # # store disease burden and hospital admission data (for additional analysis)
-    # if(get_burden_rdata){
-    #   rstride_out$data_burden <- data.frame(day_infection           = rstride_out$data_transmission$sim_day,
-    #                                         part_age                = rstride_out$data_transmission$part_age,
-    #                                         start_infectiousness    = rstride_out$data_transmission$start_infectiousness,
-    #                                         end_infectiousness      = rstride_out$data_transmission$end_infectiousness,
-    #                                         start_symptoms          = rstride_out$data_transmission$start_symptoms,
-    #                                         end_symptoms            = rstride_out$data_transmission$end_symptoms,
-    #                                         hospital_admission      = rstride_out$data_transmission$hospital_admission_start,
-    #                                         infector_age            = rstride_out$data_transmission$infector_age,
-    #                                         infector_is_symptomatic = rstride_out$data_transmission$infector_is_symptomatic,
-    #                                         date_infection          = as.Date(config_exp$start_date,'%Y-%m-%d') + rstride_out$data_transmission$sim_day,
-    #                                         exp_id                  = rstride_out$data_transmission$exp_id)
-    # }
     
     # if transmission data should not be stored, replace item by NA
     if(!get_transmission_rdata){
@@ -226,9 +215,8 @@ run_rStride <- function(exp_design               = exp_design,
                 # get_burden_rdata         = FALSE,
                 use_date_prefix          = TRUE,
                 get_tracing_rdata        = FALSE,
-                bool_transmission_all    = TRUE,
                 num_parallel_workers     = NA))
-    run_tag <- basename(project_dir)
+    #run_tag <- basename(project_dir)
   }
   
   # command line message
@@ -287,11 +275,12 @@ run_rStride <- function(exp_design               = exp_design,
   cluster_timeout <- ifelse(.rstride$is_ua_cluster(),36000,1000)
   
   # start parallel workers
-  smd_start_cluster(timeout = cluster_timeout)
+  smd_start_cluster(timeout = cluster_timeout, num_proc = num_parallel_workers)
+  
   
   ################################## #
   ## CONFIG ID                    ####
-  ####################################
+  ################################## #
   
   # configuration id
   exp_design$config_id <- .rstride$get_config_id(exp_design)
@@ -338,6 +327,16 @@ run_rStride <- function(exp_design               = exp_design,
                        output_prefix       = smd_file_path(project_dir,exp_tag,.verbose=FALSE)
                        config_exp_filename = paste0(output_prefix,".xml")
                        config_exp          = create_config_exp(config_default, output_prefix, exp_design, i_exp)
+                       
+                       # Temporary fix to include the lockdown/exit parameters into the calendar (backward compatibility)
+                       if(any(config_exp[grepl('cnt_reduction_workplace',names(config_exp)) | 
+                                         grepl('cnt_reduction_other',names(config_exp))] > 0)){
+                         config_exp  <- integrate_lockdown_parameters_into_calendar(config_exp)
+                         #smd_print("Deprecated lockdown and exit parameters merged into the calendar. Please make use of the updated calendar features",WARNING = T)
+                       }
+                       
+                       # check collectivity info
+                       .rstride$check_population_contact_combination(config_exp)
                        
                        # # to debug
                        # config_exp          = .rstride$read_config_xml(config_exp_filename)
@@ -502,7 +501,7 @@ add_hospital_admission_time <- function(data_transmission,config_exp){
   # defensive programming for fitting ==>> probability cannot be > 1
   hospital_probability[hospital_probability>1] <- 1
   
-  # # set hospital delay for 4 age groups
+  # # set hospital delay by age group
   hosp_delay_mean      <- parse_hospital_input(config_exp$hospital_mean_delay_age)
   
   # set (uniform) delay  distribution -1, 0, 1
@@ -518,15 +517,16 @@ add_hospital_admission_time <- function(data_transmission,config_exp){
   i_hosp <- 1
   for(i_hosp in 1:length(hospital_probability)){
     #flag_part      <- !is.na(data_transmission$start_symptoms) & data_transmission$age_cat_hosp_num == i_hosp
-    flag_part      <-  age_cat_hosp_num == i_hosp
+    flag_part      <- age_cat_hosp_num == i_hosp
     flag_admission <- as.logical(rbinom(n = nrow(data_transmission),size = 1,prob = hospital_probability[[i_hosp]]))
     flag_hosp      <- flag_part & flag_admission
-    hosp_start     <- as.numeric(data_transmission$start_symptoms[flag_hosp]) + hosp_delay_mean[[i_hosp]] + sample(hosp_delay_variance,sum(flag_hosp),replace = T)
-    data_transmission[flag_hosp, hospital_admission_start := hosp_start]
- 
-    # save age-specific results  
-    data_transmission[flag_hosp ,paste0('hospital_admission_start_age',i_hosp) := hosp_start]
-
+    if(sum(flag_hosp)>0){
+      hosp_start     <- as.numeric(data_transmission$start_symptoms[flag_hosp]) + hosp_delay_mean[[i_hosp]] + sample(hosp_delay_variance,sum(flag_hosp),replace = T)
+      data_transmission[flag_hosp, hospital_admission_start := hosp_start]
+      
+      # save age-specific results  
+      data_transmission[flag_hosp ,paste0('hospital_admission_start_age',i_hosp) := hosp_start]      
+    }
   }
  
   # return
@@ -546,6 +546,12 @@ get_prevalence_data <- function(config_exp,file_name){
     return(NA)
   }
 
+}
+
+# help function to combine numerical values into a string format
+c_str <- function(...){
+  values <- unlist(list(...))
+  return(paste(values,sep=',',collapse=','))
 }
 
 ## STORE ALL FUNCTIONS ----

@@ -11,8 +11,14 @@ The project is hosted in a [GitHub repository](https://github.com/lwillem/stride
 * [Model optimisation](https://doi.org/10.1186/s12859-015-0612-2)
 * [Influenza](https://doi.org/10.1016/j.procs.2017.05.086)
 * [Measles (age)](https://link.springer.com/chapter/10.1007/978-3-030-22734-0_33) and [Measles (clustering)](https://doi.org/10.1101/2019.12.10.19014282)
-* [COVID19](https://doi.org/10.1101/2020.07.01.20144444) and [STRIDE COVID19 GitHub](https://github.com/lwillem/stride_covid19_v1)
+* [COVID-19 household bubbles](https://doi.org/10.1038/s41467-021-21747-7) and [STRIDE COVID19 GitHub](https://github.com/lwillem/stride_covid19_v1)
+* [COVID-19 universal testing](https://doi.org/10.1371/journal.pcbi.1008688)
 
+**ZENODO repositories** related to this software:
+
+* [Synthetic population data for Belgium](https://doi.org/10.5281/zenodo.4485995)
+* [COVID-19 household bubbles](https://doi.org/10.5281/zenodo.4440258)
+* [COVID-19 universal testing](https://doi.org/10.5281/zenodo.4386507)
 
 **Contributors** to the software (in alphabetical order):
 

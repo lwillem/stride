@@ -37,13 +37,12 @@ using namespace stride::util;
 using namespace std;
 
 // Default constructor
-PublicHealthAgency::PublicHealthAgency(): m_telework_probability(0),m_detection_probability(0),
+PublicHealthAgency::PublicHealthAgency(): m_detection_probability(0),
 		m_tracing_efficiency_household(0),m_tracing_efficiency_other(0),m_case_finding_capacity(0),m_delay_isolation_index(0),m_delay_contact_tracing(0),
 		m_test_false_negative(0)
 	{}
 
 void PublicHealthAgency::Initialize(const ptree& config){
-	m_telework_probability        = config.get<double>("run.telework_probability",0);
 	m_detection_probability       = config.get<double>("run.detection_probability",0);
 
 	m_tracing_efficiency_household = config.get<double>("run.tracing_efficiency_household",0);
@@ -61,22 +60,12 @@ void PublicHealthAgency::Initialize(const ptree& config){
 	m_tracing_efficiency_other      *= (1.0 - m_test_false_negative);
 }
 
-void PublicHealthAgency::SetTelework(std::shared_ptr<Population> pop, util::RnMan& rnMan)
-{
-	auto       generator   = rnMan.GetUniform01Generator();
-	for (auto& p : *pop) {
-		if(p.GetPoolId(ContactType::Id::Workplace) != 0 &&  generator() < m_telework_probability){
-			p.SetTeleworkAbility();
-		}
-	}
-}
-
 bool PublicHealthAgency::IsContactTracingActive(const std::shared_ptr<Calendar> calendar) const {
 	return (m_detection_probability > 0) && calendar->IsContactTracingActivated();
 }
 
 
-void PublicHealthAgency::PerformContactTracing(std::shared_ptr<Population> pop, ContactHandler& cHandler,
+void PublicHealthAgency::PerformContactTracing(std::shared_ptr<Population> pop, RnHandler& rnHandler,
 												const std::shared_ptr<Calendar> calendar)
 {
 
@@ -92,7 +81,7 @@ void PublicHealthAgency::PerformContactTracing(std::shared_ptr<Population> pop, 
 	for (auto& p_case : *pop) {
 
 		if(p_case.GetHealth().NumberDaysInfected(1) &&
-				cHandler() < m_detection_probability) {
+				rnHandler.Binomial(m_detection_probability)) {
 			p_case.SetTracingIndexCase();
 		}
 
@@ -105,7 +94,7 @@ void PublicHealthAgency::PerformContactTracing(std::shared_ptr<Population> pop, 
 	for (auto& p_case : *pop) {
 
 		if (p_case.IsTracingIndexCase() && p_case.GetHealth().NumberDaysSymptomatic(m_delay_isolation_index)	) {
-        Trace(p_case, pop, cHandler, calendar);  
+        Trace(p_case, pop, rnHandler, calendar);
 
         // update index case counter, and terminate if quota is reached
         num_index_cases++;
@@ -119,7 +108,7 @@ void PublicHealthAgency::PerformContactTracing(std::shared_ptr<Population> pop, 
 //TODO: rename IsolateAndTrace()
 void PublicHealthAgency::Trace(Person& p_case, 
         std::shared_ptr<Population> pop, 
-        ContactHandler& cHandler,
+		RnHandler& rnHandler,
         const std::shared_ptr<Calendar> calendar)
 {
 	auto& logger       = pop->RefEventLogger();
@@ -176,7 +165,7 @@ void PublicHealthAgency::Trace(Person& p_case,
 					poolTypeString    = "Workplace";
 				}
 
-				if(cHandler() < tracing_efficiency){
+				if(rnHandler.Binomial(tracing_efficiency)){
 
 					if(p_contact->GetHealth().IsInfected()){
 						// start isolation over X days

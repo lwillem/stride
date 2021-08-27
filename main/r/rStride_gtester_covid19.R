@@ -54,7 +54,6 @@ exp_design <- expand.grid(r0                            = 2.5,
                           age_contact_matrix_file       = 'contact_matrix_flanders_conditional_teachers.xml',
                           start_date                    = '2020-03-05',
                           holidays_file                 = 'holidays_belgium_2019_2021.csv',
-                          telework_probability          = 0,
                           cnt_reduction_workplace       = 0,
                           cnt_reduction_other           = 0,
                           compliance_delay_workplace    = 0,
@@ -63,8 +62,6 @@ exp_design <- expand.grid(r0                            = 2.5,
                           cnt_reduction_workplace_exit  = 0,
                           cnt_reduction_other_exit      = 0,
                           cnt_reduction_school_exit     = 0,
-                          cnt_reduction_intergeneration = 0,
-                          cnt_reduction_intergeneration_cutoff = 0,
                           cnt_intensity_householdCluster = 0,
                           detection_probability          = 0,
                           tracing_efficiency_household   = 0,
@@ -78,8 +75,13 @@ exp_design <- expand.grid(r0                            = 2.5,
                           hospital_probability_age      = paste(0.049,0.03024,0.1197,0.5922,sep=','),
                           hospital_mean_delay_age       = paste(3,7,7,6,sep=','),
                           
-                          disease_transmission_age      = 0,
+                          disease_susceptibility_age      = NA,
+                          disease_susceptibility_agecat   = NA,
+                          transmission_probability_distribution = NA,
+                          transmission_probability_distribution_overdispersion = NA,
 
+                          transmission_probability = NA,
+                          
                           stringsAsFactors = F)
 
 # all contacts ----
@@ -97,8 +99,8 @@ exp_design_dist <- exp_design
 exp_design_dist$holidays_file              <- 'calendar_belgium_2020_covid19_exit_school_adjusted.csv'
 exp_design_dist$cnt_reduction_workplace    <- 0.3;
 exp_design_dist$cnt_reduction_other        <- 0.4;
-exp_design_dist$compliance_delay_workplace <- 3;
-exp_design_dist$compliance_delay_other     <- 4;
+exp_design_dist$compliance_delay_workplace <- 3;  # cpp tester: 2
+exp_design_dist$compliance_delay_other     <- 4;  # cpp tester: 3
 exp_design_dist$gtester_label              <- 'covid_distancing'
 
 
@@ -136,29 +138,86 @@ exp_design_cts_all <- exp_design_cts
 exp_design_cts_all$event_log_level          <- 'ContactTracing'
 exp_design_cts_all$gtester_label            <- 'covid_tracing_all'
 
-# age-specific transmission: baseline ----
+# age-specific susceptibility: baseline ----
 # note: this should provide exact the same results as 'covid_base'
+exp_design_susceptible <- exp_design
+exp_design_susceptible$gtester_label            <- 'covid_suscept'
+tmp_susceptible  <- rep(1,100)
+exp_design_susceptible$disease_susceptibility_agecat <- paste(0:99,collapse=',')
+exp_design_susceptible$disease_susceptibility_age <- paste(tmp_susceptible,collapse=',')
+
+# age-specific susceptibility: adapted
+exp_design_susceptible_adapt <- exp_design
+exp_design_susceptible_adapt$gtester_label            <- 'covid_suscept_adapt'
+tmp_susceptible[-seq(1,91,9)] <- 0.90
+exp_design_susceptible_adapt$disease_susceptibility_agecat <- paste(0:99,collapse=',')
+exp_design_susceptible_adapt$disease_susceptibility_age <- paste(tmp_susceptible,collapse=',')
+
+# individual-based transmission: baseline ----
 exp_design_transm <- exp_design
-exp_design_transm$gtester_label            <- 'covid_transm_base'
+exp_design_transm$gtester_label            <- 'covid_transm'
+exp_design_transm$transmission_probability_distribution   <- 'Constant'
+exp_design_transm$transmission_probability_distribution_overdispersion   <- 0
+
+# individual-based transmission: adapted
+exp_design_transm_adapt <- exp_design
+exp_design_transm_adapt$gtester_label            <- 'covid_transm_gamma'
+exp_design_transm_adapt$transmission_probability_distribution   <- 'Gamma'
+exp_design_transm_adapt$transmission_probability_distribution_overdispersion   <- 0.8
+
+
+# fitting transmission and susceptibility: baseline ----
+exp_design_fitting <- exp_design
+exp_design_fitting$gtester_label            <- 'covid_fitting'
 # b0 <- 0.124492138353664; b1 <- 39.6458896077442            # from: disease_covid19_lognormal 
 b0 <- 0.14743616688954;  b1 <- 43.9598287259418              # from: disease_covid19_age  
-tmp_transmission <- rep((exp_design_transm$r0 - b0) / b1,100)
-exp_design_transm$disease_transmission_age <- paste(tmp_transmission,collapse=',')
-exp_design_transm$r0 <- -1  
+tmp_transmission <- rep(unique(exp_design_fitting$r0 - b0) / b1,100)
+exp_design_fitting$disease_susceptibility_age <- paste(tmp_transmission,collapse=',')
+exp_design_fitting$disease_susceptibility_agecat <- paste(0:99,collapse=',')
+# exp_design_fitting$r0 = (1-b0)/b1
+exp_design_fitting$transmission_probability = 1
 
-# age-specific transmission: adapted
-exp_design_transm_adapt <- exp_design
-exp_design_transm_adapt$gtester_label            <- 'covid_transm_adapt'
-tmp_transmission[seq(1,91,9)] <- 0.057
-exp_design_transm_adapt$disease_transmission_age <- paste(tmp_transmission,collapse=',')
-exp_design_transm_adapt$r0 <- -1  
+# fitting transmission and susceptibility: modified
+exp_design_fitting_adapt <- exp_design_fitting
+exp_design_fitting_adapt$gtester_label            <- 'covid_fitting_adapt'
+tmp_transmission[seq(0,18,1)]  <- 0.02
+tmp_transmission[seq(60,70,1)] <- 0.08
+exp_design_fitting_adapt$disease_susceptibility_age <- paste(tmp_transmission,collapse=',')
+
+# fitting transmission and susceptibility: modified
+exp_design_fitting_agegroup <- exp_design_fitting
+exp_design_fitting_agegroup$gtester_label            <- 'covid_fitting_agegroup'
+t_base <- unique(exp_design_fitting$r0 - b0) / b1
+exp_design_fitting_agegroup$disease_susceptibility_age <- paste(c(0.02,t_base,0.08,t_base),collapse=',')
+exp_design_fitting_agegroup$disease_susceptibility_agecat <- c('0,18,59,70')
+
+# collectivity ----
+exp_design_collectivity <- exp_design
+exp_design_collectivity$population_file              <- 'pop_belgium600k_c500_teachers_censushh_collectivity.csv'
+exp_design_collectivity$age_contact_matrix_file      <- 'contact_matrix_flanders_conditional_teachers_collectivity20.xml'
+exp_design_collectivity$gtester_label                <- 'covid_collectivity'
+
+# collectivity population, but in strict isolation
+exp_design_collectivity_isolation <- exp_design
+exp_design_collectivity_isolation$population_file    <- 'pop_belgium600k_c500_teachers_censushh_collectivity.csv'
+exp_design_collectivity_isolation$gtester_label      <- 'covid_collectivity_isolation'
+
+# collectivity mixing, default population
+exp_design_collectivity_mixing <- exp_design
+exp_design_collectivity_mixing$age_contact_matrix_file  <- 'contact_matrix_flanders_conditional_teachers_collectivity20.xml'
+exp_design_collectivity_mixing$gtester_label            <- 'covid_collectivity_mixing'
 
 # rbind all designs
 exp_design <- rbind(exp_design, exp_design_all,
                     exp_design_cts_all, exp_design_cts,
                     exp_design_daily, exp_design_dist,
                     exp_design_15min, exp_design_hhcl,
-                    exp_design_transm,exp_design_transm_adapt)
+                    exp_design_susceptible,exp_design_susceptible_adapt,
+                    exp_design_transm,exp_design_transm_adapt,
+                    exp_design_fitting,exp_design_fitting_adapt,
+                    exp_design_fitting_agegroup,
+                    exp_design_collectivity,exp_design_collectivity_isolation,
+                    exp_design_collectivity_mixing)
 
 
 # add a unique seed for each run
@@ -166,14 +225,23 @@ exp_design <- rbind(exp_design, exp_design_all,
 exp_design$rng_seed <- 1:nrow(exp_design)
 dim(exp_design)
 
-# align rng seeds for "base" and "transm_base"
-exp_design$rng_seed[grepl('covid_transm',exp_design$gtester_label)] <- exp_design$rng_seed[exp_design$gtester_label %in% c('covid_base')]
+# align rng seeds for "base" and "suscept", "transm" and "fitting" tests
+exp_design$rng_seed[grepl('covid_suscept',exp_design$gtester_label)] <- exp_design$rng_seed[exp_design$gtester_label %in% c('covid_base')]
+exp_design$rng_seed[grepl('covid_transm',exp_design$gtester_label)]  <- exp_design$rng_seed[exp_design$gtester_label %in% c('covid_base')]
+exp_design$rng_seed[grepl('covid_fitting',exp_design$gtester_label)] <- exp_design$rng_seed[exp_design$gtester_label %in% c('covid_base')]
+
 
 # # selection? ----
 # exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base'),]
-# exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_transm_base','covid_transm_adapt'),]
+#exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_collectivity','covid_collectivity_isolation','covid_collectivity_mixing'),]
+#exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_fitting_base','covid_fitting_adapt'),]
+#exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_transm','covid_transm_gamma'),]
+ # exp_design <- exp_design[grepl('_base',exp_design$gtester_label) |
+ #                            grepl('_collectivity',exp_design$gtester_label) |
+ #                            grepl('_fitting',exp_design$gtester_label),]
 
 
+table(exp_design$gtester_label)
 ################################## #
 ## RUN rSTRIDE                  ####
 ################################## #
@@ -190,11 +258,21 @@ smd_print("START ABC FUNCTION TEST")
 # get one parameter config, set workdir and save parameter RDS file
 model_param_abc <- exp_design[exp_design$gtester_label %in% c('covid_base'),]
 model_param_abc <- exp_design[1,]
+model_param_abc$event_log_level <- "Incidence"
 setwd(project_dir)
 saveRDS(model_param_abc,'model_param_update.rds')
 
 # run rStride_abc
-rstride_out_abc <- run_rStride_abc(c(100,3,400,0.4,0.85,7.4,0.85,4.51))
+rstride_out_abc <- run_rStride_abc(c(rng_seed = 100, 
+                                     r0 = 3, 
+                                     num_infected_seeds= 400, 
+                                     hosp_probability_factor=0.4,
+                                     cnt_reduction_workplace=0.85,
+                                     compliance_delay_workplace=7.4,
+                                     cnt_reduction_other=0.85,
+                                     compliance_delay_other=4.51
+                                     )
+                                   )
 
 # restore workdir
 setwd('../..')
@@ -228,31 +306,37 @@ project_summary$run_time       <- NULL
 project_summary$total_time     <- NULL
 
 # CHECK summary: plot number of cases
-y_lim     <- range(pretty(c(project_summary$num_cases*0.9,project_summary$num_cases*1.1)))
-bplt_mean <- aggregate(num_cases ~ gtester_label,data=project_summary,mean)
-bplt_mean$num_cases <- round(bplt_mean$num_cases)
-bplt <- boxplot(num_cases ~ gtester_label,data=project_summary,las=2,ylim=y_lim)
-x_ticks_mean <- (1:ncol(bplt$stats))+0.2
-points(x = x_ticks_mean,
-       y = bplt_mean$num_cases,
-       pch = 8,
-       col = 4)
-arrows(x0 = x_ticks_mean,
-       y0 = bplt_mean$num_cases * 0.9,
-       y1 = bplt_mean$num_cases * 1.1,
-       col = 4, lwd = 2,length = 0
-       )
-text(x = 1:ncol(bplt$stats),
-     y = bplt_mean$num_cases*1.1,
-     labels = bplt_mean$num_cases,
-     pos = 3,
-     col=4)
-legend('topright',
-       c('mean',
-         'mean ± 10%'),
-       pch=c('*','I'),
+plot_final_sizes <- function(project_summary){
+  y_lim     <- range(pretty(c(project_summary$num_cases*0.9,project_summary$num_cases*1.1)))
+  bplt_mean <- aggregate(num_cases ~ gtester_label,data=project_summary,mean)
+  bplt_mean$num_cases <- round(bplt_mean$num_cases)
+  par(mar=c(10,4,4,2))
+  bplt <- boxplot(num_cases ~ gtester_label,data=project_summary,las=2,ylim=y_lim,xlab='')
+  x_ticks_mean <- (1:ncol(bplt$stats))+0.2
+  points(x = x_ticks_mean,
+         y = bplt_mean$num_cases,
+         pch = 8,
+         col = 4)
+  arrows(x0 = x_ticks_mean,
+         y0 = bplt_mean$num_cases * 0.9,
+         y1 = bplt_mean$num_cases * 1.1,
+         col = 4, lwd = 2,length = 0
+  )
+  text(x = 1:ncol(bplt$stats),
+       y = bplt_mean$num_cases*1.1,
+       labels = bplt_mean$num_cases,
+       pos = 3,
        col=4)
-grid()
+  legend('bottom',
+         c('mean',
+           'mean ± 10%'),
+         pch=c('*','I'),
+         col=4,
+         ncol=2)
+  grid()
+}
+par(mfrow=c(1,1))
+plot_final_sizes(project_summary)
 
 # load the incidence output
 data_incidence     <- .rstride$load_aggregated_output(project_dir,'data_incidence')
@@ -286,29 +370,36 @@ if(!setequal(project_summary,ref_project_summary)){
     col_changed <- which(colSums(project_summary != ref_project_summary) > 0)
     smd_print('column(s) with changes:', paste(names(col_changed),collapse = ','),WARNING = T)
   } else{
-    smd_print('Summary dimensions changed!',WARNING = T)
-    
+    smd_print(paste(c('Summary dimensions changed:',setdiff(names(project_summary),names(ref_project_summary))),collapse='\n\t\t'),WARNING = T)
   }
   
-  diff_summary    <- setdiff(project_summary,ref_project_summary)
-  smd_print(names(diff_summary),WARNING = T)
+  # remove new column names
+  select_project_summary <- project_summary[,names(project_summary) %in% names(ref_project_summary)]
   
-  if(length(diff_summary)>1 && all(dim(project_summary) == dim(ref_project_summary))){
-    flag <- rowSums(project_summary[,names(diff_summary)] != ref_project_summary[,names(diff_summary)])>0
-    smd_print('EXP_ID with changes:', paste(unique(project_summary$gtester_label[flag]),collapse = ','))
-    project_summary[flag,names(diff_summary)]
+  # remove redundant exp
+  ref_project_summary <- ref_project_summary[,names(ref_project_summary) %in% names(select_project_summary)]
+  
+  # get difference
+  diff_summary    <- setdiff(select_project_summary,ref_project_summary)
+  if(length(diff_summary)>1 && all(dim(select_project_summary) == dim(ref_project_summary))){
+    smd_print(names(diff_summary),WARNING = T)
+    
+    flag <- rowSums(select_project_summary[,names(diff_summary)] != ref_project_summary[,names(diff_summary)])>0
+    smd_print('EXP_ID with changes:', paste(unique(select_project_summary$gtester_label[flag]),collapse = ','))
+    select_project_summary[flag,names(diff_summary)]
     ref_project_summary[flag,names(diff_summary)]
     
-    par(mfrow=c(1,2),mar=c(8,4,4,2))
-    y_lim <- range(pretty(c(ref_project_summary$num_cases,project_summary$num_cases)))
+    #par(mfrow=c(1,2),mar=c(8,4,4,2))
+    par(mar=c(8,4,4,2))
+    y_lim <- range(pretty(c(ref_project_summary$num_cases,select_project_summary$num_cases)))
     boxplot(num_cases ~ gtester_label,
-            data=ref_project_summary,main='REFERENCE',ylim=y_lim, las=2);grid()
+            data=ref_project_summary,main='REFERENCE',ylim=y_lim, las=2,xlab='');grid()
     boxplot(num_cases ~ gtester_label,
-            data=ref_project_summary,main='BOTH',ylim=y_lim, las=2);grid()
+            data=ref_project_summary,main='BOTH',ylim=y_lim, las=2,xlab='');grid()
     boxplot(num_cases ~ gtester_label,
-            data=project_summary,add=T,
-            col=alpha(2,0.4),main='',ylim=y_lim,las=2)  ;
-    legend('topleft',c('reference','new'),fill=c(1,alpha(2,0.4)) ,cex=0.8)
+            data=select_project_summary,add=T,
+            col=alpha(2,0.4),main='',ylim=y_lim,las=2,xlab='')  ;
+    legend('bottomleft',c('reference','new'),fill=c(1,alpha(2,0.4)) ,cex=0.8)
     grid() 
     par(mfrow=c(1,1),mar=c(8,4,4,2))
 
@@ -318,9 +409,9 @@ if(!setequal(project_summary,ref_project_summary)){
   smd_print("SUMMARY OK")
 }
 
-
 ## COMPARE INCIDENCE ----
-if(setequal(data_incidence, ref_data_incidence)){
+if(setequal(data_incidence[,names(data_incidence) != 'exp_id'], 
+            ref_data_incidence[,names(ref_data_incidence) != 'exp_id'])){
   smd_print("INCIDENCE OK")
 } else{
   
@@ -344,6 +435,7 @@ if(setequal(data_incidence, ref_data_incidence)){
       flag <- rowSums(data_incidence[,names(diff_incidence)] != ref_data_incidence[,names(diff_incidence)],na.rm=T)>0
       smd_print('EXP_ID with changes:', paste(unique(data_incidence$exp_id[flag]),collapse = ','))
       # data_incidence[flag,names(diff_incidence)]
+      smd_print('gtester_label with changes:', paste(unique(project_summary$gtester_label[project_summary$exp_id %in% data_incidence$exp_id[flag]]),collapse = ','))
       # ref_data_incidence[flag,names(diff_incidence)]    
       
       # bool_colnames <- names(diff_incidence)[names(diff_incidence) %in% names(ref_data_incidence)]
@@ -359,9 +451,9 @@ if(setequal(data_incidence, ref_data_incidence)){
   }
 }
 
-
 ## COMPARE PREVALENCE ----
-if(setequal(data_prevalence,ref_data_prevalence)){ 
+if(setequal(data_prevalence[,names(data_prevalence) != 'exp_id'],
+            ref_data_prevalence[,names(ref_data_prevalence) != 'exp_id'])){ 
   smd_print("PREVALENCE OK")
 } else{
   smd_print("PREVALENCE CHANGED",WARNING = T)
@@ -372,12 +464,12 @@ if(setequal(data_prevalence,ref_data_prevalence)){
 
 ## COMPARE ABC ----
 ref_rstride_out_abc <- readRDS(file='tests/regression_rstride_out_abc.rds')
-if(setequal(rstride_out_abc,rstride_out_abc)){
+if(setequal(rstride_out_abc,ref_rstride_out_abc)){
   smd_print("rSTRIDE ABC OK")
 } else{
   
   smd_print("rSTRIDE ABC CHANGED!",WARNING = T)
-  stride_diff <- setdiff(rstride_out_abc,rstride_out_abc)
+  stride_diff <- setdiff(rstride_out_abc,ref_rstride_out_abc)
   smd_print(names(diff_summary),WARNING = T)
 }
 
@@ -401,6 +493,11 @@ rrv_repo <- function(){
   saveRDS(data_incidence,file=file.path(stride_repo_dir,'regression_rstride_incidence.rds'))
   saveRDS(data_prevalence,file=file.path(stride_repo_dir,'regression_rstride_prevalence.rds'))
   saveRDS(rstride_out_abc,file=file.path(stride_repo_dir,'regression_rstride_out_abc.rds'))
+  
+  pdf(file=file.path(stride_repo_dir,'regression_rstride_summary.pdf'))
+  plot_final_sizes(project_summary)
+  dev.off()
+  
   smd_print('NEW REFERENCE VALES STORED: IN STRIDE REPOSITORY')
   rrv()
 }

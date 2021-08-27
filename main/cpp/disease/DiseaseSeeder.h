@@ -21,7 +21,7 @@
 #pragma once
 
 #include "contact/ContactPool.h"
-#include "contact/TransmissionProfile.h"
+#include "disease/TransmissionProfile.h"
 #include "util/RnMan.h"
 #include "util/SegmentedVector.h"
 
@@ -43,10 +43,10 @@ public:
         DiseaseSeeder(const boost::property_tree::ptree& config, util::RnMan& rnMan);
 
         /// Build the simulator.
-        void Seed(std::shared_ptr<Population> pop, TransmissionProfile& transmissionProfile);
+        void Seed(std::shared_ptr<Population> pop, const TransmissionProfile& transProfile, util::RnHandler& rnHandler);
 
         /// Import infected cases into the population
-        void ImportInfectedCases(std::shared_ptr<Population> pop, unsigned int numInfected, unsigned int simDay, TransmissionProfile& transmissionProfile);
+        void ImportInfectedCases(std::shared_ptr<Population> pop, unsigned int numInfected, unsigned int simDay, const TransmissionProfile& transProfile, util::RnHandler& rnHandler);
 
 
 private:

@@ -146,15 +146,16 @@ inspect_summary <- function(project_dir)
   # get parameter combinations
   input_opt_design <- unique(project_summary[,names(input_opt)])
   
-  # with only one parameter, convert vector into matrix
+  # with only one parameter, convert vector into nx2 matrix with dummy column
   if(length(input_opt)==1){
-    input_opt_design <- data.frame(as.matrix(data.frame(input_opt)))
+    input_opt_design <- data.frame(input_opt,
+                                   num_days = unique(project_summary$num_days) )
   }
   
   # with only identical parameters, use the r0
   if(length(input_opt)==0){
-    # input_opt_design <- as.matrix(data.frame(r0=unique(project_summary$r0)))
-    input_opt_design <- data.frame(r0=unique(project_summary$r0))
+    input_opt_design <- data.frame(r0=unique(project_summary$r0),
+                                   num_days=unique(project_summary$num_days))
   }
   
   return(input_opt_design)
@@ -163,6 +164,11 @@ inspect_summary <- function(project_dir)
 
 ## HELP FUNCTION ####
 .rstride$get_unique_param_list <- function(project_summary){
+
+  # option to select "holidays_calendar" basic file name by excluding the relative path, to overcome (experiment-specific) file names 
+  if('holidays_file' %in% names(project_summary)){
+    project_summary$holidays_file <- basename(project_summary$holidays_file)
+  }
   
   col_output <- c('run_time', 'total_time', 'num_cases', 'AR' )
   col_extra  <- c('rng_seed','output_prefix','transmission_probability','exp_id','config_id','contact_id')

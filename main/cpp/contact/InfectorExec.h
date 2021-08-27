@@ -24,18 +24,23 @@
 
 namespace stride {
 
+class Calendar;
 class ContactPool;
 class AgeContactProfile;
 class TransmissionProfile;
-class ContactHandler;
 class Population;
+
+namespace util {
+
+class RnHandler;
+
+}
 
 /// For use in the InfectorMap and Sim; executes infector.
 typedef void(InfectorExec)(ContactPool& pool, const AgeContactProfile& profile,
-                           const TransmissionProfile& trans_profile, ContactHandler& c_handler,
+                           const TransmissionProfile& trans_profile, util::RnHandler& rnHandler,
                            unsigned short int sim_day, std::shared_ptr<spdlog::logger> event_logger,
-						   double cnt_reduction_work, double cnt_reduction_other, double cnt_reduction_school,
-						   double cnt_reduction_intergeneration, unsigned int cnt_reduction_intergeneration_cutoff,
-						   std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster);
+						   std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster,
+						   std::shared_ptr<Calendar> calendar);
 
 } // namespace stride

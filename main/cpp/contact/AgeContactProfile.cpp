@@ -30,7 +30,7 @@ using namespace boost::property_tree;
 
 AgeContactProfile::AgeContactProfile(Id poolType, const ptree& contactPt) : std::array<double, MaximumAge() + 1>()
 {
-        string typeKey = ContactType::ToString(poolType);
+        string typeKey = "";
         // TODO ELiminate this hack by fixing the data file
         if (poolType == Id::K12School || poolType == Id::College) {
                 typeKey = "school";
@@ -44,16 +44,28 @@ AgeContactProfile::AgeContactProfile(Id poolType, const ptree& contactPt) : std:
                 typeKey = "secondary_community";
         } else if (poolType == Id::HouseholdCluster) {
              	typeKey = "household";
+        } else if (poolType == Id::Collectivity) {
+         		typeKey = "collectivity";
+
         }
+
+        // construct XML key
         const string key{string("matrices.").append(typeKey)};
-        unsigned int i = 0U;
-        for (const auto& participant : contactPt.get_child(key)) {
-                double totalContacts = 0;
-                for (const auto& contact : participant.second.get_child("contacts")) {
-                        totalContacts += contact.second.get<double>("rate");
-                }
-                (*this)[i++] = totalContacts;
-        }
+
+        // if the XML key is present, parse ptree and store data
+        if(contactPt.get_optional<std::string>(key).is_initialized()){
+        	unsigned int i = 0U;
+			for (const auto& participant : contactPt.get_child(key)) {
+					double totalContacts = 0;
+					for (const auto& contact : participant.second.get_child("contacts")) {
+							totalContacts += contact.second.get<double>("rate");
+					}
+					(*this)[i++] = totalContacts;
+			}
+
+            } else {
+//            	cerr << "WARNING: the contact data does not contain '" << key << "', assume contact probability == 0" << endl;
+            }
 }
 
 } // namespace stride

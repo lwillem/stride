@@ -23,8 +23,8 @@
 #include "PublicHealthAgency.h"
 #include "PCRPool.h"
 #include "contact/ContactPool.h"
-#include "contact/ContactHandler.h"
 #include "util/RnMan.h"
+#include "util/RnHandler.h"
 #include "util/SegmentedVector.h"
 #include "util/FileSys.h"
 
@@ -48,10 +48,7 @@ public:
 		void Initialize(const boost::property_tree::ptree& config);
 
        /// Public Health Strategy: perform universal testing
-       void PerformUniversalTesting(std::shared_ptr<Population> pop, ContactHandler& cHandler, const std::shared_ptr<Calendar> calendar, PublicHealthAgency& pha);
-
-private:
-        bool Bernoulli(ContactHandler& cHandler, double prob_of_success);
+       void PerformUniversalTesting(std::shared_ptr<Population> pop, util::RnHandler& rnHandler, const std::shared_ptr<Calendar> calendar, PublicHealthAgency& pha);
 
 private:
         filesys::path m_unitest_planning_output_fn; ///> Filename to output the planning to

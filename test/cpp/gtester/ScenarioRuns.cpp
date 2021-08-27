@@ -120,7 +120,10 @@ const char* tags_measles[] = {"measles_16", "measles_26"};
 const char* tags_r0[] = {"r0_0", "r0_4", "r0_8", "r0_12", "r0_16"};
 
 const char* tags_covid19[] = {"covid19_base", "covid19_all", "covid19_daily", "covid19_distancing",
-		"covid19_age_15min", "covid19_householdclusters", "covid19_tracing","covid19_tracing_all"};
+		"covid19_age_15min", "covid19_householdclusters", "covid19_tracing","covid19_tracing_all",
+		"covid19_transm","covid19_transm_gamma",
+		"covid19_suscept","covid19_suscept_age","covid19_suscept_adapt",
+		"covid19_fitting","covid19_fitting_adapt"};
 
 } // namespace
 
@@ -128,9 +131,9 @@ INSTANTIATE_TEST_CASE_P(covid19, RunsDefault, ValuesIn(tags_covid19));
 
 INSTANTIATE_TEST_CASE_P(influenza, RunsDefault, ValuesIn(tags_influenza));
 
-INSTANTIATE_TEST_CASE_P(measles, RunsDefault, ValuesIn(tags_measles));
+//INSTANTIATE_TEST_CASE_P(measles, RunsDefault, ValuesIn(tags_measles));
 
-INSTANTIATE_TEST_CASE_P(r0, RunsDefault, ValuesIn(tags_r0));
+//INSTANTIATE_TEST_CASE_P(r0, RunsDefault, ValuesIn(tags_r0));
 
 
 } // namespace Tests

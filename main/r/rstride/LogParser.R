@@ -32,11 +32,11 @@ if(0==1){
   event_logfile <- file.path(f_exp_dir,'event_log.txt')
   exp_id <- 2;bool_parse_tracing=TRUE
   xx <- parse_event_logfile(event_logfile,2)
-  
+  event_logfile <- event_log_filename
+  exp_id <- i_exp;bool_parse_tracing=TRUE
 }
 parse_event_logfile <- function(event_logfile,exp_id,
-                                bool_parse_tracing=TRUE,
-                                bool_transmission_all = TRUE)  # reducted transmission output
+                                bool_parse_tracing=TRUE)  # reducted transmission output
 {
 
   # terminal message
@@ -46,7 +46,7 @@ parse_event_logfile <- function(event_logfile,exp_id,
   data_log_cat <- fread(event_logfile, sep=' ', fill=TRUE,
                            select = 1)
   data_log_cat <- unlist(unique(data_log_cat))
-  
+
   # initialise output variables
   rstride_out <- list()
   
@@ -54,17 +54,22 @@ parse_event_logfile <- function(event_logfile,exp_id,
   # - PART    participant info
   # - PRIM    seed infection
   # - TRAN    transmission event
+  # - TRAN_M  transmission event (minimal info)
   # - CONT    contact event
   # - VACC    additional immunization
   # - TRACE   contact tracing
+  # - UNITEST] universal test log
+  # - UNITEST-ISOLATE universal test strategy isolations
+  # - NCOM    non-compliance to social distancing measures
 
   ###################### #
   ## PARTICIPANT DATA ####
   ###################### #
-  header_part         <- c('local_id', 'part_age', 'household_id', 'school_id', 'college_id','workplace_id', 'household_cluster_id',
+  header_part         <- c('local_id', 'part_age', 'household_id', 'school_id', 'college_id','workplace_id', 
+                           'household_cluster_id','collectivity_id',
                            'is_susceptible','is_infected','is_infectious','is_recovered','is_immune',
                            'start_infectiousness','start_symptomatic','end_infectiousness','end_symptomatic',
-                           'household_size','school_size','college_size','workplace_size','primarycommunity_size','secundarycommunity_size','is_teleworking')
+                           'household_size','school_size','college_size','workplace_size','primarycommunity_size','secundarycommunity_size')
 
   rstride_out$data_participants  <- reformat_log_data(event_logfile = event_logfile,
                                                       data_log_cat  = data_log_cat,
@@ -76,32 +81,22 @@ parse_event_logfile <- function(event_logfile,exp_id,
   ####################### #
   ## TRANSMISSION DATA ####
   ####################### #
-  if(bool_transmission_all){
-    
- 
-  header_transm       <- c('local_id', 'infector_id','part_age',
-                           'infector_age','pool_type','sim_day','id_index_case',
-                           'start_infectiousness','end_infectiousness','start_symptoms','end_symptoms',
-                           'infector_is_symptomatic')
-  } else {
-    header_transm       <- c(NA, #'local_id',
-                             NA, #'infector_id',
-                             'part_age',
-                             NA, #'infector_age',
-                             NA, #'pool_type',
+  if("[TRAN_M]" %in% data_log_cat){
+    header_transm       <- c('part_age',
                              'sim_day',
-                             NA, #'id_index_case',
                              'start_infectiousness',
-                             NA, #'end_infectiousness',
                              'start_symptoms',
-                             'end_symptoms',
-                             NA #'infector_is_symptomatic'
-                            )
+                             'end_symptoms')
+  } else {
+    header_transm       <- c('local_id', 'infector_id','part_age',
+                             'infector_age','pool_type','sim_day','id_index_case',
+                             'start_infectiousness','end_infectiousness','start_symptoms','end_symptoms',
+                             'infector_is_symptomatic','part_rel_infectiousness','part_rel_susceptibility')
   }
   
   rstride_out$data_transmission  <- reformat_log_data(event_logfile = event_logfile,
                                                       data_log_cat  = data_log_cat,
-                                                      log_cat       = c("PRIM","TRAN"),
+                                                      log_cat       = c("PRIM","TRAN","TRAN_M"),
                                                       colnames_all  = header_transm,
                                                       exp_id        = exp_id)
   
@@ -109,7 +104,7 @@ parse_event_logfile <- function(event_logfile,exp_id,
   ## CONTACT DATA     ####
   ###################### # 
   header_cnt          <- c('local_id', 'part_age', 'cnt_age', 'cnt_home', 'cnt_school', 
-                           'cnt_college','cnt_work', 'cnt_prim_comm', 'cnt_sec_comm', 'cnt_hh_cluster', 
+                           'cnt_college','cnt_work', 'cnt_prim_comm', 'cnt_sec_comm', 'cnt_hh_cluster', 'cnt_collectivity',
                            'sim_day', 'cnt_prob', 'trm_prob','part_sympt','cnt_sympt')
 
   rstride_out$data_contacts <- reformat_log_data(event_logfile = event_logfile,
@@ -152,7 +147,7 @@ parse_event_logfile <- function(event_logfile,exp_id,
   
   rstride_out$data_unitest <- reformat_log_data(event_logfile = event_logfile,
                                                 data_log_cat  = data_log_cat,
-                                                log_cat       = "UNITEST]",
+                                                log_cat       = "UNITEST",
                                                 colnames_all  = header_testing,
                                                 exp_id        = exp_id)
   ########################################## #
@@ -167,11 +162,29 @@ parse_event_logfile <- function(event_logfile,exp_id,
                                                     exp_id        = exp_id)
   
 
+  ########################################## #
+  ## NON-COMPLIANCE                       ####
+  ########################################## # 
+  header_ncompliance   <- c('local_id', 'part_age', 
+                           'household_id', 'noncomplier_household',
+                           'school_id', 'noncomplier_school',
+                           'college_id', 'noncomplier_college',
+                           'workplace_id',  'noncomplier_workplace',
+                           #'hh_cluster_id', 'noncomplier_hh_cluster',
+                           'prim_comm_id','noncomplier_prim_comm',
+                           'sec_comm_id', 'noncomplier_sec_comm')
+  
+
+  rstride_out$ncompliance <- reformat_log_data(event_logfile = event_logfile,
+                                               data_log_cat  = data_log_cat,
+                                               log_cat       = "NCOM",
+                                               colnames_all  = header_ncompliance,
+                                               exp_id        = exp_id)
+  
   # print CLI message and return
   cat("LOG PARSING COMPLETE",fill=TRUE)
   return(rstride_out)
 }
-
 
 ################################# #
 ## REFORMAT LOG DATA           ####
@@ -189,6 +202,9 @@ log_cat       = "UNITEST-ISOLATE"
 # exp_id <- 2
 reformat_log_data <- function(event_logfile,data_log_cat,log_cat,colnames_all,exp_id) {
 
+  # adapt log category to ...]
+  log_cat <- paste0(log_cat,']')
+  
   # check if the given log category is present
   #FIX for unitest: gsub
   if(!any(sapply(log_cat,grepl,data_log_cat))){

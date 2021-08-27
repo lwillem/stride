@@ -49,8 +49,8 @@ source('./bin/rStride_intervention_baseline.R')
 library(EasyABC)
 
 # set samples and cluster size
-n_sample = 24
 n_cluster = 8
+n_sample = n_cluster*2
 
 # set acceptance level
 pacc=0.5
@@ -119,24 +119,25 @@ run_file_path <- dirname(smd_file_path('./sim_output',run_tag_data,'test'))
 setwd(run_file_path)
 saveRDS(model_param_update,'model_param_update.rds')
 saveRDS(sum_stat_obs,'sum_stat_obs.rds')
+saveRDS(stride_prior,'stride_prior.rds')
 
-# stride_out <- run_rStride_abc(c(20,4,400,0.4,0.85,7.4,0.85,4.51))
+# run_param <- c(rng_seed=20,4,400,0.4,0.85,7.4,0.85,4.51)
+# names(run_param)[-1] <- names(stride_prior)
+# stride_out <- run_rStride_abc(run_param)
 # length(stride_out)
 # dim(sum_stat_obs)
 
-# p = 0.2
 # ABC_stride<-ABC_rejection(model     = run_rStride_abc,
 #                            prior    = stride_prior,
 #                            nb_simul = n_sample,
 #                            summary_stat_target=sum_stat_obs$value,
-#                            tol=p,
+#                            tol=pacc,
 #                            verbose = T,
 #                            n_cluster=n_cluster,
 #                            use_seed=TRUE,
 #                            progress_bar=T)
 
 
-#pacc=0.5
 ABC_stride<-ABC_sequential(model=run_rStride_abc,
                            prior=stride_prior,
                            nb_simul=n_sample,
@@ -165,6 +166,9 @@ save(list=ls(),file=smd_file_path(project_dir,'ABC_stride_all.RData'))
 # ABC_stride <- readRDS(smd_file_path(project_dir,'ABC_stride.rds'))
 # load(file=smd_file_path(project_dir,'ABC_stride_all.RData'))
 
+# or use intermediate output
+#ABC_stride <- load_partial_results_abc(project_dir)
+
 # # re-load rStride
 # source('./bin/rstride/rStride.R')
 
@@ -176,11 +180,14 @@ print(length(ABC_stride$intermediary))
 # plot (final) results
 plot_abc_results(ABC_stride,project_dir)
 
+# plot posterior distribution per iteration
+plot_abc_posterior(ABC_stride,project_dir)
+
 # plot parameter correlation
 plot_abc_correlation(ABC_stride,project_dir)
 
-# intermediate results
-plot_abc_intermediate(ABC_stride,project_dir)
+# # intermediate results
+# plot_abc_intermediate(ABC_stride,project_dir)
 
 
 

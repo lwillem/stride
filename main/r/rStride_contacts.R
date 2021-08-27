@@ -119,14 +119,11 @@ dim(exp_design)
 #                           # holidays_file             = c("calendar_belgium_2020_covid19_may_school.json",
 #                           #                               "calendar_belgium_2020_covid19_may_workplace.json"),
 #                           school_system_adjusted        = 1,
-#                           telework_probability          = c(0),
 #                           cnt_reduction_workplace       = c(0.8),
 #                           cnt_reduction_other           = c(0.85),
 #                           compliance_delay_workplace    = c(0),
 #                           compliance_delay_other        = c(0),
 #                           num_daily_imported_cases      = c(0),
-#                           cnt_reduction_intergeneration = 0.95,
-#                           cnt_reduction_intergeneration_cutoff = 65,
 #                           cnt_intensity_householdCluster = c(0,0.99),
 #                           stringsAsFactors = F)
 # 

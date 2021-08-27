@@ -20,15 +20,16 @@
 
 #pragma once
 
+#include "calendar/Calendar.h"
 #include "contact/ContactType.h"
 #include "contact/IdSubscriptArray.h"
-#include "contact/ContactHandler.h"
 #include "disease/Health.h"
-#include "calendar/Calendar.h"
+#include "util/RnHandler.h"
 
 #include <cstddef>
 #include <queue>
 #include <vector>
+
 
 namespace stride {
 
@@ -55,17 +56,17 @@ public:
 public:
         /// Default construction (for population vector).
         Person() : m_age(0.0), m_id(0), m_pool_ids(), m_health(), m_in_pools(), m_is_participant(),
-		m_able_to_telework(), m_is_tracing_index(false), m_contact_tracing_list(), 
-        m_isolated(false),
-        m_events() {}
+		m_non_complier(), m_is_tracing_index(false), m_contact_tracing_list(),
+        m_isolated(false), m_events() {}
 
         /// Constructor: set the person data.
         Person(unsigned int id, float age, unsigned int householdId, unsigned int k12SchoolId, unsigned int collegeId,
-               unsigned int workId, unsigned int primaryCommunityId, unsigned int secondaryCommunityId, unsigned int householdClusterId)
+               unsigned int workId, unsigned int primaryCommunityId, unsigned int secondaryCommunityId, unsigned int householdClusterId,
+			   unsigned int collectivityId)
             : m_age(age), m_id(id), m_pool_ids{householdId, k12SchoolId,        collegeId,
                                                workId,      primaryCommunityId, secondaryCommunityId,
-											   householdClusterId},
-              m_health(), m_in_pools(true), m_is_participant(false), m_able_to_telework(false),
+											   householdClusterId, collectivityId},
+              m_health(), m_in_pools(true), m_is_participant(false), m_non_complier(false),
 			  m_is_tracing_index(false), m_contact_tracing_list(), m_isolated(false),
               m_events()
         {
@@ -106,9 +107,9 @@ public:
 
         /// Daily update of the isolation status, health status and presence in contact pools.
         void Update(bool isRegularWeekday, bool isK12SchoolOff, bool isCollegeOff,
-        		bool isWorkplaceDistancingEnforced, bool isHouseholdClusteringAllowed, 
+        		bool isHouseholdClusteringAllowed,
         		bool isIsolatedFromHousehold, 
-                ContactHandler& cHandler,
+				util::RnHandler& rnHandler,
                 const std::shared_ptr<Calendar> calendar);
 
         /// Set the age of the person
@@ -124,13 +125,7 @@ public:
                 m_in_pools[type] = (poolId != 0); // Means present in Household, absent elsewhere.
         }
 
-        /// set ability to telework
-        void SetTeleworkAbility() { m_able_to_telework = true; }
-
-        /// Is this person able to telework
-        bool IsAbleToTelework() const { return m_able_to_telework;}
-
-        /// Set this person as index case for track&trace strategies
+         /// Set this person as index case for track&trace strategies
         void SetTracingIndexCase(){ m_is_tracing_index = true; }
 
         /// Set this person as index case for track&trace strategies
@@ -174,9 +169,6 @@ private:
 
         ///< Is this a participant in the social contact study?
         bool m_is_participant;
-
-		///< Is the participant able to telework?
-		bool m_able_to_telework;
 
         ///< Is the person a non-complier to social distancing measures in the contact pools they belong to?
         ContactType::IdSubscriptArray<bool> m_non_complier;

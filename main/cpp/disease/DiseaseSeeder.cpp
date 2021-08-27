@@ -20,6 +20,7 @@
 
 #include "DiseaseSeeder.h"
 
+#include "contact/EventLogMode.h"
 #include "pop/Population.h"
 #include "pop/SurveySeeder.h"
 #include "util/FileSys.h"
@@ -38,7 +39,7 @@ using namespace std;
 
 DiseaseSeeder::DiseaseSeeder(const ptree& config, RnMan& rnMan) : m_config(config), m_rn_man(rnMan) {}
 
-void DiseaseSeeder::Seed(std::shared_ptr<Population> pop, TransmissionProfile& transmissionProfile)
+void DiseaseSeeder::Seed(std::shared_ptr<Population> pop, const TransmissionProfile& transProfile, util::RnHandler& rnHandler)
 {
 
         // --------------------------------------------------------------
@@ -77,10 +78,10 @@ void DiseaseSeeder::Seed(std::shared_ptr<Population> pop, TransmissionProfile& t
         // --------------------------------------------------------------
         // Add infected seeds to the population
         // --------------------------------------------------------------
-        ImportInfectedCases(pop, numInfected, 0, transmissionProfile);
+        ImportInfectedCases(pop, numInfected, 0, transProfile, rnHandler);
 }
 
-void DiseaseSeeder::ImportInfectedCases(std::shared_ptr<Population> pop, unsigned int numInfected, unsigned int simDay, TransmissionProfile& transmissionProfile)
+void DiseaseSeeder::ImportInfectedCases(std::shared_ptr<Population> pop, unsigned int numInfected, unsigned int simDay, const TransmissionProfile& transProfile, util::RnHandler& rnHandler)
 {
 
         // --------------------------------------------------------------
@@ -92,18 +93,34 @@ void DiseaseSeeder::ImportInfectedCases(std::shared_ptr<Population> pop, unsigne
         const auto   maxPopIndex = static_cast<int>(popSize - 1);
         auto         generator   = m_rn_man.GetUniformIntGenerator(0, maxPopIndex, 0U);
         auto&        logger      = pop->RefEventLogger();
-        const string log_level   = m_config.get<string>("run.event_log_level", "None");
+        const EventLogMode::Id log_level   = EventLogMode::ToMode(m_config.get<string>("run.event_log_level", "None"));
 
         while (numInfected > 0) {
                 Person& p = pop->at(static_cast<size_t>(generator()));
                 if (p.GetHealth().IsSusceptible() && (p.GetAge() >= sAgeMin) && (p.GetAge() <= sAgeMax)) {
-                        p.GetHealth().StartInfection(p.GetId(),0, transmissionProfile.DrawIndividualProbability());
+                        double rel_inf = transProfile.GetIndividualInfectiousness(rnHandler);
+                        p.GetHealth().StartInfection(p.GetId(),0,rel_inf);
                         numInfected--;
-                        if (log_level != "None") {
-                                logger->info("[PRIM] {} {} {} {} {} {} {} {} {} {} {} {} {}",
+
+                        //TODO: make use of Infector template functions
+                        if (log_level >= EventLogMode::Id::Transmissions) {
+                                logger->info("[PRIM] {} {} {} {} {} {} {} {} {} {} {} {} {} {}",
                                 		p.GetId(), -1, p.GetAge(), -1, -1, simDay, p.GetId(),
 										p.GetHealth().GetStartInfectiousness(),p.GetHealth().GetEndInfectiousness(),
-										p.GetHealth().GetStartSymptomatic(),p.GetHealth().GetEndSymptomatic(), -1, p.GetHealth().GetIndividualTransmissionProbability());
+										p.GetHealth().GetStartSymptomatic(),p.GetHealth().GetEndSymptomatic(), -1,
+										p.GetHealth().GetRelativeInfectiousness(),
+										p.GetHealth().GetRelativeSusceptibility());
+
+                        } else if(log_level == EventLogMode::Id::Incidence){
+                        	{
+								logger->info("[TRAN_M] {} {} {} {} {}",
+											 p.GetAge(),
+											 simDay,
+											 p.GetHealth().GetStartInfectiousness(),
+											 p.GetHealth().GetStartSymptomatic(),
+											 p.GetHealth().GetEndSymptomatic()
+											 );
+							}
                         }
 
                         // register as survey participant

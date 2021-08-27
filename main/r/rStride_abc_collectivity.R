@@ -82,6 +82,8 @@ model_param_update <- get_exp_param_default(bool_revised_model_param = T,
 
 # TEMP
 #model_param_update$population_file <- "pop_belgium600k_c500_teachers_censushh.csv"
+model_param_update$population_file <- "pop_belgium600k_c500_teachers_censushh_collectivity.csv"
+model_param_update$age_contact_matrix_file <- "contact_matrix_flanders_conditional_teachers_collectivity20.xml"
 model_param_update$num_days        <- 74
 #model_param_update$logparsing_cases_upperlimit <- 2.5e6
 
@@ -95,43 +97,46 @@ ref_period <- seq(as.Date('2020-03-15'),
 
 # set priors
 stride_prior <- list(#r0                         = c("unif",3.0,4.0),
-                     num_infected_seeds         = c("unif",200,400),
+                     num_infected_seeds         = c("unif",250,350),
                      #hosp_probability_factor    = c("unif",0.3,0.5),
-                     cnt_reduction_workplace    = c("unif",0.70,0.90),
-                     compliance_delay_workplace = c("unif",4.51,7.49),  # rounded: 5-7
-                     cnt_reduction_other        = c("unif",0.70,0.95),
-                     compliance_delay_other     = c("unif",4.51,7.49), # rounded: 5-7
+                     cnt_reduction_workplace    = c("unif",0.70,0.85),
+                     # compliance_delay_workplace = c("unif",4.51,7.49),  # rounded: 5-7
+                     cnt_reduction_other        = c("unif",0.80,0.90),
+                     # compliance_delay_other     = c("unif",4.51,7.49), # rounded: 5-7
                      
-                     disease_susceptibility_age_opt1 = c("unif",0.01,0.20),
-                     disease_susceptibility_age_opt2 = c("unif",0.01,0.20),
-                     disease_susceptibility_age_opt3 = c("unif",0.01,0.20),
-                     disease_susceptibility_age_opt4 = c("unif",0.01,0.20),
-                     disease_susceptibility_age_opt5 = c("unif",0.01,0.20),
-                     disease_susceptibility_age_opt6 = c("unif",0.01,0.30),
-                     disease_susceptibility_age_opt7 = c("unif",0.01,0.30),
-                     disease_susceptibility_age_opt8 = c("unif",0.01,0.40),
-                     disease_susceptibility_age_opt9 = c("unif",0.01,0.50),
+                     cnt_baseline_collectivity     = c("unif",0,1.0),  
+                     cnt_reduction_collectivity    = c("unif",0,1.0), 
                      
-                     hospital_probability_age_opt1 = c("unif",0.01,0.90),
-                     hospital_probability_age_opt2 = c("unif",0.01,0.90),
-                     hospital_probability_age_opt3 = c("unif",0.01,0.90),
-                     hospital_probability_age_opt4 = c("unif",0.01,0.90),
-                     hospital_probability_age_opt5 = c("unif",0.01,0.90),
-                     hospital_probability_age_opt6 = c("unif",0.01,0.90),
-                     hospital_probability_age_opt7 = c("unif",0.01,0.90),
-                     hospital_probability_age_opt8 = c("unif",0.01,0.90),
-                     hospital_probability_age_opt9 = c("unif",0.01,0.90)
+                     disease_susceptibility_age_opt1 = c("unif",0.05,0.15),
+                     disease_susceptibility_age_opt2 = c("unif",0.01,0.10),
+                     disease_susceptibility_age_opt3 = c("unif",0.01,0.10),
+                     disease_susceptibility_age_opt4 = c("unif",0.01,0.10),
+                     disease_susceptibility_age_opt5 = c("unif",0.01,0.10),
+                     disease_susceptibility_age_opt6 = c("unif",0.01,0.15),
+                     disease_susceptibility_age_opt7 = c("unif",0.01,0.15),
+                     disease_susceptibility_age_opt8 = c("unif",0.10,0.2),
+                     disease_susceptibility_age_opt9 = c("unif",0.1,0.50),
+                     
+                     hospital_probability_age_opt1 = c("unif",0.001,0.05),
+                     hospital_probability_age_opt2 = c("unif",0.001,0.05),
+                     hospital_probability_age_opt3 = c("unif",0.001,0.05),
+                     hospital_probability_age_opt4 = c("unif",0.001,0.05),
+                     hospital_probability_age_opt5 = c("unif",0.001,0.05),
+                     hospital_probability_age_opt6 = c("unif",0.001,0.05),
+                     hospital_probability_age_opt7 = c("unif",0.001,0.10),
+                     hospital_probability_age_opt8 = c("unif",0.10,0.20),
+                     hospital_probability_age_opt9 = c("unif",0.10,0.60)
                      
                      )  
 
 # other options...
-#model_param_update$compliance_delay_workplace <- 7
-#model_param_update$compliance_delay_other <- 7
-#model_param_update$disease_susceptibility_agecat <- "0,10,20,30,40,50,60,70,80"
+model_param_update$compliance_delay_workplace <- 7
+model_param_update$compliance_delay_other <- 7
+model_param_update$compliance_delay_community <- 7
 
-# make sure that the population-based transmission and hospital probability is enabled/disabled correctly
+# make sure that the population-based transmission and hospital probability are enabled/disabled correctly
 model_param_update$disease_susceptibility_agecat <- model_param_update$hospital_category_age
-if(any(grepl('disease_susceptibility_age',names(stride_prior)))){
+if(any(grepl('disease_susceptibility_age',c(names(stride_prior),names(model_param_update))))){
   model_param_update$transmission_probability  <- 1
 }
 if(any(grepl('hospital_probability_age',names(stride_prior)))){

@@ -30,13 +30,13 @@ set(STRIDE_SRC
     contact/EventLogMode.cpp
     contact/Infector.cpp
     contact/NonComplianceSeeder.cpp
-    contact/TransmissionProfile.cpp
     #---
     disease/DiseaseSeeder.cpp
     disease/Health.cpp
     disease/HealthSeeder.cpp
     disease/ImmunitySeeder.cpp
     disease/PublicHealthAgency.cpp
+    disease/TransmissionProfile.cpp
     disease/UniversalTesting.cpp
     #---
     execs/ControlHelper.cpp

@@ -30,6 +30,8 @@ INSTALL(DIRECTORY
 # rStride analysis scripts
 INSTALL( FILES 			
             rStride_abc.R
+            rStride_abc_age.R
+            rStride_abc_collectivity.R
             rStride_all.R
             rStride_contacts.R
             rStride_create_config.R
@@ -41,8 +43,7 @@ INSTALL( FILES
             rStride_r0.R 	
             rStride_intervention_baseline.R
             rStride_intervention.R
-            rStride_superspreading.R	
-            rStride_trans_prob_estimation.R			 	 
+            rStride_superspreading.R			 	 
             rStride_universal_testing.R
             rStride_pop.R				 
 

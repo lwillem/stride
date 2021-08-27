@@ -94,6 +94,9 @@ if(!(exists('.rstride'))){
   # read the csv file
   project_summary          <- read.table(project_summary_filename,sep=',',header=T,stringsAsFactors = stringsAsFactors)
   
+  # set NA as character
+  project_summary[is.na(project_summary)] <- 'NA'
+  
   # return the data.frame
   return(project_summary)
 }
@@ -227,6 +230,10 @@ if(!(exists('.rstride'))){
 # so, separate the comparison for numeric and non-numeric types
 .rstride$get_equal_rows <- function(f_matrix,f_vector){
   
+  # convert NA into character
+  f_vector[is.na(f_vector)] <- 'NA'
+  f_matrix[is.na(f_matrix)] <- 'NA'
+  
   # get numeric columns
   col_numeric      <- unlist(lapply(f_vector,is.numeric))
   
@@ -314,7 +321,7 @@ if(!(exists('.rstride'))){
       if(length(names_id_columns)>0) {
         for(i_id_column in names_id_columns){
           row_is_id  <- !is.na(data_all[,i_id_column])
-          if(i_id_column %in% c('household_id','school_id','college_id','workplace_id')){
+          if(i_id_column %in% c('household_id','school_id','college_id','workplace_id','household_cluster_id','collectivity_id')){
             row_is_id <- row_is_id & data_all[,i_id_column] != 0
           } 
           data_all[row_is_id,i_id_column] <- as.numeric(sprintf(paste0('%d%0',num_exp_id_digits,'d'),
@@ -420,7 +427,7 @@ if(!(exists('.rstride'))){
 .rstride$log_levels_exist <- function(design_of_experiment = exp_design){
   
   valid_levels <- design_of_experiment$event_log_level %in% 
-    c('None','Transmissions','All','ContactTracing')
+    c('None','Incidence','Transmissions','All','ContactTracing')
   
   if(any(!valid_levels)){
     smd_print('INVALID LOG LEVEL(S):', 
@@ -541,6 +548,20 @@ if(!(exists('.rstride'))){
   return(TRUE)
 }
 
+.rstride$check_population_contact_combination <- function(exp_design){
+  
+  bool_population <- any(grepl("collectivity",exp_design$population_file))
+  bool_contacts   <- any(grepl("collectivity",exp_design$age_contact_matrix_file))
+  
+  if((bool_population || bool_contacts) &&
+     !(bool_population && bool_contacts)){
+   
+    smd_print(c("WARNING: no uniformity on collectivities in population and contact input files.\n\t\t\t- ",
+                exp_design$population_file,'\n\t\t\t- ',exp_design$age_contact_matrix_file),WARNING = T,FORCED = T)
+    
+  }
+}
+
 ############################### #
 ## DEVELOPMENT FUNCTIONS     ####
 ############################### #
@@ -595,10 +616,10 @@ if(!(exists('.rstride'))){
     # load directory content (non recursive)
     stride_dir_tag  <- 'stride-'
     stride_dirs     <- dir(install_dir,pattern = stride_dir_tag)
-    stride_dirs_num <- as.numeric(sub(stride_dir_tag,'',stride_dirs))
+    stride_dirs_num <- suppressWarnings(as.numeric(sub(stride_dir_tag,'',stride_dirs)))
     
     # select last directory
-    last_stride_dir <- stride_dirs[stride_dirs_num == max(stride_dirs_num)]
+    last_stride_dir <- stride_dirs[order(stride_dirs_num,decreasing = T)[1]]
     
     # set work directory
     setwd(file.path(install_dir,last_stride_dir))

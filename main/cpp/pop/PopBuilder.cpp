@@ -76,6 +76,8 @@ shared_ptr<Population> PopBuilder::MakePersons(shared_ptr<Population> pop)
 
         string line;
         getline(popFile, line); // step over file header
+        auto headers   = Split(line, ",");
+
         unsigned int person_id = 0U;
 
         while (getline(popFile, line)) {
@@ -88,9 +90,16 @@ shared_ptr<Population> PopBuilder::MakePersons(shared_ptr<Population> pop)
                 const auto secondaryCommunityId = FromString<unsigned int>(values[5]);
 
                 unsigned int householdClusterId = 0;
-                if(values.size() == 7){
+                if(values.size() == 7 && Trim(ToString(headers[6]),ToString('"')) == "household_cluster_id"){
                 	householdClusterId = FromString<unsigned int>(values[6]);
                 }
+
+                unsigned int collectivityId = 0;
+
+				if(values.size() == 7 && Trim(ToString(headers[6]),ToString('"')) == "collectivity_id"){
+					collectivityId = FromString<unsigned int>(values[6]);
+				}
+
                 //TODO: rename school types to current approach
                 unsigned int collegeId = 0;
                 if(schoolId != 0 && age >= age_break_school_types && age < 23){
@@ -99,7 +108,7 @@ shared_ptr<Population> PopBuilder::MakePersons(shared_ptr<Population> pop)
                 }
 
                 pop->CreatePerson(person_id, age, householdId, schoolId, collegeId, workId, primaryCommunityId,
-                                  secondaryCommunityId, householdClusterId);
+                                  secondaryCommunityId, householdClusterId, collectivityId);
                 ++person_id;
         }
 
