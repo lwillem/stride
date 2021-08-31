@@ -129,6 +129,9 @@ public:
                 m_in_pools[type] = (poolId != 0); // Means present in Household, absent elsewhere.
         }
 
+        ///< Set factor with which to scale contact rate in community pools for this individual
+        void SetIndividualCommunityContactFactor(double factor) { m_individual_community_contact_factor = factor; }
+
          /// Set this person as index case for track&trace strategies
         void SetTracingIndexCase(){ m_is_tracing_index = true; }
 
