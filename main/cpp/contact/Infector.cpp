@@ -154,9 +154,10 @@ inline double GetContactProbability(const AgeContactProfile& profile, const Pers
     				cnt_adjustment_factor = (1-workplace_distancing_factor);
     			}
 
-    			// account for physical distancing in the community
+
     			if((pType == Id::PrimaryCommunity || pType == Id::SecondaryCommunity)){
 
+    				// account for physical distancing in the community
     				double community_distancing_factor = calendar->GetCommunityDistancingFactor();
    					cnt_adjustment_factor = (1-community_distancing_factor);
     			}
@@ -191,6 +192,12 @@ inline double GetContactProbability(const AgeContactProfile& profile, const Pers
         // adjust contact for distancing
         reference_num_contacts_p1 *= cnt_adjustment_factor;
         reference_num_contacts_p2 *= cnt_adjustment_factor;
+
+        // adjust contact for individual variation in community contacts
+        if((pType == Id::PrimaryCommunity || pType == Id::SecondaryCommunity)){
+            reference_num_contacts_p1 *= p1->GetIndividualCommunityContactFactor();
+            reference_num_contacts_p2 *= p2->GetIndividualCommunityContactFactor();
+        }
 
 
         // special case: reduce the number of community contacts if part of a HouseholdCluster
