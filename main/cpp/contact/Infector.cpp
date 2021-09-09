@@ -193,10 +193,10 @@ inline double GetContactProbability(const AgeContactProfile& profile, const Pers
         reference_num_contacts_p1 *= cnt_adjustment_factor;
         reference_num_contacts_p2 *= cnt_adjustment_factor;
 
-        // adjust contact for individual variation in community contacts
-        if((pType == Id::PrimaryCommunity || pType == Id::SecondaryCommunity)){
-            reference_num_contacts_p1 *= p1->GetIndividualCommunityContactFactor();
-            reference_num_contacts_p2 *= p2->GetIndividualCommunityContactFactor();
+        // adjust contact for individual variation in community and workplace contacts
+        if(pType == Id::PrimaryCommunity || pType == Id::SecondaryCommunity || pType == Id::Workplace){
+            reference_num_contacts_p1 *= p1->GetIndividualContactFactor();
+            reference_num_contacts_p2 *= p2->GetIndividualContactFactor();
         }
 
 

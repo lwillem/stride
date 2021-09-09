@@ -19,7 +19,7 @@
 """
 """
 
-import argparse
+'''
 import matplotlib.pyplot as plt
 import multiprocessing
 import numpy as np
@@ -27,7 +27,7 @@ import os
 
 from statsmodels.nonparametric.smoothers_lowess import lowess
 
-from util import get_experiment_ids, get_cumulative_cases, get_new_cases_per_day, get_secondary_cases_by_individual, save_figure
+from util import get_cumulative_cases, get_new_cases_per_day, get_secondary_cases_by_individual, save_figure
 from util import plot_ar, plot_day_last_infection, plot_evolution, plot_final_size_frequencies
 
 def get_p80(secondary_cases_by_individual, total_cases, extinction_threshold=0):
@@ -208,30 +208,18 @@ def plot_herd_immunity_threshold(output_dir, fig_name, display_scenario_names, a
 
 def main(output_dir, scenario_names, display_scenario_names):
     extinction_threshold = 20 # FIXME
-    num_days = 180 # FIXME
     pop_size = 3000000 # FIXME
 
     if len(display_scenario_names) < len(scenario_names):
         display_scenario_names = scenario_names
 
-    all_p80s_exclude_extinction = []
-    all_total_cases = []
     all_last_days_with_infections_exclude_extinction = []
 
     all_herd_immunity_thresholds_exclude_extinction = []
     all_herd_immunity_thresholds_day_exclude_extinction = []
 
     for scenario in scenario_names:
-        print(scenario)
-
-        experiment_ids = get_experiment_ids(output_dir, scenario)
         with multiprocessing.Pool(processes=4) as pool:
-            # Get number of secondary cases for each infected individual
-            secondary_cases_by_individual = pool.starmap(get_secondary_cases_by_individual,
-                                                [(output_dir, scenario, exp_id, num_days) for exp_id in experiment_ids])
-            # Get number of new cases per day
-            new_cases_per_day = pool.starmap(get_new_cases_per_day,
-                                                [(output_dir, scenario, exp_id, num_days) for exp_id in experiment_ids])
             # Get mean Rt per day
             mean_rt_by_day_exclude_extinction = pool.starmap(get_effective_r_by_day,
                                                 [(output_dir, scenario, exp_id, num_days, extinction_threshold) for exp_id in experiment_ids])
@@ -247,15 +235,6 @@ def main(output_dir, scenario_names, display_scenario_names):
 
             all_herd_immunity_thresholds_exclude_extinction.append(herd_immunity_threshold_exclude_extinction)
             all_herd_immunity_thresholds_day_exclude_extinction.append(herd_immunity_threshold_day_exclude_extinction)
-
-            # Calculate the final total number of cases for each simulation
-            # Note: index cases are not counted.
-            total_cases = [sum(x.values()) for x in secondary_cases_by_individual]
-            all_total_cases.append(total_cases)
-
-            # Calculate the proportion of infected individuals responsible for 80% of infections
-            p80s_exclude_extinction = get_p80(secondary_cases_by_individual, total_cases, extinction_threshold)
-            all_p80s_exclude_extinction.append(p80s_exclude_extinction)
 
             # Calculate last day with new infections
             last_day_with_infections = []
@@ -274,21 +253,49 @@ def main(output_dir, scenario_names, display_scenario_names):
             # Plot evolution of Rt
             plot_effective_r_by_day(output_dir, "mean_rt_exclude_extinction_avg", scenario, mean_rt_by_day_exclude_extinction, num_days)
 
-            # Sort total cases from high to low & print
-            # Used to determine extinction threshold
-            #total_cases.sort(reverse=True)
-            #print(total_cases)
-        
-    plot_p80s(output_dir, "p80s_exclude_extinction", display_scenario_names, all_p80s_exclude_extinction)
+
     plot_extinction_probabilities(output_dir, "extinction_probabilities", display_scenario_names, all_total_cases, extinction_threshold)
-    plot_final_size_frequencies(output_dir, "final_size_frequencies", display_scenario_names, all_total_cases, num_days)
     plot_ar(output_dir, "ar_exclude_extinction", display_scenario_names, all_total_cases, num_days, pop_size, extinction_threshold)
     plot_ar(output_dir, "ar_exclude_extinction", display_scenario_names, all_total_cases, num_days, pop_size, 0, True)
     plot_day_last_infection(output_dir, "day_of_last_infection_exclude_extinction", display_scenario_names, all_last_days_with_infections_exclude_extinction)
 
     plot_herd_immunity_threshold(output_dir, "herd_immunity_threshold_exclude_extinction_smoothed_rt", display_scenario_names, all_herd_immunity_thresholds_exclude_extinction)
     plot_herd_immunity_threshold(output_dir, "herd_immunity_threshold_day_exclude_extinction_smoothed_rt", display_scenario_names, all_herd_immunity_thresholds_day_exclude_extinction, show_day=True)
+'''
 
+import argparse
+import matplotlib.pyplot as plt
+import multiprocessing
+
+from plots import plot_p80s, plot_final_size_frequencies, plot_new_cases_per_day
+from util import get_experiment_ids, get_cases_output, get_p80, get_total_cases
+
+def main(output_dir, scenario_names, display_scenario_names):
+    num_days = 200
+
+    all_p80s = []
+    all_final_sizes = []
+    for s_i in range(len(scenario_names)):
+        scenario_name = scenario_names[s_i]
+        print(scenario_name)
+
+        experiment_ids = get_experiment_ids(output_dir, scenario_name)
+        with multiprocessing.Pool(processes=4) as pool:
+            cases_output = pool.starmap(get_cases_output, [(output_dir, scenario_name, exp_id) for exp_id in experiment_ids])
+            # Calculate the proportion of infected individuals responsible for 80% of infections
+            all_p80s.append([get_p80(output["secondary_cases_by_individual"]) for output in cases_output]) # TODO exclude extinction?
+            # Get final outbreak size
+            total_cases = [get_total_cases(output["cases_by_day"], num_days) for output in cases_output]
+            all_final_sizes.append(total_cases)
+
+            # Sort total cases from high to low & print
+            # Used to determine extinction threshold
+            total_cases.sort(reverse=True)
+            print(total_cases)
+
+            plot_new_cases_per_day(output_dir, "new_cases_per_day", display_scenario_names, [output["cases_by_day"] for output in cases_output], num_days)
+    plot_p80s(output_dir, "p80s", display_scenario_names, all_p80s)
+    plot_final_size_frequencies(output_dir, "final_size_frequencies", display_scenario_names, all_final_sizes, num_days)
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
