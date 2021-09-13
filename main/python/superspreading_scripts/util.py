@@ -156,34 +156,5 @@ def get_cumulative_cases(output_dir, scenario_name, experiment_id, num_days, inc
                     cumulative_cases += 1
     return cumulative_cases
 
-def plot_ar(output_dir, fig_name, display_scenario_names, all_total_cases, num_days, pop_size, extinction_threshold=0, violin_plot=False):
-    all_total_cases_prop_pop = []
-    for scenario in all_total_cases:
-        all_total_cases_prop_pop.append([total_cases / pop_size for total_cases in scenario if total_cases >= extinction_threshold])
-
-    if violin_plot:
-        plt.violinplot(all_total_cases_prop_pop)
-        plt.xticks(range(1, len(all_total_cases_prop_pop) + 1), display_scenario_names, rotation=25)
-    else:
-        plt.boxplot(all_total_cases_prop_pop, labels=display_scenario_names)
-        plt.xticks(rotation=25)
-
-    plt.ylabel("AR (after {} days)".format(num_days))
-
-    save_figure(output_dir, fig_name, extension="png")
-
-def plot_day_last_infection(output_dir, fig_name, display_scenario_names, all_last_days_with_infections, violin_plot=False):
-    if violin_plot:
-        plt.violinplot(all_last_days_with_infections)
-        plt.xticks(range(1, len(all_last_days_with_infections) + 1), display_scenario_names, rotation=25)
-    else:
-        plt.boxplot(all_last_days_with_infections, labels=display_scenario_names)
-        plt.xticks(rotation=25)
-
-    plt.plot(range(1, len(all_last_days_with_infections) + 1), [np.mean(x) for x in all_last_days_with_infections], linestyle="None", marker="o")
-
-    plt.ylabel("Last day with new infections")
-    save_figure(output_dir, fig_name, extension="png")
-
 
 '''

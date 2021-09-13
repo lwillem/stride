@@ -107,6 +107,8 @@ extern template class Infector<EventLogMode::Id::Incidence, false>;
 extern template class Infector<EventLogMode::Id::Incidence, true>;
 extern template class Infector<EventLogMode::Id::Transmissions, false>;
 extern template class Infector<EventLogMode::Id::Transmissions, true>;
+extern template class Infector<EventLogMode::Id::Participants, false>;
+extern template class Infector<EventLogMode::Id::Participants, true>;
 extern template class Infector<EventLogMode::Id::All, false>;
 extern template class Infector<EventLogMode::Id::All, true>;
 

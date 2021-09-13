@@ -30,37 +30,6 @@ from statsmodels.nonparametric.smoothers_lowess import lowess
 from util import get_cumulative_cases, get_new_cases_per_day, get_secondary_cases_by_individual, save_figure
 from util import plot_ar, plot_day_last_infection, plot_evolution, plot_final_size_frequencies
 
-def get_p80(secondary_cases_by_individual, total_cases, extinction_threshold=0):
-    """
-        Get proportion of infected individuals responsible for 80% of infections.
-    """
-    p80s = []
-    for run_i in range(len(secondary_cases_by_individual)):
-        total_cases_run = total_cases[run_i]
-        if total_cases_run == 0: # If no transmissions occur, P80 cannot be calculated
-            pass
-        if total_cases_run >= extinction_threshold:
-            # Order number of secondary cases by individual in decreasing order
-            secondary_cases_sorted = list(secondary_cases_by_individual[run_i].values())
-            secondary_cases_sorted.sort(reverse=True)
-
-            num_cases_responsible = 0
-            num_cases_caused = 0
-            for s in secondary_cases_sorted:
-                num_cases_caused += s
-                num_cases_responsible += 1
-                if num_cases_caused >= (total_cases_run * 0.80):
-                    break
-            p80s.append(num_cases_responsible / total_cases_run)
-    return p80s
-
-def plot_p80s(output_dir, fig_name, display_scenario_names, all_p80s):
-    plt.boxplot(all_p80s, labels=display_scenario_names)
-    plt.xticks(rotation=25)
-    plt.ylabel("P80")
-
-    save_figure(output_dir, fig_name)
-
 def plot_extinction_probabilities(output_dir, fig_name, display_scenario_names, all_total_cases, extinction_threshold=0):
     extinction_probabilities = []
     for scenario_total_cases in all_total_cases:
@@ -267,11 +236,14 @@ import argparse
 import matplotlib.pyplot as plt
 import multiprocessing
 
-from plots import plot_p80s, plot_final_size_frequencies, plot_new_cases_per_day
+from plots import plot_p80s, plot_final_size_frequencies
+from plots import plot_cumulative_cases_per_day, plot_new_cases_per_day
 from util import get_experiment_ids, get_cases_output, get_p80, get_total_cases
 
 def main(output_dir, scenario_names, display_scenario_names):
     num_days = 200
+
+    extinction_threshold = 20
 
     all_p80s = []
     all_final_sizes = []
@@ -283,7 +255,7 @@ def main(output_dir, scenario_names, display_scenario_names):
         with multiprocessing.Pool(processes=4) as pool:
             cases_output = pool.starmap(get_cases_output, [(output_dir, scenario_name, exp_id) for exp_id in experiment_ids])
             # Calculate the proportion of infected individuals responsible for 80% of infections
-            all_p80s.append([get_p80(output["secondary_cases_by_individual"]) for output in cases_output]) # TODO exclude extinction?
+            all_p80s.append([get_p80(output["secondary_cases_by_individual"], extinction_threshold) for output in cases_output]) # TODO exclude extinction?
             # Get final outbreak size
             total_cases = [get_total_cases(output["cases_by_day"], num_days) for output in cases_output]
             all_final_sizes.append(total_cases)
@@ -293,7 +265,8 @@ def main(output_dir, scenario_names, display_scenario_names):
             total_cases.sort(reverse=True)
             print(total_cases)
 
-            plot_new_cases_per_day(output_dir, "new_cases_per_day", display_scenario_names, [output["cases_by_day"] for output in cases_output], num_days)
+            plot_new_cases_per_day(output_dir, "new_cases_per_day", scenario_name, [output["cases_by_day"] for output in cases_output], num_days)
+            plot_cumulative_cases_per_day(output_dir, "cumulative_cases_per_day", scenario_name, [output["cases_by_day"] for output in cases_output], num_days)
     plot_p80s(output_dir, "p80s", display_scenario_names, all_p80s)
     plot_final_size_frequencies(output_dir, "final_size_frequencies", display_scenario_names, all_final_sizes, num_days)
 

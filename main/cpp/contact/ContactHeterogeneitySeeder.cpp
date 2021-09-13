@@ -42,26 +42,32 @@ shared_ptr<Population> ContactHeterogeneitySeeder::Seed(shared_ptr<Population> p
 
 	auto& population = *pop;
 
-	boost::optional<string> community_contact_distribution = m_config.get_optional<string>("run.contact_distribution");
+	auto& logger = population.RefEventLogger();
 
-	if (community_contact_distribution) {
+	boost::optional<string> contact_distribution = m_config.get_optional<string>("run.contact_distribution");
+
+	if (contact_distribution) {
 
 		// Get target overdispersion
-		double community_contact_distribution_overdispersion = m_config.get<double>("run.contact_distribution_overdispersion");
+		double contact_distribution_overdispersion = m_config.get<double>("run.contact_distribution_overdispersion");
 
-		if (*community_contact_distribution == "Gamma") {
+		if (*contact_distribution == "Gamma") {
 			// Use distribution with mean 1 and overdispersion = contact_distribution_overdispersion
-			double shape = community_contact_distribution_overdispersion;
+			double shape = contact_distribution_overdispersion;
 			double scale = 1 / shape;
 			auto gamma_generator = m_rn_man.GetGammaGenerator(shape, scale, 0U);
 
 			// Seed community contact factors
 			for (size_t i = 0; i < population.size(); ++i) {
-				population[i].SetIndividualContactFactor(gamma_generator());
+				auto individual_contact_factor = gamma_generator();
+				population[i].SetIndividualContactFactor(individual_contact_factor);
+
+				// Log person details
+				logger->info("[CNTH] {} {}", population[i].GetId(), individual_contact_factor);
+
 			}
 
 		}
-
 	}
 
 

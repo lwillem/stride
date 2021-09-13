@@ -93,16 +93,16 @@ public:
         }
 };
 
-/// Specialized LOG_POLICY policy LogMode::All.
+/// Specialized LOG_POLICY policy LogMode::Participants.
 template <>
-class LOG_POLICY<EventLogMode::Id::All>
+class LOG_POLICY<EventLogMode::Id::Participants>
 {
 public:
         static void Contact(const std::shared_ptr<spdlog::logger>& logger, const Person* p1, const Person* p2,
                             ContactType::Id type, unsigned short int sim_day, const double cProb, const double tProb)
         {
-                if (p1->IsSurveyParticipant()) {
-                        logger->info("[CONT] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}", p1->GetId(), p1->GetAge(),
+               if (p1->IsSurveyParticipant()) {
+                        logger->info("[CONT] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}", p1->GetId(), p1->GetAge(),
                                      p2->GetAge(), static_cast<unsigned int>(type == ContactType::Id::Household),
                                      static_cast<unsigned int>(type == ContactType::Id::K12School),
                                      static_cast<unsigned int>(type == ContactType::Id::College),
@@ -112,8 +112,42 @@ public:
 									 static_cast<unsigned int>(type == ContactType::Id::HouseholdCluster),
 									 static_cast<unsigned int>(type == ContactType::Id::Collectivity),
 									 sim_day,
-									 cProb, tProb,p2->GetHealth().IsSymptomatic(),p1->GetHealth().IsSymptomatic());
-                }
+									 cProb, tProb,p2->GetHealth().IsSymptomatic(),p1->GetHealth().IsSymptomatic(), p2->GetId());
+               }
+        }
+
+        static void Trans(const std::shared_ptr<spdlog::logger>& logger, const Person* p1, const Person* p2,
+                          ContactType::Id type, unsigned short int sim_day, unsigned int id_index_case)
+        {
+                logger->info("[TRAN] {} {} {} {} {} {} {} {} {} {} {} {} {} {}", p2->GetId(), p1->GetId(), p2->GetAge(), p1->GetAge(),
+                             ToString(type), sim_day, id_index_case,
+							 p2->GetHealth().GetStartInfectiousness(),p2->GetHealth().GetEndInfectiousness(),
+							 p2->GetHealth().GetStartSymptomatic(),p2->GetHealth().GetEndSymptomatic(),
+							 p1->GetHealth().IsSymptomatic(),  p1->GetHealth().GetRelativeInfectiousness(),
+							 p2->GetHealth().GetRelativeSusceptibility());
+        }
+};
+
+
+/// Specialized LOG_POLICY policy LogMode::All.
+template <>
+class LOG_POLICY<EventLogMode::Id::All>
+{
+public:
+        static void Contact(const std::shared_ptr<spdlog::logger>& logger, const Person* p1, const Person* p2,
+                            ContactType::Id type, unsigned short int sim_day, const double cProb, const double tProb)
+        {
+                        logger->info("[CONT] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}", p1->GetId(), p1->GetAge(),
+                                     p2->GetAge(), static_cast<unsigned int>(type == ContactType::Id::Household),
+                                     static_cast<unsigned int>(type == ContactType::Id::K12School),
+                                     static_cast<unsigned int>(type == ContactType::Id::College),
+                                     static_cast<unsigned int>(type == ContactType::Id::Workplace),
+                                     static_cast<unsigned int>(type == ContactType::Id::PrimaryCommunity),
+                                     static_cast<unsigned int>(type == ContactType::Id::SecondaryCommunity),
+									 static_cast<unsigned int>(type == ContactType::Id::HouseholdCluster),
+									 static_cast<unsigned int>(type == ContactType::Id::Collectivity),
+									 sim_day,
+									 cProb, tProb,p2->GetHealth().IsSymptomatic(),p1->GetHealth().IsSymptomatic(), p2->GetId());
         }
 
         static void Trans(const std::shared_ptr<spdlog::logger>& logger, const Person* p1, const Person* p2,
@@ -261,7 +295,7 @@ namespace stride {
 using namespace stride::util;
 
 //-------------------------------------------------------------------------------------------------
-// Definition for ContactLogMode::Contacts,
+// Definition for EventLogMode::All, and ContactLogMode::Participants
 // both with track_index_case false and true.
 //-------------------------------------------------------------------------------------------------
 template <EventLogMode::Id LL, bool TIC, bool TO>
@@ -306,11 +340,12 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
 								const auto  tProb_p1_p2    = transProfile.GetProbability(p1,p2);
 								const auto  tProb_p2_p1    = transProfile.GetProbability(p2,p1);
 
-                                // log contact if person 1 is participating in survey
-                                LP::Contact(eventLogger, p1, p2, pType, simDay, cProb, tProb_p1_p2);
-                                // log contact if person 2 is participating in survey
-                                LP::Contact(eventLogger, p2, p1, pType, simDay, cProb, tProb_p2_p1);
-
+                                	// log contact
+								// for log policy Participants: if person 1 is participating in survey
+                                	LP::Contact(eventLogger, p1, p2, pType, simDay, cProb, tProb_p1_p2);
+                                	// log contact
+                                // for log policy Participants: if person 1 is participating in survey
+                                	LP::Contact(eventLogger, p2, p1, pType, simDay, cProb, tProb_p2_p1);
 
                                 // if track&trace is in place, option to register (both) contact(s)
                                 p1->RegisterContact(p2);
@@ -350,7 +385,7 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
 }
 
 //-------------------------------------------------------------------------------------------
-// Definition for ContactLogMode::None and ContactLogMode::Transmission
+// Definition for ContactLogMode::None and ContactLogMode::Transmissions
 // both with track_index_case false and true.
 //-------------------------------------------------------------------------------------------
 template <EventLogMode::Id LL, bool TIC>
@@ -429,6 +464,8 @@ template class Infector<EventLogMode::Id::Incidence, false>;
 template class Infector<EventLogMode::Id::Incidence, true>;
 template class Infector<EventLogMode::Id::Transmissions, false>;
 template class Infector<EventLogMode::Id::Transmissions, true>;
+template class Infector<EventLogMode::Id::Participants, false>;
+template class Infector<EventLogMode::Id::Participants, true>;
 template class Infector<EventLogMode::Id::All, false>;
 template class Infector<EventLogMode::Id::All, true>;
 

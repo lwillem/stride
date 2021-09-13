@@ -32,9 +32,10 @@ using boost::to_upper;
 string ToString(Id l)
 {
         static map<Id, string> names{make_pair(Id::None, "None"),
-        							 make_pair(Id::Incidence, "Incidence"),
-        							 make_pair(Id::Transmissions, "Transmissions"),
-                                     make_pair(Id::All, "All")};
+        							 	 make_pair(Id::Incidence, "Incidence"),
+										 make_pair(Id::Transmissions, "Transmissions"),
+										 make_pair(Id::Transmissions, "Participants"),
+										 make_pair(Id::All, "All")};
         return names.at(l);
 }
 
@@ -44,6 +45,7 @@ Id ToMode(const string& s)
         	                         make_pair("INCIDENCE", Id::Incidence),
         					         make_pair("TRANSMISSIONS", Id::Transmissions),
 									 make_pair("CONTACTTRACING", Id::Transmissions), // use Transmission logging by default
+									 make_pair("PARTICIPANTS", Id::Participants),
                                      make_pair("ALL", Id::All)};
         std::string            t{s};
         to_upper(t);
