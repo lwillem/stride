@@ -153,6 +153,8 @@ for (i in seq_along(scenario_names)) {
 
 disease_config_file <- "disease_covid19_lognorm.xml"
 holidays_file <- "holidays_belgium_2019_2021.csv"
+
+tp_mean <- 0.08
  
 num_days <- 1
 num_runs <- 1
@@ -170,7 +172,7 @@ contact_overdispersions <- c(0, 0.2, 0.4, 0.6, 1, 10)
 for (i in seq_along(scenario_names)) {
   run_simulations(scenario_name = scenario_names[i], track_index_case = "false", 
                   event_log_level = "All", 
-                  tp_distribution = "Constant", tp_mean = 0.08, tp_overdispersion = 0,
+                  tp_distribution = "Constant", tp_mean = tp_mean, tp_overdispersion = 0,
                   contact_distribution = contact_distributions[i], 
                   contact_distribution_overdispersion = contact_overdispersions[i],
                   disease_config_file = disease_config_file, holidays_file = holidays_file,
@@ -183,46 +185,6 @@ for (i in seq_along(scenario_names)) {
 # Run simulations, tracking only the index case, for 40 days.                                 #
 ###############################################################################################
 
-# run_simulations(
-#   scenario_name = "index_case_only_baseline", track_index_case = "true",
-#   tp_distribution = "Constant", tp_mean = c(0.0, 0.025, 0.05, 0.075, 0.1), tp_overdispersion = 0, 
-#   cnt_reduction_workplace = 0, cnt_reduction_other = 0, 
-#   cnt_reduction_workplace_exit = 0, cnt_reduction_other_exit = 0, cnt_reduction_school_exit = 0,
-#   disease_config_file = "disease_covid19_lognorm.xml", holidays_file = "holidays_none.json",
-#   num_days = 40, num_infected_seeds = 1, num_runs = 1000)
-# 
-# run_simulations(
-#   scenario_name = "index_case_only_superspreading_1000", track_index_case = "true",
-#   tp_distribution = "Gamma", tp_mean = c(0.0, 0.025, 0.05, 0.075, 0.1), tp_overdispersion = 10, 
-#   cnt_reduction_workplace = 0, cnt_reduction_other = 0, 
-#   cnt_reduction_workplace_exit = 0, cnt_reduction_other_exit = 0, cnt_reduction_school_exit = 0,
-#   disease_config_file = "disease_covid19_lognorm.xml", holidays_file = "holidays_none.json",
-#   num_days = 40, num_infected_seeds = 1, num_runs = 1000)
-# 
-# run_simulations(
-#   scenario_name = "index_case_only_superspreading_60", track_index_case = "true",
-#   tp_distribution = "Gamma", tp_mean = c(0.0, 0.025002, 0.050004, 0.075102, 0.10086), tp_overdispersion = 0.6, 
-#   cnt_reduction_workplace = 0, cnt_reduction_other = 0, 
-#   cnt_reduction_workplace_exit = 0, cnt_reduction_other_exit = 0, cnt_reduction_school_exit = 0,
-#   disease_config_file = "disease_covid19_lognorm.xml", holidays_file = "holidays_none.json",
-#   num_days = 40, num_infected_seeds = 1, num_runs = 1000)
-# 
-# run_simulations(
-#   scenario_name = "index_case_only_superspreading_40", track_index_case = "true",
-#   tp_distribution = "Gamma", tp_mean = c(0.0, 0.025, 0.050044, 0.075852, 0.10438), tp_overdispersion = 0.4, 
-#   cnt_reduction_workplace = 0, cnt_reduction_other = 0, 
-#   cnt_reduction_workplace_exit = 0, cnt_reduction_other_exit = 0, cnt_reduction_school_exit = 0,
-#   disease_config_file = "disease_covid19_lognorm.xml", holidays_file = "holidays_none.json",
-#   num_days = 40, num_infected_seeds = 1, num_runs = 1000)
-# 
-# run_simulations(
-#   scenario_name = "index_case_only_superspreading_20", track_index_case = "true",
-#   tp_distribution = "Gamma", tp_mean = c(0.0, 0.025014, 0.051518, 0.085884, 0.141108), tp_overdispersion = 0.2, 
-#   cnt_reduction_workplace = 0, cnt_reduction_other = 0, 
-#   cnt_reduction_workplace_exit = 0, cnt_reduction_other_exit = 0, cnt_reduction_school_exit = 0,
-#   disease_config_file = "disease_covid19_lognorm.xml", holidays_file = "holidays_none.json",
-#   num_days = 40, num_infected_seeds = 1, num_runs = 1000)
-# 
 # ###############################################################################################
 # # Run simplified simulations, tracking only the index case, for 40 days.                      #
 # # Results for these are used to compare to estimates obtained with theoretical description.   #

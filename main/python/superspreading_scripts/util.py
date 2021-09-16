@@ -25,6 +25,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
+from statsmodels.nonparametric.smoothers_lowess import lowess
+
 def get_experiment_ids(output_dir, scenario_name):
     exp_design_file = os.path.join(output_dir, scenario_name, "exp_design.csv")
     experiment_ids = []
@@ -35,13 +37,46 @@ def get_experiment_ids(output_dir, scenario_name):
             experiment_ids.append(exp_id)
     return experiment_ids
 
+def get_parameters(output_dir, scenario_name, experiment_id):
+    summary_file = os.path.join(output_dir, scenario_name, "exp" + "{:04}".format(experiment_id), "summary.csv")
+
+    parameters = {}
+    with open(summary_file) as csvfile:
+        reader = csv.DictReader(csvfile)
+        row = next(reader) # Get first line
+        parameters["num_days"] = int(row["num_days"])
+        parameters["population_size"] = int(row["population_size"])
+
+    return parameters
+
+def get_rt_by_day(infected_by_day, secondary_cases_by_individual, num_days):
+    rt_by_day = {}
+
+    for day in range(num_days):
+        # Check if any individuals were infected on this day
+        if day in infected_by_day and len(infected_by_day[day]) > 0:
+            # Get number of secondary cases caused by each individual infected on this day
+            secondary_cases_day = []
+            for infector_id in infected_by_day[day]:
+                secondary_cases_day.append(secondary_cases_by_individual[infector_id])
+            rt_by_day[day] = np.mean(secondary_cases_day)
+        else:
+            rt_by_day[day] = np.nan
+
+    return rt_by_day
+
 def get_cases_output(output_dir, scenario_name, experiment_id):
     print("Getting output for exp " + str(experiment_id))
 
+    # Get parameters from summary file
+    parameters = get_parameters(output_dir, scenario_name, experiment_id)
+
+    # Get output data from file
     log_file = os.path.join(output_dir, scenario_name, "exp" + "{:04}".format(experiment_id), "event_log.txt")
 
     potential_infectors = {}
-    cases_by_day = {}
+    cases_by_day = {} # Keep track of number of cases per day
+    infected_by_day = {} # Keep track of IDs of persons infected per day
 
     with open(log_file) as f:
         for line in f:
@@ -49,8 +84,20 @@ def get_cases_output(output_dir, scenario_name, experiment_id):
             tag = line[0]
             if tag == "[PRIM]": # Index case
                 infected_id = int(float(line[1]))
+                sim_day = int(line[6])
                 if infected_id not in potential_infectors:
                     potential_infectors[infected_id] = 0
+
+                if sim_day in cases_by_day:
+                    cases_by_day[sim_day] += 1
+                else:
+                    cases_by_day[sim_day] = 1
+
+                if sim_day in infected_by_day:
+                    infected_by_day[sim_day].append(infected_id)
+                else:
+                    infected_by_day[sim_day] = [infected_id]
+
             elif tag == "[TRAN]": # Transmission
                 infector_id = int(float(line[2]))
                 infected_id = int(float(line[1]))
@@ -71,12 +118,60 @@ def get_cases_output(output_dir, scenario_name, experiment_id):
                 else:
                     cases_by_day[sim_day] = 1
 
+                if sim_day in infected_by_day:
+                    infected_by_day[sim_day].append(infected_id)
+                else:
+                    infected_by_day[sim_day] = [infected_id]
+
+    # Get P80
+    # Get ...
+    # Get Rt by day
+    rt_by_day = get_rt_by_day(infected_by_day, potential_infectors, parameters["num_days"])
+
     cases_output = {
+        "experiment_id": experiment_id,
+        "parameters": parameters,
         "secondary_cases_by_individual": potential_infectors,
-        "cases_by_day": cases_by_day
+        "cases_by_day": cases_by_day,
+        "infected_by_day": infected_by_day,
+        "rt_by_day": rt_by_day
     }
     return cases_output
 
+def get_day_of_last_infection(cases_by_day, num_days):
+    day_of_last_infection = np.nan
+    for day in range(num_days - 1, -1, -1):
+        if day in cases_by_day and cases_by_day[day] > 0:
+            day_of_last_infection = day
+            break
+
+    return day_of_last_infection
+
+
+def get_herd_immunity_threshold(rt_by_day, cases_by_day, num_days, population_size, get_day=False):
+    # Smooth (using LOWESS function)
+    rt_by_day_smoothed = lowess([rt_by_day[day] for day in range(num_days)], range(num_days), is_sorted=True, return_sorted=False)
+
+    # Look for last day where smoothed Rt >= 1
+    last_day_rt_greq_1 = np.nan
+    for day in range(num_days - 1, -1, -1):
+        rt = rt_by_day_smoothed[day]
+        if rt >= 1:
+            last_day_rt_greq_1 = day
+            break
+
+    if get_day: # Return day on which herd immunity threshold is reached
+        return last_day_rt_greq_1
+    else:
+        # Get proportion of population no longer susceptible on this day
+        # = cumulative cases (including index cases) / population_size
+        if np.isnan(last_day_rt_greq_1):
+            return np.nan
+        cumulative_cases = 0
+        for day in range(last_day_rt_greq_1 + 1):
+            cumulative_cases += cases_by_day[day] if day in cases_by_day else 0
+        herd_immunity_threshold = cumulative_cases / population_size
+        return herd_immunity_threshold
 
 def get_p80(secondary_cases_by_individual, extinction_threshold = 0):
     total_cases = sum(list(secondary_cases_by_individual.values()))
@@ -104,57 +199,3 @@ def get_total_cases(cases_by_day, num_days):
             total_cases += cases
 
     return total_cases
-
-'''
-def get_params_by_experiment(output_dir, scenario_name):
-    exp_design_file = os.path.join(output_dir, scenario_name, "exp_design.csv")
-    params = {}
-    with open(exp_design_file) as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            exp_id = int(row["exp_id"])
-            params[exp_id] = {
-                "transmission_probability" : float(row["transmission_probability"]),
-                "transmission_probability_distribution": row["transmission_probability_distribution"],
-                "transmission_probability_distribution_overdispersion": float(row["transmission_probability_distribution_overdispersion"]),
-
-                "community_contact_distribution": row["community_contact_distribution"],
-                "community_contact_distribution_overdispersion": float(row["community_contact_distribution_overdispersion"]),
-
-                "num_infected_seeds": int(row["num_infected_seeds"]),
-                "num_days": int(row["num_days"]),
-            }
-
-    return params
-
-def get_trans_prob_by_exp(output_dir, scenario_name):
-    experiments = {}
-    summary_file = os.path.join(output_dir, scenario_name, scenario_name + "_summary.csv")
-    with open(summary_file) as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            exp_id = int(row["exp_id"])
-            transmission_probability = float(row["transmission_probability"])
-            experiments[exp_id] = transmission_probability
-
-    return experiments
-
-def get_cumulative_cases(output_dir, scenario_name, experiment_id, num_days, include_index_cases=False):
-    log_file = os.path.join(output_dir, scenario_name, "exp" + "{:04}".format(experiment_id), "event_log.txt")
-    cumulative_cases = 0
-    with open(log_file) as f:
-        for line in f:
-            line = line.split(" ")
-            tag = line[0]
-            if tag == "[PRIM]" and include_index_cases:
-                sim_day = int(line[6])
-                if sim_day < num_days:
-                    cumulative_cases += 1
-            elif tag == "[TRAN]":
-                sim_day = int(line[6])
-                if sim_day < num_days:
-                    cumulative_cases += 1
-    return cumulative_cases
-
-
-'''
