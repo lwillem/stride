@@ -112,17 +112,52 @@ run_simulations <- function(scenario_name,                        # Label for ou
 # Run simulations without interventions.                                                      #
 ###############################################################################################
 
+# disease_config_file <- "disease_covid19_lognorm.xml"
+# holidays_file <- "holidays_belgium_2019_2021.csv"
+# 
+# num_days <- 200
+# num_infected_seeds <- 1
+# num_runs <- 8
+# 
+# scenario_names = c("baseline_infectiousness_baseline_contacts", 
+#                    "baseline_infectiousness_superspreading_40_contacts",
+#                    "superspreading_40_infectiousness_baseline_contacts",
+#                    "superspreading_40_infectiousness_superspreading_40_contacts")
+# 
+# tp_distributions = c("Constant", "Constant", "Gamma", "Gamma")
+# tp_means = c(0.08, 0.08, 0.081264, 0.081264)
+# tp_overdispersions = c(0, 0, 0.4, 0.4)
+#   
+# contact_distributions = c("Constant", "Gamma", "Constant", "Gamma")
+# contact_overdispersions = c(0, 0.4, 0, 0.4)
+#   
+# for (i in seq_along(scenario_names)) {
+#     run_simulations(scenario_name = scenario_names[i], track_index_case = "false", event_log_level = "Transmissions",
+#                     tp_distribution = tp_distributions[i], tp_mean = tp_means[i], tp_overdispersion = tp_overdispersions[i],
+#                     contact_distribution = contact_distributions[i], contact_distribution_overdispersion = contact_overdispersions[i],
+#                     disease_config_file = disease_config_file, holidays_file = holidays_file, 
+#                     num_days = num_days, num_infected_seeds = num_infected_seeds, num_runs = num_runs)
+# }
+  
+# tp_overdispersion = 10 --> tp_mean = 0.08
+# tp_overdispersion = 0.6 --> tp_mean = 0.080166
+# tp_overdispersion = 0.2 --> tp_mean = 0.094622
+
+###############################################################################################
+# Run simulations with social distancing (periods based on CoMix data)                        #
+###############################################################################################
+
 disease_config_file <- "disease_covid19_lognorm.xml"
-holidays_file <- "holidays_belgium_2019_2021.csv"
+holidays_file <- "calendar_social_distancing_comix.csv"
 
 num_days <- 200
 num_infected_seeds <- 1
 num_runs <- 8
 
-scenario_names = c("baseline_infectiousness_baseline_contacts", 
-                   "baseline_infectiousness_superspreading_40_contacts",
-                   "superspreading_40_infectiousness_baseline_contacts",
-                   "superspreading_40_infectiousness_superspreading_40_contacts")
+scenario_names = c("sd_baseline_infectiousness_baseline_contacts", 
+                   "sd_baseline_infectiousness_superspreading_40_contacts",
+                   "sd_superspreading_40_infectiousness_baseline_contacts",
+                   "sd_superspreading_40_infectiousness_superspreading_40_contacts")
 
 tp_distributions = c("Constant", "Constant", "Gamma", "Gamma")
 tp_means = c(0.08, 0.08, 0.081264, 0.081264)
@@ -138,48 +173,44 @@ for (i in seq_along(scenario_names)) {
                     disease_config_file = disease_config_file, holidays_file = holidays_file, 
                     num_days = num_days, num_infected_seeds = num_infected_seeds, num_runs = num_runs)
 }
-  
+
 # tp_overdispersion = 10 --> tp_mean = 0.08
 # tp_overdispersion = 0.6 --> tp_mean = 0.080166
 # tp_overdispersion = 0.2 --> tp_mean = 0.094622
-
-###############################################################################################
-# Run simulations with social distancing (periods based on CoMix data)                        #
-###############################################################################################
 
 ###############################################################################################
 # Run simulations for 1 day to get degree distribution.                                       #
 ###############################################################################################
 
 disease_config_file <- "disease_covid19_lognorm.xml"
-holidays_file <- "holidays_belgium_2019_2021.csv"
-
-tp_mean <- 0.08
- 
-num_days <- 1
-num_runs <- 1
-
-scenario_names = c("degree_dist_baseline_infectiousness_baseline_contacts", 
-                   "degree_dist_baseline_infectiousness_superspreading_20_contacts",
-                   "degree_dist_baseline_infectiousness_superspreading_40_contacts", 
-                   "degree_dist_baseline_infectiousness_superspreading_60_contacts",
-                   "degree_dist_baseline_infectiousness_superspreading_100_contacts",
-                   "degree_dist_baseline_infectiousness_superspreading_1000_contacts")
-
-contact_distributions <- c("Constant", "Gamma", "Gamma", "Gamma")
-contact_overdispersions <- c(0, 0.2, 0.4, 0.6, 1, 10)
-
-for (i in seq_along(scenario_names)) {
-  run_simulations(scenario_name = scenario_names[i], track_index_case = "false", 
-                  event_log_level = "All", 
-                  tp_distribution = "Constant", tp_mean = tp_mean, tp_overdispersion = 0,
-                  contact_distribution = contact_distributions[i], 
-                  contact_distribution_overdispersion = contact_overdispersions[i],
-                  disease_config_file = disease_config_file, holidays_file = holidays_file,
-                  num_days = num_days, num_infected_seeds = num_infected_seeds, num_runs = num_runs)
-}
-
-# TODO degree distribution when social distancing is practiced 
+# holidays_file <- "holidays_belgium_2019_2021.csv"
+# 
+# tp_mean <- 0.08
+#  
+# num_days <- 1
+# num_runs <- 1
+# 
+# scenario_names = c("degree_dist_baseline_infectiousness_baseline_contacts", 
+#                    "degree_dist_baseline_infectiousness_superspreading_20_contacts",
+#                    "degree_dist_baseline_infectiousness_superspreading_40_contacts", 
+#                    "degree_dist_baseline_infectiousness_superspreading_60_contacts",
+#                    "degree_dist_baseline_infectiousness_superspreading_100_contacts",
+#                    "degree_dist_baseline_infectiousness_superspreading_1000_contacts")
+# 
+# contact_distributions <- c("Constant", "Gamma", "Gamma", "Gamma")
+# contact_overdispersions <- c(0, 0.2, 0.4, 0.6, 1, 10)
+# 
+# for (i in seq_along(scenario_names)) {
+#   run_simulations(scenario_name = scenario_names[i], track_index_case = "false", 
+#                   event_log_level = "All", 
+#                   tp_distribution = "Constant", tp_mean = tp_mean, tp_overdispersion = 0,
+#                   contact_distribution = contact_distributions[i], 
+#                   contact_distribution_overdispersion = contact_overdispersions[i],
+#                   disease_config_file = disease_config_file, holidays_file = holidays_file,
+#                   num_days = num_days, num_infected_seeds = num_infected_seeds, num_runs = num_runs)
+# }
+# 
+# # TODO degree distribution when social distancing is practiced 
 
 ###############################################################################################
 # Run simulations, tracking only the index case, for 40 days.                                 #
