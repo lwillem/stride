@@ -37,7 +37,7 @@ def plot_herd_immunity_threshold(output_dir, fig_name, display_scenario_names, a
         hits.append([x for x in scenario if not np.isnan(x)])
 
     plt.violinplot(hits)
-    plt.xticks(range(1, len(display_scenario_names + 1), display_scenario_names)
+    plt.xticks(range(1, len(display_scenario_names + 1), display_scenario_names))
 
     if show_day:
         plt.ylabel("Day on which Rt >= 1 for the last time")

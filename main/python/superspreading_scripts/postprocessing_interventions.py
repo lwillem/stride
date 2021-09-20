@@ -19,7 +19,7 @@
 """
 """
 
-import argparse
+'''
 import matplotlib.pyplot as plt
 import multiprocessing
 import numpy as np
@@ -66,31 +66,12 @@ def main(output_dir, scenario_names, display_scenario_names):
     all_last_days_with_infections = []
 
     for scenario in scenario_names:
-        print(scenario)
-
-        experiment_ids = get_experiment_ids(output_dir, scenario)
         with multiprocessing.Pool(processes=4) as pool:
-            # Get number of secondary cases for each infected individual
-            secondary_cases_by_individual = pool.starmap(get_secondary_cases_by_individual,
-                                                [(output_dir, scenario, exp_id, num_days) for exp_id in experiment_ids])
-            # Get number of new cases per day
-            new_cases_per_day = pool.starmap(get_new_cases_per_day,
-                                                [(output_dir, scenario, exp_id, num_days) for exp_id in experiment_ids])
 
             # Calculate the final total number of cases for each simulation
             # Note: index cases are not counted.
             total_cases = [sum(x.values()) for x in secondary_cases_by_individual]
             all_total_cases.append(total_cases)
-
-            # Calculate last day with new infections
-            last_day_with_infections = []
-            for run in new_cases_per_day:
-                for day in range(num_days - 1, -1, -1):
-                    if run[day] > 0:
-                        last_day_with_infections.append(day)
-                    elif day == 0:
-                        last_day_with_infections.append(day)
-            all_last_days_with_infections.append(last_day_with_infections_exclude_extinction)
 
             # Calculate number of cases during lockdown and after release
             num_cases_lockdown = [sum([run[d] for d in range(30, 100)]) for run in new_cases_per_day]
@@ -118,6 +99,61 @@ def main(output_dir, scenario_names, display_scenario_names):
 
     plot_resurgence_probabilities(output_dir, "resurgence_probabilities", all_num_cases_release_exclude_extinct_before_d30, display_scenario_names, 500)
 
+'''
+
+import argparse
+import multiprocessing
+
+from plots import plot_new_cases_per_day
+from util import get_experiment_ids, get_cases_output
+
+def main(output_dir, scenario_names, display_scenario_names):
+    num_days = 200
+
+    for s_i in range(len(scenario_names)):
+        scenario_name = scenario_names[s_i]
+        print(scenario_name)
+
+        experiment_ids = get_experiment_ids(output_dir, scenario_name)
+        with multiprocessing.Pool(processes=4) as pool:
+            cases_output = pool.starmap(get_cases_output, [(output_dir, scenario_name, exp_id) for exp_id in experiment_ids])
+
+            plot_new_cases_per_day(output_dir, "sd_new_cases_per_day", scenario_name, [output["cases_by_day"] for output in cases_output], num_days)
+
+'''
+experiment_ids = get_experiment_ids(output_dir, scenario_name)
+with multiprocessing.Pool(processes=4) as pool:
+    cases_output = pool.starmap(get_cases_output, [(output_dir, scenario_name, exp_id) for exp_id in experiment_ids])
+    # Calculate the proportion of infected individuals responsible for 80% of infections
+    all_p80s.append([get_p80(output["secondary_cases_by_individual"], extinction_threshold) for output in cases_output]) # TODO exclude extinction?
+    # Get final outbreak size
+    total_cases = [get_total_cases(output["cases_by_day"], num_days) for output in cases_output]
+    all_final_sizes.append(total_cases)
+    # Day of last infection
+    all_days_last_infection.append([get_day_of_last_infection(output["cases_by_day"], num_days) for output in cases_output])
+    # TODO smoothed Rt by day?
+    # Herd immunity threshold
+    all_hits.append([get_herd_immunity_threshold(output["rt_by_day"], output["cases_by_day"], num_days, output["parameters"]["population_size"]) for output in cases_output])
+    all_hits_day.append([get_herd_immunity_threshold(output["rt_by_day"], output["cases_by_day"], num_days, output["parameters"]["population_size"]) for output in cases_output], get_day=True)
+
+    # Sort total cases from high to low & print
+    # Used to determine extinction threshold
+    total_cases.sort(reverse=True)
+    print(total_cases)
+
+    plot_cumulative_cases_per_day(output_dir, "cumulative_cases_per_day", scenario_name, [output["cases_by_day"] for output in cases_output], num_days)
+    plot_effective_r_by_day(output_dir, "rt_by_day", scenario_name, [output["rt_by_day"] for output in cases_output], num_days)
+
+plot_extinction_probabilities(output_dir, "extinction_probabilities", display_scenario_names, all_final_sizes, extinction_threshold)
+plot_p80s(output_dir, "p80s", display_scenario_names, all_p80s)
+plot_ar(output_dir, "ar", display_scenario_names, all_final_sizes, num_days, population_size)
+plot_ar(output_dir, "ar_exclude_extinction", display_scenario_names, all_final_sizes, num_days, population_size, extinction_threshold=extinction_threshold)
+plot_herd_immunity_threshold(output_dir, "hits", display_scenario_names, all_hits)
+plot_herd_immunity_threshold(output_dir, "hits_day", display_scenario_names, all_hits_day, show_day=True)
+plot_final_size_frequencies(output_dir, "final_size_frequencies", display_scenario_names, all_final_sizes, num_days)
+plot_day_last_infection(output_dir, "last_day_with_infections", display_scenario_names, all_days_last_infection, num_days)
+
+'''
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser()

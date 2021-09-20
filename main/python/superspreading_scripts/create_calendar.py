@@ -99,6 +99,18 @@ def main():
 
         # TODO schools closed
         # TODO school distancing?
+        period = date(2020, 8, 31) - date(2020, 3, 13)
+        for i in range(period.days + 1):
+            day = date(2020, 3, 13) + timedelta(days=i)
+            for age in range(26):
+                writer.writerow({
+                    "category": "schools_closed",
+                    "date": day,
+                    "value": 1,
+                    "type": "double",
+                    "age": age,
+                    "age_char": age
+                })
 
         # Community distancing
         for wave, num_contacts in comix_contacts["community"].items():

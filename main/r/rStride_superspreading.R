@@ -64,7 +64,7 @@ run_simulations <- function(scenario_name,                        # Label for ou
     num_participants_survey                        = 0,
     output_cases                                   = "false",
     rng_seed                                       = seq(num_runs),
-    start_date                                     = "2020-02-03",
+    start_date                                     = "2020-02-01",
     track_index_case                               = track_index_case,
     
     # Parameters relating to social distancing measures
@@ -182,7 +182,7 @@ for (i in seq_along(scenario_names)) {
 # Run simulations for 1 day to get degree distribution.                                       #
 ###############################################################################################
 
-disease_config_file <- "disease_covid19_lognorm.xml"
+#disease_config_file <- "disease_covid19_lognorm.xml"
 # holidays_file <- "holidays_belgium_2019_2021.csv"
 # 
 # tp_mean <- 0.08
