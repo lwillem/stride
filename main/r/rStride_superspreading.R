@@ -109,6 +109,35 @@ run_simulations <- function(scenario_name,                        # Label for ou
 }
 
 ###############################################################################################
+# Run simulations to verify baseline = simulations with overdispersion parameter = 10.        #
+###############################################################################################
+
+# disease_config_file <- "disease_covid19_lognorm.xml"
+# holidays_file <- "holidays_belgium_2019_2021.csv"
+ 
+# num_days <- 200
+# num_infected_seeds <- 1
+# num_runs <- 8
+
+# scenario_names = c("baseline_infectiousness_superspreading_100_contacts",
+#                    "superspreading_100_infectiousness_baseline_contacts",
+#                    "superspreading_100_infectiousness_superspreading_100_contacts")
+# 
+# tp_distributions = c("Constant", "Gamma", "Gamma")
+# tp_overdispersions = c(0, 10, 10)
+#   
+# contact_distributions = c("Gamma", "Constant", "Gamma")
+# contact_overdispersions = c(10, 0, 10)
+#   
+# for (i in seq_along(scenario_names)) {
+#     run_simulations(scenario_name = scenario_names[i], track_index_case = "false", event_log_level = "Transmissions",
+#                     tp_distribution = tp_distributions[i], tp_mean = 0.08, tp_overdispersion = tp_overdispersions[i],
+#                     contact_distribution = contact_distributions[i], contact_distribution_overdispersion = contact_overdispersions[i],
+#                     disease_config_file = disease_config_file, holidays_file = holidays_file, 
+#                     num_days = num_days, num_infected_seeds = num_infected_seeds, num_runs = num_runs)
+# }
+
+###############################################################################################
 # Run simulations without interventions.                                                      #
 ###############################################################################################
 
@@ -216,61 +245,31 @@ for (i in seq_along(scenario_names)) {
 # Run simulations, tracking only the index case, for 40 days.                                 #
 ###############################################################################################
 
-# ###############################################################################################
-# # Run simplified simulations, tracking only the index case, for 40 days.                      #
-# # Results for these are used to compare to estimates obtained with theoretical description.   #
-# ###############################################################################################
-# 
-# # Some 'hacks' needed in C++ code to run these:
-# #     - In Person::Update(): everyone is always present in 
-# #       household / school / workplace / primary and secondary community, 
-# #       and always absent in HouseholdCluster
-# #     - In DiseaseSeeder::ImportInfectedCases(): fill in id of person being looked at on line 98,
-# #       so that the same individual is chosen each time as the index case.
-# #       I.e..: Person& p = pop->at(static_cast<size_t>(person_id));
-# #       Persons I ran simulations for:
-# #           * Adult (person_id = 4)
-# #           * Child (person_id = 3)
-# #           * Elderly (person_id = 5)
-# #
-# # To run simulations for child / elderly, only the scenario_name needs to be updated in the R script below. 
-# 
-# # run_simulations(
-# #   scenario_name = "index_case_only_simple_adult_baseline", track_index_case = "true",
-# #   tp_distribution = "Constant", tp_mean = c(0.0, 0.025, 0.05, 0.075, 0.1), tp_overdispersion = 0, 
-# #   cnt_reduction_workplace = 0, cnt_reduction_other = 0, 
-# #   cnt_reduction_workplace_exit = 0, cnt_reduction_other_exit = 0, cnt_reduction_school_exit = 0,
-# #   disease_config_file = "disease_covid19_lognorm_nocntreduction.xml", holidays_file = "holidays_none.json",
-# #   num_days = 40, num_infected_seeds = 1, num_runs = 200)
-# # 
-# # run_simulations(
-# #   scenario_name = "index_case_only_simple_adult_superspreading_1000", track_index_case = "true",
-# #   tp_distribution = "Gamma", tp_mean = c(0.0, 0.025, 0.05, 0.075, 0.1), tp_overdispersion = 10, 
-# #   cnt_reduction_workplace = 0, cnt_reduction_other = 0, 
-# #   cnt_reduction_workplace_exit = 0, cnt_reduction_other_exit = 0, cnt_reduction_school_exit = 0,
-# #   disease_config_file = "disease_covid19_lognorm_nocntreduction.xml", holidays_file = "holidays_none.json",
-# #   num_days = 40, num_infected_seeds = 1, num_runs = 200)
-# # 
-# # run_simulations(
-# #   scenario_name = "index_case_only_simple_adult_superspreading_60", track_index_case = "true",
-# #   tp_distribution = "Gamma", tp_mean = c(0.0, 0.025002, 0.050004, 0.075102, 0.10086), tp_overdispersion = 0.6, 
-# #   cnt_reduction_workplace = 0, cnt_reduction_other = 0, 
-# #   cnt_reduction_workplace_exit = 0, cnt_reduction_other_exit = 0, cnt_reduction_school_exit = 0,
-# #   disease_config_file = "disease_covid19_lognorm_nocntreduction.xml", holidays_file = "holidays_none.json",
-# #   num_days = 40, num_infected_seeds = 1, num_runs = 200)
-# # 
-# # run_simulations(
-# #   scenario_name = "index_case_only_simple_adult_superspreading_40", track_index_case = "true",
-# #   tp_distribution = "Gamma", tp_mean = c(0.0, 0.025, 0.050044, 0.075852, 0.10438), tp_overdispersion = 0.4, 
-# #   cnt_reduction_workplace = 0, cnt_reduction_other = 0, 
-# #   cnt_reduction_workplace_exit = 0, cnt_reduction_other_exit = 0, cnt_reduction_school_exit = 0,
-# #   disease_config_file = "disease_covid19_lognorm_nocntreduction.xml", holidays_file = "holidays_none.json",
-# #   num_days = 40, num_infected_seeds = 1, num_runs = 200)
-# # 
-# # run_simulations(
-# #   scenario_name = "index_case_only_simple_adult_superspreading_20", track_index_case = "true",
-# #   tp_distribution = "Gamma", tp_mean = c(0.0, 0.025014, 0.051518, 0.085884, 0.141108), tp_overdispersion = 0.2, 
-# #   cnt_reduction_workplace = 0, cnt_reduction_other = 0, 
-# #   cnt_reduction_workplace_exit = 0, cnt_reduction_other_exit = 0, cnt_reduction_school_exit = 0,
-# #   disease_config_file = "disease_covid19_lognorm_nocntreduction.xml", holidays_file = "holidays_none.json",
-# #   num_days = 40, num_infected_seeds = 1, num_runs = 200)
+###############################################################################################
+# Run simplified simulations, tracking only the index case, for 40 days.                      #
+# Results for these are used to compare to estimates obtained with theoretical description.   #
+###############################################################################################
+
+track_index_case <- "true"
+
+num_days <- 40
+num_infected_seeds <- 1
+num_runs <- 8
+
+disease_config_file <- "disease_covid19_lognorm_nocntreduction.xml"
+holidays_file <- "holidays_none.csv"
+
+run_simplified <- "true"
+
+adult_id <- 4
+child_id <- 3
+elderly_id <- 5
+
+# baseline: tp_mean = c(0.0, 0.025, 0.05, 0.075, 0.1)
+# tp overdispersion 1000: c(0.0, 0.025, 0.05, 0.075, 0.1)
+# tp overdispersion 60: c(0.0, 0.025002, 0.050004, 0.075102, 0.10086)
+# tp overdispersion 40: c(0.0, 0.025, 0.050044, 0.075852, 0.10438)
+# tp overdispersion 20: c(0.0, 0.025014, 0.051518, 0.085884, 0.141108)
+
+# TODO run simulations 
+# TODO adapt theoretical description for contact heterogeneity? 

@@ -114,7 +114,7 @@ public:
         		bool isHouseholdClusteringAllowed,
         		bool isIsolatedFromHousehold, 
 				util::RnHandler& rnHandler,
-                const std::shared_ptr<Calendar> calendar);
+                const std::shared_ptr<Calendar> calendar, bool run_simplified);
 
         /// Set the age of the person
         void SetAge(unsigned int newAge) { m_age = newAge; }

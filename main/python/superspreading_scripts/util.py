@@ -147,6 +147,12 @@ def get_day_of_last_infection(cases_by_day, num_days):
 
     return day_of_last_infection
 
+def get_num_cases_over_period(cases_by_day, start_day, end_day):
+    total_cases = 0
+    for day in range(start_day, end_day + 1):
+        if day in cases_by_day:
+            total_cases += cases_by_day[day]
+    return total_cases
 
 def get_herd_immunity_threshold(rt_by_day, cases_by_day, num_days, population_size, get_day=False):
     # Smooth (using LOWESS function)

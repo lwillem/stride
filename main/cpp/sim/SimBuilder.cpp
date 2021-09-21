@@ -49,6 +49,7 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         sim->m_config                        = m_config;
         sim->m_population                    = std::move(pop);
         sim->m_track_index_case              = m_config.get<bool>("run.track_index_case");
+        sim->m_run_simplified                = m_config.get<bool>("run.run_simplified", false);
         sim->m_num_threads                   = m_config.get<unsigned int>("run.num_threads");
         unsigned int num_days                = m_config.get<unsigned short>("run.num_days");
         sim->m_calendar                      = make_shared<Calendar>(m_config,num_days);
