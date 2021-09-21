@@ -60,7 +60,7 @@ def main(output_dir, scenario_names, display_scenario_names):
             # TODO smoothed Rt by day?
             # Herd immunity threshold
             all_hits.append([get_herd_immunity_threshold(output["rt_by_day"], output["cases_by_day"], num_days, output["parameters"]["population_size"]) for output in cases_output])
-            all_hits_day.append([get_herd_immunity_threshold(output["rt_by_day"], output["cases_by_day"], num_days, output["parameters"]["population_size"]) for output in cases_output], get_day=True)
+            all_hits_day.append([get_herd_immunity_threshold(output["rt_by_day"], output["cases_by_day"], num_days, output["parameters"]["population_size"], get_day=True) for output in cases_output])
 
             # Sort total cases from high to low & print
             # Used to determine extinction threshold
