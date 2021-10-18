@@ -98,7 +98,7 @@ def plot_p80s(output_dir, fig_name, display_scenario_names, p80s):
     # Create boxplots
     plt.boxplot(p80s, labels=display_scenario_names)
     plt.ylabel("P80")
-    plt.ylim(0, 0.5)
+    #plt.ylim(0, 0.5)
     save_figure(output_dir, fig_name, extension="png", dpi=100)
 
 def plot_effective_r_by_day(output_dir, fig_name, scenario_name, rt_by_day, num_days):

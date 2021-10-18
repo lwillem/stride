@@ -77,6 +77,28 @@ def get_cases_output(output_dir, scenario_name, experiment_id):
     potential_infectors = {}
     cases_by_day = {} # Keep track of number of cases per day
     infected_by_day = {} # Keep track of IDs of persons infected per day
+    cnt_probabilities = []
+    individual_contact_factors = []
+    transmissions_by_location = {
+        "Household": 0,
+        "K12School": 0,
+        "College": 0,
+        "Workplace": 0,
+        "PrimaryCommunity": 0,
+        "SecondaryCommunity": 0,
+    }
+    contact_probabilities_by_location = {
+        "Household": [],
+        "K12School": [],
+        "College": [],
+        "Workplace": [],
+        "PrimaryCommunity": [],
+        "SecondaryCommunity": [],
+    }
+
+    total_transmissions = 0
+
+    num_contacts_per_participant = {}
 
     with open(log_file) as f:
         for line in f:
@@ -99,8 +121,15 @@ def get_cases_output(output_dir, scenario_name, experiment_id):
                     infected_by_day[sim_day] = [infected_id]
 
             elif tag == "[TRAN]": # Transmission
+                total_transmissions += 1
                 infector_id = int(float(line[2]))
                 infected_id = int(float(line[1]))
+
+                location = line[5]
+                if location in transmissions_by_location:
+                    transmissions_by_location[location] += 1
+                else:
+                    transmissions_by_location[location] = 1
 
                 # Add infected to potential infectors
                 if infected_id not in potential_infectors:
@@ -122,6 +151,27 @@ def get_cases_output(output_dir, scenario_name, experiment_id):
                     infected_by_day[sim_day].append(infected_id)
                 else:
                     infected_by_day[sim_day] = [infected_id]
+            elif tag == "[PART]":
+                participant_id = int(float(line[1]))
+                if participant_id not in num_contacts_per_participant:
+                    num_contacts_per_participant[participant_id] = 0
+            elif tag == "[CONT]":
+                participant_id = int(float(line[1]))
+                if participant_id in num_contacts_per_participant:
+                    num_contacts_per_participant[participant_id] += 1
+                else:
+                    num_contacts_per_participant[participant_id] = 1
+            elif tag == "[CNTH]":
+                individual_contact_factors.append(float(line[2]))
+            elif tag == "[CCNT]":
+                cnt_probability = float(line[1])
+                cnt_probabilities.append(cnt_probability)
+                location = line[2].strip()
+                if location in contact_probabilities_by_location:
+                    contact_probabilities_by_location[location].append(cnt_probability)
+                else:
+                    contact_probabilities_by_location[location] = [cnt_probability]
+
 
     # Get P80
     # Get ...
@@ -134,7 +184,12 @@ def get_cases_output(output_dir, scenario_name, experiment_id):
         "secondary_cases_by_individual": potential_infectors,
         "cases_by_day": cases_by_day,
         "infected_by_day": infected_by_day,
-        "rt_by_day": rt_by_day
+        "rt_by_day": rt_by_day,
+        "contact_probabilities": cnt_probabilities,
+        "individual_contact_factors": individual_contact_factors,
+        "transmissions_by_location": transmissions_by_location,
+        "contact_probabilities_by_location": contact_probabilities_by_location,
+        "num_contacts_per_participant": num_contacts_per_participant
     }
     return cases_output
 

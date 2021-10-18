@@ -47,6 +47,7 @@ def get_degree_distribution(output_dir, scenario_name, experiment_id):
 
     # Add edges between individuals that have contact
     log_file = os.path.join(output_dir, scenario_name, "exp" + "{:04}".format(experiment_id), "event_log.txt")
+    number_of_edges = 0
     with open(log_file) as f:
         for line in f:
             line = line.split(" ")
@@ -56,13 +57,16 @@ def get_degree_distribution(output_dir, scenario_name, experiment_id):
                 p2_id = int(float(line[17]))
                 # Log contact in graph
                 G.add_edge(p1_id, p2_id)
+                number_of_edges += 1
+
+    print(number_of_edges)
 
     # Calculate degree frequencies
     degree_freqs = nx.degree_histogram(G)
 
     #avg_degree = np.mean([degree[1] for degree in nx.degree(G)])
     #print(avg_degree)
-    print(nx.number_of_edges(G))
+    #print(nx.number_of_edges(G))
 
     # Normalize to total number of nodes
     degree_freqs = [freq / population_size for freq in degree_freqs]
