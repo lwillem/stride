@@ -1,4 +1,4 @@
-import argparse
+"""import argparse
 import csv
 import multiprocessing
 import numpy as np
@@ -256,3 +256,4 @@ if __name__=="__main__":
 
     args = parser.parse_args()
     main(args.population_file, args.contact_matrix_file, args.transmission_probabilities, args.infectious_period_length, args.overdispersion)
+"""

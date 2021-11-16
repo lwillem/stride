@@ -67,7 +67,7 @@ def main(output_dir, scenario_names, display_scenario_names):
 
 '''
 
-import argparse
+"""import argparse
 import multiprocessing
 
 from plots import plot_cumulative_cases_per_day, plot_new_cases_per_day
@@ -133,4 +133,4 @@ if __name__=="__main__":
     parser.add_argument("--display_scenario_names", type=str, nargs="+", default=[], help="Names for scenarios to be displayed on plots")
 
     args = parser.parse_args()
-    main(args.output_dir, args.scenario_names, args.display_scenario_names)
+    main(args.output_dir, args.scenario_names, args.display_scenario_names)"""

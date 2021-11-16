@@ -21,7 +21,7 @@
     + comparison of offspring distribution to negative binomial distribution.
     Using results from simulations tracking only secondary cases from index case.
 """
-
+"""
 import argparse
 import multiprocessing
 import matplotlib.pyplot as plt
@@ -137,4 +137,4 @@ if __name__=="__main__":
     parser.add_argument("--display_scenario_names", type=str, nargs="+", default=[], help="Names for scenarios to be displayed on plots")
 
     args = parser.parse_args()
-    main(args.output_dir, args.scenario_names, args.overdispersion_params, args.display_scenario_names)
+    main(args.output_dir, args.scenario_names, args.overdispersion_params, args.display_scenario_names)"""

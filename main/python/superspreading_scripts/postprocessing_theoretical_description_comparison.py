@@ -20,7 +20,7 @@
     Script to create plots comparing theoretical description estimates
     to simulation results.
 """
-
+"""
 import argparse
 import csv
 import matplotlib.pyplot as plt
@@ -144,4 +144,4 @@ if __name__=="__main__":
     parser.add_argument("--contact_matrix_file", type=str, default=os.path.join("..", "resources", "data", "contact_matrix_flanders_conditional_teachers.xml"))
 
     args = parser.parse_args()
-    main(args.output_dir, args.scenario_names, args.overdispersion_params, args.population_file, args.contact_matrix_file)
+    main(args.output_dir, args.scenario_names, args.overdispersion_params, args.population_file, args.contact_matrix_file)"""

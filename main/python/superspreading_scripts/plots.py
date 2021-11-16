@@ -1,8 +1,13 @@
+
+
+
 import matplotlib.pyplot as plt
 import numpy as np
 import os
 
-def plot_ar(output_dir, fig_name, display_scenario_names, all_total_cases, num_days, pop_size, extinction_threshold=0):
+from collections import Counter
+
+def plot_ar(output_dir, fig_name, display_scenario_names, all_total_cases, num_days, pop_size, extinction_threshold=0, y_min=-0.05, y_max=1.05):
     all_total_cases_prop_pop = []
     for scenario in all_total_cases:
         all_total_cases_prop_pop.append([total_cases / pop_size for total_cases in scenario if total_cases >= extinction_threshold])
@@ -11,11 +16,11 @@ def plot_ar(output_dir, fig_name, display_scenario_names, all_total_cases, num_d
     plt.xticks(range(1, len(all_total_cases_prop_pop) + 1), display_scenario_names)
 
     plt.ylabel("AR (after {} days)".format(num_days))
-    plt.ylim(0, 1)
+    plt.ylim(y_min, y_max)
 
-    save_figure(output_dir, fig_name, extension="png", dpi=100)
+    save_figure(output_dir, fig_name, extension="png")
 
-def plot_cumulative_cases_per_day(output_dir, fig_name, scenario_name, cases_by_day, num_days):
+def plot_cumulative_cases_per_day(output_dir, fig_name, scenario_name, cases_by_day, num_days, y_max=None):
     for run in cases_by_day:
         total_cases = 0
         cumulative_cases_by_day = []
@@ -27,81 +32,37 @@ def plot_cumulative_cases_per_day(output_dir, fig_name, scenario_name, cases_by_
     plt.xlabel("Simulation day")
     plt.ylabel("Cumulative cases")
 
-    # TODO y_max?
+    if y_max is not None:
+        plt.ylim(0, y_max)
 
-    save_figure(output_dir, fig_name + "_" + scenario_name, extension="png", dpi=100)
+    save_figure(output_dir, fig_name + "_" + scenario_name)
 
-def plot_herd_immunity_threshold(output_dir, fig_name, display_scenario_names, all_hits, show_day=False):
-    hits = []
-    for scenario in all_hits:
-        hits.append([x for x in scenario if not np.isnan(x)])
+def plot_day_of_last_infection(output_dir, fig_name, display_scenario_names, all_days_last_infection, num_days):
+    plt.boxplot(all_days_last_infection, labels=display_scenario_names)
 
-    plt.violinplot(hits)
-    plt.xticks(range(1, len(display_scenario_names) + 1), display_scenario_names)
-
-    if show_day:
-        plt.ylabel("Day on which Rt >= 1 for the last time")
-    else:
-        plt.ylabel("Herd immunity threshold")
-
-    save_figure(output_dir, fig_name, extension="png", dpi=100)
-
-def plot_extinction_probabilities(output_dir, fig_name, display_scenario_names, all_total_cases, extinction_threshold):
-    extinction_probabilities = []
-    for scenario in all_total_cases:
-        extinction_probabilities.append(len([x for x in scenario if x < extinction_threshold]) / len(scenario))
-
-    plt.bar(range(len(all_total_cases)), extinction_probabilities)
-    plt.xticks(range(len(display_scenario_names)), display_scenario_names)
-    plt.ylabel("Extinction probability (threshold = {} cases)".format(extinction_threshold))
-    plt.ylim(0, 1.1)
-
-    save_figure(output_dir, fig_name, extension="png", dpi=100)
-
-def plot_final_size_frequencies(output_dir, fig_name, display_scenario_names, all_total_cases, num_days):
-    """
-        Plot frequency with which final sizes occur.
-        Visualisation for extinction threshold.
-    """
-
-    plt.hist(all_total_cases, histtype="bar", stacked=True)
-
-    plt.xlabel("Outbreak size after {} days".format(num_days))
-    plt.ylabel("Frequency")
-    plt.legend(display_scenario_names)
-
-    save_figure(output_dir, fig_name, extension="png", dpi=100)
-
-def plot_day_last_infection(output_dir, fig_name, display_scenario_names, all_days_last_infection, num_days):
-    plt.violinplot(all_days_last_infection)
-
-    plt.xticks(range(1, len(all_days_last_infection) + 1), display_scenario_names)
+    #plt.xticks(range(1, len(all_days_last_infection) + 1), display_scenario_names)
 
     plt.ylabel("Day with last infection")
-    plt.ylim(0, num_days + 1)
+    plt.ylim(-0.5, num_days + 1)
 
-    save_figure(output_dir, fig_name, extension="png", dpi=100)
+    save_figure(output_dir, fig_name, extension="png")
 
-def plot_new_cases_per_day(output_dir, fig_name, scenario_name, cases_by_day, num_days):
-    for run in cases_by_day:
-        plt.plot(range(num_days), [run[day] if day in run else 0 for day in range(num_days)])
+def plot_day_of_peak(output_dir, fig_name, display_scenario_names, all_cases_per_day, num_days, extinction_threshold=0):
+    all_peak_days = []
+    for scenario in all_cases_per_day:
+        peak_days = []
+        for run in scenario:
+            if sum(run.values()) >= extinction_threshold:
+                peak_days.append(max(run, key=lambda day: run[day]))
+        all_peak_days.append(peak_days)
+    plt.boxplot(all_peak_days, labels=display_scenario_names)
 
-    plt.xlabel("Simulation day")
-    plt.ylabel("New cases")
-    # TODO y_max ?
+    plt.ylabel("Day of peak")
+    plt.ylim(-0.5, num_days + 1)
 
-    save_figure(output_dir, fig_name + "_" + scenario_name, extension="png", dpi=100)
+    save_figure(output_dir, fig_name)
 
-def plot_p80s(output_dir, fig_name, display_scenario_names, p80s):
-    # Remove NaNs
-    p80s = [[p80 for p80 in scenario_result if not np.isnan(p80)] for scenario_result in p80s]
-    # Create boxplots
-    plt.boxplot(p80s, labels=display_scenario_names)
-    plt.ylabel("P80")
-    #plt.ylim(0, 0.5)
-    save_figure(output_dir, fig_name, extension="png", dpi=100)
-
-def plot_effective_r_by_day(output_dir, fig_name, scenario_name, rt_by_day, num_days):
+def plot_effective_r_by_day(output_dir, fig_name, scenario_name, rt_by_day, num_days, y_max=None):
     mean = []
     lower = []
     upper = []
@@ -121,11 +82,142 @@ def plot_effective_r_by_day(output_dir, fig_name, scenario_name, rt_by_day, num_
     plt.xlim(-0.5, num_days)
 
     plt.ylabel("Rt")
-    # TODO ylim?
+    if y_max is not None:
+        plt.ylim(0, y_max)
 
     save_figure(output_dir, fig_name + "_" + scenario_name, extension="png", dpi=100)
 
-def save_figure(output_dir, figure_name, extension="eps", dpi=1000):
+def plot_extinction_probabilities(output_dir, fig_name, display_scenario_names, all_total_cases, extinction_threshold):
+    extinction_probabilities = []
+    for scenario in all_total_cases:
+        extinction_probabilities.append(len([x for x in scenario if x < extinction_threshold]) / len(scenario))
+
+    plt.bar(range(len(all_total_cases)), extinction_probabilities)
+    plt.xticks(range(len(display_scenario_names)), display_scenario_names)
+    plt.ylabel("Extinction probability (threshold = {} cases)".format(extinction_threshold))
+    plt.ylim(0, 1.1)
+
+    save_figure(output_dir, fig_name)
+
+def plot_final_size_frequencies(output_dir, fig_name, display_scenario_names, all_total_cases, num_days):
+    """
+        Plot frequency with which final sizes occur.
+        Visualisation for extinction threshold.
+    """
+
+    plt.hist(all_total_cases, histtype="bar", stacked=True)
+
+    plt.xlabel("Outbreak size after {} days".format(num_days))
+    plt.ylabel("Frequency")
+    plt.legend(display_scenario_names)
+
+    save_figure(output_dir, fig_name)
+
+def plot_herd_immunity_threshold(output_dir, fig_name, display_scenario_names, all_hits, show_day=False, num_days=200):
+    hits = []
+    for scenario in all_hits:
+        hits.append([x for x in scenario if not np.isnan(x)])
+
+    plt.violinplot(hits)
+    plt.xticks(range(1, len(display_scenario_names) + 1), display_scenario_names)
+
+    if show_day:
+        plt.ylabel("Day on which Rt >= 1 for the last time")
+        plt.ylim(0, num_days)
+    else:
+        plt.ylabel("Herd immunity threshold")
+        plt.ylim(0, 1)
+
+    save_figure(output_dir, fig_name, extension="png")
+
+def plot_new_cases_per_day(output_dir, fig_name, scenario_name, cases_by_day, num_days, y_max=None):
+    for run in cases_by_day:
+        plt.plot(range(num_days), [run[day] if day in run else 0 for day in range(num_days)])
+
+    plt.xlabel("Simulation day")
+    plt.ylabel("New cases")
+    if y_max is not None:
+        plt.ylim(0, y_max)
+
+    save_figure(output_dir, fig_name + "_" + scenario_name, extension="png", dpi=100)
+
+def plot_p80s(output_dir, fig_name, display_scenario_names, p80s):
+    # Remove NaNs
+    p80s = [[p80 for p80 in scenario_result if not np.isnan(p80)] for scenario_result in p80s]
+    # Create boxplots
+    plt.boxplot(p80s, labels=display_scenario_names)
+    plt.ylabel("P80")
+    plt.ylim(0, 1.1)
+    save_figure(output_dir, fig_name, extension="png", dpi=100)
+
+def plot_peak_sizes(output_dir, fig_name, display_scenario_names, all_cases_by_day, extinction_threshold=0, ymin=None, ymax=None):
+    all_peak_sizes = []
+    for scenario in all_cases_by_day:
+        all_peak_sizes.append([max(run.values()) for run in scenario if sum(run.values()) >= extinction_threshold])
+    plt.boxplot(all_peak_sizes, labels=display_scenario_names)
+    if (ymin is not None) and (ymax is not None):
+        plt.ylim(ymin, ymax)
+    plt.ylabel("Peak size")
+
+    save_figure(output_dir, fig_name)
+
+def plot_secondary_cases_distribution(output_dir, fig_name, display_scenario_names, all_secondary_cases_by_individual):
+    for scenario in all_secondary_cases_by_individual:
+        all_secondary_cases = []
+        for run in scenario:
+            all_secondary_cases += list(run.values())
+
+        frequencies = Counter(all_secondary_cases)
+        num_cases_sorted = list(frequencies.keys())
+        num_cases_sorted.sort()
+        plt.plot(num_cases_sorted, [frequencies[num] for num in num_cases_sorted])
+
+    plt.xlabel("Number of secondary cases")
+    plt.xlim(-5, 105)
+
+    plt.ylabel("Frequency")
+    plt.yscale("log")
+
+    plt.legend(display_scenario_names)
+
+    save_figure(output_dir, fig_name)
+
+def plot_transmissions_by_location(output_dir, fig_name, scenario_name, transmissions_by_location):
+    transmissions_by_location_dict = {
+        "Household": [],
+        "K12School": [],
+        "College": [],
+        "Workplace": [],
+        "PrimaryCommunity": [],
+        "SecondaryCommunity": [],
+    }
+
+    for run in transmissions_by_location:
+        total_transmissions = sum(run.values())
+
+        for location, value in run.items():
+            if location in transmissions_by_location_dict:
+                if total_transmissions > 0:
+                    transmissions_by_location_dict[location].append(value / total_transmissions)
+                else:
+                    transmissions_by_location_dict[location].append(0)
+            else:
+                if total_transmissions > 0:
+                    transmissions_by_location_dict[location] = [value / total_transmissions]
+                else:
+                    transmissions_by_location_dict[location].append(0)
+
+    locations = list(transmissions_by_location_dict.keys())
+    plt.boxplot([transmissions_by_location_dict[loc] for loc in locations], labels=locations)
+
+    plt.xticks(rotation=45)
+
+    plt.ylabel("Fraction of infections")
+    plt.ylim(-0.05, 1)
+
+    save_figure(output_dir, fig_name + "_" + scenario_name)
+
+def save_figure(output_dir, figure_name, extension="eps", dpi=200):
     if not os.path.exists(os.path.join(output_dir, "fig")):
         os.mkdir(os.path.join(output_dir, "fig"))
 

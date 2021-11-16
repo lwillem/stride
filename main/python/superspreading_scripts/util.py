@@ -13,7 +13,7 @@
 #  see http://www.gnu.org/licenses/.
 #
 #
-#  Copyright 2020, Willem L, Kuylen E & Broeckhove J
+#  Copyright 2021, Kuylen E
 ############################################################################ #
 
 """
@@ -21,7 +21,6 @@
 """
 
 import csv
-import matplotlib.pyplot as plt
 import numpy as np
 import os
 
@@ -37,179 +36,17 @@ def get_experiment_ids(output_dir, scenario_name):
             experiment_ids.append(exp_id)
     return experiment_ids
 
-def get_parameters(output_dir, scenario_name, experiment_id):
-    summary_file = os.path.join(output_dir, scenario_name, "exp" + "{:04}".format(experiment_id), "summary.csv")
-
-    parameters = {}
-    with open(summary_file) as csvfile:
-        reader = csv.DictReader(csvfile)
-        row = next(reader) # Get first line
-        parameters["num_days"] = int(row["num_days"])
-        parameters["population_size"] = int(row["population_size"])
-
-    return parameters
-
-def get_rt_by_day(infected_by_day, secondary_cases_by_individual, num_days):
-    rt_by_day = {}
-
-    for day in range(num_days):
-        # Check if any individuals were infected on this day
-        if day in infected_by_day and len(infected_by_day[day]) > 0:
-            # Get number of secondary cases caused by each individual infected on this day
-            secondary_cases_day = []
-            for infector_id in infected_by_day[day]:
-                secondary_cases_day.append(secondary_cases_by_individual[infector_id])
-            rt_by_day[day] = np.mean(secondary_cases_day)
-        else:
-            rt_by_day[day] = np.nan
-
-    return rt_by_day
-
-def get_cases_output(output_dir, scenario_name, experiment_id):
-    print("Getting output for exp " + str(experiment_id))
-
-    # Get parameters from summary file
-    parameters = get_parameters(output_dir, scenario_name, experiment_id)
-
-    # Get output data from file
-    log_file = os.path.join(output_dir, scenario_name, "exp" + "{:04}".format(experiment_id), "event_log.txt")
-
-    potential_infectors = {}
-    cases_by_day = {} # Keep track of number of cases per day
-    infected_by_day = {} # Keep track of IDs of persons infected per day
-    cnt_probabilities = []
-    individual_contact_factors = []
-    transmissions_by_location = {
-        "Household": 0,
-        "K12School": 0,
-        "College": 0,
-        "Workplace": 0,
-        "PrimaryCommunity": 0,
-        "SecondaryCommunity": 0,
-    }
-    contact_probabilities_by_location = {
-        "Household": [],
-        "K12School": [],
-        "College": [],
-        "Workplace": [],
-        "PrimaryCommunity": [],
-        "SecondaryCommunity": [],
-    }
-
-    total_transmissions = 0
-
-    num_contacts_per_participant = {}
-
-    with open(log_file) as f:
-        for line in f:
-            line = line.split(" ")
-            tag = line[0]
-            if tag == "[PRIM]": # Index case
-                infected_id = int(float(line[1]))
-                sim_day = int(line[6])
-                if infected_id not in potential_infectors:
-                    potential_infectors[infected_id] = 0
-
-                if sim_day in cases_by_day:
-                    cases_by_day[sim_day] += 1
-                else:
-                    cases_by_day[sim_day] = 1
-
-                if sim_day in infected_by_day:
-                    infected_by_day[sim_day].append(infected_id)
-                else:
-                    infected_by_day[sim_day] = [infected_id]
-
-            elif tag == "[TRAN]": # Transmission
-                total_transmissions += 1
-                infector_id = int(float(line[2]))
-                infected_id = int(float(line[1]))
-
-                location = line[5]
-                if location in transmissions_by_location:
-                    transmissions_by_location[location] += 1
-                else:
-                    transmissions_by_location[location] = 1
-
-                # Add infected to potential infectors
-                if infected_id not in potential_infectors:
-                    potential_infectors[infected_id] = 0
-                # Add infector to infectors (if not yet done)
-                # And add this infection to total secondary cases count
-                if infector_id not in potential_infectors:
-                    potential_infectors[infector_id] = 1
-                else:
-                    potential_infectors[infector_id] += 1
-
-                sim_day = int(line[6])
-                if sim_day in cases_by_day:
-                    cases_by_day[sim_day] += 1
-                else:
-                    cases_by_day[sim_day] = 1
-
-                if sim_day in infected_by_day:
-                    infected_by_day[sim_day].append(infected_id)
-                else:
-                    infected_by_day[sim_day] = [infected_id]
-            elif tag == "[PART]":
-                participant_id = int(float(line[1]))
-                if participant_id not in num_contacts_per_participant:
-                    num_contacts_per_participant[participant_id] = 0
-            elif tag == "[CONT]":
-                participant_id = int(float(line[1]))
-                if participant_id in num_contacts_per_participant:
-                    num_contacts_per_participant[participant_id] += 1
-                else:
-                    num_contacts_per_participant[participant_id] = 1
-            elif tag == "[CNTH]":
-                individual_contact_factors.append(float(line[2]))
-            elif tag == "[CCNT]":
-                cnt_probability = float(line[1])
-                cnt_probabilities.append(cnt_probability)
-                location = line[2].strip()
-                if location in contact_probabilities_by_location:
-                    contact_probabilities_by_location[location].append(cnt_probability)
-                else:
-                    contact_probabilities_by_location[location] = [cnt_probability]
-
-
-    # Get P80
-    # Get ...
-    # Get Rt by day
-    rt_by_day = get_rt_by_day(infected_by_day, potential_infectors, parameters["num_days"])
-
-    cases_output = {
-        "experiment_id": experiment_id,
-        "parameters": parameters,
-        "secondary_cases_by_individual": potential_infectors,
-        "cases_by_day": cases_by_day,
-        "infected_by_day": infected_by_day,
-        "rt_by_day": rt_by_day,
-        "contact_probabilities": cnt_probabilities,
-        "individual_contact_factors": individual_contact_factors,
-        "transmissions_by_location": transmissions_by_location,
-        "contact_probabilities_by_location": contact_probabilities_by_location,
-        "num_contacts_per_participant": num_contacts_per_participant
-    }
-    return cases_output
-
-def get_day_of_last_infection(cases_by_day, num_days):
+def get_day_of_last_infection(cases_per_day, num_days):
     day_of_last_infection = np.nan
     for day in range(num_days - 1, -1, -1):
-        if day in cases_by_day and cases_by_day[day] > 0:
+        if day in cases_per_day and cases_per_day[day] > 0:
             day_of_last_infection = day
             break
 
     return day_of_last_infection
 
-def get_num_cases_over_period(cases_by_day, start_day, end_day):
-    total_cases = 0
-    for day in range(start_day, end_day + 1):
-        if day in cases_by_day:
-            total_cases += cases_by_day[day]
-    return total_cases
-
-def get_herd_immunity_threshold(rt_by_day, cases_by_day, num_days, population_size, get_day=False):
+def get_herd_immunity_threshold(rt_by_day, cases_per_day, num_days, population_size, get_day=False):
+    total_cases = sum(cases_per_day.values())
     # Smooth (using LOWESS function)
     rt_by_day_smoothed = lowess([rt_by_day[day] for day in range(num_days)], range(num_days), is_sorted=True, return_sorted=False)
 
@@ -230,7 +67,7 @@ def get_herd_immunity_threshold(rt_by_day, cases_by_day, num_days, population_si
             return np.nan
         cumulative_cases = 0
         for day in range(last_day_rt_greq_1 + 1):
-            cumulative_cases += cases_by_day[day] if day in cases_by_day else 0
+            cumulative_cases += cases_per_day[day] if day in cases_per_day else 0
         herd_immunity_threshold = cumulative_cases / population_size
         return herd_immunity_threshold
 
@@ -253,10 +90,133 @@ def get_p80(secondary_cases_by_individual, extinction_threshold = 0):
     else:
         return np.nan
 
-def get_total_cases(cases_by_day, num_days):
+def get_parameters(output_dir, scenario_name, experiment_id):
+    summary_file = os.path.join(output_dir, scenario_name, "exp" + "{:04}".format(experiment_id), "summary.csv")
+
+    parameters = {}
+    with open(summary_file) as csvfile:
+        reader = csv.DictReader(csvfile)
+        row = next(reader) # Get first line
+        parameters["num_days"] = int(row["num_days"])
+        parameters["population_size"] = int(row["population_size"])
+
+    return parameters
+
+def get_rt_by_day(ids_infected_by_day, secondary_cases_by_individual, num_days):
+    rt_by_day = {}
+
+    for day in range(num_days):
+        # Check if any individuals were infected on this day
+        if day in ids_infected_by_day and len(ids_infected_by_day[day]) > 0:
+            # Get number of secondary cases caused by each individual infected on this day
+            secondary_cases_day = []
+            for infector_id in ids_infected_by_day[day]:
+                secondary_cases_day.append(secondary_cases_by_individual[infector_id])
+            rt_by_day[day] = np.mean(secondary_cases_day)
+        else:
+            rt_by_day[day] = np.nan
+
+    return rt_by_day
+
+def get_total_cases(cases_per_day, num_days):
     total_cases = 0
-    for day, cases in cases_by_day.items():
+    for day, cases in cases_per_day.items():
         if day < num_days:
             total_cases += cases
 
     return total_cases
+
+def get_output(output_dir, scenario_name, experiment_id):
+
+    log_file = os.path.join(output_dir, scenario_name, "exp" + "{:04}".format(experiment_id), "event_log.txt")
+
+    # Get parameters from summary file
+    parameters = get_parameters(output_dir, scenario_name, experiment_id)
+
+    cases_per_day = {}
+    ids_infected_by_day = {}
+    secondary_cases_by_individual = {}
+
+    transmissions_by_location = {
+        "Household": 0,
+        "K12School": 0,
+        "College": 0,
+        "Workplace": 0,
+        "PrimaryCommunity": 0,
+        "SecondaryCommunity": 0,
+    }
+
+    with open(log_file) as f:
+        for line in f:
+            line = line.split(" ")
+            tag = line[0]
+
+            if tag == "[PRIM]": # Index case
+                infected_id = int(float(line[1]))
+                sim_day = int(line[6])
+                if infected_id not in secondary_cases_by_individual:
+                    secondary_cases_by_individual[infected_id] = 0
+
+                if sim_day in cases_per_day:
+                    cases_per_day[sim_day] += 1
+                else:
+                    cases_per_day[sim_day] = 1
+
+                if sim_day in ids_infected_by_day:
+                    ids_infected_by_day[sim_day].append(infected_id)
+                else:
+                    ids_infected_by_day[sim_day] = [infected_id]
+            elif tag == "[TRAN]": # Transmission
+                infector_id = int(float(line[2]))
+                infected_id = int(float(line[1]))
+                location = line[5]
+                sim_day = int(line[6])
+
+                # Add infected to potential infectors
+                if infected_id not in secondary_cases_by_individual:
+                    secondary_cases_by_individual[infected_id] = 0
+                # Add infector to infectors (if not yet done)
+                # And add this transmission to total secondary cases count
+                if infector_id not in secondary_cases_by_individual:
+                    secondary_cases_by_individual[infector_id] = 1
+                else:
+                    secondary_cases_by_individual[infector_id] += 1
+
+                if sim_day in cases_per_day:
+                    cases_per_day[sim_day] += 1
+                else:
+                    cases_per_day[sim_day] = 1
+
+                if sim_day in ids_infected_by_day:
+                    ids_infected_by_day[sim_day].append(infected_id)
+                else:
+                    ids_infected_by_day[sim_day] = [infected_id]
+
+                if location in transmissions_by_location:
+                    transmissions_by_location[location] += 1
+                else:
+                    transmissions_by_location[location] = 1
+
+    rt_by_day = get_rt_by_day(ids_infected_by_day, secondary_cases_by_individual, parameters["num_days"])
+
+    output = {
+        "experiment_id": experiment_id,
+        "parameters": parameters,
+        "secondary_cases_by_individual": secondary_cases_by_individual,
+        "cases_per_day": cases_per_day,
+        "rt_by_day": rt_by_day,
+        "transmissions_by_location": transmissions_by_location
+    }
+
+    return output
+
+"""
+
+def get_num_cases_over_period(cases_by_day, start_day, end_day):
+    total_cases = 0
+    for day in range(start_day, end_day + 1):
+        if day in cases_by_day:
+            total_cases += cases_by_day[day]
+    return total_cases
+
+"""

@@ -13,138 +13,127 @@
 #  see http://www.gnu.org/licenses/.
 #
 #
-#  Copyright 2020, Willem L, Kuylen E & Broeckhove J
+#  Copyright 2021, Kuylen E
 ############################################################################ #
 
 """
 """
 
 import argparse
-import matplotlib.pyplot as plt
 import multiprocessing
 
-from collections import Counter
+from plots import plot_ar, plot_cumulative_cases_per_day, plot_day_of_last_infection, plot_day_of_peak, plot_extinction_probabilities, plot_effective_r_by_day, plot_final_size_frequencies, plot_herd_immunity_threshold, plot_new_cases_per_day, plot_p80s, plot_peak_sizes, plot_secondary_cases_distribution, plot_transmissions_by_location
 
-from plots import plot_p80s, plot_final_size_frequencies, plot_day_last_infection, plot_effective_r_by_day
-from plots import plot_ar, plot_cumulative_cases_per_day, plot_new_cases_per_day, plot_extinction_probabilities, plot_herd_immunity_threshold
-from plots import save_figure
+from util import get_day_of_last_infection, get_experiment_ids, get_herd_immunity_threshold, get_output, get_p80, get_total_cases
 
-from util import get_experiment_ids, get_cases_output, get_p80, get_total_cases, get_day_of_last_infection, get_rt_by_day, get_herd_immunity_threshold
+def main(output_dir):
+    baseline_scenario_name = "baseline"
 
-def main(output_dir, scenario_names, display_scenario_names):
+    overdispersion_scenario_names = ["infectiousness_overdispersion", "contacts_overdispersion"]
+    overdispersion_parameters = ["1000", "100", "60", "40", "20"]
+
     num_days = 200
-    extinction_threshold = 0
     population_size = 3000000
 
-    all_days_last_infection = []
-    all_p80s = []
-    all_final_sizes = []
-    all_hits = []
-    all_hits_day = []
+    extinction_threshold = 20
 
-    for s_i in range(len(scenario_names)):
-        scenario_name = scenario_names[s_i]
-        print(scenario_name)
+    for overdispersion_scenario in overdispersion_scenario_names:
+        scenario_names = [baseline_scenario_name] + [overdispersion_scenario + "_" + overdispersion for overdispersion in overdispersion_parameters]
 
-        import numpy as np
+        all_cases_per_day = []
 
-        experiment_ids = get_experiment_ids(output_dir, scenario_name)
-        with multiprocessing.Pool(processes=4) as pool:
-            cases_output = pool.starmap(get_cases_output, [(output_dir, scenario_name, exp_id) for exp_id in experiment_ids])
-            '''for run in cases_output:
-                #print(np.mean(run["contact_probabilities"]))
-                print(run["contact_probabilities"])'''
-            # Calculate the proportion of infected individuals responsible for 80% of infections
-            by_location = {}
-            for loc in cases_output[0]["transmissions_by_location"]:
-                by_location[loc] = [run["transmissions_by_location"][loc] for run in cases_output]
+        all_days_last_infection = []
+        all_days_last_infection_exclude_extinction = []
 
+        all_final_sizes = []
 
-            plt.boxplot([by_location[loc] for loc in by_location], labels=by_location.keys())
-            plt.ylabel("Number of transmissions")
-            plt.xlabel("Location")
-            plt.xticks(rotation=45)
-            save_figure(output_dir, "transmissions_by_location_" + scenario_name, extension="png", dpi=100)
+        all_hits = []
+        all_hits_exclude_extinction = []
+        all_hits_day = []
+        all_hits_day_exclude_extinction = []
 
-            '''for run in cases_output:
-                plt.hist(run["contact_probabilities"], log=True)
-                plt.title("Contact probabilities experiment {}".format(run["experiment_id"]))
-                plt.xlabel("Contact probability")
-                plt.ylabel("Frequency")
-                save_figure(output_dir, "contact_probabilities_" + scenario_name + "_" + str(run["experiment_id"]))'''
-            plt.hist([run["contact_probabilities"] for run in cases_output], histtype="barstacked")
-            plt.xlabel("Contact probability")
-            plt.ylabel("Frequency")
-            save_figure(output_dir, "contact_probabilities_" + scenario_name)
+        all_p80s = []
+        all_p80s_exclude_extinction = []
 
-            for run in cases_output:
-                secondary_cases = Counter(run["secondary_cases_by_individual"].values())
-                num_cases_sorted = list(secondary_cases.keys())
-                num_cases_sorted.sort()
-                plt.plot(num_cases_sorted, [secondary_cases[num] for num in num_cases_sorted])
+        all_secondary_cases = []
 
-            plt.yscale("log")
-            plt.xlabel("Number of secondary cases")
-            plt.ylabel("Frequency")
-            save_figure(output_dir, "secondary_cases_dist_log_" + scenario_name)
+        alpha = r"$\alpha$"
+        display_scenario_names = ["Baseline", alpha + " = 10", alpha + " = 1", alpha + " = 0.6", alpha + " = 0.4", alpha + " = 0.2"]
 
-            all_cnt_probabilities = []
-            for run in cases_output:
-                cnt_probabilities = [run["contact_probabilities_by_location"][location] for location in run["contact_probabilities_by_location"] if location == "Workplace"]
-                cnt_probabilities = [item for sublist in cnt_probabilities for item in sublist]
-                all_cnt_probabilities.append(cnt_probabilities)
-                #print([np.mean(run["contact_probabilities_by_location"][location]) for location in run["contact_probabilities_by_location"]])
-                #if sum(run["cases_by_day"].values()) > 20:
-                #    plt.violinplot([run["contact_probabilities_by_location"][location] if len(run["contact_probabilities_by_location"][location]) > 0 else np.nan for location in run["contact_probabilities_by_location"]])
-                #    #plt.xticks(range(1, len(run["contact_probabilities_by_location"]) + 1), run["contact_probabilities_by_location"].keys())
-                #    plt.show()
-            plt.hist(all_cnt_probabilities, histtype="barstacked", log=True)
-            plt.xlabel("Contact probability")
-            plt.xlim(0, 1)
-            plt.ylabel("Frequency")
-            save_figure(output_dir, "contact_probabilities_only_workplace_" + scenario_name)
+        for scenario_name in scenario_names:
+            print(scenario_name)
+            experiment_ids = get_experiment_ids(output_dir, scenario_name)
+            output = {}
+            with multiprocessing.Pool(processes=4) as pool:
+                output = pool.starmap(get_output, [(output_dir, scenario_name, exp_id) for exp_id in experiment_ids])
+
+                # Sort total cases from high to low & print
+                # Used to determine extinction threshold
+                total_cases = [get_total_cases(run["cases_per_day"], num_days) for run in output]
+                total_cases.sort(reverse=True)
+                print(total_cases)
+
+                all_final_sizes.append(total_cases)
+                all_cases_per_day.append([run["cases_per_day"] for run in output])
+
+                all_days_last_infection.append([get_day_of_last_infection(run["cases_per_day"], num_days) for run in output])
+                all_days_last_infection_exclude_extinction.append([get_day_of_last_infection(run["cases_per_day"], num_days) for run in output if sum(run["cases_per_day"].values()) >= extinction_threshold])
+
+                all_secondary_cases.append([run["secondary_cases_by_individual"] for run in output])
+
+                # Calculate the proportion of infected individuals responsible for 80% of infections
+                all_p80s.append([get_p80(run["secondary_cases_by_individual"]) for run in output])
+                all_p80s_exclude_extinction.append([get_p80(run["secondary_cases_by_individual"], extinction_threshold = extinction_threshold) for run in output])
+
+                all_hits.append([get_herd_immunity_threshold(run["rt_by_day"], run["cases_per_day"], num_days, run["parameters"]["population_size"]) for run in output])
+                all_hits_exclude_extinction.append([get_herd_immunity_threshold(run["rt_by_day"], run["cases_per_day"], num_days, run["parameters"]["population_size"]) for run in output if sum(run["cases_per_day"].values()) >= extinction_threshold])
+
+                all_hits_day.append([get_herd_immunity_threshold(run["rt_by_day"], run["cases_per_day"], num_days, run["parameters"]["population_size"], get_day=True) for run in output])
+                all_hits_day_exclude_extinction.append([get_herd_immunity_threshold(run["rt_by_day"], run["cases_per_day"], num_days, run["parameters"]["population_size"], get_day=True) for run in output if sum(run["cases_per_day"].values()) >= extinction_threshold])
+
+                plot_new_cases_per_day(output_dir, "new_cases_per_day", scenario_name, [run["cases_per_day"] for run in output], num_days, y_max=170000)
+                plot_cumulative_cases_per_day(output_dir, "cumulative_cases_per_day", scenario_name, [run["cases_per_day"] for run in output], num_days, y_max=3000000)
+
+                plot_effective_r_by_day(output_dir, "rt", scenario_name, [run["rt_by_day"] for run in output], num_days, y_max=30)
+
+                plot_transmissions_by_location(output_dir, "transmissions_by_location", scenario_name, [run["transmissions_by_location"] for run in output])
 
 
-            all_p80s.append([get_p80(output["secondary_cases_by_individual"], extinction_threshold) for output in cases_output]) # TODO exclude extinction?
+        plot_ar(output_dir, "ar_" + overdispersion_scenario, display_scenario_names, all_final_sizes, num_days, population_size)
+        plot_ar(output_dir, "ar_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_final_sizes, num_days, population_size, extinction_threshold=extinction_threshold, y_min=0.8, y_max=1)
 
-            # Get final outbreak size
-            total_cases = [get_total_cases(output["cases_by_day"], num_days) for output in cases_output]
-            all_final_sizes.append(total_cases)
+        plot_day_of_peak(output_dir, "day_of_peak_" + overdispersion_scenario, display_scenario_names, all_cases_per_day, num_days)
+        plot_day_of_peak(output_dir, "day_of_peak_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_cases_per_day, num_days, extinction_threshold=extinction_threshold)
 
-            # Sort total cases from high to low & print
-            # Used to determine extinction threshold
-            total_cases.sort(reverse=True)
-            print(total_cases)
+        plot_day_of_last_infection(output_dir, "day_of_last_infection_" + overdispersion_scenario, display_scenario_names, all_days_last_infection, num_days)
+        plot_day_of_last_infection(output_dir, "day_of_last_infection_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_days_last_infection_exclude_extinction, num_days)
 
-            plot_new_cases_per_day(output_dir, "new_cases_per_day", scenario_name, [output["cases_by_day"] for output in cases_output], num_days)
+        plot_herd_immunity_threshold(output_dir, "hit_" + overdispersion_scenario, display_scenario_names, all_hits, show_day=False)
+        plot_herd_immunity_threshold(output_dir, "hits_day_" + overdispersion_scenario, display_scenario_names, all_hits_day, show_day=True)
 
-            '''
-            # Day of last infection
-            all_days_last_infection.append([get_day_of_last_infection(output["cases_by_day"], num_days) for output in cases_output])
-            # TODO smoothed Rt by day?
-            # Herd immunity threshold
-            all_hits.append([get_herd_immunity_threshold(output["rt_by_day"], output["cases_by_day"], num_days, output["parameters"]["population_size"]) for output in cases_output])
-            all_hits_day.append([get_herd_immunity_threshold(output["rt_by_day"], output["cases_by_day"], num_days, output["parameters"]["population_size"], get_day=True) for output in cases_output])
+        plot_herd_immunity_threshold(output_dir, "hit_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_hits_exclude_extinction, show_day=False)
+        plot_herd_immunity_threshold(output_dir, "hits_day_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_hits_day_exclude_extinction, show_day=True)
 
-            plot_cumulative_cases_per_day(output_dir, "cumulative_cases_per_day", scenario_name, [output["cases_by_day"] for output in cases_output], num_days)
-            plot_effective_r_by_day(output_dir, "rt_by_day", scenario_name, [output["rt_by_day"] for output in cases_output], num_days)'''
+        plot_final_size_frequencies(output_dir, "final_size_frequencies_" + overdispersion_scenario, display_scenario_names, all_final_sizes, num_days)
+        plot_extinction_probabilities(output_dir, "extinction_probabilities_" + overdispersion_scenario, display_scenario_names, all_final_sizes, extinction_threshold)
 
-    plot_p80s(output_dir, "p80s", display_scenario_names, all_p80s)
-    #plot_ar(output_dir, "ar", display_scenario_names, all_final_sizes, num_days, population_size)
-    #plot_ar(output_dir, "ar_exclude_extinction", display_scenario_names, all_final_sizes, num_days, population_size, extinction_threshold=extinction_threshold)
-    '''plot_extinction_probabilities(output_dir, "extinction_probabilities", display_scenario_names, all_final_sizes, extinction_threshold)
+        plot_p80s(output_dir, "p80s_" + overdispersion_scenario, display_scenario_names, all_p80s)
+        plot_p80s(output_dir, "p80s_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_p80s_exclude_extinction)
 
-    plot_herd_immunity_threshold(output_dir, "hits", display_scenario_names, all_hits)
-    plot_herd_immunity_threshold(output_dir, "hits_day", display_scenario_names, all_hits_day, show_day=True)
-    plot_final_size_frequencies(output_dir, "final_size_frequencies", display_scenario_names, all_final_sizes, num_days)
-    plot_day_last_infection(output_dir, "last_day_with_infections", display_scenario_names, all_days_last_infection, num_days)'''
+        plot_peak_sizes(output_dir, "peak_sizes_" + overdispersion_scenario, display_scenario_names, all_cases_per_day, ymin=0, ymax=175000)
+        plot_peak_sizes(output_dir, "peak_sizes_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_cases_per_day, extinction_threshold=extinction_threshold, ymin=100000, ymax=175000)
+
+        plot_secondary_cases_distribution(output_dir, "secondary_cases_distribution_" + overdispersion_scenario, display_scenario_names, all_secondary_cases)
 
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("output_dir", type=str, help="Directory containing simulation results")
-    parser.add_argument("scenario_names", type=str, nargs="+", help="Names of scenarios to be postprocessed")
-    parser.add_argument("--display_scenario_names", type=str, nargs="+", default=[], help="Names for scenarios to be displayed on plots")
 
     args = parser.parse_args()
-    main(args.output_dir, args.scenario_names, args.display_scenario_names)
+    main(args.output_dir)
+
+"""
+    # TODO smoothed Rt by day?
+    # TODO % of superspreaders infected by day? or by end of simulation?
+"""
