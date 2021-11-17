@@ -12,16 +12,28 @@
 #  along with the software. If not, see <http://www.gnu.org/licenses/>.
 #  see http://www.gnu.org/licenses/.
 #
-#  Copyright 2019, Willem L, Kuylen E & Broeckhove J
+#  Copyright 2020, Willem L, Kuylen E & Broeckhove J
 #############################################################################
 
+#================================================================================================
+# Copy the Python scripts to the bin folder.
+#================================================================================================
 
-#============================================================================
-# Add subdirs:
-#============================================================================
-add_subdirectory(cpp)
-add_subdirectory(python)
-add_subdirectory(r)
-add_subdirectory(resources)
+
+# Python postprocessing scripts
+INSTALL( FILES 			
+			plots.py
+			postprocessing_degree_distribution.py
+			postprocessing_index_case_only.py
+			postprocessing_interventions.py
+			postprocessing_no_interventions.py
+			postprocessing_theoretical_description_comparison.py
+			postprocessing_verify_baseline.py
+			theoretical_description_calculation.py
+			util.py	 
+
+	DESTINATION ${BIN_INSTALL_LOCATION}  
+	PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_WRITE GROUP_READ
+)
 
 #############################################################################

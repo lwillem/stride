@@ -12,16 +12,15 @@
 #  along with the software. If not, see <http://www.gnu.org/licenses/>.
 #  see http://www.gnu.org/licenses/.
 #
-#  Copyright 2019, Willem L, Kuylen E & Broeckhove J
+#  Copyright 2020, Willem L, Kuylen E & Broeckhove J
 #############################################################################
 
+#================================================================================================
+# Copy the Python scripts to the bin folder.
+#================================================================================================
 
-#============================================================================
-# Add subdirs:
-#============================================================================
-add_subdirectory(cpp)
-add_subdirectory(python)
-add_subdirectory(r)
-add_subdirectory(resources)
+# Superspreading project scripts
+add_subdirectory(superspreading_scripts)
+
 
 #############################################################################
