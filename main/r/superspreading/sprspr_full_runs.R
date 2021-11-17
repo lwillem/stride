@@ -47,13 +47,6 @@ sprspr_full_runs <- function(output_prefix,
     output_prefix <- ""
   }
   
-  
-  # set parallel chains
-  num_chains <- 5
-
-  #setup parallel workers (from simid.rtools)
-  smd_start_cluster(num_proc = num_chains)
-  
   # Parameters 
   event_log_level <- "Transmissions"
   track_index_case <- "false"
@@ -79,7 +72,7 @@ sprspr_full_runs <- function(output_prefix,
                       "infectiousness_overdispersion_20")
   tp_overdispersions <- c(10, 1, 0.6, 0.4, 0.2) 
   
-  foreach (i = 1:length(scenario_names)) %dopar% {
+  for (i in seq_along(scenario_names)) {
     tp_mean <- get_mean_non_truncated_gamma(mean_transmission_probability, tp_overdispersions[i])
     
     run_simulations(scenario_name=paste0(output_prefix, scenario_names[i]), track_index_case=track_index_case, event_log_level=event_log_level, 
@@ -99,7 +92,7 @@ sprspr_full_runs <- function(output_prefix,
   
   contact_overdispersions <- c(10, 1, 0.6, 0.4, 0.2) 
   
-  foreach (i = 1:length(scenario_names)) %dopar% {
+  for (i in seq_along(scenario_names)) {
     run_simulations(scenario_name=paste0(output_prefix, scenario_names[i]), track_index_case=track_index_case, event_log_level=event_log_level, 
                     tp_distribution="Constant", tp_mean=mean_transmission_probability, tp_overdispersion=0, 
                     contact_distribution="Gamma", contact_distribution_overdispersion=contact_overdispersions[i],
@@ -107,9 +100,6 @@ sprspr_full_runs <- function(output_prefix,
                     num_infected_seeds=num_infected_seeds, population_file=population_file, start_date=start_date, 
                     num_runs=num_runs)
   }
-  
-  # close parallel workers (from simid.rtools)
-  smd_stop_cluster()
 }
 
 use_interventions <- FALSE
