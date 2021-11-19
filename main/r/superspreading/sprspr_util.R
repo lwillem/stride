@@ -119,8 +119,10 @@ run_simulations <- function(
 get_mean_non_truncated_gamma <- function(target_mean, shape) 
 {
   tolerance <- 1.49e-4
-  scale_params <- seq(0.003, 0.9, by=0.00001)
+  scale_est <- target_mean / shape 
+  scale_params <- seq(scale_est / 2, scale_est * 2, by=0.00001)
   
+  best_scale <- NaN
   best_mean <- 0 # FIXME is this ok to start? NaN not working 
   
   for (scale in scale_params) {
@@ -134,11 +136,12 @@ get_mean_non_truncated_gamma <- function(target_mean, shape)
     if (abs(mean.tr - target_mean) < tolerance) {
       if (abs(mean.tr - target_mean) < abs(best_mean - target_mean)) {
         best_mean <- mean.tr
+        best_scale <- scale 
       }
       
     }
   }
   
-  return(best_mean)
+  return(best_scale * shape)
 }
 

@@ -99,6 +99,7 @@ def get_parameters(output_dir, scenario_name, experiment_id):
         row = next(reader) # Get first line
         parameters["num_days"] = int(row["num_days"])
         parameters["population_size"] = int(row["population_size"])
+        parameters["transmission_probability"] = float(row["transmission_probability"])
 
     return parameters
 
@@ -136,6 +137,7 @@ def get_output(output_dir, scenario_name, experiment_id):
     cases_per_day = {}
     ids_infected_by_day = {}
     secondary_cases_by_individual = {}
+    secondary_cases_by_index_case = {}
 
     transmissions_by_location = {
         "Household": 0,
@@ -156,6 +158,9 @@ def get_output(output_dir, scenario_name, experiment_id):
                 sim_day = int(line[6])
                 if infected_id not in secondary_cases_by_individual:
                     secondary_cases_by_individual[infected_id] = 0
+
+                if infected_id not in secondary_cases_by_index_case:
+                    secondary_cases_by_index_case[infected_id] = 0
 
                 if sim_day in cases_per_day:
                     cases_per_day[sim_day] += 1
@@ -182,6 +187,9 @@ def get_output(output_dir, scenario_name, experiment_id):
                 else:
                     secondary_cases_by_individual[infector_id] += 1
 
+                if infector_id in secondary_cases_by_index_case:
+                    secondary_cases_by_index_case[infector_id] += 1
+
                 if sim_day in cases_per_day:
                     cases_per_day[sim_day] += 1
                 else:
@@ -203,6 +211,7 @@ def get_output(output_dir, scenario_name, experiment_id):
         "experiment_id": experiment_id,
         "parameters": parameters,
         "secondary_cases_by_individual": secondary_cases_by_individual,
+        "secondary_cases_by_index_case": secondary_cases_by_index_case,
         "cases_per_day": cases_per_day,
         "rt_by_day": rt_by_day,
         "transmissions_by_location": transmissions_by_location

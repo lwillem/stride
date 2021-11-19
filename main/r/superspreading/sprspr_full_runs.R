@@ -54,7 +54,7 @@ sprspr_full_runs <- function(output_prefix,
   start_date <- "2020-02-17"
   
   disease_config_file <- "disease_covid19_lognorm.xml"
-  population_file <- "pop_belgium3000k_c500_teachers_censushh.csv"
+  population_file <- "pop_belgium11M_c500_teachers_censushh.csv"
   
   # Baseline 
   run_simulations(scenario_name=paste0(output_prefix, "baseline"), event_log_level=event_log_level, track_index_case=track_index_case, 
@@ -108,26 +108,21 @@ if(length(cli_args) >= 1) {
   use_interventions <- as.logical(cli_args[[1]])
 }
 
-# # optional: process command line arguments 'JOB ID'
-# if(length(cli_args) >= 2){
-#   run_tag <- paste(run_tag,cli_args[[2]],sep='_') # add job ID to run_tag
-# }
-
 if (use_interventions) {
   # Run simulations with social distancing intervention 
   sprspr_full_runs(output_prefix = "sd_",
-                   holidays_file = "calendar_social_distancing_comix.csv",
+                   holidays_file = "calendar_social_distancing_comm_85_65_work_85_65.csv",
                    mean_transmission_probability = 0.08,
                    num_days = 200, 
                    num_infected_seeds = 1, 
-                   num_runs = 8) 
+                   num_runs = 200) 
 } else {
   # Run simulations without interventions
   sprspr_full_runs(holidays_file = "holidays_belgium_2019_2021.csv",
                    mean_transmission_probability = 0.08, 
                    num_days = 200,
                    num_infected_seeds = 1, 
-                   num_runs = 8)   
+                   num_runs = 200)   
 }
 
 # TODO combinations of infectiousness + contacts overdispersion? 

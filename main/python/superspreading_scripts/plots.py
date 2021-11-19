@@ -1,11 +1,9 @@
-
-
-
 import matplotlib.pyplot as plt
 import numpy as np
 import os
 
 from collections import Counter
+from scipy.stats import nbinom, probplot
 
 def plot_ar(output_dir, fig_name, display_scenario_names, all_total_cases, num_days, pop_size, extinction_threshold=0, y_min=-0.05, y_max=1.05):
     all_total_cases_prop_pop = []
@@ -139,7 +137,24 @@ def plot_new_cases_per_day(output_dir, fig_name, scenario_name, cases_by_day, nu
     if y_max is not None:
         plt.ylim(0, y_max)
 
-    save_figure(output_dir, fig_name + "_" + scenario_name, extension="png", dpi=100)
+    save_figure(output_dir, fig_name + "_" + scenario_name)
+
+def plot_offspring_distributions(output_dir, fig_name, scenario_name, secondary_cases_by_tp):
+    for tp in secondary_cases_by_tp:
+        num_runs = len(secondary_cases_by_tp[tp])
+        print(num_runs)
+        freq = Counter(secondary_cases_by_tp[tp])
+        num_cases_sorted = list(freq.keys())
+        num_cases_sorted.sort()
+
+        plt.plot(num_cases_sorted, [freq[num] / len(secondary_cases_by_tp[tp]) for num in num_cases_sorted], marker="o")
+
+    plt.xlabel("Number of secondary cases")
+    plt.ylabel("Frequency")
+    plt.ylim(-0.05, 1.05)
+    plt.legend(["{:.3f}".format(tp) for tp in secondary_cases_by_tp], title="E(Transmission probability)")
+
+    save_figure(output_dir, fig_name + "_" + scenario_name)
 
 def plot_p80s(output_dir, fig_name, display_scenario_names, p80s):
     # Remove NaNs
@@ -160,6 +175,53 @@ def plot_peak_sizes(output_dir, fig_name, display_scenario_names, all_cases_by_d
     plt.ylabel("Peak size")
 
     save_figure(output_dir, fig_name)
+
+def plot_qq(output_dir, fig_name, scenario_name, k, secondary_cases_by_tp):
+    """
+        Create QQ-plots to compare offspring distribution
+        to negative binomial distribution
+    """
+    tps_sorted = list(secondary_cases_by_tp.keys())
+    tps_sorted.sort()
+
+    for tp in tps_sorted:
+        res = probplot(secondary_cases_by_tp[tp], dist=nbinom, sparams=(k, k / (np.mean(secondary_cases_by_tp[tp]) + k)), fit=False, plot=plt)
+        plt.xlabel("Negative binomial distribution quantiles")
+        plt.ylabel("Simulations results qunatiles") # FIXME Find better axis labels
+        plt.title("")
+
+        save_figure(output_dir, fig_name + "_" + scenario_name + "_tp_" + "{:.2f}".format(tp))
+
+def plot_secondary_cases_per_index_case(output_dir, fig_name, display_scenario_names, all_secondary_cases_by_tp, exclude_extinction=False):
+    i = 0
+    for scenario in all_secondary_cases_by_tp:
+
+        if exclude_extinction:
+            scenario_output = {}
+            for tp, secondary_cases in scenario.items():
+                secondary_cases_exclude_extinction = [num_cases for num_cases in scenario[tp] if num_cases > 0]
+                if len(secondary_cases_exclude_extinction) > 0:
+                    scenario_output[tp] = secondary_cases_exclude_extinction
+        else:
+            scenario_output = scenario
+
+        tp_sorted = list(scenario_output.keys())
+        tp_sorted.sort()
+
+
+        lower = [np.percentile(scenario_output[tp], 2.5) for tp in tp_sorted]
+        upper = [np.percentile(scenario_output[tp], 97.5) for tp in tp_sorted]
+
+        plt.plot(tp_sorted, [np.mean(scenario_output[tp]) for tp in tp_sorted], color="C"+str(i), label=display_scenario_names[i])
+        plt.fill_between(tp_sorted, lower, upper, facecolor="C"+str(i), alpha=0.3)
+
+        i += 1
+
+    plt.legend()
+    plt.xlabel("Mean transmission probability")
+    plt.xlim(-0.05, 1.05)
+    plt.ylabel("Number of secondary cases per index case")
+    save_figure(output_dir, fig_name, extension="png")
 
 def plot_secondary_cases_distribution(output_dir, fig_name, display_scenario_names, all_secondary_cases_by_individual):
     for scenario in all_secondary_cases_by_individual:

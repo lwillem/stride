@@ -33,7 +33,7 @@ def main(output_dir):
     overdispersion_parameters = ["1000", "100", "60", "40", "20"]
 
     num_days = 200
-    population_size = 3000000
+    population_size = np.nan
 
     extinction_threshold = 20
 
@@ -97,6 +97,8 @@ def main(output_dir):
                 plot_effective_r_by_day(output_dir, "rt", scenario_name, [run["rt_by_day"] for run in output], num_days, y_max=30)
 
                 plot_transmissions_by_location(output_dir, "transmissions_by_location", scenario_name, [run["transmissions_by_location"] for run in output])
+
+                population_size = output[0]["parameters"]["population_size"]
 
 
         plot_ar(output_dir, "ar_" + overdispersion_scenario, display_scenario_names, all_final_sizes, num_days, population_size)

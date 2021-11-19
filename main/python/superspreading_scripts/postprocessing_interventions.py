@@ -134,3 +134,9 @@ if __name__=="__main__":
 
     args = parser.parse_args()
     main(args.output_dir, args.scenario_names, args.display_scenario_names)"""
+
+def main(output_dir):
+    pass
+
+if __name__=="__main__":
+    pass 
