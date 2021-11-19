@@ -112,7 +112,8 @@ run_simulations <- function(
                              dir_postfix         = scenario_name,
                              remove_run_output   = FALSE,
                              parse_log_data      = FALSE,
-                             use_date_prefix     = FALSE)
+                             use_date_prefix     = FALSE,
+                             num_parallel_workers = 32)
   
 }
 
