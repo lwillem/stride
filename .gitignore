@@ -93,6 +93,11 @@ doc/doxygen/latex
 doc/doxygen/tex
 
 #----------------
+# Python stuff 
+#----------------
+*__pycache__/
+
+#----------------
 # R stuff
 #----------------
 .Rproj.user
