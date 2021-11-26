@@ -10,13 +10,13 @@ def plot_ar(output_dir, fig_name, display_scenario_names, all_total_cases, num_d
     for scenario in all_total_cases:
         all_total_cases_prop_pop.append([total_cases / pop_size for total_cases in scenario if total_cases >= extinction_threshold])
 
-    plt.violinplot(all_total_cases_prop_pop)
-    plt.xticks(range(1, len(all_total_cases_prop_pop) + 1), display_scenario_names)
+
+    plt.boxplot(all_total_cases_prop_pop, labels=display_scenario_names)
 
     plt.ylabel("AR (after {} days)".format(num_days))
     plt.ylim(y_min, y_max)
 
-    save_figure(output_dir, fig_name, extension="png")
+    save_figure(output_dir, fig_name)
 
 def plot_cumulative_cases_per_day(output_dir, fig_name, scenario_name, cases_by_day, num_days, y_max=None):
     for run in cases_by_day:
@@ -116,8 +116,7 @@ def plot_herd_immunity_threshold(output_dir, fig_name, display_scenario_names, a
     for scenario in all_hits:
         hits.append([x for x in scenario if not np.isnan(x)])
 
-    plt.violinplot(hits)
-    plt.xticks(range(1, len(display_scenario_names) + 1), display_scenario_names)
+    plt.boxplot(hits, labels=display_scenario_names)
 
     if show_day:
         plt.ylabel("Day on which Rt >= 1 for the last time")
@@ -126,7 +125,7 @@ def plot_herd_immunity_threshold(output_dir, fig_name, display_scenario_names, a
         plt.ylabel("Herd immunity threshold")
         plt.ylim(0, 1)
 
-    save_figure(output_dir, fig_name, extension="png")
+    save_figure(output_dir, fig_name)
 
 def plot_new_cases_per_day(output_dir, fig_name, scenario_name, cases_by_day, num_days, y_max=None):
     for run in cases_by_day:
@@ -138,6 +137,20 @@ def plot_new_cases_per_day(output_dir, fig_name, scenario_name, cases_by_day, nu
         plt.ylim(0, y_max)
 
     save_figure(output_dir, fig_name + "_" + scenario_name)
+
+def plot_num_cases_over_period(output_dir, fig_name, display_scenario_names, start_day, end_day, all_cases_per_day):
+    all_cases_over_period = []
+    for scenario in all_cases_per_day:
+        cases_over_period = []
+        for run in scenario:
+            num_cases = 0
+            for day in range(start_day, end_day + 1):
+                if day in run:
+                    num_cases += run[day]
+            cases_over_period.append(num_cases)
+        all_cases_over_period.append(cases_over_period)
+    plt.boxplot(all_cases_over_period, labels=display_scenario_names)
+    plt.show()
 
 def plot_offspring_distributions(output_dir, fig_name, scenario_name, secondary_cases_by_tp):
     for tp in secondary_cases_by_tp:
@@ -223,17 +236,20 @@ def plot_secondary_cases_per_index_case(output_dir, fig_name, display_scenario_n
     plt.ylabel("Number of secondary cases per index case")
     save_figure(output_dir, fig_name, extension="png")
 
-def plot_secondary_cases_distribution(output_dir, fig_name, display_scenario_names, all_secondary_cases_by_individual):
-    for scenario in all_secondary_cases_by_individual:
-        all_secondary_cases = []
+def plot_secondary_cases_distribution(output_dir, fig_name, display_scenario_names, all_secondary_cases_frequencies):
+    for scenario in all_secondary_cases_frequencies:
+        all_frequencies = {}
         for run in scenario:
-            all_secondary_cases += list(run.values())
+            for num_secondary_cases, freq in run.items():
+                if num_secondary_cases in all_frequencies:
+                    all_frequencies[num_secondary_cases] += freq
+                else:
+                    all_frequencies[num_secondary_cases] = freq
 
-        frequencies = Counter(all_secondary_cases)
-        num_cases_sorted = list(frequencies.keys())
+        num_cases_sorted = list(all_frequencies.keys())
         num_cases_sorted.sort()
-        plt.plot(num_cases_sorted, [frequencies[num] for num in num_cases_sorted])
 
+    plt.plot(num_cases_sorted, [all_frequencies[num] for num in num_cases_sorted])
     plt.xlabel("Number of secondary cases")
     plt.xlim(-5, 105)
 
@@ -243,6 +259,7 @@ def plot_secondary_cases_distribution(output_dir, fig_name, display_scenario_nam
     plt.legend(display_scenario_names)
 
     save_figure(output_dir, fig_name)
+
 
 def plot_transmissions_by_location(output_dir, fig_name, scenario_name, transmissions_by_location):
     transmissions_by_location_dict = {

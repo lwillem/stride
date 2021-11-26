@@ -27,13 +27,12 @@ import os
 from statsmodels.nonparametric.smoothers_lowess import lowess
 
 def get_experiment_ids(output_dir, scenario_name):
-    exp_design_file = os.path.join(output_dir, scenario_name, "exp_design.csv")
+    exp_ids_file = os.path.join(output_dir, scenario_name, "exp_ids.txt")
     experiment_ids = []
-    with open(exp_design_file) as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            exp_id = int(row["exp_id"])
-            experiment_ids.append(exp_id)
+    with open(exp_ids_file) as f:
+        for line in f:
+            experiment_ids.append(int(line))
+
     return experiment_ids
 
 def get_day_of_last_infection(cases_per_day, num_days):
@@ -137,7 +136,7 @@ def get_output(output_dir, scenario_name, experiment_id):
     cases_per_day = {}
     ids_infected_by_day = {}
     secondary_cases_by_individual = {}
-    secondary_cases_by_index_case = {}
+    index_case_ids = []
 
     transmissions_by_location = {
         "Household": 0,
@@ -159,8 +158,7 @@ def get_output(output_dir, scenario_name, experiment_id):
                 if infected_id not in secondary_cases_by_individual:
                     secondary_cases_by_individual[infected_id] = 0
 
-                if infected_id not in secondary_cases_by_index_case:
-                    secondary_cases_by_index_case[infected_id] = 0
+                index_case_ids.append(infected_id)
 
                 if sim_day in cases_per_day:
                     cases_per_day[sim_day] += 1
@@ -187,9 +185,6 @@ def get_output(output_dir, scenario_name, experiment_id):
                 else:
                     secondary_cases_by_individual[infector_id] += 1
 
-                if infector_id in secondary_cases_by_index_case:
-                    secondary_cases_by_index_case[infector_id] += 1
-
                 if sim_day in cases_per_day:
                     cases_per_day[sim_day] += 1
                 else:
@@ -206,26 +201,75 @@ def get_output(output_dir, scenario_name, experiment_id):
                     transmissions_by_location[location] = 1
 
     rt_by_day = get_rt_by_day(ids_infected_by_day, secondary_cases_by_individual, parameters["num_days"])
+    p80 = get_p80(secondary_cases_by_individual, extinction_threshold = 0)
 
     output = {
         "experiment_id": experiment_id,
         "parameters": parameters,
         "secondary_cases_by_individual": secondary_cases_by_individual,
-        "secondary_cases_by_index_case": secondary_cases_by_index_case,
+        "index_case_ids": index_case_ids,
         "cases_per_day": cases_per_day,
         "rt_by_day": rt_by_day,
-        "transmissions_by_location": transmissions_by_location
+        "transmissions_by_location": transmissions_by_location,
+        "p80": p80
     }
 
     return output
 
-"""
+def get_summary_output(output_dir, scenario_name, exp_id):
+    summary_file = os.path.join(output_dir, scenario_name, "exp{:04}".format(exp_id), "output_summary.csv")
+    with open(summary_file) as csvfile:
+        reader = csv.DictReader(csvfile)
 
-def get_num_cases_over_period(cases_by_day, start_day, end_day):
-    total_cases = 0
-    for day in range(start_day, end_day + 1):
-        if day in cases_by_day:
-            total_cases += cases_by_day[day]
-    return total_cases
+        # Get first row
+        row = next(reader)
+        output = {
+            "num_days": int(row["num_days"]),
+            "population_size": int(row["population_size"]),
+            "p80": float(row["P80"]),
+            "total_cases": int(row["num_cases"])
+        }
 
-"""
+        return output
+
+def get_num_secondary_cases_frequencies(output_dir, scenario_name, exp_id):
+    secondary_cases_file = os.path.join(output_dir, scenario_name, "exp{:04}".format(exp_id), "secondary_cases_frequencies.csv")
+
+    secondary_cases_frequencies = {}
+    with open(secondary_cases_file) as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            num_secondary_cases = int(row["num_secondary_cases"])
+            frequency = int(row["frequency"])
+            secondary_cases_frequencies[num_secondary_cases] = frequency
+
+    return secondary_cases_frequencies
+
+def get_output_per_day(output_dir, scenario_name, exp_id):
+    num_cases_per_day = {}
+    rt_by_day = {}
+    output_file = os.path.join(output_dir, scenario_name, "exp{:04}".format(exp_id), "output_per_day.csv")
+    with open(output_file) as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            day = int(row["sim_day"])
+            num_cases = int(row["num_cases"])
+            r_t = float(row["r_t"])
+            num_cases_per_day[day] = num_cases
+            rt_by_day[day] = r_t
+
+    return {"cases_per_day": num_cases_per_day, "rt_by_day": rt_by_day}
+
+def get_transmissions_by_location(output_dir, scenario_name, exp_id):
+    transmissions_by_location = {}
+
+    output_file = os.path.join(output_dir, scenario_name, "exp{:04}".format(exp_id), "transmissions_by_location.csv")
+    with open(output_file) as csvfile:
+        reader = csv.DictReader(csvfile)
+
+        for row in reader:
+            location = row["location"]
+            num_transmissions = int(row["num_cases"])
+            transmissions_by_location[location] = num_transmissions
+
+    return transmissions_by_location

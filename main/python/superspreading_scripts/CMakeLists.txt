@@ -1,8 +1,8 @@
 #############################################################################
-#  This file is part of the Stride software. 
+#  This file is part of the Stride software.
 #  It is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by 
-#  the Free Software Foundation, either version 3 of the License, or any 
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or any
 #  later version.
 #  The software is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -12,7 +12,7 @@
 #  along with the software. If not, see <http://www.gnu.org/licenses/>.
 #  see http://www.gnu.org/licenses/.
 #
-#  Copyright 2020, Willem L, Kuylen E & Broeckhove J
+#  Copyright 2021, Kuylen E
 #############################################################################
 
 #================================================================================================
@@ -20,8 +20,8 @@
 #================================================================================================
 
 
-# Python postprocessing scripts
-INSTALL( FILES 			
+# Python scripts
+INSTALL( FILES
 			plots.py
 			postprocessing_degree_distribution.py
 			postprocessing_index_case_only.py
@@ -29,10 +29,17 @@ INSTALL( FILES
 			postprocessing_no_interventions.py
 			postprocessing_theoretical_description_comparison.py
 			postprocessing_verify_baseline.py
-			theoretical_description_calculation.py
-			util.py	 
+			postprocessing_util.py
 
-	DESTINATION ${BIN_INSTALL_LOCATION}  
+      run_degree_distribution_simulations.py
+      run_full_simulations.py
+      run_index_case_only_simulations.py
+      run_simplified_simulations.py
+      run_util.py
+
+      theoretical_description_calculation.py
+
+	DESTINATION ${BIN_INSTALL_LOCATION}
 	PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_WRITE GROUP_READ
 )
 
