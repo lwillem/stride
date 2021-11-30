@@ -107,26 +107,31 @@ def create_config(scenario_name, exp_id, contact_distribution, contact_distribut
 def f(t, shape, scale):
     return t * gamma.pdf(t, a=shape, scale=scale)
 
-def get_mean_non_truncated_gamma(target_mean, shape):
+def get_truncated_mean(shape, scale):
+    cdf1 = gamma.cdf(0, a=shape, scale=scale)
+    cdf2 = gamma.cdf(1, a=shape, scale=scale)
+
+    mean_tr = (quad(lambda x: f(x, shape, scale), 0, 1) / (cdf2 - cdf1))[0]
+
+    return (mean_tr, scale)
+
+def get_mean_non_truncated_gamma(target_mean, shape, num_parallel_workers=4):
     tolerance = 1.49e-4
     scale_est = target_mean / shape
-    scale_params = np.arange(scale_est / 2, scale_est * 2, 0.0001)
+    scale_params = np.arange(scale_est / 1.5, scale_est * 1.5, 0.00001)
 
-    best_scale = np.nan
-    best_mean = np.Inf
+    with multiprocessing.Pool(processes=num_parallel_workers) as pool:
+        mean_and_scale_ests = pool.starmap(get_truncated_mean, [(shape, scale) for scale in scale_params])
 
-    for scale in scale_params:
-        cdf1 = gamma.cdf(0, a=shape, scale=scale)
-        cdf2 = gamma.cdf(1, a=shape, scale=scale)
-
-        mean_tr = (quad(lambda x: f(x, shape, scale), 0, 1) / (cdf2 - cdf1))[0]
-
-        if (abs(mean_tr - target_mean) < tolerance):
-            if (abs(mean_tr - target_mean) < abs(best_mean - target_mean)):
-                best_mean = mean_tr
+        best_mean = mean_and_scale_ests[0][0]
+        best_scale = mean_and_scale_ests[0][1]
+        for mean, scale in mean_and_scale_ests:
+            if abs(mean - target_mean) < abs(best_mean - target_mean):
+                best_mean = mean
                 best_scale = scale
 
-    return (best_scale * shape)
+        if abs(best_mean - target_mean) <= tolerance:
+            return shape * best_scale
 
 def run_and_summarize(exp_id):
     # Run

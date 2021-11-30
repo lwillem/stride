@@ -155,12 +155,11 @@ def plot_num_cases_over_period(output_dir, fig_name, display_scenario_names, sta
 def plot_offspring_distributions(output_dir, fig_name, scenario_name, secondary_cases_by_tp):
     for tp in secondary_cases_by_tp:
         num_runs = len(secondary_cases_by_tp[tp])
-        print(num_runs)
         freq = Counter(secondary_cases_by_tp[tp])
         num_cases_sorted = list(freq.keys())
         num_cases_sorted.sort()
 
-        plt.plot(num_cases_sorted, [freq[num] / len(secondary_cases_by_tp[tp]) for num in num_cases_sorted], marker="o")
+        plt.plot(num_cases_sorted, [freq[num] / num_runs for num in num_cases_sorted], marker="o")
 
     plt.xlabel("Number of secondary cases")
     plt.ylabel("Frequency")
@@ -203,7 +202,7 @@ def plot_qq(output_dir, fig_name, scenario_name, k, secondary_cases_by_tp):
         plt.ylabel("Simulations results qunatiles") # FIXME Find better axis labels
         plt.title("")
 
-        save_figure(output_dir, fig_name + "_" + scenario_name + "_tp_" + "{:.2f}".format(tp))
+        save_figure(output_dir, fig_name + "_" + scenario_name + "_tp_" + "{:.3f}".format(tp))
 
 def plot_secondary_cases_per_index_case(output_dir, fig_name, display_scenario_names, all_secondary_cases_by_tp, exclude_extinction=False):
     i = 0
@@ -232,7 +231,7 @@ def plot_secondary_cases_per_index_case(output_dir, fig_name, display_scenario_n
 
     plt.legend()
     plt.xlabel("Mean transmission probability")
-    plt.xlim(-0.05, 1.05)
+    plt.xlim(0.02, 0.105)
     plt.ylabel("Number of secondary cases per index case")
     save_figure(output_dir, fig_name, extension="png")
 
@@ -249,7 +248,7 @@ def plot_secondary_cases_distribution(output_dir, fig_name, display_scenario_nam
         num_cases_sorted = list(all_frequencies.keys())
         num_cases_sorted.sort()
 
-    plt.plot(num_cases_sorted, [all_frequencies[num] for num in num_cases_sorted])
+        plt.plot(num_cases_sorted, [all_frequencies[num] for num in num_cases_sorted])
     plt.xlabel("Number of secondary cases")
     plt.xlim(-5, 105)
 

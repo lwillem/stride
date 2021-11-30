@@ -102,7 +102,7 @@ def main(output_dir, num_parallel_workers):
                 plot_effective_r_by_day(output_dir, "rt", scenario_name, [run["rt_by_day"] for run in output_per_day], num_days, y_max=30)
 
                 plot_cumulative_cases_per_day(output_dir, "cumulative_cases_per_day", scenario_name, [run["cases_per_day"] for run in output_per_day], num_days, y_max=population_size)
-                plot_new_cases_per_day(output_dir, "new_cases_per_day", scenario_name, [run["cases_per_day"] for run in output_per_day], num_days, y_max=170000)
+                plot_new_cases_per_day(output_dir, "new_cases_per_day", scenario_name, [run["cases_per_day"] for run in output_per_day], num_days, y_max=670000)
 
                 plot_transmissions_by_location(output_dir, "transmissions_by_location", scenario_name, transmissions_by_location)
 
@@ -124,8 +124,8 @@ def main(output_dir, num_parallel_workers):
         plot_herd_immunity_threshold(output_dir, "hits_day_" + overdispersion_scenario, display_scenario_names, all_hits_day, show_day=True)
         plot_herd_immunity_threshold(output_dir, "hits_day_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_hits_day_exclude_extinction, show_day=True)
 
-        plot_peak_sizes(output_dir, "peak_sizes_" + overdispersion_scenario, display_scenario_names, all_cases_per_day, ymin=0, ymax=175000)
-        plot_peak_sizes(output_dir, "peak_sizes_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_cases_per_day, extinction_threshold=extinction_threshold, ymin=100000, ymax=175000)
+        plot_peak_sizes(output_dir, "peak_sizes_" + overdispersion_scenario, display_scenario_names, all_cases_per_day, ymin=-10, ymax=670000)
+        plot_peak_sizes(output_dir, "peak_sizes_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_cases_per_day, extinction_threshold=extinction_threshold, ymin=400000, ymax=670000)
 
         plot_p80s(output_dir, "p80s_" + overdispersion_scenario, display_scenario_names, all_p80s)
         plot_p80s(output_dir, "p80s_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_p80s_exclude_extinction)
@@ -135,9 +135,10 @@ def main(output_dir, num_parallel_workers):
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("output_dir", type=str, help="Directory containing simulation results")
+    parser.add_arugment("--num_parallel_workers", type=int, default=4)
 
     args = parser.parse_args()
-    main(args.output_dir, 4)
+    main(args.output_dir, args.num_parallel_workers)
 
 """
     # TODO smoothed Rt by day?

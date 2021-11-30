@@ -245,6 +245,16 @@ def get_num_secondary_cases_frequencies(output_dir, scenario_name, exp_id):
 
     return secondary_cases_frequencies
 
+def get_num_secondary_cases_per_index_case(output_dir, scenario_name, exp_id):
+    output_file = os.path.join(output_dir, scenario_name, "exp{:04}".format(exp_id), "secondary_cases_by_index_case.csv")
+    all_secondary_cases = []
+    with open(output_file) as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            all_secondary_cases.append(int(row["num_secondary_cases"]))
+
+    return np.mean(all_secondary_cases)
+
 def get_output_per_day(output_dir, scenario_name, exp_id):
     num_cases_per_day = {}
     rt_by_day = {}
