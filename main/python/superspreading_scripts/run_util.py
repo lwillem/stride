@@ -32,7 +32,7 @@ from collections import Counter
 from scipy.stats import gamma
 from scipy.integrate import quad
 
-from postprocessing_util import get_output
+from postprocessing_util import get_degree_distribution, get_output
 
 
 def create_config(scenario_name, exp_id, contact_distribution, contact_distribution_overdispersion,
@@ -133,103 +133,116 @@ def get_mean_non_truncated_gamma(target_mean, shape, num_parallel_workers=4):
         if abs(best_mean - target_mean) <= tolerance:
             return shape * best_scale
 
-def run_and_summarize(exp_id):
+
+def run_single(exp_id, summarize):
     # Run
     subprocess.run(["./bin/stride", "-c exp{:04}.xml".format(exp_id)], stdout=subprocess.PIPE)
-    # Summarize
+
     config = ET.parse('config/exp{:04}.xml'.format(exp_id)).getroot()
     output_prefix = (config.find('output_prefix').text).split("/")
     output_dir = output_prefix[0]
     scenario_name = output_prefix[1]
 
-    output = get_output(output_dir, scenario_name, exp_id)
+    if summarize == "Basic":
+        output = get_output(output_dir, scenario_name, exp_id)
 
-    num_days = output["parameters"]["num_days"]
+        num_days = output["parameters"]["num_days"]
+        with open(os.path.join(output_dir, scenario_name, "exp{:04}".format(exp_id), "output_per_day.csv"), "w") as csvfile:
+            fieldnames = ["sim_day", "num_cases", "r_t"]
+            writer = csv.DictWriter(csvfile, fieldnames)
+            writer.writeheader()
+            for day in range(num_days):
+                num_cases = 0
+                r_t = np.nan
+                if day in output["cases_per_day"]:
+                    num_cases = output["cases_per_day"][day]
+                if day in output["rt_by_day"]:
+                    r_t = output["rt_by_day"][day]
+                writer.writerow({
+                    "sim_day": day,
+                    "num_cases": num_cases,
+                    "r_t": r_t,
+                })
+        with open(os.path.join(output_dir, scenario_name, "exp{:04}".format(exp_id), "secondary_cases_frequencies.csv"), "w") as csvfile:
+            fieldnames = ["num_secondary_cases", "frequency"]
+            writer = csv.DictWriter(csvfile, fieldnames)
+            writer.writeheader()
 
-    with open(os.path.join(output_dir, scenario_name, "exp{:04}".format(exp_id), "output_per_day.csv"), "w") as csvfile:
-        fieldnames = ["sim_day", "num_cases", "r_t"]
-        writer = csv.DictWriter(csvfile, fieldnames)
-        writer.writeheader()
+            frequencies = Counter(output["secondary_cases_by_individual"].values())
+            for num_secondary_cases, frequency in frequencies.items():
+                writer.writerow({
+                    "num_secondary_cases": num_secondary_cases,
+                    "frequency": frequency
+                })
 
-        for day in range(num_days):
-            num_cases = 0
-            r_t = np.nan
-            if day in output["cases_per_day"]:
-                num_cases = output["cases_per_day"][day]
-            if day in output["rt_by_day"]:
-                r_t = output["rt_by_day"][day]
-            writer.writerow({
-                "sim_day": day,
-                "num_cases": num_cases,
-                "r_t": r_t,
-            })
+        with open(os.path.join(output_dir, scenario_name, "exp{:04}".format(exp_id), "secondary_cases_by_index_case.csv"), "w") as csvfile:
+            fieldnames = ["index_case_id", "num_secondary_cases"]
+            writer = csv.DictWriter(csvfile, fieldnames)
+            writer.writeheader()
 
-    with open(os.path.join(output_dir, scenario_name, "exp{:04}".format(exp_id), "secondary_cases_frequencies.csv"), "w") as csvfile:
-        fieldnames = ["num_secondary_cases", "frequency"]
-        writer = csv.DictWriter(csvfile, fieldnames)
-        writer.writeheader()
+            for index_case_id in output["index_case_ids"]:
+                writer.writerow({
+                    "index_case_id": index_case_id,
+                    "num_secondary_cases": output["secondary_cases_by_individual"][index_case_id]
+                })
 
-        frequencies = Counter(output["secondary_cases_by_individual"].values())
-        for num_secondary_cases, frequency in frequencies.items():
-            writer.writerow({
-                "num_secondary_cases": num_secondary_cases,
-                "frequency": frequency
-            })
+        with open(os.path.join(output_dir, scenario_name, "exp{:04}".format(exp_id), "transmissions_by_location.csv"), "w") as csvfile:
+            fieldnames = ["location", "num_cases"]
+            writer = csv.DictWriter(csvfile, fieldnames)
+            writer.writeheader()
 
-    with open(os.path.join(output_dir, scenario_name, "exp{:04}".format(exp_id), "secondary_cases_by_index_case.csv"), "w") as csvfile:
-        fieldnames = ["index_case_id", "num_secondary_cases"]
-        writer = csv.DictWriter(csvfile, fieldnames)
-        writer.writeheader()
+            for location, num_cases in output["transmissions_by_location"].items():
+                writer.writerow({
+                    "location": location,
+                    "num_cases": num_cases
+                })
 
-        for index_case_id in output["index_case_ids"]:
-            writer.writerow({
-                "index_case_id": index_case_id,
-                "num_secondary_cases": output["secondary_cases_by_individual"][index_case_id]
-            })
+        with open(os.path.join(output_dir, scenario_name, "exp{:04}".format(exp_id), "summary.csv"), "r") as csvinput:
+            with open(os.path.join(output_dir, scenario_name, "exp{:04}".format(exp_id), "output_summary.csv"), "w") as csvoutput:
+                writer = csv.writer(csvoutput, lineterminator='\n')
+                reader = csv.reader(csvinput)
 
-    with open(os.path.join(output_dir, scenario_name, "exp{:04}".format(exp_id), "transmissions_by_location.csv"), "w") as csvfile:
-        fieldnames = ["location", "num_cases"]
-        writer = csv.DictWriter(csvfile, fieldnames)
-        writer.writeheader()
+                all_rows = []
 
-        for location, num_cases in output["transmissions_by_location"].items():
-            writer.writerow({
-                "location": location,
-                "num_cases": num_cases
-            })
-
-    with open(os.path.join(output_dir, scenario_name, "exp{:04}".format(exp_id), "summary.csv"), "r") as csvinput:
-        with open(os.path.join(output_dir, scenario_name, "exp{:04}".format(exp_id), "output_summary.csv"), "w") as csvoutput:
-            writer = csv.writer(csvoutput, lineterminator='\n')
-            reader = csv.reader(csvinput)
-
-            all_rows = []
-
-            # header
-            row = next(reader)
-            row.append("P80")
-            all_rows.append(row)
-
-            for row in reader:
-                row.append(output["p80"])
+                # header
+                row = next(reader)
+                row.append("P80")
                 all_rows.append(row)
 
-            writer.writerows(all_rows)
+                for row in reader:
+                    row.append(output["p80"])
+                    all_rows.append(row)
+
+                writer.writerows(all_rows)
+
+        # Delete files that are no longer needed
+        subprocess.run(["rm", os.path.join(output_dir, scenario_name, "exp{:04}".format(exp_id), "event_log.txt")])
+        subprocess.run(["rm", os.path.join(output_dir, scenario_name, "exp{:04}".format(exp_id), "summary.csv")])
+    elif summarize == "DegreeDistribution":
+        output = get_output(output_dir, scenario_name, exp_id)
+        degree_distribution = get_degree_distribution(output_dir, scenario_name, exp_id, output["parameters"]["population_size"])
+
+        with open(os.path.join(output_dir, scenario_name, "exp{:04}".format(exp_id), "degree_distribution.csv"), "w") as csvfile:
+            fieldnames = ["degree", "frequency"]
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+            writer.writeheader()
+            for degree in range(len(degree_distribution)):
+                writer.writerow({"degree": degree, "frequency": degree_distribution[degree]})
+
+        # Delete files that are no longer needed
+        subprocess.run(["rm", os.path.join(output_dir, scenario_name, "exp{:04}".format(exp_id), "event_log.txt")])
 
     # Copy config file to output dir
     subprocess.run(["mv", "config/exp{:04}.xml".format(exp_id),
                     os.path.join(output_dir, scenario_name, "exp{:04}".format(exp_id), "config.xml")])
-
-    # Delete files that are no longer needed
-    subprocess.run(["rm", os.path.join(output_dir, scenario_name, "exp{:04}".format(exp_id), "event_log.txt")])
-    subprocess.run(["rm", os.path.join(output_dir, scenario_name, "exp{:04}".format(exp_id), "summary.csv")])
 
 def run_parallel(scenario_name, contact_distribution, contact_distribution_overdispersion,
                     disease_config_file, event_log_level, holidays_file, num_days,
                     num_infected_seeds, population_file, run_simplified, start_date,
                     track_index_case, transmission_probability_distribution,
                     transmission_probability, transmission_probability_distribution_overdispersion,
-                    num_runs, infected_seed_id=None, num_parallel_workers=4):
+                    num_runs, infected_seed_id=None, num_parallel_workers=4, summarize="Basic"):
 
     ########################################
     # Create config files for experiments. #
@@ -262,4 +275,5 @@ def run_parallel(scenario_name, contact_distribution, contact_distribution_overd
     ######################################################
 
     with multiprocessing.Pool(processes=num_parallel_workers) as pool:
-        pool.map(run_and_summarize, list(range(1, num_runs + 1)))
+        #pool.map(run_single, list(range(1, num_runs + 1)))
+        pool.starmap(run_single, [(exp_id, summarize) for i in range(1, num_runs + 1)])

@@ -13,91 +13,55 @@
 #  see http://www.gnu.org/licenses/.
 #
 #
-#  Copyright 2020, Willem L, Kuylen E & Broeckhove J
+#  Copyright 2021, Kuylen E
 ############################################################################ #
 
 """
 """
 
-"""
-
 import argparse
-import csv
 import matplotlib.pyplot as plt
 import multiprocessing
-import networkx as nx
-import numpy as np
-import os
 
 from plots import save_figure
-from util import get_experiment_ids
+from postprocessing_util import get_degree_distribution_from_file, get_experiment_ids, get_summary_output
 
-def get_degree_distribution(output_dir, scenario_name, experiment_id):
-    G = nx.Graph()
+def main(output_dir, num_parallel_workers):
+    scenario_names = ["dd_baseline",
+                        "dd_contacts_overdispersion_1000",
+                        "dd_contacts_overdispersion_100",
+                        "dd_contacts_overdispersion_60",
+                        "dd_contacts_overdispersion_40",
+                        "dd_contacts_overdispersion_20"]
+    alpha = r"$\alpha$"
+    display_scenario_names = ["Baseline", alpha + " = 10", alpha + " = 1", alpha + " = 0.6", alpha + " = 0.4", alpha + " = 0.2"]
 
-    # Add all individuals in population to graph as nodes
-    summary_file = os.path.join(output_dir, scenario_name, "exp" + "{:04}".format(experiment_id), "summary.csv")
-    population_size = 0
-    with open(summary_file) as csvfile:
-        reader = csv.DictReader(csvfile)
-        # Get first line
-        row = next(reader)
-        population_size = int(row["population_size"])
-
-    for person_id in range(population_size):
-        G.add_node(person_id)
-
-    # Add edges between individuals that have contact
-    log_file = os.path.join(output_dir, scenario_name, "exp" + "{:04}".format(experiment_id), "event_log.txt")
-    number_of_edges = 0
-    with open(log_file) as f:
-        for line in f:
-            line = line.split(" ")
-            tag = line[0]
-            if tag == "[CONT]":
-                p1_id = int(float(line[1]))
-                p2_id = int(float(line[17]))
-                # Log contact in graph
-                G.add_edge(p1_id, p2_id)
-                number_of_edges += 1
-
-    print(number_of_edges)
-
-    # Calculate degree frequencies
-    degree_freqs = nx.degree_histogram(G)
-
-    #avg_degree = np.mean([degree[1] for degree in nx.degree(G)])
-    #print(avg_degree)
-    #print(nx.number_of_edges(G))
-
-    # Normalize to total number of nodes
-    degree_freqs = [freq / population_size for freq in degree_freqs]
-
-    return degree_freqs
-
-def main(output_dir, scenario_names, display_scenario_names):
-    num_days = 1
-
-    for s_i in range(len(scenario_names)):
-        scenario_name = scenario_names[s_i]
+    for scenario_name in scenario_names:
         print(scenario_name)
-
         experiment_ids = get_experiment_ids(output_dir, scenario_name)
-        with multiprocessing.Pool(processes=4) as pool:
-            degree_dist = pool.starmap(get_degree_distribution, [(output_dir, scenario_name, exp_id) for exp_id in experiment_ids])
-            for results in degree_dist:
-                plt.bar(range(len(results)), results)
-                plt.xlabel("Degree")
-                plt.xlim(-0.5,55)
-                plt.ylabel("Frequency")
-                plt.ylim(0, 0.20)
-                save_figure(output_dir, "degree_dist_" + scenario_name, extension="png", dpi=100)
+
+        with multiprocessing.Pool(processes=num_parallel_workers) as pool:
+            degree_distribution = pool.starmap(get_degree_distribution_from_file, [(output_dir, scenario_name, exp_id) for exp_id in experiment_ids])
+            summary_output = pool.starmap(get_summary_output, [(output_dir, scenario_name, exp_id, "summary.csv") for exp_id in experiment_ids])
+            population_size = summary_output[0]["population_size"]
+
+            for run in degree_distribution:
+                degrees = list(run.keys())
+                degrees.sort()
+                plt.plot(degrees, [run[d] / population_size for d in degrees])
+    plt.legend(display_scenario_names)
+    plt.xlim(0, 250)
+    plt.xlabel("Degree")
+    plt.ylabel("Frequency")
+
+    save_figure(output_dir, "degree_distributions")
 
 if __name__=="__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("output_dir", type=str, help="Directory containing simulation results")
-    parser.add_argument("scenario_names", type=str, nargs="+", help="Names of scenarios to be postprocessed")
-    parser.add_argument("--display_scenario_names", type=str, nargs="+", default=[], help="Names for scenarios to be displayed on plots")
+     parser = argparse.ArgumentParser()
 
-    args = parser.parse_args()
-    main(args.output_dir, args.scenario_names, args.display_scenario_names)"""
+     parser.add_argument("output_dir", type=str, help="Directory containing simulation results")
+     parser.add_argument("--num_parallel_workers", type=int, default=4)
+
+     args = parser.parse_args()
+
+     main(args.output_dir, args.num_parallel_workers)

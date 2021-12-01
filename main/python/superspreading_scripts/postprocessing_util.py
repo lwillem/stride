@@ -21,6 +21,7 @@
 """
 
 import csv
+import networkx as nx
 import numpy as np
 import os
 
@@ -43,6 +44,45 @@ def get_day_of_last_infection(cases_per_day, num_days):
             break
 
     return day_of_last_infection
+
+def get_degree_distribution(output_dir, scenario_name, experiment_id, population_size):
+    G = nx.Graph()
+
+    # Add all individuals in population to graph as nodes
+    for person_id in range(population_size):
+        G.add_node(person_id)
+
+    # Add edges between individuals that have contact
+    log_file = os.path.join(output_dir, scenario_name, "exp{:04}".format(experiment_id), "event_log.txt")
+    with open(log_file) as f:
+        for line in f:
+            line = line.split(" ")
+            tag = line[0]
+            if tag == "[CONT]":
+                p1_id = int(float(line[1]))
+                p2_id = int(float(line[17]))
+                # Add edge to graph
+                G.add_edge(p1_id, p2_id)
+
+    # Calculate degree frequencies
+    degree_freqs = nx.degree_histogram(G)
+
+    # Normalize to total number of nodes
+    #degree_freqs = [freq / population_size for freq in degree_freqs]
+
+    return degree_freqs
+
+def get_degree_distribution_from_file(output_dir, scenario_name, experiment_id):
+    output_file = os.path.join(output_dir, scenario_name, "exp{:04}".format(experiment_id), "degree_distribution.csv")
+    degree_distribution = {}
+    with open(output_file) as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            degree = int(row["degree"])
+            frequency = int(row["frequency"])
+            degree_distribution[degree] = frequency
+
+    return degree_distribution
 
 def get_herd_immunity_threshold(rt_by_day, cases_per_day, num_days, population_size, get_day=False):
     total_cases = sum(cases_per_day.values())
@@ -216,8 +256,8 @@ def get_output(output_dir, scenario_name, experiment_id):
 
     return output
 
-def get_summary_output(output_dir, scenario_name, exp_id):
-    summary_file = os.path.join(output_dir, scenario_name, "exp{:04}".format(exp_id), "output_summary.csv")
+def get_summary_output(output_dir, scenario_name, exp_id, file_name="output_summary.csv"):
+    summary_file = os.path.join(output_dir, scenario_name, "exp{:04}".format(exp_id), file_name)
     with open(summary_file) as csvfile:
         reader = csv.DictReader(csvfile)
 
@@ -226,9 +266,11 @@ def get_summary_output(output_dir, scenario_name, exp_id):
         output = {
             "num_days": int(row["num_days"]),
             "population_size": int(row["population_size"]),
-            "p80": float(row["P80"]),
             "total_cases": int(row["num_cases"])
         }
+
+        if "P80" in row:
+            output["p80"] = float(row["P80"])
 
         return output
 

@@ -1,6 +1,6 @@
 import argparse
 
-from run_util import create_config, get_mean_non_truncated_gamma, run_parallel
+from run_util import get_mean_non_truncated_gamma, run_parallel
 
 def run_full_simulations(output_prefix, disease_config_file, holidays_file,
                             mean_transmission_probability, num_days, num_infected_seeds,
