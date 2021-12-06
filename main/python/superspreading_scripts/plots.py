@@ -7,10 +7,13 @@ from scipy.stats import nbinom, probplot
 
 def plot_ar(output_dir, fig_name, display_scenario_names, all_total_cases, num_days, pop_size, extinction_threshold=0, y_min=-0.05, y_max=1.05):
     all_total_cases_prop_pop = []
+    means = []
     for scenario in all_total_cases:
-        all_total_cases_prop_pop.append([total_cases / pop_size for total_cases in scenario if total_cases >= extinction_threshold])
+        ars = [total_cases / pop_size for total_cases in scenario if total_cases >= extinction_threshold]
+        all_total_cases_prop_pop.append(ars)
+        means.append(np.mean(ars))
 
-
+    plt.scatter(range(1, len(all_total_cases_prop_pop) + 1), means, marker="o")
     plt.boxplot(all_total_cases_prop_pop, labels=display_scenario_names)
 
     plt.ylabel("AR (after {} days)".format(num_days))
@@ -18,7 +21,7 @@ def plot_ar(output_dir, fig_name, display_scenario_names, all_total_cases, num_d
 
     save_figure(output_dir, fig_name)
 
-def plot_cumulative_cases_per_day(output_dir, fig_name, scenario_name, cases_by_day, num_days, y_max=None):
+def plot_cumulative_cases_per_day(output_dir, fig_name, scenario_name, cases_by_day, num_days, y_max=None, events={}):
     for run in cases_by_day:
         total_cases = 0
         cumulative_cases_by_day = []
@@ -26,6 +29,10 @@ def plot_cumulative_cases_per_day(output_dir, fig_name, scenario_name, cases_by_
             total_cases += run[day] if day in run else 0
             cumulative_cases_by_day.append(total_cases)
         plt.plot(range(num_days), cumulative_cases_by_day)
+
+    for event_name, event_day in events.items():
+        plt.axvline(event_day, color="lightgrey")
+        plt.text(event_day + 1, y_max - (y_max / 5), event_name, rotation=90, color="lightgrey")
 
     plt.xlabel("Simulation day")
     plt.ylabel("Cumulative cases")
@@ -60,7 +67,7 @@ def plot_day_of_peak(output_dir, fig_name, display_scenario_names, all_cases_per
 
     save_figure(output_dir, fig_name)
 
-def plot_effective_r_by_day(output_dir, fig_name, scenario_name, rt_by_day, num_days, y_max=None):
+def plot_effective_r_by_day(output_dir, fig_name, scenario_name, rt_by_day, num_days, y_max=None, events={}):
     mean = []
     lower = []
     upper = []
@@ -70,6 +77,10 @@ def plot_effective_r_by_day(output_dir, fig_name, scenario_name, rt_by_day, num_
         mean.append(np.nanmean(r_on_day))
         lower.append(np.percentile(r_on_day, 2.5))
         upper.append(np.percentile(r_on_day, 97.5))
+
+    for event_name, event_day in events.items():
+        plt.axvline(event_day, color="lightgrey")
+        plt.text(event_day + 1, y_max - (y_max / 5), event_name, rotation=90, color="lightgrey")
 
     plt.plot(range(num_days), mean)
     plt.fill_between(range(num_days), lower, upper, color="lightgrey")
@@ -85,19 +96,19 @@ def plot_effective_r_by_day(output_dir, fig_name, scenario_name, rt_by_day, num_
 
     save_figure(output_dir, fig_name + "_" + scenario_name, extension="png", dpi=100)
 
-def plot_extinction_probabilities(output_dir, fig_name, display_scenario_names, all_total_cases, extinction_threshold):
+def plot_extinction_probabilities(output_dir, fig_name, display_scenario_names, all_total_cases, extinction_threshold, ylabel="Extinction probability"):
     extinction_probabilities = []
     for scenario in all_total_cases:
         extinction_probabilities.append(len([x for x in scenario if x < extinction_threshold]) / len(scenario))
 
     plt.bar(range(len(all_total_cases)), extinction_probabilities)
     plt.xticks(range(len(display_scenario_names)), display_scenario_names)
-    plt.ylabel("Extinction probability (threshold = {} cases)".format(extinction_threshold))
+    plt.ylabel(ylabel + " (threshold = {} cases)".format(extinction_threshold))
     plt.ylim(0, 1.1)
 
     save_figure(output_dir, fig_name)
 
-def plot_final_size_frequencies(output_dir, fig_name, display_scenario_names, all_total_cases, num_days):
+def plot_final_size_frequencies(output_dir, fig_name, display_scenario_names, all_total_cases, xlabel):
     """
         Plot frequency with which final sizes occur.
         Visualisation for extinction threshold.
@@ -105,7 +116,7 @@ def plot_final_size_frequencies(output_dir, fig_name, display_scenario_names, al
 
     plt.hist(all_total_cases, histtype="bar", stacked=True)
 
-    plt.xlabel("Outbreak size after {} days".format(num_days))
+    plt.xlabel(xlabel)
     plt.ylabel("Frequency")
     plt.legend(display_scenario_names)
 
@@ -127,10 +138,13 @@ def plot_herd_immunity_threshold(output_dir, fig_name, display_scenario_names, a
 
     save_figure(output_dir, fig_name)
 
-def plot_new_cases_per_day(output_dir, fig_name, scenario_name, cases_by_day, num_days, y_max=None):
+def plot_new_cases_per_day(output_dir, fig_name, scenario_name, cases_by_day, num_days, y_max=None, events={}):
     for run in cases_by_day:
         plt.plot(range(num_days), [run[day] if day in run else 0 for day in range(num_days)])
 
+    for event_name, event_day in events.items():
+        plt.axvline(event_day, color="lightgrey")
+        plt.text(event_day + 1, y_max - (y_max / 5), event_name, rotation=90, color="lightgrey")
     plt.xlabel("Simulation day")
     plt.ylabel("New cases")
     if y_max is not None:
@@ -138,19 +152,15 @@ def plot_new_cases_per_day(output_dir, fig_name, scenario_name, cases_by_day, nu
 
     save_figure(output_dir, fig_name + "_" + scenario_name)
 
-def plot_num_cases_over_period(output_dir, fig_name, display_scenario_names, start_day, end_day, all_cases_per_day):
-    all_cases_over_period = []
-    for scenario in all_cases_per_day:
-        cases_over_period = []
-        for run in scenario:
-            num_cases = 0
-            for day in range(start_day, end_day + 1):
-                if day in run:
-                    num_cases += run[day]
-            cases_over_period.append(num_cases)
-        all_cases_over_period.append(cases_over_period)
-    plt.boxplot(all_cases_over_period, labels=display_scenario_names)
-    plt.show()
+def plot_num_cases_over_period(output_dir, fig_name, display_scenario_names, start_day, end_day, all_cases_over_period):
+    #plt.boxplot(all_cases_over_period, labels=display_scenario_names)
+    plt.violinplot(all_cases_over_period)
+    plt.scatter(range(1, len(all_cases_over_period) + 1), [np.mean(scenario) for scenario in all_cases_over_period])
+
+    plt.xticks(range(1, len(all_cases_over_period) + 1), display_scenario_names)
+    plt.ylabel("Number of cases day {}-{}".format(start_day, end_day))
+
+    save_figure(output_dir, fig_name, extension="png")
 
 def plot_offspring_distributions(output_dir, fig_name, scenario_name, secondary_cases_by_tp):
     for tp in secondary_cases_by_tp:

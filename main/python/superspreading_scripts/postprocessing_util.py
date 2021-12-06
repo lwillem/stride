@@ -166,6 +166,14 @@ def get_total_cases(cases_per_day, num_days):
 
     return total_cases
 
+def get_cases_over_period(cases_per_day, start_day, end_day):
+    total_cases = 0
+    for day in range(start_day, end_day):
+        if day in cases_per_day:
+            total_cases += cases_per_day[day]
+
+    return total_cases
+
 def get_output(output_dir, scenario_name, experiment_id):
 
     log_file = os.path.join(output_dir, scenario_name, "exp" + "{:04}".format(experiment_id), "event_log.txt")

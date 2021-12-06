@@ -21,18 +21,6 @@
     + comparison of offspring distribution to negative binomial distribution.
     Using results from simulations tracking only secondary cases from index case.
 """
-"""
-def main(output_dir):
-
-    for overdispersion_scenario in overdispersion_scenario_names:
-
-        for scenario_name in scenario_names:
-
-            with multiprocessing.Pool(processes=4) as pool:
-
-
-
-"""
 
 import argparse
 import multiprocessing

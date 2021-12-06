@@ -257,7 +257,7 @@ def run_parallel(scenario_name, contact_distribution, contact_distribution_overd
     with open(os.path.join("sim_output", scenario_name, "exp_ids.txt"), "w") as f:
         for exp_id in range(1, num_runs + 1):
             print(exp_id, file=f)
-        #f.writelines([str(exp_id) for exp_id in range(1, num_runs + 1)])
+
     for i in range(1, num_runs + 1):
         create_config(scenario_name=scenario_name, exp_id=i,
                     contact_distribution=contact_distribution, contact_distribution_overdispersion=contact_distribution_overdispersion,
@@ -276,4 +276,4 @@ def run_parallel(scenario_name, contact_distribution, contact_distribution_overd
 
     with multiprocessing.Pool(processes=num_parallel_workers) as pool:
         #pool.map(run_single, list(range(1, num_runs + 1)))
-        pool.starmap(run_single, [(exp_id, summarize) for i in range(1, num_runs + 1)])
+        pool.starmap(run_single, [(exp_id, summarize) for exp_id in range(1, num_runs + 1)])
