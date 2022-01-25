@@ -26,7 +26,7 @@ import multiprocessing
 from plots import save_figure
 from postprocessing_util import get_degree_distribution_from_file, get_experiment_ids, get_summary_output
 
-def main(output_dir, num_parallel_workers):
+def main(output_dir, output_prefix, num_parallel_workers):
     scenario_names = ["dd_baseline",
                         "dd_contacts_overdispersion_1000",
                         "dd_contacts_overdispersion_100",
@@ -61,9 +61,9 @@ if __name__=="__main__":
      parser = argparse.ArgumentParser()
 
      parser.add_argument("output_dir", type=str, help="Directory containing simulation results")
-     parser.add_argument("output_prefix", type=str, default="")
+     parser.add_argument("--output_prefix", type=str, default="")
      parser.add_argument("--num_parallel_workers", type=int, default=4)
 
      args = parser.parse_args()
 
-     main(args.output_dir, args.num_parallel_workers)
+     main(args.output_dir, args.output_prefix, args.num_parallel_workers)

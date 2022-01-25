@@ -6,7 +6,7 @@ import argparse
 
 from run_util import run_parallel
 
-def run_degree_distribution_simulations(disease_config_file, num_days, population_file, start_date, num_parallel_workers):
+def run_degree_distribution_simulations(output_prefix, disease_config_file, num_days, population_file, start_date, num_parallel_workers):
     event_log_level = "All"
     run_simplified = "false"
     track_index_case = "false"
@@ -62,7 +62,7 @@ if __name__=="__main__":
 
     args = parser.parse_args()
 
-    run_degree_distribution_simulations(args.disease_config_file, args.num_days, args.population_file, args.start_date,
+    run_degree_distribution_simulations(args.output_prefix, args.disease_config_file, args.num_days, args.population_file, args.start_date,
                                             args.num_parallel_workers)
 
 
