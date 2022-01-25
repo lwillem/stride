@@ -78,7 +78,7 @@ def main(output_dir, num_parallel_workers):
                 # Used to determine extinction threshold
                 total_cases = [get_total_cases(run["cases_per_day"], num_days) for run in output_per_day]
                 total_cases.sort(reverse=True)
-                print(total_cases)
+                #print(total_cases)
 
                 all_cases_per_day.append([run["cases_per_day"] for run in output_per_day])
 
@@ -109,23 +109,23 @@ def main(output_dir, num_parallel_workers):
         plot_ar(output_dir, "ar_" + overdispersion_scenario, display_scenario_names, all_final_sizes, num_days, population_size)
         plot_ar(output_dir, "ar_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_final_sizes, num_days, population_size, extinction_threshold=extinction_threshold, y_min=0.8, y_max=1)
 
-        plot_day_of_last_infection(output_dir, "day_of_last_infection_" + overdispersion_scenario, display_scenario_names, all_days_last_infection, num_days)
-        plot_day_of_last_infection(output_dir, "day_of_last_infection_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_days_last_infection_exclude_extinction, num_days)
+        plot_day_of_last_infection(output_dir, "day_of_last_infection_" + overdispersion_scenario, display_scenario_names, all_days_last_infection, -1, num_days)
+        plot_day_of_last_infection(output_dir, "day_of_last_infection_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_days_last_infection_exclude_extinction, 100, num_days)
 
-        plot_day_of_peak(output_dir, "day_of_peak_" + overdispersion_scenario, display_scenario_names, all_cases_per_day, num_days)
-        plot_day_of_peak(output_dir, "day_of_peak_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_cases_per_day, num_days, extinction_threshold=extinction_threshold)
+        plot_day_of_peak(output_dir, "day_of_peak_" + overdispersion_scenario, display_scenario_names, all_cases_per_day, 150)
+        plot_day_of_peak(output_dir, "day_of_peak_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_cases_per_day, 150, extinction_threshold=extinction_threshold)
 
         plot_final_size_frequencies(output_dir, "final_size_frequencies_" + overdispersion_scenario, display_scenario_names, all_final_sizes, "Outbreak size after {} days".format(num_days))
         plot_extinction_probabilities(output_dir, "extinction_probabilities_" + overdispersion_scenario, display_scenario_names, all_final_sizes, extinction_threshold)
 
         plot_herd_immunity_threshold(output_dir, "hit_" + overdispersion_scenario, display_scenario_names, all_hits, show_day=False)
-        plot_herd_immunity_threshold(output_dir, "hit_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_hits_exclude_extinction, show_day=False)
+        plot_herd_immunity_threshold(output_dir, "hit_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_hits_exclude_extinction, show_day=False, y_min=0.4)
 
         plot_herd_immunity_threshold(output_dir, "hits_day_" + overdispersion_scenario, display_scenario_names, all_hits_day, show_day=True)
         plot_herd_immunity_threshold(output_dir, "hits_day_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_hits_day_exclude_extinction, show_day=True)
 
-        plot_peak_sizes(output_dir, "peak_sizes_" + overdispersion_scenario, display_scenario_names, all_cases_per_day, ymin=-10, ymax=670000)
-        plot_peak_sizes(output_dir, "peak_sizes_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_cases_per_day, extinction_threshold=extinction_threshold, ymin=400000, ymax=670000)
+        plot_peak_sizes(output_dir, "peak_sizes_" + overdispersion_scenario, display_scenario_names, all_cases_per_day, 0, num_days, ymin=-10, ymax=670000)
+        plot_peak_sizes(output_dir, "peak_sizes_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_cases_per_day, 0, num_days, extinction_threshold=extinction_threshold, ymin=400000, ymax=670000)
 
         plot_p80s(output_dir, "p80s_" + overdispersion_scenario, display_scenario_names, all_p80s)
         plot_p80s(output_dir, "p80s_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_p80s_exclude_extinction)
@@ -135,7 +135,7 @@ def main(output_dir, num_parallel_workers):
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("output_dir", type=str, help="Directory containing simulation results")
-    parser.add_arugment("--num_parallel_workers", type=int, default=4)
+    parser.add_argument("--num_parallel_workers", type=int, default=4)
 
     args = parser.parse_args()
     main(args.output_dir, args.num_parallel_workers)

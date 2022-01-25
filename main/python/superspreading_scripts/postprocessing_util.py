@@ -158,6 +158,20 @@ def get_rt_by_day(ids_infected_by_day, secondary_cases_by_individual, num_days):
 
     return rt_by_day
 
+def get_resurgence_probability(all_cases_per_day, start_lockdown, end_lockdown, num_days, resurgence_threshold):
+    runs_with_cases_during_lockdown = 0
+    runs_above_resurgence_threshold = 0
+
+    for run in all_cases_per_day:
+        num_cases_during_lockdown = get_cases_over_period(run, 30, 90)
+        num_cases_after_lockdown = get_cases_over_period(run, 90, 600)
+        if not num_cases_during_lockdown == 0:
+            runs_with_cases_during_lockdown += 1
+            if num_cases_after_lockdown >= resurgence_threshold:
+                runs_above_resurgence_threshold += 1
+
+    return runs_above_resurgence_threshold / runs_with_cases_during_lockdown
+
 def get_total_cases(cases_per_day, num_days):
     total_cases = 0
     for day, cases in cases_per_day.items():

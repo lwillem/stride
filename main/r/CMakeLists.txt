@@ -26,9 +26,6 @@ INSTALL(DIRECTORY
 	PATTERN "*.Rhistory" EXCLUDE
 )
 
-# Superspreading project scripts
-add_subdirectory(superspreading)
-
 # rStride analysis scripts
 INSTALL( FILES 			
             rStride_abc.R

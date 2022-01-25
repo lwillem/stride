@@ -18,7 +18,7 @@ def run_degree_distribution_simulations(disease_config_file, num_days, populatio
     num_runs = 1
 
     # Baseline
-    run_parallel(scenario_name="dd_baseline", contact_distribution="Constant", contact_distribution_overdispersion=0,
+    run_parallel(scenario_name=output_prefix + "dd_baseline", contact_distribution="Constant", contact_distribution_overdispersion=0,
                     disease_config_file=disease_config_file, event_log_level=event_log_level,
                     holidays_file=holidays_file, num_days=num_days, num_infected_seeds=num_infected_seeds,
                     population_file=population_file, run_simplified=run_simplified, start_date=start_date,
@@ -39,7 +39,7 @@ def run_degree_distribution_simulations(disease_config_file, num_days, populatio
     for i in range(len(scenario_names)):
         scenario_name = scenario_names[i]
         k = overdispersion_parameters[i]
-        run_parallel(scenario_name=scenario_name, contact_distribution="Gamma",
+        run_parallel(scenario_name=output_prefix + scenario_name, contact_distribution="Gamma",
                         contact_distribution_overdispersion=k, disease_config_file=disease_config_file,
                         event_log_level=event_log_level, holidays_file=holidays_file, num_days=num_days,
                         num_infected_seeds=num_infected_seeds, population_file=population_file,
@@ -53,6 +53,7 @@ def run_degree_distribution_simulations(disease_config_file, num_days, populatio
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
 
+    parser.add_argument("--output_prefix", type=str, default="")
     parser.add_argument("--disease_config_file", type=str, default="disease_covid19_lognorm.xml")
     parser.add_argument("--num_days", type=int, default=7)
     parser.add_argument("--population_file", type=str, default="pop_belgium11M_c500_teachers_censushh.csv")

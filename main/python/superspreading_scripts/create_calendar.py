@@ -149,6 +149,12 @@ def main(start_date, use_holidays):
         post_lockdown_community_distancing = 1 - (np.mean(post_lockdown_contacts["community"]) / pre_pandemic_contacts["community"])
         post_lockdown_workplace_distancing = 1 - (np.mean(post_lockdown_contacts["workplace"]) / pre_pandemic_contacts["workplace"])
 
+        print("LOCKDOWN COMMUNITY DISTANCING: {}".format(lockdown_community_distancing))
+        print("LOCKDOWN WORKPLACE DISTANCING: {}".format(lockdown_workplace_distancing))
+
+        print("POST LOCKDOWN COMMUNITY DISTANCING: {}".format(post_lockdown_community_distancing))
+        print("POST LOCKDOWN WORKPLACE DISTANCING: {}".format(post_lockdown_workplace_distancing))
+
         for i in range(num_days_post_lockdown):
             day = end_lockdown + timedelta(i)
             # Community distancing

@@ -37,6 +37,7 @@ def main(output_dir, num_parallel_workers):
     display_scenario_names = ["Baseline", alpha + " = 10", alpha + " = 1", alpha + " = 0.6", alpha + " = 0.4", alpha + " = 0.2"]
 
     for scenario_name in scenario_names:
+        scenario_name = output_prefix + scenario_name
         print(scenario_name)
         experiment_ids = get_experiment_ids(output_dir, scenario_name)
 
@@ -60,6 +61,7 @@ if __name__=="__main__":
      parser = argparse.ArgumentParser()
 
      parser.add_argument("output_dir", type=str, help="Directory containing simulation results")
+     parser.add_argument("output_prefix", type=str, default="")
      parser.add_argument("--num_parallel_workers", type=int, default=4)
 
      args = parser.parse_args()

@@ -28,7 +28,6 @@ INSTALL( FILES
 			postprocessing_interventions.py
 			postprocessing_no_interventions.py
 			postprocessing_theoretical_description_comparison.py
-			postprocessing_verify_baseline.py
 			postprocessing_util.py
 
       run_degree_distribution_simulations.py
