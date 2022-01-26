@@ -286,8 +286,11 @@ def get_summary_output(output_dir, scenario_name, exp_id, file_name="output_summ
         # Get first row
         row = next(reader)
         output = {
+            "contact_matrix_file": row["age_contact_matrix_file"],
+            "disease_config_file": row["disease_config_file"],
             "num_days": int(row["num_days"]),
             "population_size": int(row["population_size"]),
+            "population_file": row["population_file"],
             "total_cases": int(row["num_cases"])
         }
 

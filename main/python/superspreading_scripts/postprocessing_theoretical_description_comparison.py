@@ -24,9 +24,7 @@
 import csv
 import matplotlib.pyplot as plt
 import numpy as np
-import os
 
-from estimate_transmission_probability import estimate_effective_contacts
 from util import save_figure
 
 def main(output_dir, scenario_names, overdispersion_params, population_file, contact_matrix_file):
@@ -34,12 +32,6 @@ def main(output_dir, scenario_names, overdispersion_params, population_file, con
 
     for scenario_i in range(len(scenario_names)):
 
-        # Estimate mean + variance number of effective contacts for index cases
-
-        means_theoretical_by_tp, var_theoretical_by_tp = estimate_effective_contacts(population_file, contact_matrix_file,
-                                                                tps_sorted, infectious_period_length,
-                                                                overdispersion=overdispersion_vals[scenario_i],
-                                                                person_ids=person_ids)
 
 
 
@@ -49,12 +41,17 @@ if __name__=="__main__":
 
 import argparse
 import multiprocessing
+import os
 
 from plots import plot_comparison_means_theoretical_sims, plot_comparison_variance_theoretical_sims
 
-from postprocessing_util import get_experiment_ids, get_num_secondary_cases_per_index_case
+from postprocessing_util import get_experiment_ids, get_num_secondary_cases_per_index_case, get_summary_output
+
+from theoretical_description_calculation import estimate_effective_contacts
 
 def main(output_dir, index_case_id, num_parallel_workers):
+    infectious_period_length = 7
+
     baseline_scenario_name = "simplified_baseline"
     overdispersion_scenario_names = ["infectiousness", "contacts"]
     overdispersion_parameters = ["1000", "100", "60", "40", "20"]
@@ -62,24 +59,41 @@ def main(output_dir, index_case_id, num_parallel_workers):
 
     for overdispersion_scenario in overdispersion_scenario_names:
         scenario_names = [baseline_scenario_name] + ["simplified_" + overdispersion_scenario + "_overdispersion_" + overdispersion for overdispersion in overdispersion_parameters]
+        i = 0
         for scenario_name in scenario_names:
             print(scenario_name)
 
+            infectiousness_overdispersion = None
+            contacts_overdispersion = None
+            if overdispersion_scenario == "infectiousness" and scenario_name != "simplified_baseline":
+                infectiousness_overdispersion = float(overdispersion_parameters[i]) / 100
+                i += 1
+            elif overdispersion_scenario == "contacts" and scenario_name != "simplified_baseline":
+                contacts_overdispersion = float(overdispersion_parameters[i]) / 100
+                i += 1
+
             secondary_cases_by_tp = []
+            theoretical_means_by_tp = []
+            theoretical_variances_by_tp = []
+
 
             for tp in transmission_probabilities:
                 full_scenario_name = scenario_name + "_pid_" + str(index_case_id) + "_tp_" + str(tp)
                 experiment_ids = get_experiment_ids(output_dir, full_scenario_name)
                 with multiprocessing.Pool(processes=num_parallel_workers) as pool:
                     secondary_cases = pool.starmap(get_num_secondary_cases_per_index_case, [(output_dir, full_scenario_name, exp_id) for exp_id in experiment_ids])
+                    summary_output = pool.starmap(get_summary_output, [(output_dir, full_scenario_name, exp_id) for exp_id in experiment_ids])
                     secondary_cases_by_tp.append(secondary_cases)
 
-            theoretical_means = secondary_cases_by_tp # TODO
-            theoretical_variances = [0] * len(transmission_probabilities) # TODO
+                    population_file = os.path.join("data", summary_output[0]["population_file"])
+                    contact_matrix_file = os.path.join("data", summary_output[0]["contact_matrix_file"])
 
-            plot_comparison_means_theoretical_sims(output_dir, "mean_comparison_", scenario_name + "_pid_" + str(index_case_id), transmission_probabilities, secondary_cases_by_tp, theoretical_means)
-            plot_comparison_variance_theoretical_sims(output_dir, "variance_comparison_", scenario_name + "_pid_" + str(index_case_id), transmission_probabilities, secondary_cases_by_tp, theoretical_variances)
+                    theoretical_mean, theoretical_variance = estimate_effective_contacts(population_file, contact_matrix_file, tp, infectious_period_length, infectiousness_overdispersion, contacts_overdispersion, index_case_id, num_parallel_workers)
+                    theoretical_means_by_tp.append(theoretical_mean)
+                    theoretical_variances_by_tp.append(theoretical_variance)
 
+            plot_comparison_means_theoretical_sims(output_dir, "mean_comparison_", scenario_name + "_pid_" + str(index_case_id), transmission_probabilities, secondary_cases_by_tp, theoretical_means_by_tp)
+            plot_comparison_variance_theoretical_sims(output_dir, "variance_comparison_", scenario_name + "_pid_" + str(index_case_id), transmission_probabilities, secondary_cases_by_tp, theoretical_variances_by_tp)
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser()

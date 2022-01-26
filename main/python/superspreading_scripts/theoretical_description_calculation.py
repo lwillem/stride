@@ -56,8 +56,8 @@ def integrate_function(function, person, pools, contact_rates, mean_individual_c
             result = ev_integral + ve_integral
     elif infectiousness_overdispersion is None:
         if function == "mean":
-            func = lambda x: (sum_pools_and_contacts("mean", person, pools, contact_rates, mean_individual_contact_factor, mean_individual_contact_factor, infectious_period_length, mean_transmission_probability, mean_transmission_probability, infectiousness_overdispersion, contacts_overdispersion))
-            integral, upper_error = integrate.quad(func, 0, 1, epsabs=1.49e-2)
+            func = lambda x: (sum_pools_and_contacts("mean", person, pools, contact_rates, x, mean_individual_contact_factor, infectious_period_length, mean_transmission_probability, mean_transmission_probability, infectiousness_overdispersion, contacts_overdispersion))
+            integral, upper_error = integrate.quad(func, 0, np.Inf, epsabs=1.49e-2)
             result = integral
         elif function == "variance":
             func_ev = lambda x: (sum_pools_and_contacts("ev", person, pools, contact_rates, x, mean_individual_contact_factor, infectious_period_length, mean_transmission_probability, mean_transmission_probability, infectiousness_overdispersion, contacts_overdispersion))
@@ -81,6 +81,10 @@ def sum_pools_and_contacts(function, person, all_pools, contact_rates, individua
         pdf = gamma.pdf(transmission_probability, shape, scale=scale)
         cdf1 = gamma.cdf(1, shape, scale=scale)
         cdf0 = gamma.cdf(0, shape, scale=scale)
+    elif contacts_overdispersion is not None:
+        shape = contacts_overdispersion
+        scale = mean_individual_contact_factor / shape
+        pdf = gamma.pdf(individual_contact_factor, shape, scale=scale)
 
     # Iterate over contact pools this person belongs to
     for pool_type, pools in all_pools.items():
@@ -103,6 +107,9 @@ def sum_pools_and_contacts(function, person, all_pools, contact_rates, individua
 
                     contact_probability = min(contact_probability1, contact_probability2)
 
+                    if pool_type == "wokrplace" or pool_type == "primary_community" or pool_type == "secondary_community":
+                        contact_probability *= individual_contact_factor
+
                     # Households are assumed to be fully connected in Stride
                     if pool_type == "household":
                         contact_probability = 0.999
@@ -113,29 +120,29 @@ def sum_pools_and_contacts(function, person, all_pools, contact_rates, individua
                     # Function to sum over
                     if infectiousness_overdispersion is None and contacts_overdispersion is None:
                         if function == "mean":
-                            result += (1 - (1 - (mean_transmission_probability * (individual_contact_factor * contact_probability)))**infectious_period_length)
+                            result += (1 - (1 - (mean_transmission_probability * contact_probability))**infectious_period_length)
                         elif function == "variance":
-                            result += ((1 - (mean_transmission_probability * (individual_contact_factor * contact_probability)))**infectious_period_length) * (1 - (1 - mean_transmission_probability * (individual_contact_factor * contact_probability))**infectious_period_length)
+                            result += ((1 - (mean_transmission_probability * contact_probability))**infectious_period_length) * (1 - (1 - mean_transmission_probability * contact_probability)**infectious_period_length)
                     elif contacts_overdispersion is None:
                         if function == "mean":
-                            result += (1 - ((1 - (transmission_probability * (individual_contact_factor * contact_probability)))**infectious_period_length) * (pdf / (cdf1 - cdf0)))
+                            result += (1 - ((1 - (transmission_probability * contact_probability))**infectious_period_length) * (pdf / (cdf1 - cdf0)))
                         elif function == "ev": # E[Var(Y | X)]
-                            result += ((1 - (transmission_probability * (individual_contact_factor * contact_probability)))**infectious_period_length) * (1 - (1 - transmission_probability * (individual_contact_factor * contact_probability))**infectious_period_length) * (pdf / (cdf1 - cdf0))
+                            result += ((1 - (transmission_probability * contact_probability))**infectious_period_length) * (1 - (1 - transmission_probability * contact_probability)**infectious_period_length) * (pdf / (cdf1 - cdf0))
                         elif function == "ve": # Var(E[Y | X])
-                            result += (1 - (1 - transmission_probability * (individual_contact_factor * contact_probability))**infectious_period_length)
+                            result += (1 - (1 - transmission_probability * contact_probability)**infectious_period_length)
                     elif infectiousness_overdispersion is None:
                         if function == "mean":
-                            result += (1 - ((1 - (transmission_probability * (individual_contact_factor * contact_probability)))**infectious_period_length))
+                            result += (1 - ((1 - (transmission_probability * contact_probability))**infectious_period_length) * pdf)
                         elif function == "ev": # E[Var(Y | X)]
-                            result += ((1 - (transmission_probability * (individual_contact_factor * contact_probability)))**infectious_period_length) * (1 - (1 - transmission_probability * (individual_contact_factor * contact_probability))**infectious_period_length)
+                            result += ((1 - (transmission_probability * contact_probability))**infectious_period_length) * (1 - (1 - transmission_probability * contact_probability)**infectious_period_length) * pdf
                         elif function == "ve": # Var(E[Y | X])
-                            result += (1 - (1 - transmission_probability * (individual_contact_factor * contact_probability))**infectious_period_length)
+                            result += (1 - (1 - transmission_probability * contact_probability)**infectious_period_length)
     # If we are calculating the variance of the expected value Var(E[Y | X])
     if function == "ve":
         if contacts_overdispersion is None:
             result = ((result - estimated_mean)**2) * (pdf / (cdf1 - cdf0))
         elif infectiousness_overdispersion is None:
-            result = ((result - estimated_mean)**2)
+            result = ((result - estimated_mean)**2) * pdf
 
     return result
 
