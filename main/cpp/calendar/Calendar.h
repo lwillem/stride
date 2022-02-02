@@ -86,7 +86,7 @@ public:
 			}
 
 			// else, return numerical value
-			return m_school_closures[age][GetDayIndex(m_date)];
+			return m_school_closures[age][m_day_index];
 		}
 
 
@@ -94,54 +94,54 @@ public:
         /// Check if distancing measures are in place for workplaces
         bool IsWorkplaceDistancingEnforced() const
         {
-        	return m_workplace_distancing[GetDayIndex(m_date)] > 0.0;
+        	return m_workplace_distancing[m_day_index] > 0.0;
 		}
 
         /// Get distancing factor for workplaces
 		double GetWorkplaceDistancingFactor() const
 		{
-			 return m_workplace_distancing[GetDayIndex(m_date)];
+			 return m_workplace_distancing[m_day_index];
 		}
 
         /// Check if distancing measures are in place for communities
 		bool IsCommunityDistancingEnforced() const
 		{
-			 return m_community_distancing[GetDayIndex(m_date)] > 0.0;
+			 return m_community_distancing[m_day_index] > 0.0;
 		}
 
 		/// Get distancing factor for community contacts
 		double GetCommunityDistancingFactor() const
 		{
-  			return m_community_distancing[GetDayIndex(m_date)];
+  			return m_community_distancing[m_day_index];
 		}
 
 		/// Get distancing factor for collectivities
 		double GetCollectivityDistancingFactor() const
 		{
-			return m_collectivity_distancing[GetDayIndex(m_date)];
+			return m_collectivity_distancing[m_day_index];
 		}
 
 		/// Check if contact tracing is place
 		bool IsContactTracingActivated() const
 		{
-			 return m_contact_tracing[GetDayIndex(m_date)];
+			 return m_contact_tracing[m_day_index];
 		}
 
   		/// Check if universal testing is place
 		bool IsUniversalTestingActivated() const
 		{
-			 return m_universal_testing[GetDayIndex(m_date)];
+			 return m_universal_testing[m_day_index];
 		}
 
 		/// Check if household clustering is allowed
 		bool IsHouseholdClusteringAllowed() const
 		{
-			 return m_household_clustering[GetDayIndex(m_date)];
+			 return m_household_clustering[m_day_index];
 		}
 
 		unsigned int GetNumberOfImportedCases() const
 		{
-			return m_imported_cases[GetDayIndex(m_date)];
+			return m_imported_cases[m_day_index];
 		}
 
 private:
@@ -163,7 +163,7 @@ private:
 		bool IsPublicHoliday() const
 		{
 			//return (std::find(m_public_holidays.begin(), m_public_holidays.end(), m_date) != m_public_holidays.end());
-			return m_public_holidays[GetDayIndex(m_date)];
+			return m_public_holidays[m_day_index];
 		}
 
 		/// Check if it's weekend.
@@ -194,7 +194,9 @@ private:
 
         std::vector<std::vector<double>> m_school_closures; /// Matrix for [age x time] with social distancing at school]
 
-
+        std::size_t m_weekday;
+        unsigned short int m_day;
+        unsigned short int m_day_index;
 
 };
 

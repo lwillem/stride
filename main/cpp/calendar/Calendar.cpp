@@ -39,12 +39,18 @@ Calendar::Calendar(const ptree& configPt,unsigned int num_days) :
 		m_workplace_distancing(num_days), m_community_distancing(num_days), m_collectivity_distancing(num_days),
 		m_contact_tracing(num_days),
 		m_universal_testing(num_days), m_household_clustering(num_days), m_imported_cases(num_days,0U),
-		m_school_closures(100, vector<double>(num_days))
+		m_school_closures(100, vector<double>(num_days)),
+        //
+        m_weekday(), m_day(), m_day_index()
 {
         // Set start date
         m_date = boost::gregorian::from_simple_string(configPt.get<string>("run.start_date", "2020-01-01"));
         m_date_start = m_date;
         m_date_end = m_date + boost::gregorian::days(num_days);
+        //
+        m_weekday = m_date.day_of_week();
+        m_day = 0;
+        m_day_index = GetDayIndex(m_date);
 
         string holiday_file = configPt.get<string>("run.holidays_file", "holidays_belgium_2019_2021.csv");
         string csv_extension = "csv";
@@ -60,17 +66,20 @@ Calendar::Calendar(const ptree& configPt,unsigned int num_days) :
 void Calendar::AdvanceDay()
 {
         m_date = m_date + boost::gregorian::date_duration(1);
+        m_weekday = m_date.day_of_week();
+        m_day = m_day + 1;
+        m_day_index = GetDayIndex(m_date); // TODO: m_day_index = m_day, remove?
 }
 
 size_t Calendar::GetDay() const { return m_date.day(); }
 
-size_t Calendar::GetDayOfTheWeek() const { return m_date.day_of_week(); }
+size_t Calendar::GetDayOfTheWeek() const { return m_weekday; }
 
 size_t Calendar::GetMonth() const { return m_date.month(); }
 
 unsigned short int Calendar::GetSimulationDay() const {
 
-	return GetDayIndex(m_date);
+	return m_day;
 }
 
 
@@ -280,6 +289,7 @@ void Calendar::Initialize_csv(const ptree& configPt)
 
 				// convert date
 				const auto date = boost::gregorian::from_simple_string(date_str);
+                const auto date_index = GetDayIndex(date);
 
 				// check date
 				if(IsDatePartOfSimulation(date_str)){
@@ -287,18 +297,18 @@ void Calendar::Initialize_csv(const ptree& configPt)
 					// convert value into boolean
 					const bool value_boolean = value == 1.0;
 
-					if(category == "general")              {  m_public_holidays[GetDayIndex(date)] = value_boolean; }
-					if(category == "schools_closed")       {  m_school_closures[age][GetDayIndex(date)] = value; }
-					if(category == "workplace_distancing") {  m_workplace_distancing[GetDayIndex(date)] = value; }
-					if(category == "community_distancing") {  m_community_distancing[GetDayIndex(date)] = value; }
-					if(category == "collectivity_distancing"){m_collectivity_distancing[GetDayIndex(date)] = value; }
-					if(category == "household_clustering") {  m_household_clustering[GetDayIndex(date)] = value_boolean; }
-					if(category == "contact_tracing")      {  m_contact_tracing[GetDayIndex(date)] = value_boolean; }
-					if(category == "universal_testing")    {  m_universal_testing[GetDayIndex(date)] = value_boolean; }
+					if(category == "general")              {  m_public_holidays[date_index] = value_boolean; }
+					if(category == "schools_closed")       {  m_school_closures[age][date_index] = value; }
+					if(category == "workplace_distancing") {  m_workplace_distancing[date_index] = value; }
+					if(category == "community_distancing") {  m_community_distancing[date_index] = value; }
+					if(category == "collectivity_distancing"){m_collectivity_distancing[date_index] = value; }
+					if(category == "household_clustering") {  m_household_clustering[date_index] = value_boolean; }
+					if(category == "contact_tracing")      {  m_contact_tracing[date_index] = value_boolean; }
+					if(category == "universal_testing")    {  m_universal_testing[date_index] = value_boolean; }
 					if(category == "imported_cases")
 					{
 						unsigned int num_cases = configPt.get<unsigned int>("run.num_daily_imported_cases",0);
-						m_imported_cases[GetDayIndex(date)] = num_cases;
+						m_imported_cases[date_index] = num_cases;
 					}
 
 				} // end if valid date
