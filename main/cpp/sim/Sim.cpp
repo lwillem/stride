@@ -91,6 +91,14 @@ void Sim::TimeStep()
             logger->info("[IMPORT-CASES] sim_day={} count={}", simDay, m_calendar->GetNumberOfImportedCases());        	
         }
 
+        // For each age, check school and college closing
+        unsigned int maxAge = population.GetMaxAge();
+        std::vector<bool> areCollegesOff(maxAge + 1);
+        for (unsigned int age = 0; age <= maxAge; age++) {
+            bool isCollegeOff   = m_calendar->IsSchoolClosed(age);
+            areCollegesOff[age] = isCollegeOff;
+        }
+
 #pragma omp parallel num_threads(m_num_threads)
         {
         	const auto thread_num = static_cast<unsigned int>(omp_get_thread_num());
@@ -107,13 +115,16 @@ void Sim::TimeStep()
 //						m_calendar->IsSchoolClosed(11), //isSecondarySchoolOff,
 //						m_calendar->IsSchoolClosed(20)); //isCollegeOff);
 
-				unsigned int school_id = population[i].GetPoolId(ContactType::Id::K12School);
-				unsigned int school_age = population[i].GetAge();
-				if(school_id>0){
-					school_age = poolSys.RefPools(ContactType::Id::K12School)[school_id].GetMinAge();
-				}
-				bool isK12SchoolOff = m_calendar->IsSchoolClosed(school_age);
-				bool isCollegeOff   = m_calendar->IsSchoolClosed(population[i].GetAge());
+                unsigned int school_age = population[i].GetAge();
+                bool isCollegeOff = areCollegesOff[school_age];
+                bool isK12SchoolOff;
+                // adjust K12SchoolOff boolean to school type for individual 'i'
+                unsigned int school_id = population[i].GetPoolId(ContactType::Id::K12School);
+                if(school_id>0){
+                    school_age = poolSys.RefPools(ContactType::Id::K12School)[school_id].GetMinAge();
+                    isK12SchoolOff = m_calendar->IsSchoolClosed(school_age);
+                }
+                else { isK12SchoolOff = isCollegeOff; }
 				// update health and presence at different contact pools
 				population[i].Update(isRegularWeekday, isK12SchoolOff, isCollegeOff,
 						isHouseholdClusteringAllowed,
