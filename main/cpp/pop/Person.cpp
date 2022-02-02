@@ -73,11 +73,10 @@ void Person::Update(bool isRegularWeekday, bool isK12SchoolOff, bool isCollegeOf
 		bool isHouseholdClusteringAllowed,
         bool isIsolatedFromHousehold,
 		util::RnHandler& rnHandler,
-        const std::shared_ptr<Calendar> calendar,
+        unsigned short int simDay,
 		bool run_simplified)
-
+        
 {
-        const unsigned int simDay = calendar->GetSimulationDay();
 
         UpdateEvents(simDay);
 
