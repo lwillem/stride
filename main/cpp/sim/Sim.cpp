@@ -139,7 +139,7 @@ void Sim::TimeStep()
         }// end pragma openMP
 
 		 // Perform contact tracing (if activated)
-		 m_public_health_agency.PerformContactTracing(m_population, m_rn_handlers[0], m_calendar);
+		 m_public_health_agency.PerformContactTracing(m_population, m_rn_handlers, m_calendar);
 
 		 // Perform universal testing 
 	     m_universal_testing.PerformUniversalTesting(m_population, m_rn_handlers[0], m_calendar,m_public_health_agency);

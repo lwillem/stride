@@ -239,7 +239,7 @@ void UniversalTesting::PerformUniversalTesting(std::shared_ptr<Population> pop,
             if (h.IsInfected() && h.IsPcrDetectable(m_unitest_detectable_delay)) {
               bool pcr_test_positive = rnHandler.Binomial(1-m_unitest_fnr);
               if (pcr_test_positive)
-                pha.Trace(*indiv, pop, rnHandler, calendar);
+                pha.Trace(*indiv, pop, rnHandler, simDay);
             }
           }
         } else {

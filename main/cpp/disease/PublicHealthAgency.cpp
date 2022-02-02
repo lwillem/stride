@@ -28,6 +28,7 @@
 
 #include <boost/property_tree/ptree.hpp>
 #include <algorithm>
+#include <omp.h>
 
 namespace stride {
 
@@ -65,8 +66,8 @@ bool PublicHealthAgency::IsContactTracingActive(const std::shared_ptr<Calendar> 
 }
 
 
-void PublicHealthAgency::PerformContactTracing(std::shared_ptr<Population> pop, RnHandler& rnHandler,
-												const std::shared_ptr<Calendar> calendar)
+void PublicHealthAgency::PerformContactTracing(std::shared_ptr<Population> pop, std::vector<util::RnHandler>& rnHandlers,
+                                               const std::shared_ptr<Calendar> calendar)
 {
 
 	// if contact tracing not active, stop
@@ -76,17 +77,21 @@ void PublicHealthAgency::PerformContactTracing(std::shared_ptr<Population> pop, 
 
 	//cout << m_detection_probability << " -- "<< m_tracing_efficiency_household << " -- "<< m_tracing_efficiency_other << " ** " << m_case_finding_capacity << endl;
 
+    Population& population    = *pop;
+#pragma omp parallel num_threads(rnHandlers.size())
+    {
+        auto &rnHandler = rnHandlers[static_cast<size_t>(omp_get_thread_num())];
+        /// Mark index cases for track&trace
+#pragma omp for schedule(static)
+        for (size_t i = 0; i < population.size(); ++i) {
+            auto &p_case = population[i];
+            if(p_case.GetHealth().NumberDaysInfected(1) && rnHandler.Binomial(m_detection_probability)) {
+                    p_case.SetTracingIndexCase();
+            }
+        }
+    } // end pragma openMP
 
-	/// Mark index cases for track&trace
-	for (auto& p_case : *pop) {
-
-		if(p_case.GetHealth().NumberDaysInfected(1) &&
-				rnHandler.Binomial(m_detection_probability)) {
-			p_case.SetTracingIndexCase();
-		}
-
-	}
-
+    const unsigned short int simDay = calendar->GetSimulationDay();
 	/// Set counter for index cases
 	unsigned int num_index_cases = 0;
 
@@ -94,7 +99,7 @@ void PublicHealthAgency::PerformContactTracing(std::shared_ptr<Population> pop, 
 	for (auto& p_case : *pop) {
 
 		if (p_case.IsTracingIndexCase() && p_case.GetHealth().NumberDaysSymptomatic(m_delay_isolation_index)	) {
-        Trace(p_case, pop, rnHandler, calendar);
+        Trace(p_case, pop, rnHandlers[0], simDay);
 
         // update index case counter, and terminate if quota is reached
         num_index_cases++;
@@ -109,10 +114,9 @@ void PublicHealthAgency::PerformContactTracing(std::shared_ptr<Population> pop, 
 void PublicHealthAgency::Trace(Person& p_case, 
         std::shared_ptr<Population> pop, 
 		RnHandler& rnHandler,
-        const std::shared_ptr<Calendar> calendar)
+        const unsigned short int simDay)
 {
 	auto& logger       = pop->RefEventLogger();
-	const auto  simDay = calendar->GetSimulationDay();
 
 			// Set index case in quarantine.
 		    // As this individual tested positive, he/she is isolated for 7 days.
