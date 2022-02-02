@@ -20,7 +20,6 @@
 
 #pragma once
 
-#include "calendar/Calendar.h"
 #include "contact/AgeContactProfile.h"
 #include "contact/EventLogMode.h"
 #include "disease/TransmissionProfile.h"
@@ -83,7 +82,7 @@ public:
         static void Exec(ContactPool& pool, const AgeContactProfile& profile, const TransmissionProfile& transProfile,
         				 util::RnHandler& rnHandler, unsigned short int simDay, std::shared_ptr<spdlog::logger> eventLogger,
 						 std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster,
-						 std::shared_ptr<Calendar> calendar);
+                         double pType_distancing_factor);
 };
 
 /// Time-optimized version (For None || Transmission logging).
@@ -97,7 +96,7 @@ public:
         static void Exec(ContactPool& pool, const AgeContactProfile& profile, const TransmissionProfile& transProfile,
         				 util::RnHandler& rnHandler, unsigned short int simDay, std::shared_ptr<spdlog::logger> eventLogger,
 						 std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster,
-						 std::shared_ptr<Calendar> calendar);
+                         double pType_distancing_factor);
 };
 
 /// Explicit instantiations in cpp file.

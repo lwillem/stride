@@ -84,6 +84,10 @@ void Sim::TimeStep()
 		if (isHouseholdClusteringAllowed && poolSys.RefPools(ContactType::Id::HouseholdCluster).size() > 1){
 			cnt_intensity_householdCluster = m_cnt_intensity_householdCluster;
 		}
+        // Set other distancing factors except for school (requires pool min age)
+        double workplace_distancing_factor = m_calendar->GetWorkplaceDistancingFactor();
+        double community_distancing_factor = m_calendar->GetCommunityDistancingFactor();
+        double collectivity_distancing_factor = m_calendar->GetCollectivityDistancingFactor();
 
         // Import infected cases into the population
         if(m_calendar->GetNumberOfImportedCases() > 0){
@@ -154,9 +158,21 @@ void Sim::TimeStep()
 					}
 #pragma omp for schedule(static)
 					for (size_t i = 1; i < poolSys.RefPools(typ).size(); i++) { // NOLINT
-							infector(poolSys.RefPools(typ)[i], m_contact_profiles[typ], m_transmission_profile,
+                            double typ_distancing_factor;
+                            // account for physical distancing at work
+                            if (typ == ContactType::Id::Workplace) { typ_distancing_factor = workplace_distancing_factor; }
+                            // account for physical distancing in the community
+                            else if (typ == ContactType::Id::PrimaryCommunity || typ == ContactType::Id::SecondaryCommunity) { typ_distancing_factor = community_distancing_factor; }
+                            // account for physical distancing at school
+                            else if (typ == ContactType::Id::K12School || typ == ContactType::Id::College) { typ_distancing_factor = m_calendar->GetSchoolDistancingFactor(poolSys.RefPools(typ)[i].GetMinAge()); }
+                            // account for physical distancing in the collectivity
+                            else if (typ == ContactType::Id::Collectivity) { typ_distancing_factor = collectivity_distancing_factor; }
+                            // account for contact intensity in household clusters
+                            else if (typ == ContactType::Id::HouseholdCluster) { typ_distancing_factor = cnt_intensity_householdCluster; }
+
+                            infector(poolSys.RefPools(typ)[i], m_contact_profiles[typ], m_transmission_profile,
 									 m_rn_handlers[thread_num], simDay, eventLogger,
-									 m_population,cnt_intensity_householdCluster,m_calendar);
+									 m_population, cnt_intensity_householdCluster, typ_distancing_factor);
 					}
 			}
         } // end pragma openMP

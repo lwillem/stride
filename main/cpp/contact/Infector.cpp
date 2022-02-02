@@ -21,7 +21,6 @@
 #include "Infector.h"
 
 #include "ContactPool.h"
-#include "calendar/Calendar.h"
 #include "pop/Person.h"
 
 using namespace std;
@@ -172,50 +171,20 @@ using namespace stride::util;
 
 inline double GetContactProbability(const AgeContactProfile& profile, const Person* p1, const Person* p2,
 		size_t pool_size, const ContactType::Id pType, const unsigned min_age_members,
-		std::shared_ptr<Population>& population, double cnt_intensity_householdCluster,std::shared_ptr<Calendar> calendar, util::RnHandler& rnHandler)
+		std::shared_ptr<Population>& population, double cnt_intensity_householdCluster, double pType_distancing_factor)
 {
 
-		// initiate a contact adjustment factor, to account for physical distancing and/or contact intensity
-    	double cnt_adjustment_factor = 1;
+        // initiate a contact adjustment factor, to account for physical distancing and/or contact intensity
+        double cnt_adjustment_factor = 1;
 
-    		// Check if one of the persons is a non-complier to social distancing measures in this particular pooltype
-    		if ((not p1->IsNonComplier(pType)) and (not p2->IsNonComplier(pType))) {
-
-    			// account for physical distancing at work
-    			if(pType == Id::Workplace){
-
-    				double workplace_distancing_factor = calendar->GetWorkplaceDistancingFactor();
-    				cnt_adjustment_factor = (1-workplace_distancing_factor);
-    			}
-
-
-    			if((pType == Id::PrimaryCommunity || pType == Id::SecondaryCommunity)){
-
-    				// account for physical distancing in the community
-    				double community_distancing_factor = calendar->GetCommunityDistancingFactor();
-   					cnt_adjustment_factor = (1-community_distancing_factor);
-    			}
-
-    			// account for physical distancing at school
-    			if(pType == Id::K12School || pType == Id::College){
-
-    				double school_distancing_factor = calendar->GetSchoolDistancingFactor(min_age_members) ;
-    				cnt_adjustment_factor = (1-school_distancing_factor);
-    			}
-
-    			// account for physical distancing in the collectivity
-				if(pType == Id::Collectivity){
-
-					double collectivity_distancing_factor = calendar->GetCollectivityDistancingFactor();
-					cnt_adjustment_factor = (1-collectivity_distancing_factor);
-				}
-    		}
-
-
-		// account for contact intensity in household clusters
-		if(pType == Id::HouseholdCluster){
-			cnt_adjustment_factor = cnt_intensity_householdCluster;
-		}
+        // account for contact intensity in household clusters
+        if (pType == Id::HouseholdCluster){
+            cnt_adjustment_factor = cnt_intensity_householdCluster;
+        }
+        // Check if one of the persons is a non-complier to social distancing measures in this particular pooltype
+        else if ((not p1->IsNonComplier(pType)) and (not p2->IsNonComplier(pType))) {
+            cnt_adjustment_factor = (1 - pType_distancing_factor);
+        }
 
 
 		// get the reference number of contacts, given age and age-contact profile
@@ -261,24 +230,7 @@ inline double GetContactProbability(const AgeContactProfile& profile, const Pers
 			contact_probability = individual_contact_probability_p2;
 		}
 
-        // adjust contact for individual variation in community and workplace contacts
-        if(pType == Id::PrimaryCommunity || pType == Id::SecondaryCommunity || pType == Id::Workplace){
-
-        		double individual_contact_factor_p1 = p1->GetIndividualContactFactor();
-        		double individual_contact_factor_p2 = p2->GetIndividualContactFactor();
-        		double avg_individual_contact_factor = (individual_contact_factor_p1 + individual_contact_factor_p2) / 2;
-        		contact_probability *= avg_individual_contact_factor;
-        }
-
-
-        // choose a random probability
-        //double contact_probability = individual_contact_probability_p1;
-        //if (rnHandler.Binomial(0.5)) {
-        	//	contact_probability = individual_contact_probability_p2;
-        //}
-
-
-	    // limit probability to 0.999
+        	    // limit probability to 0.999
         if (contact_probability >= 1) {
         	contact_probability = 0.999;
         }
@@ -313,7 +265,7 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
                                  const TransmissionProfile& transProfile, util::RnHandler& rnHandler,
                                  unsigned short int simDay, shared_ptr<spdlog::logger> eventLogger,
 								 std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster,
-								 std::shared_ptr<Calendar> calendar)
+                                 double pType_distancing_factor)
 {
         using LP = LOG_POLICY<LL>;
 
@@ -345,7 +297,7 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
                         }
                         // check for contact
                         const double cProb = GetContactProbability(profile, p1, p2, pSize, pType, min_age_members,
-								population,m_cnt_intensity_householdCluster,calendar, rnHandler);
+								population,m_cnt_intensity_householdCluster,pType_distancing_factor);
                         if (rnHandler.Binomial(cProb)) {
 								const auto  tProb_p1_p2    = transProfile.GetProbability(p1,p2);
 								const auto  tProb_p2_p1    = transProfile.GetProbability(p2,p1);
@@ -403,7 +355,7 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                                    const TransmissionProfile& transProfile, util::RnHandler& rnHandler,
                                    unsigned short int simDay, shared_ptr<spdlog::logger> eventLogger,
 								   std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster,
-								   std::shared_ptr<Calendar> calendar)
+                                   double pType_distancing_factor)
 {
         using LP = LOG_POLICY<LL>;
 
@@ -442,7 +394,7 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                                         continue;
                                 }
                                 const double cProb_p1 = GetContactProbability(profile, p1, p2, pSize, pType, min_age_members,
-															population, m_cnt_intensity_householdCluster,calendar, rnHandler);
+															population, m_cnt_intensity_householdCluster, pType_distancing_factor);
                                 const auto  tProb_p1_p2   = transProfile.GetProbability(p1,p2);
                                 if (rnHandler.Binomial(cProb_p1, tProb_p1_p2)) {
 
