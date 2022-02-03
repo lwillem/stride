@@ -149,6 +149,11 @@ public:
         std::vector<Person*>& GetContactRegister () {
         	return m_contact_tracing_list;
         }
+        /// Comparator for sorting two persons given their pointers
+        static bool compPerson(const Person* a, const Person* b)
+        {
+            return a->GetId() < b->GetId();
+        }
 
         void SetNonComplier(const ContactType::Id& poolType) {  m_non_complier[poolType] = true; }
 

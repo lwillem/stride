@@ -133,7 +133,7 @@ void PublicHealthAgency::Trace(Person& p_case,
 			// cout << p_case.GetId() << ": size (orig) " <<  cnt_register.size() << endl;
 
 			// Sorting the vector, get the unique elements, and remove the others
-			std::sort(cnt_register.begin(), cnt_register.end());
+			std::sort(cnt_register.begin(), cnt_register.end(), Person::compPerson);
 			ip = std::unique(cnt_register.begin(), cnt_register.end());
 			cnt_register.resize(std::distance(cnt_register.begin(), ip));
 
