@@ -119,12 +119,90 @@ shared_ptr<Population> PopBuilder::MakePersons(shared_ptr<Population> pop)
         return pop;
 }
 
+shared_ptr<Population> PopBuilder::MakePersonsOpt(shared_ptr<Population> pop)
+{
+    //------------------------------------------------
+    // Read persons from file.
+    //------------------------------------------------
+    const auto fileName = m_config.get<string>("run.population_file");
+    m_stride_logger->info("Building default population from file {}.", fileName);
+
+    const auto use_install_dirs = m_config.get<bool>("run.use_install_dirs");
+    const auto filePath         = (use_install_dirs) ? FileSys::GetDataDir() /= fileName : filesys::path(fileName);
+    if (!is_regular_file(filePath)) {
+        throw runtime_error(string(__func__) + "> Population file " + filePath.string() + " not present.");
+    }
+
+    ifstream popFile;
+    popFile.open(filePath.string());
+    if (!popFile.is_open()) {
+        throw runtime_error(string(__func__) + "> Error opening population file " + filePath.string());
+    }
+
+    // get age break between 2 school types
+    //TODO: rename school types and/or add 3rd for secondary school
+    const unsigned int age_break_school_types = m_config.get<unsigned int>("run.age_break_school_types",18);
+
+    string line;
+    getline(popFile, line); // step over file header
+    auto headers   = Split(line, ",");
+    //
+    bool has_extra_column = headers.size() == 7;
+    string extra_id = "";
+    if (has_extra_column) { extra_id = Trim(ToString(headers[6]),ToString('"')); }
+    bool household_cluster_id = extra_id == "household_cluster_id";
+    bool collectivity_id = extra_id == "collectivity_id";
+    const unsigned int defaultHouseholdClusterId = 0;
+    const unsigned int defaultCollectivityId = 0;
+
+    // Read lines from file
+    unsigned int person_id = 0U;
+
+    while (getline(popFile, line)) {
+        const auto values               = Split(line, ",");
+        const auto age                  = static_cast<unsigned int>(IntFromString(values[0]));
+        const auto householdId          = static_cast<unsigned int>(IntFromString(values[1]));
+        auto schoolId                   = static_cast<unsigned int>(IntFromString(values[2]));
+        const auto workId               = static_cast<unsigned int>(IntFromString(values[3]));
+        const auto primaryCommunityId   = static_cast<unsigned int>(IntFromString(values[4]));
+        const auto secondaryCommunityId = static_cast<unsigned int>(IntFromString(values[5]));
+
+        unsigned int householdClusterId = defaultHouseholdClusterId;
+        unsigned int collectivityId = defaultCollectivityId;
+        if (values.size() == 7) {
+            if (household_cluster_id) {
+                householdClusterId = static_cast<unsigned int>(IntFromString(values[6]));
+            } else if (collectivity_id) {
+                collectivityId = static_cast<unsigned int>(IntFromString(values[6]));
+            }
+        }
+
+        //TODO: rename school types to current approach
+        unsigned int collegeId = 0;
+        if(schoolId != 0 && age >= age_break_school_types && age < 23){
+            collegeId = schoolId;
+            schoolId = 0;
+        }
+
+        pop->CreatePerson(person_id, age, householdId, schoolId, collegeId, workId, primaryCommunityId,
+                          secondaryCommunityId, householdClusterId, collectivityId);
+        ++person_id;
+    }
+
+    popFile.close();
+
+    m_stride_logger->trace("Done building default population.");
+
+    return pop;
+}
+
 shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
 {
         //------------------------------------------------
         // Add persons
         //------------------------------------------------
-        MakePersons(pop);
+//        MakePersons(pop);  // Toggle between these two if preferring old version
+        MakePersonsOpt(pop);
 
         // --------------------------------------------------------------
         // Determine maximum pool ids in population.
