@@ -4,6 +4,10 @@ import os
 
 from collections import Counter
 from scipy.stats import nbinom, probplot
+from statsmodels.nonparametric.smoothers_lowess import lowess
+from statsmodels.stats.proportion import proportion_confint
+
+from postprocessing_util import get_cases_over_period
 
 def plot_ar(output_dir, fig_name, display_scenario_names, all_total_cases, num_days, pop_size, extinction_threshold=0, y_min=-0.05, y_max=1.05, violin_plot=False):
     all_total_cases_prop_pop = []
@@ -15,7 +19,7 @@ def plot_ar(output_dir, fig_name, display_scenario_names, all_total_cases, num_d
 
     if violin_plot:
         plt.violinplot(all_total_cases_prop_pop)
-        plt.xticks(range(len(all_total_cases_prop_pop)), display_scenario_names)
+        plt.xticks(range(1, len(all_total_cases_prop_pop) + 1), display_scenario_names)
     else:
         plt.boxplot(all_total_cases_prop_pop, labels=display_scenario_names)
 
@@ -46,16 +50,21 @@ def plot_cumulative_cases_per_day(output_dir, fig_name, scenario_name, cases_by_
 
     save_figure(output_dir, fig_name + "_" + scenario_name)
 
-def plot_day_of_last_infection(output_dir, fig_name, display_scenario_names, all_days_last_infection, y_min, num_days):
-    plt.boxplot(all_days_last_infection, labels=display_scenario_names)
-    plt.scatter(range(1, len(all_days_last_infection) + 1), [np.mean(scenario) for scenario in all_days_last_infection])
+def plot_day_of_last_infection(output_dir, fig_name, display_scenario_names, all_days_last_infection, y_min, num_days, violin_plot=False):
+    if violin_plot:
+        plt.violinplot(all_days_last_infection)
+        plt.xticks(range(1, len(all_days_last_infection) + 1), display_scenario_names)
+    else:
+        plt.boxplot(all_days_last_infection, labels=display_scenario_names)
+
+    plt.scatter(range(1, len(all_days_last_infection) + 1), [np.mean(scenario) for scenario in all_days_last_infection], color="orange")
 
     plt.ylabel("Day with last infection")
     plt.ylim(y_min, num_days + 1)
 
     save_figure(output_dir, fig_name, extension="png")
 
-def plot_day_of_peak(output_dir, fig_name, display_scenario_names, all_cases_per_day, num_days, extinction_threshold=0):
+def plot_day_of_peak(output_dir, fig_name, display_scenario_names, all_cases_per_day, num_days, extinction_threshold=0, violin_plot=False):
     all_peak_days = []
     for scenario in all_cases_per_day:
         peak_days = []
@@ -63,16 +72,26 @@ def plot_day_of_peak(output_dir, fig_name, display_scenario_names, all_cases_per
             if sum(run.values()) >= extinction_threshold:
                 peak_days.append(max(run, key=lambda day: run[day]))
         all_peak_days.append(peak_days)
-    plt.boxplot(all_peak_days, labels=display_scenario_names)
 
-    plt.scatter(range(1, len(all_peak_days) + 1), [np.mean(scenario) for scenario in all_peak_days])
+    if violin_plot:
+        plt.violinplot(all_peak_days)
+        plt.xticks(range(1, len(all_peak_days) + 1), display_scenario_names)
+    else:
+        plt.boxplot(all_peak_days, labels=display_scenario_names)
+
+    plt.scatter(range(1, len(all_peak_days) + 1), [np.mean(scenario) for scenario in all_peak_days], color="orange")
 
     plt.ylabel("Day of peak")
     plt.ylim(-0.5, num_days + 1)
 
-    save_figure(output_dir, fig_name)
+    save_figure(output_dir, fig_name, extension="png")
 
-def plot_effective_r_by_day(output_dir, fig_name, scenario_name, rt_by_day, num_days, y_max=None, events={}):
+def plot_effective_r_by_day(output_dir, fig_name, scenario_name, rt_by_day, num_days, y_max=None, log_scale=False, events={}, smoothed=False):
+
+    if smoothed:
+        for run_i in range(len(rt_by_day)):
+            rt_by_day[run_i] = lowess([rt_by_day[run_i][day] for day in range(num_days)], range(num_days), is_sorted=True, return_sorted=False)
+
     mean = []
     lower = []
     upper = []
@@ -104,31 +123,83 @@ def plot_effective_r_by_day(output_dir, fig_name, scenario_name, rt_by_day, num_
     plt.ylabel("Rt")
     if y_max is not None:
         plt.ylim(0, y_max)
+    if log_scale:
+        plt.yscale("symlog")
 
     save_figure(output_dir, fig_name + "_" + scenario_name, extension="png", dpi=100)
 
 def plot_extinction_probabilities(output_dir, fig_name, display_scenario_names, all_total_cases, extinction_threshold, ylabel="Extinction probability"):
     extinction_probabilities = []
+    confidence_intervals = []
     for scenario in all_total_cases:
-        extinction_probabilities.append(len([x for x in scenario if x < extinction_threshold]) / len(scenario))
+        num_runs = len(scenario)
+        num_extinctions = len([x for x in scenario if x < extinction_threshold])
+        extinction_probabilities.append(num_extinctions / num_runs)
+        conf = proportion_confint(count=num_extinctions, nobs=num_runs, alpha=0.05, method="beta") # Clopper-Pearson interval
+        confidence_intervals.append(conf)
 
-    print(extinction_probabilities)
+    #print(extinction_probabilities)
 
-    plt.bar(range(len(all_total_cases)), extinction_probabilities)
+    i = 0
+    horizontal_line_width = 0.3
+    for interval in confidence_intervals:
+        bottom = interval[0]
+        top = interval[1]
+        left = i - horizontal_line_width / 2
+        right = i + horizontal_line_width / 2
+        plt.plot([i,i], [top, bottom], color="orange")
+        plt.plot([left, right], [top, top], color="orange")
+        plt.plot([left, right], [bottom, bottom], color="orange")
+        i += 1
+
+    plt.plot(range(len(all_total_cases)), extinction_probabilities, marker="o", linestyle="None")
+
+
     plt.xticks(range(len(display_scenario_names)), display_scenario_names)
     plt.ylabel(ylabel + " (threshold = {} cases)".format(extinction_threshold))
     plt.ylim(0, 1.1)
 
-    # TODO add CI
-
     save_figure(output_dir, fig_name)
 
-def plot_resurgence_probabilities(output_dir, fig_name, display_scenario_names, resurgence_probabilities):
-    plt.bar(range(len(display_scenario_names)), resurgence_probabilities)
+def plot_resurgence_probabilities(output_dir, fig_name, display_scenario_names, all_cases_per_day, start_lockdown, end_lockdown, num_days, resurgence_threshold):
+    resurgence_probabilities = []
+    confidence_intervals = []
+
+    for scenario in all_cases_per_day:
+        runs_with_cases_during_lockdown = 0
+        runs_above_resurgence_threshold = 0
+
+        for run in scenario:
+            num_cases_during_lockdown = get_cases_over_period(run, start_lockdown, end_lockdown)
+            num_cases_after_lockdown = get_cases_over_period(run, end_lockdown, num_days)
+            if not num_cases_during_lockdown == 0:
+                runs_with_cases_during_lockdown += 1
+                if num_cases_after_lockdown >= resurgence_threshold:
+                    runs_above_resurgence_threshold += 1
+        resurgence_probabilities.append(runs_above_resurgence_threshold / runs_with_cases_during_lockdown)
+        conf = proportion_confint(count=runs_above_resurgence_threshold, nobs=runs_with_cases_during_lockdown, alpha=0.05, method="beta") # Clopper-Pearson interval
+        confidence_intervals.append(conf)
+
+    # Plot confidence intervals
+    i = 0
+    horizontal_line_width = 0.3
+    for interval in confidence_intervals:
+        bottom = interval[0]
+        top = interval[1]
+        left = i - horizontal_line_width / 2
+        right = i + horizontal_line_width / 2
+
+        plt.plot([i,i], [top, bottom], color="orange")
+        plt.plot([left, right], [top, top], color="orange")
+        plt.plot([left, right], [bottom, bottom], color="orange")
+        i += 1
+
+    # Plot resurgence probabilities
+    plt.plot(range(len(resurgence_probabilities)), resurgence_probabilities, marker="o", linestyle="None")
     plt.xticks(range(len(display_scenario_names)), display_scenario_names)
 
     plt.ylabel("Resurgence probability")
-    plt.ylim(0, 1)
+    plt.ylim(0, 1.1)
 
     save_figure(output_dir, fig_name)
 
@@ -146,7 +217,7 @@ def plot_final_size_frequencies(output_dir, fig_name, display_scenario_names, al
 
     save_figure(output_dir, fig_name)
 
-def plot_herd_immunity_threshold(output_dir, fig_name, display_scenario_names, all_hits, show_day=False, num_days=200, y_min=0, y_max=1):
+def plot_herd_immunity_threshold(output_dir, fig_name, display_scenario_names, all_hits, show_day=False, num_days=200, y_min=0, y_max=1, violin_plot=False):
     hits = []
     means = []
     for scenario in all_hits:
@@ -154,9 +225,13 @@ def plot_herd_immunity_threshold(output_dir, fig_name, display_scenario_names, a
         means.append(np.mean(hits_no_nan))
         hits.append(hits_no_nan)
 
-    plt.boxplot(hits, labels=display_scenario_names)
-    plt.scatter(range(1, len(means) + 1), means)
-    print(means)
+    if violin_plot:
+        plt.violinplot(hits)
+        plt.scatter(range(1, len(hits) + 1), means, color="orange")
+        plt.xticks(range(1, len(hits) + 1), display_scenario_names)
+    else:
+        plt.boxplot(hits, labels=display_scenario_names)
+        plt.scatter(range(1, len(means) + 1), means)
 
     if show_day:
         plt.ylabel("Day on which Rt >= 1 for the last time")
@@ -165,7 +240,7 @@ def plot_herd_immunity_threshold(output_dir, fig_name, display_scenario_names, a
         plt.ylabel("Herd immunity threshold")
         plt.ylim(y_min, y_max)
 
-    save_figure(output_dir, fig_name)
+    save_figure(output_dir, fig_name, extension="png")
 
 def plot_new_cases_per_day(output_dir, fig_name, scenario_name, cases_by_day, num_days, y_max=None, events={}):
     for run in cases_by_day:
@@ -209,11 +284,21 @@ def plot_offspring_distributions(output_dir, fig_name, scenario_name, secondary_
 
     save_figure(output_dir, fig_name + "_" + scenario_name)
 
-def plot_p80s(output_dir, fig_name, display_scenario_names, p80s):
+def plot_p80s(output_dir, fig_name, display_scenario_names, p80s, violin_plot=False):
     # Remove NaNs
     p80s = [[p80 for p80 in scenario_result if not np.isnan(p80)] for scenario_result in p80s]
-    # Create boxplots
-    plt.boxplot(p80s, labels=display_scenario_names)
+    means = [np.mean(scenario_result) for scenario_result in p80s]
+    print(means)
+
+    if violin_plot:
+        plt.violinplot(p80s)
+        plt.xticks(range(1, len(display_scenario_names) + 1), display_scenario_names)
+    else:
+        # Create boxplots
+        plt.boxplot(p80s, labels=display_scenario_names)
+
+    plt.scatter(range(1, len(p80s) + 1), means, color="orange")
+
     plt.ylabel("P80")
     plt.ylim(0, 1.1)
     save_figure(output_dir, fig_name, extension="png", dpi=100)
@@ -226,8 +311,10 @@ def plot_peak_sizes(output_dir, fig_name, display_scenario_names, all_cases_by_d
         all_peak_sizes.append(peak_sizes)
         means.append(np.mean(peak_sizes))
     if violin_plot:
-        plt.violinplot(range(len(all_peak_sizes)), all_peak_sizes)
-        plt.xticks(range(len(all_peak_sizes)), display_scenario_names)
+        plt.violinplot(all_peak_sizes)
+        plt.scatter(range(1, len(all_peak_sizes) + 1), means, color="orange")
+
+        plt.xticks(range(1, len(all_peak_sizes) + 1), display_scenario_names)
     else:
         plt.boxplot(all_peak_sizes, labels=display_scenario_names)
         plt.scatter(range(1, len(all_peak_sizes) + 1), means)
@@ -235,7 +322,7 @@ def plot_peak_sizes(output_dir, fig_name, display_scenario_names, all_cases_by_d
         plt.ylim(ymin, ymax)
     plt.ylabel("Peak size")
 
-    save_figure(output_dir, fig_name)
+    save_figure(output_dir, fig_name, extension="png")
 
 def plot_qq(output_dir, fig_name, scenario_name, k, secondary_cases_by_tp):
     """
@@ -343,6 +430,29 @@ def plot_transmissions_by_location(output_dir, fig_name, scenario_name, transmis
     plt.ylim(-0.05, 1)
 
     save_figure(output_dir, fig_name + "_" + scenario_name)
+
+def plot_secondary_cases_per_index_case_histogram(output_dir, fig_name, secondary_cases_per_index_case, display_scenario_names):
+    plt.hist(secondary_cases_per_index_case, histtype="bar", stacked=True)
+    plt.xlabel("Number of secondary cases")
+    plt.ylabel("Frequency")
+    plt.legend(display_scenario_names)
+
+    save_figure(output_dir, fig_name)
+
+def plot_secondary_cases_per_index_case_means(output_dir, fig_name, secondary_cases_per_index_case, display_scenario_names):
+    horizontal_line_width = 0.5
+
+    means = [np.mean(scenario) for scenario in secondary_cases_per_index_case]
+    print(means)
+
+    plt.violinplot(secondary_cases_per_index_case)
+    plt.scatter(range(1, len(secondary_cases_per_index_case) + 1), means, color="orange")
+
+    plt.xticks(range(1, len(secondary_cases_per_index_case) + 1), display_scenario_names)
+    plt.ylabel("Secondary cases per index case")
+    plt.ylim(0, 40)
+
+    save_figure(output_dir, fig_name, extension="png")
 
 def plot_comparison_means_theoretical_sims(output_dir, fig_name, scenario_name, transmission_probabilities, secondary_cases_by_tp, theoretical_means):
     """

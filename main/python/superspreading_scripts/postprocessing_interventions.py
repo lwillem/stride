@@ -39,9 +39,6 @@ def main(output_dir, num_parallel_workers):
     overdispersion_scenario_names = ["sd_infectiousness_overdispersion", "sd_contacts_overdispersion"]
     overdispersion_parameters = ["1000", "100", "60", "40", "20"]
 
-    alpha = r"$\alpha$"
-    display_scenario_names = ["Baseline", alpha + " = 10", alpha + " = 1", alpha + " = 0.6", alpha + " = 0.4", alpha + " = 0.2"]
-
     events = {
         "Start lockdown": 30,
         "End lockdown": 90
@@ -51,6 +48,10 @@ def main(output_dir, num_parallel_workers):
     population_size = np.nan
 
     for overdispersion_scenario in overdispersion_scenario_names:
+        alpha = r"$\alpha_{i}$"
+        if overdispersion_scenario == "sd_contacts_overdispersion":
+            alpha = r"$\alpha_{c}$"
+        display_scenario_names = ["Baseline", alpha + " = 10", alpha + " = 1", alpha + " = 0.6", alpha + " = 0.4", alpha + " = 0.2"]
         scenario_names = [baseline_scenario_name] + [overdispersion_scenario + "_" + overdispersion for overdispersion in overdispersion_parameters]
 
         all_cases_per_day = []
@@ -64,7 +65,7 @@ def main(output_dir, num_parallel_workers):
         all_p80s = []
         all_secondary_cases = []
 
-        resurgence_probabilities = []
+        #resurgence_probabilities = []
         for scenario_name in scenario_names:
             print(scenario_name)
             experiment_ids = get_experiment_ids(output_dir, scenario_name)
@@ -78,7 +79,7 @@ def main(output_dir, num_parallel_workers):
                 num_days = output_summary[0]["num_days"]
                 population_size = output_summary[0]["population_size"]
 
-                resurgence_probabilities.append(get_resurgence_probability([run["cases_per_day"] for run in output_per_day], 30, 90, 600, 500))
+                #resurgence_probabilities.append(get_resurgence_probability([run["cases_per_day"] for run in output_per_day], 30, 90, 600, 500))
 
                 cases_before_lockdown = [get_cases_over_period(run["cases_per_day"], 0, 30) for run in output_per_day]
                 cases_during_lockdown = [get_cases_over_period(run["cases_per_day"], 30, 90) for run in output_per_day]
@@ -116,24 +117,26 @@ def main(output_dir, num_parallel_workers):
                 plot_cumulative_cases_per_day(output_dir, "cumulative_cases_per_day", scenario_name, [run["cases_per_day"] for run in output_per_day], num_days, y_max=population_size, events=events)
                 plot_new_cases_per_day(output_dir, "new_cases_per_day", scenario_name, [run["cases_per_day"] for run in output_per_day], num_days, y_max=250000, events=events)
 
-                plot_effective_r_by_day(output_dir, "rt", scenario_name, [run["rt_by_day"] for run in output_per_day], num_days, y_max=20, events=events)
+                plot_effective_r_by_day(output_dir, "rt", scenario_name, [run["rt_by_day"] for run in output_per_day], num_days, y_max=8, events=events, smoothed=True)
                 plot_transmissions_by_location(output_dir, "transmissions_by_location", scenario_name, transmissions_by_location)
 
         plot_ar(output_dir, "ar_" + overdispersion_scenario, display_scenario_names, all_final_sizes, num_days, population_size, violin_plot=True)
+
+        plot_final_size_frequencies(output_dir, "case_during_release_frequencies_" + overdispersion_scenario, display_scenario_names, all_cases_after_lockdown, "Number of cases during partial release phase")
 
         plot_num_cases_over_period(output_dir, "num_cases_before_lockdown_" + overdispersion_scenario, display_scenario_names, 0, 30, all_cases_before_lockdown,y_min=-100, y_max=55000)
         plot_num_cases_over_period(output_dir, "num_cases_during_lockdown_" + overdispersion_scenario, display_scenario_names, 30, 90, all_cases_during_lockdown, y_min=-100, y_max=95000)
         plot_num_cases_over_period(output_dir, "num_cases_after_lockdown_" + overdispersion_scenario, display_scenario_names, 90, 600, all_cases_after_lockdown,y_min=-20000, y_max=7000000)
         plot_num_cases_over_period(output_dir, "num_cases_after_lockdown_exclude_extinction" + overdispersion_scenario, display_scenario_names, 90, 600, all_cases_after_lockdown,y_min=-20000, y_max=7000000, extinction_threshold=resurgence_threshold)
 
-        plot_herd_immunity_threshold(output_dir, "hit_" + overdispersion_scenario, display_scenario_names, all_hits, show_day=False)
+        plot_herd_immunity_threshold(output_dir, "hit_" + overdispersion_scenario, display_scenario_names, all_hits, show_day=False, violin_plot=True)
         plot_peak_sizes(output_dir, "peak_sizes_" + overdispersion_scenario, display_scenario_names, all_cases_per_day, 90, num_days, ymin=-500, ymax=300000)
         plot_peak_sizes(output_dir, "peak_sizes_exclude_no_resurgence_" + overdispersion_scenario, display_scenario_names, all_cases_per_day, 90, num_days, ymin=-500, ymax=300000, extinction_threshold=500)
 
         plot_p80s(output_dir, "p80s_" + overdispersion_scenario, display_scenario_names, all_p80s)
         plot_secondary_cases_distribution(output_dir, "secondary_cases_distribution_" + overdispersion_scenario, display_scenario_names, all_secondary_cases)
 
-        plot_resurgence_probabilities(output_dir, "resurgence_probabilities_" + overdispersion_scenario, display_scenario_names, resurgence_probabilities)
+        plot_resurgence_probabilities(output_dir, "resurgence_probabilities_" + overdispersion_scenario, display_scenario_names, all_cases_per_day, 30, 90, 600, 500)
 
 
 if __name__=="__main__":

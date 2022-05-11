@@ -54,17 +54,35 @@ def integrate_function(function, person, pools, contact_rates, mean_individual_c
             ev_integral, ev_upper_error = integrate.quad(func_ev, 0, 1, epsabs=1.49e-2)
             ve_integral, ve_upper_error = integrate.quad(func_ve, 0, 1, epsabs=1.49e-2)
             result = ev_integral + ve_integral
-    elif infectiousness_overdispersion is None:
-        if function == "mean":
-            func = lambda x: (sum_pools_and_contacts("mean", person, pools, contact_rates, x, mean_individual_contact_factor, infectious_period_length, mean_transmission_probability, mean_transmission_probability, infectiousness_overdispersion, contacts_overdispersion))
-            integral, upper_error = integrate.quad(func, 0, np.Inf, epsabs=1.49e-2)
-            result = integral
-        elif function == "variance":
-            func_ev = lambda x: (sum_pools_and_contacts("ev", person, pools, contact_rates, x, mean_individual_contact_factor, infectious_period_length, mean_transmission_probability, mean_transmission_probability, infectiousness_overdispersion, contacts_overdispersion))
-            func_ve = lambda x: (sum_pools_and_contacts("ve", person, pools, contact_rates, x, mean_individual_contact_factor, infectious_period_length, mean_transmission_probability, mean_transmission_probability, infectiousness_overdispersion, contacts_overdispersion, estimated_mean))
-            ev_integral, ev_upper_error = integrate.quad(func_ev, 0, np.Inf, epsabs=1.49e-2)
-            ve_integral, ve_upper_error = integrate.quad(func_ve, 0, np.Inf, epsabs=1.49e-2)
-            result = ev_integral + ve_integral
+    return result
+
+def calc_one_pool_one_member(function, transmission_probability, adjusted_contact_probability, infectious_period_length, shape, scale, estimated_mean=None):
+    pdf = gamma.pdf(adjusted_contact_probability, shape, scale=scale)
+
+    if function == "mean":
+        result = (1 - (1 - (transmission_probability * adjusted_contact_probability))**infectious_period_length) * pdf
+    elif function == "ev": # E[Var(Y | X)]
+        result = ((1 - (transmission_probability * adjusted_contact_probability))**infectious_period_length) * (1 - (1 - transmission_probability * adjusted_contact_probability)**infectious_period_length) * pdf
+    elif function == "ve": # Var(E[Y | X])
+        result = (1 - (1 - transmission_probability * adjusted_contact_probability)**infectious_period_length)
+        result = ((result - estimated_mean)**2) * pdf
+    return result
+
+def integrate_function_2(function, transmission_probability, contact_probability, infectious_period_length, contacts_overdispersion):
+    shape = contacts_overdispersion
+    scale = contact_probability / shape
+
+    #if function == "mean":
+    func = lambda x: (calc_one_pool_one_member("mean", transmission_probability, x, infectious_period_length, shape, scale))
+    integral, upper_error = integrate.quad(func, 0, np.Inf, epsabs=1.49e-2)
+    result = integral
+    if function == "variance":
+        func_ev = lambda x: (calc_one_pool_one_member("ev", transmission_probability, x, infectious_period_length, shape, scale))
+        func_ve = lambda x: (calc_one_pool_one_member("ve", transmission_probability, x, infectious_period_length, shape, scale, estimated_mean=result))
+        ev_integral, ev_upper_error = integrate.quad(func_ev, 0, np.Inf, epsabs=1.49e-2)
+        ve_integral, ve_upper_error = integrate.quad(func_ve, 0, np.Inf, epsabs=1.49e-2)
+
+        result = ev_integral + ve_integral
 
     return result
 
@@ -81,10 +99,6 @@ def sum_pools_and_contacts(function, person, all_pools, contact_rates, individua
         pdf = gamma.pdf(transmission_probability, shape, scale=scale)
         cdf1 = gamma.cdf(1, shape, scale=scale)
         cdf0 = gamma.cdf(0, shape, scale=scale)
-    elif contacts_overdispersion is not None:
-        shape = contacts_overdispersion
-        scale = mean_individual_contact_factor / shape
-        pdf = gamma.pdf(individual_contact_factor, shape, scale=scale)
 
     # Iterate over contact pools this person belongs to
     for pool_type, pools in all_pools.items():
@@ -107,15 +121,14 @@ def sum_pools_and_contacts(function, person, all_pools, contact_rates, individua
 
                     contact_probability = min(contact_probability1, contact_probability2)
 
-                    if pool_type == "wokrplace" or pool_type == "primary_community" or pool_type == "secondary_community":
-                        contact_probability *= individual_contact_factor
-
                     # Households are assumed to be fully connected in Stride
                     if pool_type == "household":
                         contact_probability = 0.999
+                        contact_probability_old = 0.999
                     # Contact probability cannot be more than 1
                     if contact_probability >= 1:
                         contact_probability = 0.999
+                        contact_probability_old = 0.999
 
                     # Function to sum over
                     if infectiousness_overdispersion is None and contacts_overdispersion is None:
@@ -131,18 +144,19 @@ def sum_pools_and_contacts(function, person, all_pools, contact_rates, individua
                         elif function == "ve": # Var(E[Y | X])
                             result += (1 - (1 - transmission_probability * contact_probability)**infectious_period_length)
                     elif infectiousness_overdispersion is None:
-                        if function == "mean":
-                            result += (1 - ((1 - (transmission_probability * contact_probability))**infectious_period_length) * pdf)
-                        elif function == "ev": # E[Var(Y | X)]
-                            result += ((1 - (transmission_probability * contact_probability))**infectious_period_length) * (1 - (1 - transmission_probability * contact_probability)**infectious_period_length) * pdf
-                        elif function == "ve": # Var(E[Y | X])
-                            result += (1 - (1 - transmission_probability * contact_probability)**infectious_period_length)
+                        if pool_type == "workplace" or pool_type == "primary_community" or pool_type == "secondary_community":
+                            contact_result = integrate_function_2(function, transmission_probability, contact_probability, infectious_period_length, contacts_overdispersion)
+                            result += 0 if np.isnan(contact_result) else contact_result
+                        else:
+                            if function == "mean":
+                                result += (1 - (1 - (mean_transmission_probability * contact_probability))**infectious_period_length)
+                            elif function == "variance":
+                                result += ((1 - (mean_transmission_probability * contact_probability))**infectious_period_length) * (1 - (1 - mean_transmission_probability * contact_probability)**infectious_period_length)
+
     # If we are calculating the variance of the expected value Var(E[Y | X])
     if function == "ve":
         if contacts_overdispersion is None:
             result = ((result - estimated_mean)**2) * (pdf / (cdf1 - cdf0))
-        elif infectiousness_overdispersion is None:
-            result = ((result - estimated_mean)**2) * pdf
 
     return result
 
@@ -228,7 +242,7 @@ def estimate_effective_contacts(population_file, contact_matrix_file, transmissi
                                                             contact_rates, 1, 1, infectious_period_length,
                                                             transmission_probability, transmission_probability,
                                                             infectiousness_overdispersion, contacts_overdispersion)
-    else:
+    elif contacts_overdispersion is None:
         # Calculate treating individual transmission probability or individual contact factor as random variable
         mean_effective_contacts = integrate_function("mean", person, pools, contact_rates, 1, infectious_period_length,
                                                             transmission_probability, infectiousness_overdispersion,
@@ -236,7 +250,16 @@ def estimate_effective_contacts(population_file, contact_matrix_file, transmissi
         var_effective_contacts = integrate_function("variance", person, pools, contact_rates, 1, infectious_period_length,
                                                             transmission_probability, infectiousness_overdispersion,
                                                             contacts_overdispersion, mean_effective_contacts)
+    elif infectiousness_overdispersion is None:
+        mean_effective_contacts = sum_pools_and_contacts("mean", person, pools,
+                                                            contact_rates, 1, 1, infectious_period_length,
+                                                            transmission_probability, transmission_probability,
+                                                            infectiousness_overdispersion, contacts_overdispersion)
 
+        var_effective_contacts = sum_pools_and_contacts("variance", person, pools,
+                                                                    contact_rates, 1, 1, infectious_period_length,
+                                                                    transmission_probability, transmission_probability,
+                                                                    infectiousness_overdispersion, contacts_overdispersion)
     return (mean_effective_contacts, var_effective_contacts)
 
 def main(population_file, contact_matrix_file, transmission_probabilities, infectious_period_length, infectiousness_overdispersion, contacts_overdispersion, index_case_id, num_parallel_workers):
@@ -270,7 +293,7 @@ if __name__=="__main__":
     parser.add_argument("--infectious_period_length", type=int, default=7, help="Mean length of infectious period (in days)")
     parser.add_argument("--infectiousness_overdispersion", type=float, default=None)
     parser.add_argument("--contacts_overdispersion", type=float, default=None)
-    parser.add_argument("--index_case_id", type=int, default=1)
+    parser.add_argument("--index_case_id", type=int, default=2)
     parser.add_argument("--num_parallel_workers", type=int, default=4)
 
     args = parser.parse_args()
