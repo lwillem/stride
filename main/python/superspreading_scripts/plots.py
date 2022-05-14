@@ -9,7 +9,7 @@ from statsmodels.stats.proportion import proportion_confint
 
 from postprocessing_util import get_cases_over_period
 
-def plot_ar(output_dir, fig_name, display_scenario_names, all_total_cases, num_days, pop_size, extinction_threshold=0, y_min=-0.05, y_max=1.05, violin_plot=False):
+def plot_ar(output_dir, fig_name, display_scenario_names, all_total_cases, num_days, pop_size, color, extinction_threshold=0, y_min=-0.05, y_max=1.05):
     all_total_cases_prop_pop = []
     means = []
     for scenario in all_total_cases:
@@ -17,26 +17,30 @@ def plot_ar(output_dir, fig_name, display_scenario_names, all_total_cases, num_d
         all_total_cases_prop_pop.append(ars)
         means.append(np.mean(ars))
 
-    if violin_plot:
-        plt.violinplot(all_total_cases_prop_pop)
-        plt.xticks(range(1, len(all_total_cases_prop_pop) + 1), display_scenario_names)
-    else:
-        plt.boxplot(all_total_cases_prop_pop, labels=display_scenario_names)
+    violin_parts = plt.violinplot(all_total_cases_prop_pop)
+    for part_name, part_properties in violin_parts.items():
+        if part_name == "bodies":
+            for pc in part_properties:
+                pc.set_color(color)
+        else:
+            part_properties.set_color(color)
 
     plt.scatter(range(1, len(all_total_cases_prop_pop) + 1), means, color="orange")
+
+    plt.xticks(range(1, len(all_total_cases_prop_pop) + 1), display_scenario_names)
     plt.ylabel("AR (after {} days)".format(num_days))
     plt.ylim(y_min, y_max)
 
     save_figure(output_dir, fig_name, extension="png")
 
-def plot_cumulative_cases_per_day(output_dir, fig_name, scenario_name, cases_by_day, num_days, y_max=None, events={}):
+def plot_cumulative_cases_per_day(output_dir, fig_name, scenario_name, cases_by_day, num_days, color, y_max=None, events={}):
     for run in cases_by_day:
         total_cases = 0
         cumulative_cases_by_day = []
         for day in range(num_days):
             total_cases += run[day] if day in run else 0
             cumulative_cases_by_day.append(total_cases)
-        plt.plot(range(num_days), cumulative_cases_by_day)
+        plt.plot(range(num_days), cumulative_cases_by_day, color=color)
 
     for event_name, event_day in events.items():
         plt.axvline(event_day, color="lightgrey")
@@ -50,21 +54,26 @@ def plot_cumulative_cases_per_day(output_dir, fig_name, scenario_name, cases_by_
 
     save_figure(output_dir, fig_name + "_" + scenario_name)
 
-def plot_day_of_last_infection(output_dir, fig_name, display_scenario_names, all_days_last_infection, y_min, num_days, violin_plot=False):
-    if violin_plot:
-        plt.violinplot(all_days_last_infection)
-        plt.xticks(range(1, len(all_days_last_infection) + 1), display_scenario_names)
-    else:
-        plt.boxplot(all_days_last_infection, labels=display_scenario_names)
+
+def plot_day_of_last_infection(output_dir, fig_name, display_scenario_names, all_days_last_infection, y_min, num_days, color):
+    violin_parts = plt.violinplot(all_days_last_infection)
+    for part_name, part_properties in violin_parts.items():
+        if part_name == "bodies":
+            for pc in part_properties:
+                pc.set_color(color)
+        else:
+            part_properties.set_color(color)
 
     plt.scatter(range(1, len(all_days_last_infection) + 1), [np.mean(scenario) for scenario in all_days_last_infection], color="orange")
+
+    plt.xticks(range(1, len(all_days_last_infection) + 1), display_scenario_names)
 
     plt.ylabel("Day with last infection")
     plt.ylim(y_min, num_days + 1)
 
     save_figure(output_dir, fig_name, extension="png")
 
-def plot_day_of_peak(output_dir, fig_name, display_scenario_names, all_cases_per_day, num_days, extinction_threshold=0, violin_plot=False):
+def plot_day_of_peak(output_dir, fig_name, display_scenario_names, all_cases_per_day, num_days, color, extinction_threshold=0):
     all_peak_days = []
     for scenario in all_cases_per_day:
         peak_days = []
@@ -73,20 +82,23 @@ def plot_day_of_peak(output_dir, fig_name, display_scenario_names, all_cases_per
                 peak_days.append(max(run, key=lambda day: run[day]))
         all_peak_days.append(peak_days)
 
-    if violin_plot:
-        plt.violinplot(all_peak_days)
-        plt.xticks(range(1, len(all_peak_days) + 1), display_scenario_names)
-    else:
-        plt.boxplot(all_peak_days, labels=display_scenario_names)
+    violin_parts = plt.violinplot(all_peak_days)
+    for part_name, part_properties in violin_parts.items():
+        if part_name == "bodies":
+            for pc in part_properties:
+                pc.set_color(color)
+        else:
+            part_properties.set_color(color)
 
     plt.scatter(range(1, len(all_peak_days) + 1), [np.mean(scenario) for scenario in all_peak_days], color="orange")
 
+    plt.xticks(range(1, len(all_peak_days) + 1), display_scenario_names)
     plt.ylabel("Day of peak")
     plt.ylim(-0.5, num_days + 1)
 
     save_figure(output_dir, fig_name, extension="png")
 
-def plot_effective_r_by_day(output_dir, fig_name, scenario_name, rt_by_day, num_days, y_max=None, log_scale=False, events={}, smoothed=False):
+def plot_effective_r_by_day(output_dir, fig_name, scenario_name, rt_by_day, num_days, color, y_max=None, events={}, smoothed=False):
 
     if smoothed:
         for run_i in range(len(rt_by_day)):
@@ -112,7 +124,7 @@ def plot_effective_r_by_day(output_dir, fig_name, scenario_name, rt_by_day, num_
         plt.axvline(event_day, color="darkgrey")
         plt.text(event_day + 2, y_max - (y_max / 5), event_name, rotation=90, color="darkgrey")
 
-    plt.plot(range(num_days), mean)
+    plt.plot(range(num_days), mean, color=color)
     plt.fill_between(range(num_days), lower, upper, color="lightgrey")
 
     plt.plot(range(num_days), [1] * num_days, color="orange") # Reference line at Rt = 1
@@ -123,12 +135,10 @@ def plot_effective_r_by_day(output_dir, fig_name, scenario_name, rt_by_day, num_
     plt.ylabel("Rt")
     if y_max is not None:
         plt.ylim(0, y_max)
-    if log_scale:
-        plt.yscale("symlog")
 
     save_figure(output_dir, fig_name + "_" + scenario_name, extension="png", dpi=100)
 
-def plot_extinction_probabilities(output_dir, fig_name, display_scenario_names, all_total_cases, extinction_threshold, ylabel="Extinction probability"):
+def plot_extinction_probabilities(output_dir, fig_name, display_scenario_names, all_total_cases, extinction_threshold, color, ylabel="Extinction probability"):
     extinction_probabilities = []
     confidence_intervals = []
     for scenario in all_total_cases:
@@ -147,13 +157,12 @@ def plot_extinction_probabilities(output_dir, fig_name, display_scenario_names, 
         top = interval[1]
         left = i - horizontal_line_width / 2
         right = i + horizontal_line_width / 2
-        plt.plot([i,i], [top, bottom], color="orange")
-        plt.plot([left, right], [top, top], color="orange")
-        plt.plot([left, right], [bottom, bottom], color="orange")
+        plt.plot([i,i], [top, bottom], color=color)
+        plt.plot([left, right], [top, top], color=color)
+        plt.plot([left, right], [bottom, bottom], color=color)
         i += 1
 
-    plt.plot(range(len(all_total_cases)), extinction_probabilities, marker="o", linestyle="None")
-
+    plt.plot(range(len(all_total_cases)), extinction_probabilities, marker="o", linestyle="None", color=color)
 
     plt.xticks(range(len(display_scenario_names)), display_scenario_names)
     plt.ylabel(ylabel + " (threshold = {} cases)".format(extinction_threshold))
@@ -161,7 +170,7 @@ def plot_extinction_probabilities(output_dir, fig_name, display_scenario_names, 
 
     save_figure(output_dir, fig_name)
 
-def plot_resurgence_probabilities(output_dir, fig_name, display_scenario_names, all_cases_per_day, start_lockdown, end_lockdown, num_days, resurgence_threshold):
+def plot_resurgence_probabilities(output_dir, fig_name, display_scenario_names, all_cases_per_day, start_lockdown, end_lockdown, num_days, resurgence_threshold, color):
     resurgence_probabilities = []
     confidence_intervals = []
 
@@ -189,13 +198,13 @@ def plot_resurgence_probabilities(output_dir, fig_name, display_scenario_names, 
         left = i - horizontal_line_width / 2
         right = i + horizontal_line_width / 2
 
-        plt.plot([i,i], [top, bottom], color="orange")
-        plt.plot([left, right], [top, top], color="orange")
-        plt.plot([left, right], [bottom, bottom], color="orange")
+        plt.plot([i,i], [top, bottom], color=color)
+        plt.plot([left, right], [top, top], color=color)
+        plt.plot([left, right], [bottom, bottom], color=color)
         i += 1
 
     # Plot resurgence probabilities
-    plt.plot(range(len(resurgence_probabilities)), resurgence_probabilities, marker="o", linestyle="None")
+    plt.plot(range(len(resurgence_probabilities)), resurgence_probabilities, marker="o", linestyle="None", color=color)
     plt.xticks(range(len(display_scenario_names)), display_scenario_names)
 
     plt.ylabel("Resurgence probability")
@@ -217,7 +226,7 @@ def plot_final_size_frequencies(output_dir, fig_name, display_scenario_names, al
 
     save_figure(output_dir, fig_name)
 
-def plot_herd_immunity_threshold(output_dir, fig_name, display_scenario_names, all_hits, show_day=False, num_days=200, y_min=0, y_max=1, violin_plot=False):
+def plot_herd_immunity_threshold(output_dir, fig_name, display_scenario_names, all_hits, color, show_day=False, num_days=200, y_min=0, y_max=1):
     hits = []
     means = []
     for scenario in all_hits:
@@ -225,13 +234,15 @@ def plot_herd_immunity_threshold(output_dir, fig_name, display_scenario_names, a
         means.append(np.mean(hits_no_nan))
         hits.append(hits_no_nan)
 
-    if violin_plot:
-        plt.violinplot(hits)
-        plt.scatter(range(1, len(hits) + 1), means, color="orange")
-        plt.xticks(range(1, len(hits) + 1), display_scenario_names)
-    else:
-        plt.boxplot(hits, labels=display_scenario_names)
-        plt.scatter(range(1, len(means) + 1), means)
+    violin_parts = plt.violinplot(hits)
+    for part_name, part_properties in violin_parts.items():
+        if part_name == "bodies":
+            for pc in part_properties:
+                pc.set_color(color)
+        else:
+            part_properties.set_color(color)
+    plt.scatter(range(1, len(hits) + 1), means, color="orange")
+    plt.xticks(range(1, len(hits) + 1), display_scenario_names)
 
     if show_day:
         plt.ylabel("Day on which Rt >= 1 for the last time")
@@ -242,9 +253,9 @@ def plot_herd_immunity_threshold(output_dir, fig_name, display_scenario_names, a
 
     save_figure(output_dir, fig_name, extension="png")
 
-def plot_new_cases_per_day(output_dir, fig_name, scenario_name, cases_by_day, num_days, y_max=None, events={}):
+def plot_new_cases_per_day(output_dir, fig_name, scenario_name, cases_by_day, num_days, color, y_max=None, events={}):
     for run in cases_by_day:
-        plt.plot(range(num_days), [run[day] if day in run else 0 for day in range(num_days)])
+        plt.plot(range(num_days), [run[day] if day in run else 0 for day in range(num_days)], color=color)
 
     for event_name, event_day in events.items():
         plt.axvline(event_day, color="lightgrey")
@@ -256,9 +267,15 @@ def plot_new_cases_per_day(output_dir, fig_name, scenario_name, cases_by_day, nu
 
     save_figure(output_dir, fig_name + "_" + scenario_name)
 
-def plot_num_cases_over_period(output_dir, fig_name, display_scenario_names, start_day, end_day, all_cases_over_period, y_min=None, y_max=None, extinction_threshold=0):
-    #plt.boxplot(all_cases_over_period, labels=display_scenario_names)
-    plt.violinplot([[x for x in scenario if x >= extinction_threshold] for scenario in all_cases_over_period])
+def plot_num_cases_over_period(output_dir, fig_name, display_scenario_names, start_day, end_day, all_cases_over_period, color, y_min=None, y_max=None, extinction_threshold=0):
+    violin_parts = plt.violinplot([[x for x in scenario if x >= extinction_threshold] for scenario in all_cases_over_period])
+    for part_name, part_properties in violin_parts.items():
+        if part_name == "bodies":
+            for pc in part_properties:
+                pc.set_color(color)
+        else:
+            part_properties.set_color(color)
+
     plt.scatter(range(1, len(all_cases_over_period) + 1), [np.mean([x for x in scenario if x >= extinction_threshold]) for scenario in all_cases_over_period], color="orange")
 
     plt.xticks(range(1, len(all_cases_over_period) + 1), display_scenario_names)
@@ -284,18 +301,21 @@ def plot_offspring_distributions(output_dir, fig_name, scenario_name, secondary_
 
     save_figure(output_dir, fig_name + "_" + scenario_name)
 
-def plot_p80s(output_dir, fig_name, display_scenario_names, p80s, violin_plot=False):
+def plot_p80s(output_dir, fig_name, display_scenario_names, p80s, color):
     # Remove NaNs
     p80s = [[p80 for p80 in scenario_result if not np.isnan(p80)] for scenario_result in p80s]
     means = [np.mean(scenario_result) for scenario_result in p80s]
     print(means)
 
-    if violin_plot:
-        plt.violinplot(p80s)
-        plt.xticks(range(1, len(display_scenario_names) + 1), display_scenario_names)
-    else:
-        # Create boxplots
-        plt.boxplot(p80s, labels=display_scenario_names)
+    violin_parts = plt.violinplot(p80s)
+    for part_name, part_properties in violin_parts.items():
+        if part_name == "bodies":
+            for pc in part_properties:
+                pc.set_color(color)
+        else:
+            part_properties.set_color(color)
+
+    plt.xticks(range(1, len(display_scenario_names) + 1), display_scenario_names)
 
     plt.scatter(range(1, len(p80s) + 1), means, color="orange")
 
@@ -303,21 +323,25 @@ def plot_p80s(output_dir, fig_name, display_scenario_names, p80s, violin_plot=Fa
     plt.ylim(0, 1.1)
     save_figure(output_dir, fig_name, extension="png", dpi=100)
 
-def plot_peak_sizes(output_dir, fig_name, display_scenario_names, all_cases_by_day, start_day, end_day, extinction_threshold=0, ymin=None, ymax=None, violin_plot=False):
+def plot_peak_sizes(output_dir, fig_name, display_scenario_names, all_cases_by_day, start_day, end_day, color, extinction_threshold=0, ymin=None, ymax=None):
     all_peak_sizes = []
     means = []
     for scenario in all_cases_by_day:
         peak_sizes = [max(list(run.values())[start_day:end_day]) for run in scenario if sum(list(run.values())[start_day:end_day]) >= extinction_threshold]
         all_peak_sizes.append(peak_sizes)
         means.append(np.mean(peak_sizes))
-    if violin_plot:
-        plt.violinplot(all_peak_sizes)
-        plt.scatter(range(1, len(all_peak_sizes) + 1), means, color="orange")
 
-        plt.xticks(range(1, len(all_peak_sizes) + 1), display_scenario_names)
-    else:
-        plt.boxplot(all_peak_sizes, labels=display_scenario_names)
-        plt.scatter(range(1, len(all_peak_sizes) + 1), means)
+    violin_parts = plt.violinplot(all_peak_sizes)
+    for part_name, part_properties in violin_parts.items():
+        if part_name == "bodies":
+            for pc in part_properties:
+                pc.set_color(color)
+        else:
+            part_properties.set_color(color)
+    plt.scatter(range(1, len(all_peak_sizes) + 1), means, color="orange")
+
+    plt.xticks(range(1, len(all_peak_sizes) + 1), display_scenario_names)
+
     if (ymin is not None) and (ymax is not None):
         plt.ylim(ymin, ymax)
     plt.ylabel("Peak size")
@@ -395,8 +419,7 @@ def plot_secondary_cases_distribution(output_dir, fig_name, display_scenario_nam
 
     save_figure(output_dir, fig_name)
 
-
-def plot_transmissions_by_location(output_dir, fig_name, scenario_name, transmissions_by_location):
+def plot_transmissions_by_location(output_dir, fig_name, scenario_name, transmissions_by_location, color):
     transmissions_by_location_dict = {
         "Household": [],
         "K12School": [],
@@ -422,14 +445,24 @@ def plot_transmissions_by_location(output_dir, fig_name, scenario_name, transmis
                     transmissions_by_location_dict[location].append(0)
 
     locations = list(transmissions_by_location_dict.keys())
-    plt.boxplot([transmissions_by_location_dict[loc] for loc in locations], labels=locations)
+    bplot = plt.boxplot([transmissions_by_location_dict[loc] for loc in locations], labels=locations, patch_artist=True)
+    for part_name, part_list in bplot.items():
+        if part_name == "boxes":
+            for box in part_list:
+                box.set_edgecolor(color)
+                box.set_facecolor(color)
+                box.set_alpha(0.3)
+        else:
+            for part in part_list:
+                part.set_color(color)
+                part.set_markeredgecolor(color)
 
     plt.xticks(rotation=45)
 
     plt.ylabel("Fraction of infections")
-    plt.ylim(-0.05, 1)
+    plt.ylim(-0.05, 1.05)
 
-    save_figure(output_dir, fig_name + "_" + scenario_name)
+    save_figure(output_dir, fig_name + "_" + scenario_name, extension="png")
 
 def plot_secondary_cases_per_index_case_histogram(output_dir, fig_name, secondary_cases_per_index_case, display_scenario_names):
     plt.hist(secondary_cases_per_index_case, histtype="bar", stacked=True)
@@ -439,13 +472,19 @@ def plot_secondary_cases_per_index_case_histogram(output_dir, fig_name, secondar
 
     save_figure(output_dir, fig_name)
 
-def plot_secondary_cases_per_index_case_means(output_dir, fig_name, secondary_cases_per_index_case, display_scenario_names):
+def plot_secondary_cases_per_index_case_means(output_dir, fig_name, secondary_cases_per_index_case, display_scenario_names, color):
     horizontal_line_width = 0.5
 
     means = [np.mean(scenario) for scenario in secondary_cases_per_index_case]
     print(means)
 
-    plt.violinplot(secondary_cases_per_index_case)
+    violin_parts = plt.violinplot(secondary_cases_per_index_case)
+    for part_name, part_properties in violin_parts.items():
+        if part_name == "bodies":
+            for pc in part_properties:
+                pc.set_color(color)
+        else:
+            part_properties.set_color(color)
     plt.scatter(range(1, len(secondary_cases_per_index_case) + 1), means, color="orange")
 
     plt.xticks(range(1, len(secondary_cases_per_index_case) + 1), display_scenario_names)

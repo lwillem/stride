@@ -37,14 +37,19 @@ def main(output_dir, output_prefix, num_parallel_workers):
     overdispersion_scenario_names = ["infectiousness_overdispersion", "contacts_overdispersion"]
     overdispersion_parameters = ["1000", "100", "60", "40", "20"]
 
+    colors = {
+        "infectiousness_overdispersion": "green",
+        "contacts_overdispersion": "blue"
+    }
 
-    #display_scenario_names = [r"$\alpha_{c}$ = " + str(a) for a in overdispersion_parameters]
     for overdispersion_scenario in overdispersion_scenario_names:
         alpha = r"$\alpha_{i}$"
         if overdispersion_scenario == "contacts_overdispersion":
             alpha = r"$\alpha_{c}$"
         display_scenario_names = ["Baseline", alpha + " = 10", alpha + " = 1", alpha + " = 0.6", alpha + " = 0.4", alpha + " = 0.2"]
         scenario_names = [output_prefix + baseline_scenario_name] + [output_prefix + overdispersion_scenario + "_" + overdispersion for overdispersion in overdispersion_parameters]
+
+        color = colors[overdispersion_scenario]
 
         all_cases_per_day = []
 
@@ -105,41 +110,45 @@ def main(output_dir, output_prefix, num_parallel_workers):
 
                 all_secondary_cases.append(output_num_secondary_cases)
 
-                plot_effective_r_by_day(output_dir, "rt", scenario_name, [run["rt_by_day"] for run in output_per_day], num_days, y_max=8, smoothed=True)
+                fig_scenario_name = scenario_name
+                if scenario_name == "baseline":
+                    fig_scenario_name = "baseline_" + overdispersion_scenario
 
-                plot_cumulative_cases_per_day(output_dir, "cumulative_cases_per_day", scenario_name, [run["cases_per_day"] for run in output_per_day], num_days, y_max=population_size)
-                plot_new_cases_per_day(output_dir, "new_cases_per_day", scenario_name, [run["cases_per_day"] for run in output_per_day], num_days, y_max=670000)
+                plot_effective_r_by_day(output_dir, "rt", fig_scenario_name, [run["rt_by_day"] for run in output_per_day], num_days, color, y_max=8, smoothed=True)
 
-                plot_transmissions_by_location(output_dir, "transmissions_by_location", scenario_name, transmissions_by_location)
+                plot_cumulative_cases_per_day(output_dir, "cumulative_cases_per_day", fig_scenario_name, [run["cases_per_day"] for run in output_per_day], num_days, color, y_max=population_size)
+                plot_new_cases_per_day(output_dir, "new_cases_per_day", fig_scenario_name, [run["cases_per_day"] for run in output_per_day], num_days, color, y_max=670000)
 
-        plot_ar(output_dir, "ar_" + overdispersion_scenario, display_scenario_names, all_final_sizes, num_days, population_size, violin_plot=True)
-        plot_ar(output_dir, "ar_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_final_sizes, num_days, population_size, extinction_threshold=extinction_threshold, y_min=0.8, y_max=1, violin_plot=True)
+                plot_transmissions_by_location(output_dir, "transmissions_by_location", fig_scenario_name, transmissions_by_location, color)
 
-        plot_day_of_last_infection(output_dir, "day_of_last_infection_" + overdispersion_scenario, display_scenario_names, all_days_last_infection, -1, num_days, violin_plot=True)
-        plot_day_of_last_infection(output_dir, "day_of_last_infection_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_days_last_infection_exclude_extinction, 100, num_days, violin_plot=True)
+        plot_ar(output_dir, "ar_" + overdispersion_scenario, display_scenario_names, all_final_sizes, num_days, population_size, color)
+        plot_ar(output_dir, "ar_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_final_sizes, num_days, population_size, color, extinction_threshold=extinction_threshold, y_min=0.8, y_max=1)
 
-        plot_day_of_peak(output_dir, "day_of_peak_" + overdispersion_scenario, display_scenario_names, all_cases_per_day, 150, violin_plot=True)
-        plot_day_of_peak(output_dir, "day_of_peak_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_cases_per_day, 150, extinction_threshold=extinction_threshold, violin_plot=True)
+        plot_day_of_last_infection(output_dir, "day_of_last_infection_" + overdispersion_scenario, display_scenario_names, all_days_last_infection, -1, num_days, color)
+        plot_day_of_last_infection(output_dir, "day_of_last_infection_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_days_last_infection_exclude_extinction, 100, num_days, color)
+
+        plot_day_of_peak(output_dir, "day_of_peak_" + overdispersion_scenario, display_scenario_names, all_cases_per_day, 150, color)
+        plot_day_of_peak(output_dir, "day_of_peak_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_cases_per_day, 150, color, extinction_threshold=extinction_threshold)
 
         plot_final_size_frequencies(output_dir, "final_size_frequencies_" + overdispersion_scenario, display_scenario_names, all_final_sizes, "Outbreak size after {} days".format(num_days))
-        plot_extinction_probabilities(output_dir, "extinction_probabilities_" + overdispersion_scenario, display_scenario_names, all_final_sizes, extinction_threshold)
+        plot_extinction_probabilities(output_dir, "extinction_probabilities_" + overdispersion_scenario, display_scenario_names, all_final_sizes, extinction_threshold, color)
 
-        plot_herd_immunity_threshold(output_dir, "hit_" + overdispersion_scenario, display_scenario_names, all_hits, show_day=False, violin_plot=True)
-        plot_herd_immunity_threshold(output_dir, "hit_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_hits_exclude_extinction, show_day=False, y_min=0.4, violin_plot=True)
+        plot_herd_immunity_threshold(output_dir, "hit_" + overdispersion_scenario, display_scenario_names, all_hits, color, show_day=False)
+        plot_herd_immunity_threshold(output_dir, "hit_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_hits_exclude_extinction, color, show_day=False, y_min=0.4)
 
-        plot_herd_immunity_threshold(output_dir, "hits_day_" + overdispersion_scenario, display_scenario_names, all_hits_day, show_day=True, violin_plot=True)
-        plot_herd_immunity_threshold(output_dir, "hits_day_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_hits_day_exclude_extinction, show_day=True, violin_plot=True)
+        plot_herd_immunity_threshold(output_dir, "hits_day_" + overdispersion_scenario, display_scenario_names, all_hits_day, color, show_day=True)
+        plot_herd_immunity_threshold(output_dir, "hits_day_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_hits_day_exclude_extinction, color, show_day=True)
 
-        plot_peak_sizes(output_dir, "peak_sizes_" + overdispersion_scenario, display_scenario_names, all_cases_per_day, 0, num_days, ymin=-10, ymax=670000, violin_plot=True)
-        plot_peak_sizes(output_dir, "peak_sizes_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_cases_per_day, 0, num_days, extinction_threshold=extinction_threshold, ymin=400000, ymax=670000, violin_plot=True)
+        plot_peak_sizes(output_dir, "peak_sizes_" + overdispersion_scenario, display_scenario_names, all_cases_per_day, 0, num_days, color, ymin=-10, ymax=670000)
+        plot_peak_sizes(output_dir, "peak_sizes_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_cases_per_day, 0, num_days, color, extinction_threshold=extinction_threshold, ymin=400000, ymax=670000)
 
-        plot_p80s(output_dir, "p80s_" + overdispersion_scenario, display_scenario_names, all_p80s, violin_plot=True)
-        plot_p80s(output_dir, "p80s_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_p80s_exclude_extinction, violin_plot=True)
+        plot_p80s(output_dir, "p80s_" + overdispersion_scenario, display_scenario_names, all_p80s, color)
+        plot_p80s(output_dir, "p80s_exclude_extinction_" + overdispersion_scenario, display_scenario_names, all_p80s_exclude_extinction, color)
 
         plot_secondary_cases_distribution(output_dir, "secondary_cases_distribution_" + overdispersion_scenario, display_scenario_names, all_secondary_cases)
 
         plot_secondary_cases_per_index_case_histogram(output_dir, "secondary_cases_per_ic_" + overdispersion_scenario, all_secondary_cases_per_index_case, display_scenario_names)
-        plot_secondary_cases_per_index_case_means(output_dir, "secondary_cases_per_ic_means_" + overdispersion_scenario, all_secondary_cases_per_index_case, display_scenario_names)
+        plot_secondary_cases_per_index_case_means(output_dir, "secondary_cases_per_ic_means_" + overdispersion_scenario, all_secondary_cases_per_index_case, display_scenario_names, color)
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser()

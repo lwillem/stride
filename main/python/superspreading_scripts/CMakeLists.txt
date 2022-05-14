@@ -23,19 +23,19 @@
 # Python scripts
 INSTALL( FILES
 			plots.py
-      postprocessing_combinations.py
 			postprocessing_degree_distribution.py
 			postprocessing_index_case_only.py
 			postprocessing_interventions.py
+			postprocessing_lhs.py
 			postprocessing_no_interventions.py
       postprocessing_sensitivity_analysis.py
 			postprocessing_theoretical_description_comparison.py
 			postprocessing_util.py
 
-      run_combination_simulations.py
       run_degree_distribution_simulations.py
       run_full_simulations.py
       run_index_case_only_simulations.py
+			run_lhs.py
       run_simplified_simulations.py
       run_util.py
 

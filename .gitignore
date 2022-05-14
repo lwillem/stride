@@ -23,6 +23,8 @@ Thumbs.db
 #------------------------------------
 /.cproject
 /.project
+*.cproject
+*.project
 /MakeLocalConfig
 /.settings/
 target*/
