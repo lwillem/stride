@@ -489,7 +489,7 @@ def plot_secondary_cases_per_index_case_means(output_dir, fig_name, secondary_ca
 
     plt.xticks(range(1, len(secondary_cases_per_index_case) + 1), display_scenario_names)
     plt.ylabel("Secondary cases per index case")
-    plt.ylim(0, 40)
+    plt.ylim(0, max([max(scenario) for scenario in secondary_cases_per_index_case]) + 1)
 
     save_figure(output_dir, fig_name, extension="png")
 
