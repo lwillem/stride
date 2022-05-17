@@ -37,22 +37,8 @@ def run_lhs(disease_config_file, holidays_file, mean_transmission_probability, n
     u_bounds = [0.6, 0.6]
     sample = qmc.scale(sample, l_bounds, u_bounds)
 
-    #plt.scatter([v[0] for v in sample], [v[1] for v in sample])
-    #plt.show()
-
-    # Baseline
-    run_parallel(scenario_name="baseline", contact_distribution="Constant", contact_distribution_overdispersion=0,
-                    disease_config_file=disease_config_file, event_log_level=event_log_level,
-                    holidays_file=holidays_file, num_days=num_days, num_infected_seeds=num_infected_seeds,
-                    population_file=population_file, run_simplified=run_simplified, start_date=start_date,
-                    track_index_case=track_index_case, transmission_probability_distribution="Constant",
-                    transmission_probability=mean_transmission_probability,
-                    transmission_probability_distribution_overdispersion=0, num_runs=num_runs,
-                    num_parallel_workers=num_parallel_workers)
-
-    scenario_names = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"]
     for s_i in range(num_scenarios):
-        scenario_name = scenario_names[s_i]
+        scenario_name = "scenario_" + str(s_i)
         infectiousness_overdispersion = sample[s_i][0]
         contacts_overdispersion = sample[s_i][1]
 
