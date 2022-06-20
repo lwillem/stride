@@ -472,7 +472,7 @@ def plot_secondary_cases_per_index_case_histogram(output_dir, fig_name, secondar
 
     save_figure(output_dir, fig_name)
 
-def plot_secondary_cases_per_index_case_means(output_dir, fig_name, secondary_cases_per_index_case, display_scenario_names, color):
+def plot_secondary_cases_per_index_case_means(output_dir, fig_name, secondary_cases_per_index_case, display_scenario_names, color, x_label="", label_rotation=0, xtick_step=1):
     horizontal_line_width = 0.5
 
     means = [np.mean(scenario) for scenario in secondary_cases_per_index_case]
@@ -487,7 +487,8 @@ def plot_secondary_cases_per_index_case_means(output_dir, fig_name, secondary_ca
             part_properties.set_color(color)
     plt.scatter(range(1, len(secondary_cases_per_index_case) + 1), means, color="orange")
 
-    plt.xticks(range(1, len(secondary_cases_per_index_case) + 1), display_scenario_names)
+    plt.xticks(range(1, len(secondary_cases_per_index_case) + 1)[::xtick_step], display_scenario_names[::xtick_step], rotation=label_rotation)
+    plt.xlabel(x_label)
     plt.ylabel("Secondary cases per index case")
     plt.ylim(0, max([max(scenario) for scenario in secondary_cases_per_index_case]) + 1)
 
