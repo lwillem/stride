@@ -81,7 +81,7 @@ shared_ptr<Population> PopBuilder::MakePersons(shared_ptr<Population> pop)
         while (getline(popFile, line)) {
                 const auto values               = Split(line, ",");
                 const auto age                  = FromString<unsigned int>(values[0]);
-                const auto person_id            = FromString<unsigned int>(values[1])
+                const auto person_id            = FromString<unsigned int>(values[1]);
                 const auto householdId          = FromString<unsigned int>(values[2]);
                 auto schoolId                   = FromString<unsigned int>(values[3]);
                 const auto workId               = FromString<unsigned int>(values[4]);
