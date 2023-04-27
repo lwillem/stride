@@ -78,16 +78,15 @@ shared_ptr<Population> PopBuilder::MakePersons(shared_ptr<Population> pop)
         getline(popFile, line); // step over file header
         auto headers   = Split(line, ",");
 
-        unsigned int person_id = 0U;
-
         while (getline(popFile, line)) {
                 const auto values               = Split(line, ",");
                 const auto age                  = FromString<unsigned int>(values[0]);
-                const auto householdId          = FromString<unsigned int>(values[1]);
-                auto schoolId                   = FromString<unsigned int>(values[2]);
-                const auto workId               = FromString<unsigned int>(values[3]);
-                const auto primaryCommunityId   = FromString<unsigned int>(values[4]);
-                const auto secondaryCommunityId = FromString<unsigned int>(values[5]);
+                const auto person_id            = FromString<unsigned int>(values[1])
+                const auto householdId          = FromString<unsigned int>(values[2]);
+                auto schoolId                   = FromString<unsigned int>(values[3]);
+                const auto workId               = FromString<unsigned int>(values[4]);
+                const auto primaryCommunityId   = FromString<unsigned int>(values[5]);
+                const auto secondaryCommunityId = FromString<unsigned int>(values[6]);
 
                 unsigned int householdClusterId = 0;
                 if(values.size() == 7 && Trim(ToString(headers[6]),ToString('"')) == "household_cluster_id"){
@@ -109,7 +108,7 @@ shared_ptr<Population> PopBuilder::MakePersons(shared_ptr<Population> pop)
 
                 pop->CreatePerson(person_id, age, householdId, schoolId, collegeId, workId, primaryCommunityId,
                                   secondaryCommunityId, householdClusterId, collectivityId);
-                ++person_id;
+                ;
         }
 
         popFile.close();
