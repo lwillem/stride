@@ -160,7 +160,7 @@ shared_ptr<Population> PopBuilder::MakePersonsOpt(shared_ptr<Population> pop)
     while (getline(popFile, line)) {
         const auto values               = Split(line, ",");
         const auto age                  = static_cast<unsigned int>(IntFromString(values[0]));
-        const auto person_id            = statis_cast<unsigned int>(IntFromString(values[1]));
+        const auto person_id            = static_cast<unsigned int>(IntFromString(values[1]));
         const auto householdId          = static_cast<unsigned int>(IntFromString(values[2]));
         auto schoolId                   = static_cast<unsigned int>(IntFromString(values[3]));
         const auto workId               = static_cast<unsigned int>(IntFromString(values[4]));
