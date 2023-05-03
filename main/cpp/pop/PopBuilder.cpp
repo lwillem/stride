@@ -148,9 +148,9 @@ shared_ptr<Population> PopBuilder::MakePersonsOpt(shared_ptr<Population> pop)
     getline(popFile, line); // step over file header
     auto headers   = Split(line, ",");
     //
-    bool has_extra_column = headers.size() == 7;
+    bool has_extra_column = headers.size() == 8;
     string extra_id = "";
-    if (has_extra_column) { extra_id = Trim(ToString(headers[6]),ToString('"')); }
+    if (has_extra_column) { extra_id = Trim(ToString(headers[7]),ToString('"')); }
     bool household_cluster_id = extra_id == "household_cluster_id";
     bool collectivity_id = extra_id == "collectivity_id";
     const unsigned int defaultHouseholdClusterId = 0;
@@ -214,7 +214,46 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
         IdSubscriptArray<unsigned int> maxIds{0U};
         for (const auto& p : *pop) {
                 for (Id typ : IdList) {
+                        if (typ != Id::NewCommunity) {
                         maxIds[typ] = max(maxIds[typ], p.GetPoolId(typ));
+                        }
+                        else {                                
+                        const auto fileName = m_config.get<string>("run.new_community_file");
+                        m_stride_logger->info("Reading max number of New Communities from file {}.", fileName);
+
+                        const auto use_install_dirs = m_config.get<bool>("run.use_install_dirs");
+                        const auto filePath         = (use_install_dirs) ? FileSys::GetDataDir() /= fileName : filesys::path(fileName);
+                        if (!is_regular_file(filePath)) {
+                                throw runtime_error(string(__func__) + "> New community file " + filePath.string() + " not present.");
+                        }
+
+                        ifstream newCommunityFile;
+                        newCommunityFile.open(filePath.string());
+                        if (!newCommunityFile.is_open()) {
+                        throw runtime_error(string(__func__) + "> Error opening new community file " + filePath.string());
+                        }
+
+                        string line;
+                        getline(popFile, line); // step over file header
+                        auto headers   = Split(line, ",");
+
+
+                        getline(popFile, line)
+                        const auto values               = Split(line, ",");
+                        const auto person_id            = static_cast<unsigned int>(IntFromString(values[0]));
+                        const auto INS_j_id             = static_cast<unsigned int>(IntFromString(values[1]));
+                          
+                        maxIds[typ] = INS_j_id
+
+                        std::cout << maxIds[typ] << "!\n";
+
+                        newCommunityFile.close();
+
+                        m_stride_logger->trace("Done determining max number of New Communities.");
+
+                        }
+
+
                 }
         }
         // --------------------------------------------------------------
