@@ -50,8 +50,6 @@ AgeContactProfile::AgeContactProfile(Id poolType, const ptree& contactPt) : std:
                         typeKey = "primary_community";
         }
 
-        }
-
         // construct XML key
         const string key{string("matrices.").append(typeKey)};
 
