@@ -238,7 +238,7 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
                         auto headers   = Split(line, ",");
 
 
-                        getline(newCommunityFile, line)
+                        getline(newCommunityFile, line);
                         const auto values               = Split(line, ",");
                         const auto person_id            = static_cast<unsigned int>(IntFromString(values[0]));
                         const auto INS_j_id             = static_cast<unsigned int>(IntFromString(values[1]));
