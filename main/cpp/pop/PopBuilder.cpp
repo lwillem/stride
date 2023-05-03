@@ -194,6 +194,7 @@ shared_ptr<Population> PopBuilder::MakePersonsOpt(shared_ptr<Population> pop)
         ;
     }
 
+
     popFile.close();
 
     m_stride_logger->trace("Done building default population.");
@@ -252,8 +253,6 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
                         m_stride_logger->trace("Done determining max number of New Communities.");
 
                         newCommunityFile.close();
-
-                        m_stride_logger->trace("Done determining max number of New Communities.");
        
                         }
 
@@ -331,13 +330,18 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
                         const auto person_id            = static_cast<unsigned int>(IntFromString(values[0]));
                         const auto INS_j_id             = static_cast<unsigned int>(IntFromString(values[1]));
 
-                        auto p=id_pointer_persons.find(person_id)
+                        auto p=id_pointer_persons.find(person_id);
                         pop->RefPoolSys().RefPools(typ)[INS_j_id].AddMember(&p);
                         
 
                         ;
 
                         }
+
+                        newCommunityFile.close();
+
+                        m_stride_logger->trace("Done building default population.");
+
         
     }
 
