@@ -215,16 +215,17 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
         // --------------------------------------------------------------
         IdSubscriptArray<unsigned int> maxIds{0U};
 
+        const auto allowed_new_communities = m_config.get<boolean>("run.new_community_used")
+        const auto fileName = m_config.get<string>("run.new_community_file");
+        const auto use_install_dirs = m_config.get<bool>("run.use_install_dirs");
+        const auto filePath         = (use_install_dirs) ? FileSys::GetDataDir() /= fileName : filesys::path(fileName);
+        if (!is_regular_file(filePath)) {
+        throw runtime_error(string(__func__) + "> New community file " + filePath.string() + " not present.");
+        }
+
+        if (allowed_new_communities) {
         for (Id typ : IdList){
                 if (typ == Id::NewCommunity) {
-
-
-                        const auto fileName = m_config.get<string>("run.new_community_file");
-                        const auto use_install_dirs = m_config.get<bool>("run.use_install_dirs");
-                        const auto filePath         = (use_install_dirs) ? FileSys::GetDataDir() /= fileName : filesys::path(fileName);
-                        if (!is_regular_file(filePath)) {
-                                throw runtime_error(string(__func__) + "> New community file " + filePath.string() + " not present.");
-                        }
 
                         ifstream newCommunityFile;
                         newCommunityFile.open(filePath.string());
@@ -248,7 +249,7 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
 
                         // maxIds[typ] = 589;
 
-                        m_stride_logger->info("max number of new communities {}.", person_id);
+                        m_stride_logger->info("max number of new communities {}.", INS_j_id);
 
                         m_stride_logger->trace("Done determining max number of New Communities.");
 
@@ -257,9 +258,8 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
                         }
 
 
-
-
                 }
+        }
         
 
         for (const auto& p : *pop) {
@@ -306,15 +306,10 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
                 }
         }
 
+        if (allowed_new_communities) {
         for (Id typ : IdList) {
                 if (typ == Id::NewCommunity) {
-                        const auto fileName = m_config.get<string>("run.new_community_file");
-                        const auto use_install_dirs = m_config.get<bool>("run.use_install_dirs");
-                        const auto filePath         = (use_install_dirs) ? FileSys::GetDataDir() /= fileName : filesys::path(fileName);
-                        if (!is_regular_file(filePath)) {
-                                throw runtime_error(string(__func__) + "> New community file " + filePath.string() + " not present.");
-                        }
-
+                        
                         ifstream newCommunityFile;
                         newCommunityFile.open(filePath.string());
                         if (!newCommunityFile.is_open()) {
@@ -343,12 +338,13 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
                         m_stride_logger->trace("Done building default population.");
 
         
-    }
+                 }
 
 
 
 
                 }
+        }
         
 
 
