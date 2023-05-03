@@ -215,7 +215,7 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
         // --------------------------------------------------------------
         IdSubscriptArray<unsigned int> maxIds{0U};
 
-        const auto allowed_new_communities = m_config.get<boolean>("run.new_community_used")
+        const auto allowed_new_communities = m_config.get<boolean>("run.new_community_used");
         const auto fileName = m_config.get<string>("run.new_community_file");
         const auto use_install_dirs = m_config.get<bool>("run.use_install_dirs");
         const auto filePath         = (use_install_dirs) ? FileSys::GetDataDir() /= fileName : filesys::path(fileName);
