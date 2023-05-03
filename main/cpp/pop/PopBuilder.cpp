@@ -234,11 +234,11 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
                         }
 
                         string line;
-                        getline(popFile, line); // step over file header
+                        getline(newCommunityFile, line); // step over file header
                         auto headers   = Split(line, ",");
 
 
-                        getline(popFile, line)
+                        getline(newCommunityFile, line)
                         const auto values               = Split(line, ",");
                         const auto person_id            = static_cast<unsigned int>(IntFromString(values[0]));
                         const auto INS_j_id             = static_cast<unsigned int>(IntFromString(values[1]));
