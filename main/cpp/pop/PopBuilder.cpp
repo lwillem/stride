@@ -21,6 +21,7 @@
 
 #include "contact/ContactType.h"
 #include "contact/IdSubscriptArray.h"
+#include "pop/Person.h"
 #include "pop/Population.h"
 #include "pop/SurveySeeder.h"
 #include "util/FileSys.h"
@@ -242,7 +243,7 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
                           
                         maxIds[typ] = INS_j_id;
 
-                        m_stride_logger->info("max number of new communities {}.", fileName);
+                        m_stride_logger->info("max number of new communities {}.", INS_j_id);
 
                         m_stride_logger->trace("Done determining max number of New Communities.");
 
@@ -285,11 +286,19 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
         // belongs, per type, to the pool with subscript p.GetPoolId(type).
         // Defensive measure: we have a pool for Id 0 and leave it empty.
         // --------------------------------------------------------------
+        
+        std::map<int, Person*> id_pointer_persons;
+        
         for (auto& p : *pop) {
+                unsigned int person_id = p.GetId();
+                id_pointer_persons.insert(pair<int, Person*>(person_id, p));
+
                 for (Id typ : IdList) {
+                        if (typ != Id:NewCommunity) {
                         const auto poolId = p.GetPoolId(typ);
                         if (poolId > 0) {
                                 pop->RefPoolSys().RefPools(typ)[poolId].AddMember(&p);
+                        }
                         }
                 }
         }
