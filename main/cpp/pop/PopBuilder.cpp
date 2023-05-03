@@ -291,7 +291,7 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
         
         for (auto& p : *pop) {
                 unsigned int person_id = p.GetId();
-                id_pointer_persons.insert(pair<int, Person*>(person_id, p));
+                id_pointer_persons.insert(pair<int, Person*>(person_id, &p));
 
                 for (Id typ : IdList) {
                         if (typ != Id::NewCommunity) {
