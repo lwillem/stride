@@ -92,11 +92,13 @@ void Person::Update(bool isRegularWeekday, bool isK12SchoolOff, bool isCollegeOf
 			m_in_pools[Id::SecondaryCommunity] = true;
 			m_in_pools[Id::HouseholdCluster]   = false;
 			m_in_pools[Id::Collectivity]       = false;
+			m_in_pools[Id::NewCommunity]	   = true;
 
         } else {
         	   // by default: a person is at home (or in their collectivity)
         	   m_in_pools[Id::Household]          = true;
         	   m_in_pools[Id::Collectivity]       = true;
+			   m_in_pools[Id::NewCommunity]		  = true;
 
 
         	   // is household clustering allowed?
@@ -106,7 +108,7 @@ void Person::Update(bool isRegularWeekday, bool isK12SchoolOff, bool isCollegeOf
         	   if (isRegularWeekday) {
         		   m_in_pools[Id::Workplace]          = true;
         		   m_in_pools[Id::PrimaryCommunity]   = false;
-        		   m_in_pools[Id::SecondaryCommunity] = true;
+        		   m_in_pools[Id::SecondaryCommunity] = true;				   
         	   } else{
         	       m_in_pools[Id::Workplace]          = false;
         	       m_in_pools[Id::PrimaryCommunity]   = true;
@@ -149,6 +151,7 @@ void Person::Update(bool isRegularWeekday, bool isK12SchoolOff, bool isCollegeOf
         	        	m_in_pools[Id::SecondaryCommunity] = false;
         	        	m_in_pools[Id::HouseholdCluster]   = false;
         	        	m_in_pools[Id::Collectivity]       = false;  //TODO: correct assumption?!
+						m_in_pools[Id::NewCommunity]	   = false;
         	     }
         }
 

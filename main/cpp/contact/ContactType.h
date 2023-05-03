@@ -41,7 +41,8 @@ enum class Id : unsigned int
         PrimaryCommunity,
         SecondaryCommunity,
 		HouseholdCluster,
-		Collectivity
+		Collectivity,
+        NewCommunity
 };
 
 /// Number of ContactPool types.

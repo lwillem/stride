@@ -106,8 +106,10 @@ shared_ptr<Population> PopBuilder::MakePersons(shared_ptr<Population> pop)
                 	schoolId = 0;
                 }
 
+                unsigned int newCommunityId = 1;
+
                 pop->CreatePerson(person_id, age, householdId, schoolId, collegeId, workId, primaryCommunityId,
-                                  secondaryCommunityId, householdClusterId, collectivityId);
+                                  secondaryCommunityId, householdClusterId, collectivityId, newCommunityId);
                 ;
         }
 
@@ -166,7 +168,7 @@ shared_ptr<Population> PopBuilder::MakePersonsOpt(shared_ptr<Population> pop)
         const auto workId               = static_cast<unsigned int>(IntFromString(values[4]));
         const auto primaryCommunityId   = static_cast<unsigned int>(IntFromString(values[5]));
         const auto secondaryCommunityId = static_cast<unsigned int>(IntFromString(values[6]));
-
+       
         unsigned int householdClusterId = defaultHouseholdClusterId;
         unsigned int collectivityId = defaultCollectivityId;
         if (values.size() == 8) {
@@ -184,8 +186,10 @@ shared_ptr<Population> PopBuilder::MakePersonsOpt(shared_ptr<Population> pop)
             schoolId = 0;
         }
 
+        unsigned int newCommunityId = 1;
+
         pop->CreatePerson(person_id, age, householdId, schoolId, collegeId, workId, primaryCommunityId,
-                          secondaryCommunityId, householdClusterId, collectivityId);
+                          secondaryCommunityId, householdClusterId, collectivityId, newCommunityId);
         ;
     }
 
