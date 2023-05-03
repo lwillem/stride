@@ -274,7 +274,6 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
         // Initialize poolSys with empty ContactPools (even for Id=0).
         // --------------------------------------------------------------
         for (Id typ : IdList) {
-                m_stride_logger->info("typ {}.", ToString(typ));
                 for (unsigned int i = 1; i < maxIds[typ] + 1; i++) {
                         pop->RefPoolSys().CreateContactPool(typ);
                 }
