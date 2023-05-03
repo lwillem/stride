@@ -242,6 +242,8 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
                           
                         maxIds[typ] = INS_j_id;
 
+                        m_stride_logger->info("max number of new communities {}.", fileName);
+
                         m_stride_logger->trace("Done determining max number of New Communities.");
 
                         newCommunityFile.close();
