@@ -243,7 +243,7 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
                         const auto person_id            = static_cast<unsigned int>(IntFromString(values[0]));
                         const auto INS_j_id             = static_cast<unsigned int>(IntFromString(values[1]));
                           
-                        maxIds[typ] = INS_j_id
+                        maxIds[typ] = INS_j_id;
 
                         std::cout << maxIds[typ] << "!\n";
 
