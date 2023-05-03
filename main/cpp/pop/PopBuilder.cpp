@@ -214,7 +214,7 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
         IdSubscriptArray<unsigned int> maxIds{0U};
         for (const auto& p : *pop) {
                 for (Id typ : IdList) {
-                        m_stride_logger->info("type {}.", typ);
+                        
                         if (typ != Id::NewCommunity) {
                         maxIds[typ] = max(maxIds[typ], p.GetPoolId(typ));
                         }
