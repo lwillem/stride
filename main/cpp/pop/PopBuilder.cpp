@@ -331,7 +331,7 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
                         const auto person_id            = static_cast<unsigned int>(IntFromString(values[0]));
                         const auto INS_j_id             = static_cast<unsigned int>(IntFromString(values[1]));
 
-                        auto& p=id_pointer_persons.find(person_id)
+                        auto p=id_pointer_persons.find(person_id)
                         pop->RefPoolSys().RefPools(typ)[INS_j_id].AddMember(&p);
                         
 
