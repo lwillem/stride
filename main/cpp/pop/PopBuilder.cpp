@@ -212,14 +212,55 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
         // Determine maximum pool ids in population.
         // --------------------------------------------------------------
         IdSubscriptArray<unsigned int> maxIds{0U};
+
+        for (Id typ : IdList){
+                if (typ == Id::NewCommunity) {
+
+
+                        const auto fileName = m_config.get<string>("run.new_community_file");
+                        const auto use_install_dirs = m_config.get<bool>("run.use_install_dirs");
+                        const auto filePath         = (use_install_dirs) ? FileSys::GetDataDir() /= fileName : filesys::path(fileName);
+                        if (!is_regular_file(filePath)) {
+                                throw runtime_error(string(__func__) + "> New community file " + filePath.string() + " not present.");
+                        }
+
+                        ifstream newCommunityFile;
+                        newCommunityFile.open(filePath.string());
+                        if (!newCommunityFile.is_open()) {
+                        throw runtime_error(string(__func__) + "> Error opening new community file " + filePath.string());
+                        }
+
+                        string line;
+                        getline(newCommunityFile, line); // step over file header
+                        auto headers   = Split(line, ",");
+
+
+                        getline(newCommunityFile, line);
+                        const auto values               = Split(line, ",");
+                        const auto person_id            = static_cast<unsigned int>(IntFromString(values[0]));
+                        const auto INS_j_id             = static_cast<unsigned int>(IntFromString(values[1]));
+                          
+                        maxIds[typ] = INS_j_id;
+
+                        m_stride_logger->trace("Done determining max number of New Communities.");
+
+                        newCommunityFile.close();
+
+                        m_stride_logger->trace("Done determining max number of New Communities.");
+       
+                        }
+
+
+
+
+                }
+        
+
         for (const auto& p : *pop) {
-                for (Id typ : IdList) {
-                        
+                for (Id typ : IdList) {    
                         if (typ != Id::NewCommunity) {
                         maxIds[typ] = max(maxIds[typ], p.GetPoolId(typ));
                         }
-                        
-        
 
                 }
         }
