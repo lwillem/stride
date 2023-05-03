@@ -294,7 +294,7 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
                 id_pointer_persons.insert(pair<int, Person*>(person_id, p));
 
                 for (Id typ : IdList) {
-                        if (typ != Id:NewCommunity) {
+                        if (typ != Id::NewCommunity) {
                         const auto poolId = p.GetPoolId(typ);
                         if (poolId > 0) {
                                 pop->RefPoolSys().RefPools(typ)[poolId].AddMember(&p);
