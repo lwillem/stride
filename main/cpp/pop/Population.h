@@ -64,6 +64,9 @@ public:
         /// Get the current number of infected cases.
         unsigned int CountInfectedCases() const;
 
+        /// Get the number of infected cases that took place in a new community.
+        unsigned int CountInfectedNewCommunityCases() const;
+
         /// Get the current number of exposed cases.
         unsigned int CountExposedCases() const;
 
