@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include "contact/ContactType.h"
+
 namespace stride {
 
 /// Enumerate the various health states with respect to the infection.
@@ -162,6 +164,8 @@ private:
 
         unsigned int       m_id_index_case;        ///< ID of the index case, given infection
         unsigned int       m_id_infector;          ///< ID of the infector, given infection
+
+        ContactType::Id    m_infection_poolType;    ///< poolType of the place where the infection took place
 
         double             m_sympt_cnt_reduction_work_school;  ///< Proportional reduction of presence in work/school pool when symptomatic
         double             m_sympt_cnt_reduction_community;    ///< Proportional reduction of presence in the community pools when symptomatic
