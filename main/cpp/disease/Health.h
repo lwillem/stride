@@ -22,6 +22,8 @@
 
 #include "contact/ContactType.h"
 
+using namespace stride::ContactType;
+
 namespace stride {
 
 /// Enumerate the various health states with respect to the infection.
@@ -77,7 +79,7 @@ public:
         // Took the infection place in a "new community"?
         bool IsNewCommunity() const
         {
-                return m_infection_poolType == Id::NewCommunity;
+                return m_infection_poolType == stride::ContactType::Id::NewCommunity;
         }
 
 
