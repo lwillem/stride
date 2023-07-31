@@ -25,6 +25,9 @@
 #include "contact/ContactType.h"
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> parent of e445856 (adapting referencing to ContactType::Id)
+=======
 >>>>>>> parent of e445856 (adapting referencing to ContactType::Id)
 =======
 >>>>>>> parent of e445856 (adapting referencing to ContactType::Id)
