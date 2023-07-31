@@ -114,7 +114,7 @@ public:
         void SetSusceptible() { m_status = HealthStatus::Susceptible; }
 
         /// Start the infection.
-        void StartInfection(unsigned int id_index_case, unsigned int id_infector, ContactType::Id infection_poolType,
+        void StartInfection(unsigned int id_index_case, unsigned int id_infector, 
                 double relative_infectiousness);
 
         /// Stop the infection.

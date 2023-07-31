@@ -39,14 +39,13 @@ Health::Health(unsigned short int start_infectiousness, unsigned short int start
 }
 
 
-void Health::StartInfection(unsigned int id_index_case, unsigned int id_infector, ContactType::Id infection_poolType, double relative_infectiousness)
+void Health::StartInfection(unsigned int id_index_case, unsigned int id_infector, double relative_infectiousness)
 {
         AssertThrow(m_status == HealthStatus::Susceptible, "Inconsistent Health change", nullptr);
         m_status = HealthStatus::Exposed;
         ResetDiseaseCounter();
         m_id_index_case = id_index_case;
         m_id_infector   = id_infector;
-		m_infection_poolType = infection_poolType;
         m_relative_infectiousness = relative_infectiousness;
 }
 
