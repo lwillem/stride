@@ -74,13 +74,6 @@ public:
                        m_status == HealthStatus::InfectiousAndSymptomatic || m_status == HealthStatus::Symptomatic;
         }
 
-        // Took the infection place in a "new community"?
-        bool IsNewCommunity() const
-        {
-                return m_infection_poolType == Id::NewCommunity;
-        }
-
-
         /// Is this person infectious.
         bool IsInfectious() const
         {
@@ -100,10 +93,10 @@ public:
         }
 
         /// Is this person exposed?
-	bool IsExposed() const
-	{
-		return m_status == HealthStatus::Exposed;
-	}
+		bool IsExposed() const
+		{
+				return m_status == HealthStatus::Exposed;
+		}
 
         /// Have the symptoms started today?
         bool SymptomsStartedToday() const { return GetDiseaseCounter() == m_start_symptomatic; }
@@ -136,18 +129,18 @@ public:
         /// Get contact reduction in community pools when symptomatic infected
         double GetSymptomaticCntReductionCommunity() const { return m_sympt_cnt_reduction_community; };
 
-	/// Is this individual PCR detectable?
-	bool IsPcrDetectable(unsigned int detectable_delay) const { return GetDiseaseCounter() >= detectable_delay; }
+		/// Is this individual PCR detectable?
+		bool IsPcrDetectable(unsigned int detectable_delay) const { return GetDiseaseCounter() >= detectable_delay; }
 
         /// Get relative infectiousness
         double GetRelativeInfectiousness() const {
-        	return m_relative_infectiousness;
+        		return m_relative_infectiousness;
         }
 
         /// Get relative probability to acquire infection
-	double GetRelativeSusceptibility() const {
-		return m_relative_susceptibility;
-	}
+		double GetRelativeSusceptibility() const {
+				return m_relative_susceptibility;
+		}
 
 
 private:
@@ -177,8 +170,8 @@ private:
         double             m_sympt_cnt_reduction_work_school;  ///< Proportional reduction of presence in work/school pool when symptomatic
         double             m_sympt_cnt_reduction_community;    ///< Proportional reduction of presence in the community pools when symptomatic
 
-        double	           m_relative_infectiousness;   ///< Relative probability of transmission when infected [0-1]
-        double	           m_relative_susceptibility;   ///< Relative probability of acquiring infection upon exposure [0-1]
+        double			   m_relative_infectiousness;   ///< Relative probability of transmission when infected [0-1]
+        double			   m_relative_susceptibility;   ///< Relative probability of acquiring infection upon exposure [0-1]
 
 };
 

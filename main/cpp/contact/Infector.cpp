@@ -335,7 +335,7 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
 									rnHandler.Binomial(tProb_p2_p1)) {
 
 									double rel_inf = transProfile.GetIndividualInfectiousness(rnHandler);
-									h1.StartInfection(h2.GetIdIndexCase(),p2->GetId(), pType, rel_inf);
+									h1.StartInfection(h2.GetIdIndexCase(),p2->GetId(), rel_inf);
 
 										if (TIC)
 												h1.StopInfection();

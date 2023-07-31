@@ -48,7 +48,6 @@ private:
         std::vector<unsigned int>  m_infectious;
         std::vector<unsigned int>  m_symptomatic;
         std::vector<unsigned int>  m_infected_total;
-        std::vector<unsigned int>  m_infected_newCommmunity;
 
         std::shared_ptr<SimRunner> m_runner;
 };

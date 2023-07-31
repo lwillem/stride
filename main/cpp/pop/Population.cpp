@@ -117,16 +117,6 @@ unsigned int Population::CountInfectedCases() const
         return total;
 }
 
-unsigned int Population::CountInfectedNewCommunityCases() const
-{
-        unsigned int total{0U};
-        for (const auto& p : *this) {
-                const auto& h = p.GetHealth();
-                total += h.IsInfected() and h.IsNewCommunity;
-        }
-        return total;
-}
-
 unsigned int Population::CountExposedCases() const
 {
         unsigned int total{0U};
