@@ -386,8 +386,8 @@ if(!setequal(project_summary,ref_project_summary)){
     
     flag <- rowSums(select_project_summary[,names(diff_summary)] != ref_project_summary[,names(diff_summary)])>0
     smd_print('EXP_ID with changes:', paste(unique(select_project_summary$gtester_label[flag]),collapse = ','))
-    select_project_summary[flag,names(diff_summary)]
-    ref_project_summary[flag,names(diff_summary)]
+    select_project_summary[flag,c('gtester_label',names(diff_summary))] ==
+    ref_project_summary[flag,c('gtester_label',names(diff_summary))]
     
     #par(mfrow=c(1,2),mar=c(8,4,4,2))
     par(mar=c(8,4,4,2))
