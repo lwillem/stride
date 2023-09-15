@@ -51,6 +51,12 @@ public:
                 return m_uniform01_generator() < probability_a * probability_b;
         }
 
+                /// Perform trinomial trial with given the product of the fiven probabilities.
+        bool Binomial(double probability_a, double probability_b, double probability_c)
+        {
+                return m_uniform01_generator() < probability_a * probability_b * probability_c;
+        }
+
 private:
         /// Convert (exponential) rate into probability
         double RateToProbability(double rate) { return 1.0 - std::exp(-rate); }
