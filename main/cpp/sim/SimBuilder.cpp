@@ -96,7 +96,7 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
 
         // --------------------------------------------------------------
 		// Seed population with immunity: naturally or vaccine-induced.
-		// --------------------------------------------------------------
+	// --------------------------------------------------------------
         ImmunitySeeder(m_config, sim->m_rn_man).Seed(sim->m_population);
 
 
