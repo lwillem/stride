@@ -1,0 +1,11 @@
+<ventilation_reduction>
+	<description>Reduction of infection transmission through ventilation</description>
+	<Household>0</Household>
+	<K12School>0.1</K12School>
+	<College>0.2</College>
+	<Workplace>0.3</Workplace>
+	<PrimaryCommunity>0.4</PrimaryCommunity>
+	<SecondaryCommunity>0.5</SecondaryCommunity>
+	<HouseholdCluster>0</HouseholdCluster>
+	<Collectivity>0.1</Collectivity>
+</ventilation_reduction>

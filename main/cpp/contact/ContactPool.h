@@ -97,7 +97,7 @@ private:
         std::vector<Person*> m_members;      ///< Pointers to contactpool members (raw pointers intentional).
         unsigned int         m_min_age;      ///< The minimum age of the members
         unsigned double      m_ventilation_reduction; ///< Percentage of reduction of transmission in the venue
-        unsigned bool        m_venue_non_complier; ///< There is ventilation on the venue or not
+        // unsigned bool        m_venue_non_complier; ///< There is ventilation on the venue or not
 };
 
 } // namespace stride
