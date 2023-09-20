@@ -397,7 +397,8 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
 															population, m_cnt_intensity_householdCluster, pType_distancing_factor);
                                 const auto  tProb_p1_p2 = transProfile.GetProbability(p1,p2);
 
-                                const double vProb = 0.5;
+                                const double ventilation_reduction = 0.5;
+                                const double vProb = 1 - ventilation_reduction;
                                 //GetVenueTransmissionProbability(pType);
 
                                 if (rnHandler.Binomial(cProb_p1, tProb_p1_p2, vProb)) {
