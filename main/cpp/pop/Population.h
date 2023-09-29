@@ -50,7 +50,7 @@ public:
                                                   std::shared_ptr<spdlog::logger> strideLogger = nullptr);
 
         /// Create an empty Population, used in gengeopop.
-        static std::shared_ptr<Population> Create();
+        static std::shared_ptr<Population> Create1(const boost::property_tree::ptree& ventilation);
 
 public:
         /// Create Person in the population.
@@ -89,9 +89,9 @@ public:
         unsigned int GetPoolSize(ContactType::Id typeId, const Person* p) const;
 
 
-private:
+public:
         /// Non-trivial default constructor.
-        Population();
+        Population(const boost::property_tree::ptree& ventilation);
 
 private:
         ContactPoolSys                  m_pool_sys;       ///< The global @ContactPoolSys.

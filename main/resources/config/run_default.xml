@@ -4,9 +4,10 @@
     <event_log_level>Transmissions</event_log_level>
     <event_output_file>true</event_output_file>
     <disease_config_file>disease_measles_adaptive_behavior.xml</disease_config_file>
+	<ventilation_file>ventilation_reduction.xml</ventilation_file>
     <global_information_policy>NoGlobalInformation</global_information_policy>
     <holidays_file>holidays_none.csv</holidays_file>
-    <immunity_profile>None</immunity_profile>
+	<immunity_profile>None</immunity_profile>
     <immunity_rate>0.8</immunity_rate>
     <num_days>50</num_days>
     <num_participants_survey>10</num_participants_survey>

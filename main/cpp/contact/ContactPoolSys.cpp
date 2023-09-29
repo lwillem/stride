@@ -18,6 +18,8 @@
  * Core Population class.
  */
 
+#include <boost/property_tree/ptree.hpp>
+
 #include "ContactPoolSys.h"
 
 using namespace std;
@@ -25,7 +27,7 @@ using namespace stride::ContactType;
 
 namespace stride {
 
-ContactPoolSys::ContactPoolSys() : m_currentContactPoolId(), m_sys()
+ContactPoolSys::ContactPoolSys(const boost::property_tree::ptree& ventilation) : m_currentContactPoolId(), m_sys(), m_ventilation(ventilation)
 {
         for (Id typ : IdList) {
                 m_sys[typ].emplace_back(ContactPool(0U, typ));

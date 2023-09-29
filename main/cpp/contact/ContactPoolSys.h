@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include <boost/property_tree/ptree_fwd.hpp>
+
 #include "ContactType.h"
 #include "IdSubscriptArray.h"
 #include "contact/ContactPool.h"
@@ -37,7 +39,7 @@ class ContactPoolSys
 {
 public:
         /// Empty system.
-        ContactPoolSys();
+        ContactPoolSys(const boost::property_tree::ptree& ventilation);
 
         /// Create a new contact pool of a given type.
         ContactPool* CreateContactPool(ContactType::Id typeId);
@@ -90,6 +92,8 @@ private:
         /// We use the SegmentedVector not to run in re-allocations and to be able to use
         /// pointers into the SegmentedVector.
         ContactType::IdSubscriptArray<util::SegmentedVector<ContactPool>> m_sys;
+
+        const boost::property_tree::ptree& m_ventilation;     
 };
 
 } // namespace stride
