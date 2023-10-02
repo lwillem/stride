@@ -93,7 +93,7 @@ private:
         /// pointers into the SegmentedVector.
         ContactType::IdSubscriptArray<util::SegmentedVector<ContactPool>> m_sys;
 
-        const boost::property_tree::ptree& m_ventilation;     
+        ContactType::IdSubscriptArray<double> m_ventilation;     
 };
 
 } // namespace stride

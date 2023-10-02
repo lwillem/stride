@@ -29,8 +29,8 @@ namespace stride {
 
 using namespace std;
 
-ContactPool::ContactPool(unsigned int poolId, ContactType::Id type)
-    : m_index_immune(0), m_pool_id(poolId), m_pool_type(type), m_members(), m_min_age(110)
+ContactPool::ContactPool(unsigned int poolId, ContactType::Id type, double ventilation)
+    : m_index_immune(0), m_pool_id(poolId), m_pool_type(type), m_members(), m_min_age(110), m_ventilation()
 {
 }
 
