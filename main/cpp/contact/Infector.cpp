@@ -372,6 +372,7 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
         const auto  pType    = pool.m_pool_type;
         const auto  pImmune  = pool.m_index_immune;
         const auto& pMembers = pool.m_members;
+        const auto  pVentilation = pool.m_ventilation;
         const auto  pSize    = pMembers.size();
 
         // get minimum age of the members (relevant for school settings)
@@ -397,8 +398,7 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
 															population, m_cnt_intensity_householdCluster, pType_distancing_factor);
                                 const auto  tProb_p1_p2 = transProfile.GetProbability(p1,p2);
 
-                                const double ventilation_reduction = 0.5;
-                                const double vProb = 1 - ventilation_reduction;
+                                const double vProb = 1 - pVentilation; // reduction through ventilation
                                 //GetVenueTransmissionProbability(pType);
 
                                 if (rnHandler.Binomial(cProb_p1, tProb_p1_p2, vProb)) {

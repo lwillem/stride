@@ -96,7 +96,7 @@ private:
         ContactType::Id      m_pool_type;    ///< The type of the ContactPool (for logging and testing purposes).
         std::vector<Person*> m_members;      ///< Pointers to contactpool members (raw pointers intentional).
         unsigned int         m_min_age;      ///< The minimum age of the members
-        double      m_ventilation; ///< Percentage of reduction of transmission in the venue
+        double               m_ventilation; ///< Percentage of reduction of transmission in the venue
         // unsigned bool        m_venue_non_complier; ///< There is ventilation on the venue or not
 };
 

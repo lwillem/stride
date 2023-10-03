@@ -84,8 +84,8 @@ void Person::Update(bool isRegularWeekday, bool isK12SchoolOff, bool isCollegeOf
         m_health.Update();
 
         if (run_simplified) {
-        		m_in_pools[Id::Household]          = true;
-        		m_in_pools[Id::K12School]          = true;
+        	m_in_pools[Id::Household]          = true;
+        	m_in_pools[Id::K12School]          = true;
 			m_in_pools[Id::College]            = true;
 			m_in_pools[Id::Workplace]          = true;
 			m_in_pools[Id::PrimaryCommunity]   = true;
