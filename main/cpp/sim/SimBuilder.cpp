@@ -108,13 +108,13 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         sim->m_num_daily_imported_cases = m_config.get<double>("run.num_daily_imported_cases",0);
 
         // --------------------------------------------------------------
-		// Set Universal Testing 
+	// Set Universal Testing 
         // --------------------------------------------------------------
         sim->m_universal_testing.Initialize(m_config);
         
         // --------------------------------------------------------------
-		// Set Public Health Agency
-		// --------------------------------------------------------------
+        // Set Public Health Agency
+        // --------------------------------------------------------------
         sim->m_public_health_agency.Initialize(m_config);
 		sim->m_cnt_intensity_householdCluster       = m_config.get<double>("run.cnt_intensity_householdCluster",0);
 		sim->m_is_isolated_from_household           = m_config.get<bool>("run.is_isolated_from_household",false);
@@ -130,7 +130,7 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         ContactHeterogeneitySeeder(m_config, sim->m_rn_man).Seed(sim->m_population);
 
         // --------------------------------------------------------------
-        // Fill in the ventilation the contactPoolSys.
+        // Fill in the ventilation in the contactPoolSys.
         // --------------------------------------------------------------
         VentilationHeterogeneitySeeder(m_config, sim->m_rn_man).Ventilation(sim->m_population);
 

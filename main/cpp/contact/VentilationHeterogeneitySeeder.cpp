@@ -51,13 +51,13 @@ shared_ptr<Population> VentilationHeterogeneitySeeder::Ventilation(shared_ptr<Po
 
         const auto fp = m_config.get<bool>("run.use_install_dirs") ? FileSys::GetDataDir() / (ventilationFile.value_or("")) : filesys::path(ventilationFile.value_or(""));
         ptree ventilationPt = FileSys::ReadPtreeFile(fp);
-		ContactType::IdSubscriptArray<double> ventilationInfo;
-
+		
 		for (ContactType::Id typ : ContactType::IdList) {
 			std::string typString = ToString(typ);
-			ventilationInfo[typ] = ventilationPt.get<double>("ventilation_reduction." + typString,0);
+			double ventilationInfo = ventilationPt.get<double>("ventilation_reduction." + typString,0);
 			for (auto pool: pop->CRefPoolSys().CRefPools(typ)) {
-				pool.SetVentilation(ventilationInfo[typ]);
+				pool.SetVentilation(ventilationInfo);
+				logger->info("[VEN] {} {} {}", typString, ventilationInfo, pool.GetVentilation());
 			};
 		};
 

@@ -39,7 +39,7 @@ public:
         }
 
         static void Trans(const std::shared_ptr<spdlog::logger>&, const Person*, const Person*, ContactType::Id,
-                          unsigned short int, unsigned int)
+                          unsigned short int, unsigned int, const double)
         {
         }
 };
@@ -56,14 +56,15 @@ public:
 
         // p1: infector & p2:infectee
         static void Trans(const std::shared_ptr<spdlog::logger>& logger, const Person* p1, const Person* p2,
-                          ContactType::Id type, unsigned short int sim_day, unsigned int id_index_case)
+                          ContactType::Id type, unsigned short int sim_day, unsigned int id_index_case, const double pVentilation)
         {
-                logger->info("[TRAN_M] {} {} {} {} {}",
+                logger->info("[TRAN_M] {} {} {} {} {} {}",
 							 p2->GetAge(),
 							 sim_day,
 							 p2->GetHealth().GetStartInfectiousness(),
 							 p2->GetHealth().GetStartSymptomatic(),
-							 p2->GetHealth().GetEndSymptomatic()
+							 p2->GetHealth().GetEndSymptomatic(),
+                                                         pVentilation
 							 );
         }
 };
@@ -80,15 +81,16 @@ public:
 
         // p1: infector & p2:infectee
         static void Trans(const std::shared_ptr<spdlog::logger>& logger, const Person* p1, const Person* p2,
-                          ContactType::Id type, unsigned short int sim_day, unsigned int id_index_case)
+                          ContactType::Id type, unsigned short int sim_day, unsigned int id_index_case, const double pVentilation)
         {
-                logger->info("[TRAN] {} {} {} {} {} {} {} {} {} {} {} {} {} {}", p2->GetId(), p1->GetId(), p2->GetAge(), p1->GetAge(),
+                logger->info("[TRAN] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}", p2->GetId(), p1->GetId(), p2->GetAge(), p1->GetAge(),
                              ToString(type), sim_day, id_index_case,
 							 p2->GetHealth().GetStartInfectiousness(),p2->GetHealth().GetEndInfectiousness(),
 							 p2->GetHealth().GetStartSymptomatic(),p2->GetHealth().GetEndSymptomatic(),
 							 p1->GetHealth().IsSymptomatic(),
 							 p2->GetHealth().GetRelativeInfectiousness(),
-							 p2->GetHealth().GetRelativeSusceptibility());
+							 p2->GetHealth().GetRelativeSusceptibility(),
+                                                         pVentilation);
         }
 };
 
@@ -116,14 +118,14 @@ public:
         }
 
         static void Trans(const std::shared_ptr<spdlog::logger>& logger, const Person* p1, const Person* p2,
-                          ContactType::Id type, unsigned short int sim_day, unsigned int id_index_case)
+                          ContactType::Id type, unsigned short int sim_day, unsigned int id_index_case, const double pVentilation)
         {
                 logger->info("[TRAN] {} {} {} {} {} {} {} {} {} {} {} {} {} {}", p2->GetId(), p1->GetId(), p2->GetAge(), p1->GetAge(),
                              ToString(type), sim_day, id_index_case,
 							 p2->GetHealth().GetStartInfectiousness(),p2->GetHealth().GetEndInfectiousness(),
 							 p2->GetHealth().GetStartSymptomatic(),p2->GetHealth().GetEndSymptomatic(),
 							 p1->GetHealth().IsSymptomatic(),  p1->GetHealth().GetRelativeInfectiousness(),
-							 p2->GetHealth().GetRelativeSusceptibility());
+							 p2->GetHealth().GetRelativeSusceptibility(), pVentilation);
         }
 };
 
@@ -150,14 +152,14 @@ public:
         }
 
         static void Trans(const std::shared_ptr<spdlog::logger>& logger, const Person* p1, const Person* p2,
-                          ContactType::Id type, unsigned short int sim_day, unsigned int id_index_case)
+                          ContactType::Id type, unsigned short int sim_day, unsigned int id_index_case, const double pVentilation)
         {
                 logger->info("[TRAN] {} {} {} {} {} {} {} {} {} {} {} {} {} {}", p2->GetId(), p1->GetId(), p2->GetAge(), p1->GetAge(),
                              ToString(type), sim_day, id_index_case,
 							 p2->GetHealth().GetStartInfectiousness(),p2->GetHealth().GetEndInfectiousness(),
 							 p2->GetHealth().GetStartSymptomatic(),p2->GetHealth().GetEndSymptomatic(),
 							 p1->GetHealth().IsSymptomatic(),  p1->GetHealth().GetRelativeInfectiousness(),
-							 p2->GetHealth().GetRelativeSusceptibility());
+							 p2->GetHealth().GetRelativeSusceptibility(), pVentilation);
         }
 };
 
@@ -273,6 +275,7 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
         const auto  pType    = pool.m_pool_type;
         const auto& pMembers = pool.m_members;
         const auto  pSize    = pMembers.size();
+        const auto pVentilation = pool.m_ventilation;
 
         // get minimum age of the members (relevant for school settings)
         const unsigned int min_age_members = pool.GetMinAge();
@@ -327,7 +330,7 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
 
 										if (TIC)
 												h2.StopInfection();
-										LP::Trans(eventLogger, p1, p2, pType, simDay, h1.GetIdIndexCase());
+										LP::Trans(eventLogger, p1, p2, pType, simDay, h1.GetIdIndexCase(), pVentilation);
 								}
 
 								// if h2 infectious, account for susceptibility of p1
@@ -339,7 +342,7 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
 
 										if (TIC)
 												h1.StopInfection();
-										LP::Trans(eventLogger, p2, p1, pType, simDay, h2.GetIdIndexCase());
+										LP::Trans(eventLogger, p2, p1, pType, simDay, h2.GetIdIndexCase(), pVentilation);
 								}
                         }
                 }
@@ -399,8 +402,7 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                                 const auto  tProb_p1_p2 = transProfile.GetProbability(p1,p2);
 
                                 const double vProb = 1 - pVentilation; // reduction through ventilation
-                                //GetVenueTransmissionProbability(pType);
-
+                                
                                 if (rnHandler.Binomial(cProb_p1, tProb_p1_p2, vProb)) {
 
                                         auto& h2 = p2->GetHealth();
@@ -414,7 +416,7 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                                                 // No secondary infections with TIC; just mark p2 'recovered'
                                                 if (TIC)
                                                         h2.StopInfection();
-                                                LP::Trans(eventLogger, p1, p2, pType, simDay, h1.GetIdIndexCase());
+                                                LP::Trans(eventLogger, p1, p2, pType, simDay, h1.GetIdIndexCase(), pVentilation);
                                         }
                                 }
                         }
