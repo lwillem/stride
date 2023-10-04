@@ -23,6 +23,7 @@
 #include "contact/ContactType.h"
 #include "contact/InfectorMap.h"
 #include "contact/ContactHeterogeneitySeeder.h"
+#include "contact/VentilationHeterogeneitySeeder.h"
 #include "disease/DiseaseSeeder.h"
 #include "disease/HealthSeeder.h"
 #include "disease/ImmunitySeeder.h"
@@ -127,6 +128,11 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         // Seed population with non-compliant individuals.
         // --------------------------------------------------------------
         ContactHeterogeneitySeeder(m_config, sim->m_rn_man).Seed(sim->m_population);
+
+        // --------------------------------------------------------------
+        // Fill in the ventilation the contactPoolSys.
+        // --------------------------------------------------------------
+        VentilationHeterogeneitySeeder(m_config, sim->m_rn_man).Ventilation(sim->m_population);
 
         // --------------------------------------------------------------
         // Done.

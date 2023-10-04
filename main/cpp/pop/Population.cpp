@@ -40,7 +40,7 @@ using namespace stride::ContactType;
 
 namespace stride {
 
-Population::Population(const boost::property_tree::ptree& ventilation) : m_pool_sys(ventilation), m_event_logger() {}
+Population::Population() : m_pool_sys(), m_event_logger() {}
 
 std::shared_ptr<Population> Population::Create(const boost::property_tree::ptree& config,
                                                std::shared_ptr<spdlog::logger> strideLogger)
@@ -52,18 +52,8 @@ std::shared_ptr<Population> Population::Create(const boost::property_tree::ptree
         // --------------------------------------------------------------
         // Create empty population & and give it a InfectorLogger.
         // --------------------------------------------------------------
-        
-        ptree ventilationPt;
-
-        boost::optional<string> ventilationFile = config.get_optional<string>("run.ventilation_file");    
-        if (ventilationFile) {
-                const auto fp = config.get<bool>("run.use_install_dirs") ? FileSys::GetDataDir() / (ventilationFile.value_or("")) : filesys::path(ventilationFile.value_or(""));
-                ventilationPt = FileSys::ReadPtreeFile(fp);
-        } else {
-                ventilationPt = ptree();
-        }
-        
-        const auto pop = Create1(ventilationPt);
+            
+        const auto pop = Create();
         if (config.get<bool>("run.event_output_file", true)) {
                 const auto prefix       = config.get<string>("run.output_prefix");
                 const auto logPath      = FileSys::BuildPath(prefix, "event_log.txt");
@@ -87,15 +77,14 @@ std::shared_ptr<Population> Population::Create(const boost::property_tree::ptree
         return pop;
 }
 
-std::shared_ptr<Population> Population::Create1(const boost::property_tree::ptree& ventilation) {
+std::shared_ptr<Population> Population::Create() {
   // --------------------------------------------------------------
   // Create (empty) population and return it
   // --------------------------------------------------------------
-  //struct make_shared_enabler : public Population {
-  ///};
-  //auto r = make_shared<make_shared_enabler>(ventilation);
-  //return r;
-  return std::make_shared<Population>(ventilation);
+  struct make_shared_enabler : public Population {
+  };
+  auto r = make_shared<make_shared_enabler>();
+  return r;
 }
 
 Person* Population::CreatePerson(unsigned int id, double age, unsigned int householdId, unsigned int k12SchoolId,

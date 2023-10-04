@@ -40,7 +40,7 @@ class ContactPool
 {
 public:
         /// Initializing constructor.
-        ContactPool(unsigned int poolId, ContactType::Id type, double ventilation);
+        ContactPool(unsigned int poolId, ContactType::Id type);
 
         /// Default will do.
         ~ContactPool() = default;
@@ -59,6 +59,17 @@ public:
 
         /// Get the type of ContactPool, used for logging and tests
         ContactType::Id GetType() const { return m_pool_type; }
+
+        /// Get the ventilation of the venue
+        double GetVentilation() const { return m_ventilation; }
+
+        ///< Set ventialtion of a pool
+        void SetVentilation(double ventilation) { m_ventilation = ventilation; }
+
+        /// Get compliance of a pool
+        void SetNonComplier() {  m_venue_non_complier = true; }
+
+        bool IsNonComplier() const { return m_venue_non_complier; }
 
         /// Inspect whether this pool contains an infant
         bool HasInfant() const { return m_min_age < 1; }
@@ -97,7 +108,7 @@ private:
         std::vector<Person*> m_members;      ///< Pointers to contactpool members (raw pointers intentional).
         unsigned int         m_min_age;      ///< The minimum age of the members
         double               m_ventilation; ///< Percentage of reduction of transmission in the venue
-        // unsigned bool        m_venue_non_complier; ///< There is ventilation on the venue or not
+        bool                 m_venue_non_complier; ///< There is ventilation on the venue or not
 };
 
 } // namespace stride

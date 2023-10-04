@@ -18,8 +18,6 @@
  * Core Population class.
  */
 
-#include <boost/property_tree/ptree.hpp>
-
 #include "ContactPoolSys.h"
 
 using namespace std;
@@ -27,37 +25,17 @@ using namespace stride::ContactType;
 
 namespace stride {
 
-ContactPoolSys::ContactPoolSys(const boost::property_tree::ptree& ventilation) : m_currentContactPoolId(), m_sys(), m_ventilation()
+ContactPoolSys::ContactPoolSys() : m_currentContactPoolId(), m_sys()
 {
-
-auto ventilationHousehold = ventilation.get<double>("ventilation_reduction.Household",0);
-auto ventilationK12School = ventilation.get<double>("ventilation_reduction.K12School",0);
-auto ventilationCollege = ventilation.get<double>("ventilation_reduction.College",0);
-auto ventilationWorkplace = ventilation.get<double>("ventilation_reduction.Workplace",0);
-auto ventilationPrimaryCommunity = ventilation.get<double>("ventilation_reduction.PrimaryCommunity",0);
-auto ventilationSecondaryCommunity = ventilation.get<double>("ventilation_reduction.SecondaryCommunity",0);
-auto ventilationHouseholdCluster = ventilation.get<double>("ventilation_reduction.HouseholdCluster",0);
-auto ventilationCollectivity = ventilation.get<double>("ventilation_reduction.Collectivity",0);
-
-        for (Id typ : IdList) {
-                m_sys[typ].emplace_back(ContactPool(0U, typ, 0U));
+   for (Id typ : IdList) {
+                m_sys[typ].emplace_back(ContactPool(0U, typ));
                 m_currentContactPoolId[typ] = 1;
-                if (typ == ContactType::Id::Household) {m_ventilation[typ] = ventilationHousehold;}
-                else if (typ == ContactType::Id::K12School) {m_ventilation[typ] = ventilationK12School;}
-                else if (typ == ContactType::Id::College) {m_ventilation[typ] = ventilationCollege;}
-                else if (typ == ContactType::Id::Workplace) {m_ventilation[typ] = ventilationWorkplace;}
-                else if (typ == ContactType::Id::PrimaryCommunity) {m_ventilation[typ] = ventilationPrimaryCommunity;}
-                else if (typ == ContactType::Id::SecondaryCommunity) {m_ventilation[typ] = ventilationSecondaryCommunity;}
-                else if (typ == ContactType::Id::HouseholdCluster) {m_ventilation[typ] = ventilationHouseholdCluster;}
-                else if (typ == ContactType::Id::Collectivity) {m_ventilation[typ] = ventilationCollectivity;}
-
         }
-
 }
 
 ContactPool* ContactPoolSys::CreateContactPool(ContactType::Id typeId)
 {
-        return m_sys[typeId].emplace_back(m_currentContactPoolId[typeId]++, typeId, m_ventilation[typeId]);
+        return m_sys[typeId].emplace_back(m_currentContactPoolId[typeId]++, typeId);
 }
 
 } // namespace stride
