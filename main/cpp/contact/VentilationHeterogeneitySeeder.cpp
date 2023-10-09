@@ -55,7 +55,7 @@ shared_ptr<Population> VentilationHeterogeneitySeeder::Ventilation(shared_ptr<Po
 		for (ContactType::Id typ : ContactType::IdList) {
 			std::string typString = ToString(typ);
 			double ventilationInfo = ventilationPt.get<double>("ventilation_reduction." + typString,0);
-			for (auto pool: pop->CRefPoolSys().CRefPools(typ)) {
+			for (auto& pool: pop->RefPoolSys().RefPools(typ)) {
 				pool.SetVentilation(ventilationInfo);
 				logger->info("[VEN] {} {} {}", typString, ventilationInfo, pool.GetVentilation());
 			};
@@ -67,5 +67,30 @@ shared_ptr<Population> VentilationHeterogeneitySeeder::Ventilation(shared_ptr<Po
 	return pop;
 
 }
+
+shared_ptr<Population> VentilationHeterogeneitySeeder::Seed(shared_ptr<Population> pop)
+{
+
+	auto& population = *pop;
+
+	auto& logger = population.RefEventLogger();
+
+	// Seed non-compliance
+
+	// Non-compliance in pools
+	boost::optional<string> nonCompliancePooltype = m_config.get_optional<string>("run.non_compliance_pooltype");
+	if (nonCompliancePooltype) {
+		string nonComplianceType = m_config.get<string>("run.non_compliance_type");
+		ContactType::Id nonComplianceTypeId = ToId(nonComplianceType);
+		for (auto& pool:pop->RefPoolSys().RefPools(nonComplianceTypeId)){
+			pool.SetNonComplier();
+			logger->info("[CHG] {} ", pool.IsNonComplier());
+		}
+	}
+
+	return pop;
+}
+
+
 
 } // namespace stride

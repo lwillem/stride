@@ -73,6 +73,7 @@ private:
 
         friend class PopBuilder;
         friend class Sim;
+        friend class VentilationHeterogeneitySeeder;
 
 private:
         /// The contact pool counters (one per type id) for assigning pool UIDs. Counters

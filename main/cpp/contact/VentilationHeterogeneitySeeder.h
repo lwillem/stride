@@ -50,6 +50,10 @@ public:
     /// \param pop               Population.
     std::shared_ptr<Population> Ventilation(std::shared_ptr<Population> pop);
 
+    /// \param pop               Population.
+    std::shared_ptr<Population> Seed(std::shared_ptr<Population> pop);
+
+
 private:
     const boost::property_tree::ptree& m_config; ///< Run config.
     util::RnMan&                       m_rn_man; ///< Random number manager.
