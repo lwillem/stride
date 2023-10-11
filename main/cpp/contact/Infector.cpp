@@ -230,6 +230,22 @@ inline double GetContactProbability(const AgeContactProfile& profile, const Pers
 			contact_probability = individual_contact_probability_p2;
 		}
 
+                // adjust contact for individual variation in community and workplace contacts
+        if(pType == Id::PrimaryCommunity || pType == Id::SecondaryCommunity || pType == Id::Workplace){
+
+        		double individual_contact_factor_p1 = p1->GetIndividualContactFactor();
+        		double individual_contact_factor_p2 = p2->GetIndividualContactFactor();
+        		double avg_individual_contact_factor = (individual_contact_factor_p1 + individual_contact_factor_p2) / 2;
+        		contact_probability *= avg_individual_contact_factor;
+        }
+
+
+        // choose a random probability
+        //double contact_probability = individual_contact_probability_p1;
+        //if (rnHandler.Binomial(0.5)) {
+        	//	contact_probability = individual_contact_probability_p2;
+        //}
+
         	    // limit probability to 0.999
         if (contact_probability >= 1) {
         	contact_probability = 0.999;
