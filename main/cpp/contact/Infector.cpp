@@ -189,8 +189,8 @@ inline double GetContactProbability(const AgeContactProfile& profile, const Pers
         }
 
 
-		// get the reference number of contacts, given age and age-contact profile
-		double reference_num_contacts_p1{profile[EffectiveAge(static_cast<unsigned int>(p1->GetAge()))]};
+	// get the reference number of contacts, given age and age-contact profile
+	double reference_num_contacts_p1{profile[EffectiveAge(static_cast<unsigned int>(p1->GetAge()))]};
         double reference_num_contacts_p2{profile[EffectiveAge(static_cast<unsigned int>(p2->GetAge()))]};
         const double potential_num_contacts{static_cast<double>(pool_size - 1)};
 
