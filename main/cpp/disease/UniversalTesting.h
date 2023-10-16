@@ -32,6 +32,7 @@
 
 #include <set>
 #include <vector>
+#include <fstream>
 
 namespace stride {
 
