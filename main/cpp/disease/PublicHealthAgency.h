@@ -48,7 +48,7 @@ public:
 		void Initialize(const boost::property_tree::ptree& config);
 
         /// Public Health Strategy: look for contacts of infected cases and quarantine infected cases
-		void PerformContactTracing(std::shared_ptr<Population> pop, util::RnHandler& rnHandler, const std::shared_ptr<Calendar> calendar);
+		void PerformContactTracing(std::shared_ptr<Population> pop, std::vector<util::RnHandler>& rnHandlers, const std::shared_ptr<Calendar> calendar);
 
 		bool IsK12SchoolOff(unsigned int age, bool isPreSchoolOff, bool isPrimarySchoolOff, bool isSecondarySchoolOff, bool isCollegeOff);
 
@@ -59,7 +59,7 @@ public:
         void Trace(Person& p_case,
                 std::shared_ptr<Population> pop,
 				util::RnHandler& rnHandler,
-                const std::shared_ptr<Calendar> calendar);
+                const unsigned short int simDay);
 
 private:
         //contact tracing configuration

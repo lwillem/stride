@@ -26,6 +26,8 @@
 #include <string>
 #include <vector>
 
+#include "sim/HospitalisationConfig.h"
+
 namespace stride {
 
 class Population;
@@ -45,7 +47,7 @@ public:
         explicit HealthSeeder(const boost::property_tree::ptree& diseasePt);
 
         /// Seeds the population with Health data.
-        void Seed(const std::shared_ptr<Population>& pop, const TransmissionProfile& transProfile, std::vector<util::RnHandler>& handlers);
+        void Seed(const std::shared_ptr<Population>& pop, const HospitalisationConfig &hc, const TransmissionProfile& transProfile, std::vector<util::RnHandler>& handlers);
 
 private:
         /// Utility method to extract distribution from data in ptree.

@@ -91,7 +91,7 @@ int main(int argc, char** argv)
                 }
 
                 for (const auto& p_assignment : overrideArg.getValue()) {
-                        const auto v = util::Tokenize(p_assignment, "=");
+                        const auto v = util::Tokenize<string>(p_assignment, "=");
                         configPt.put("run." + v[0], v[1]);
                 }
 

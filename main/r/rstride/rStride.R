@@ -135,10 +135,6 @@ parse_log_file <- function(config_exp,
     rstride_out$data_transmission[flag,start_symptoms := NA]
     rstride_out$data_transmission[flag,end_symptoms := NA]
     
-    # add estimated hospital admission
-    set.seed(config_exp$rng_seed + 16022018)
-    rstride_out$data_transmission <- add_hospital_admission_time(rstride_out$data_transmission,config_exp)
-    
     # get start and end of simulation period
     sim_date_range<- as.Date(config_exp$start_date,'%Y-%m-%d') + c(0,config_exp$num_days-1)  #note: start on day 0
     
@@ -443,96 +439,6 @@ get_counts <- function(all_data,sim_day_max,output_col = "counts"){
   
   return(data_out)
 }
-
-#data_transmission <- rstride_out$data_transmission
-add_hospital_admission_time <- function(data_transmission,config_exp){
-  
-  parse_hospital_input <- function(x){
-    
-    # defensive programming: if x is not present
-    if(is.null(x) || !grepl(',',x)){
-      x <- '0,0,0,0'
-    }
-    
-    # 1.split string using ','
-    # 2. unlist result
-    # 3. make numeric
-    # 4. reformat into data.frame with 4 columns
-    out <- data.frame(t(as.numeric(unlist(strsplit(x,',')))))
-    # 5. add column names
-    names(out) <- paste0('age',1:length(out))
-    # 6. return result
-    return(out)
-  }
-  
-  if(is.null(config_exp$hospital_category_age)){
-    config_exp$hospital_category_age  = paste(0,19,60,80,sep=',')
-  }
-  
-  names(data_transmission)
-  age_cat_breaks    <- (parse_hospital_input(config_exp$hospital_category_age))
-  # data_transmission$age_cat_hosp     <- cut(data_transmission$part_age,c(age_cat_breaks,110),right=F)
-  # data_transmission$age_cat_hosp_num <- as.numeric(data_transmission$age_cat_hosp)
-  
-  part_age <- data_transmission$part_age
-  age_cat_hosp <- cut(part_age,c(age_cat_breaks,110),right=F)
-  age_cat_hosp_num <- as.numeric(age_cat_hosp)
-  #data_transmission[,age_cat_hosp_num := age_cat_hosp_num]
-  
-  # # set hospital age groups (age groups for hospital admission)
-  # hosp_age <- list(age1 = 0:18,   # 0:16
-  #                  age2 = 19:59,  # 16:59
-  #                  age3 = 60:79,  # 60:80
-  #                  age4 = 80:110) # 80+
-  
-  # create columns for hospital admission start (by age)
-  data_transmission[, hospital_admission_start      := as.numeric(NA)]
-  
-  for(i_age_cat in names(age_cat_breaks)){
-    data_transmission[, paste0('hospital_admission_start_',i_age_cat) := as.numeric(NA)]
-  }
-  names(data_transmission)
-  
-  hospital_probability        <- parse_hospital_input(config_exp$hospital_probability_age)
-  
-  # adjust probability (for fitting)
-  hospital_probability <- hospital_probability * config_exp$hosp_probability_factor
-  
-  # defensive programming for fitting ==>> probability cannot be > 1
-  hospital_probability[hospital_probability>1] <- 1
-  
-  # # set hospital delay by age group
-  hosp_delay_mean      <- parse_hospital_input(config_exp$hospital_mean_delay_age)
-  
-  # set (uniform) delay  distribution -1, 0, 1
-  hosp_delay_variance <- -1:1
-  
-  # # calculate time between symptom onset and hospital admission (future work)
-  # get_hospital_delay <- function(n){
-  #   round(rtweibull(n, shape=1.112,scale=5.970, max =31))
-  # }
-
-  age_cat_hosp_num[is.na(data_transmission$start_symptoms)] <- 0
-  # sample hospital admission dates
-  i_hosp <- 1
-  for(i_hosp in 1:length(hospital_probability)){
-    #flag_part      <- !is.na(data_transmission$start_symptoms) & data_transmission$age_cat_hosp_num == i_hosp
-    flag_part      <- age_cat_hosp_num == i_hosp
-    flag_admission <- as.logical(rbinom(n = nrow(data_transmission),size = 1,prob = hospital_probability[[i_hosp]]))
-    flag_hosp      <- flag_part & flag_admission
-    if(sum(flag_hosp)>0){
-      hosp_start     <- as.numeric(data_transmission$start_symptoms[flag_hosp]) + hosp_delay_mean[[i_hosp]] + sample(hosp_delay_variance,sum(flag_hosp),replace = T)
-      data_transmission[flag_hosp, hospital_admission_start := hosp_start]
-      
-      # save age-specific results  
-      data_transmission[flag_hosp ,paste0('hospital_admission_start_age',i_hosp) := hosp_start]      
-    }
-  }
- 
-  # return
-  return(data_transmission) 
-}
-
 
 # load prevelence data and add colunm names
 get_prevalence_data <- function(config_exp,file_name){

@@ -22,5 +22,7 @@
 add_subdirectory(cpp)
 add_subdirectory(r)
 add_subdirectory(resources)
+# Added for pybind stride library
+add_subdirectory(python/pybind)
 
 #############################################################################

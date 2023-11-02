@@ -63,12 +63,12 @@ std::tuple<bool, unsigned int> ContactPool::SortMembers()
 
         for (size_t i_member = 0; i_member < m_index_immune; i_member++) {
                 // if immune, move to back
-                if (m_members[i_member]->GetHealth().IsImmune()) {
+                if (m_members[i_member]->IsImmune()) {
                         bool         swapped   = false;
                         unsigned int new_place = m_index_immune - 1;
                         m_index_immune--;
                         while (!swapped && new_place > i_member) {
-                                if (m_members[new_place]->GetHealth().IsImmune()) {
+                                if (m_members[new_place]->IsImmune()) {
                                         m_index_immune--;
                                         new_place--;
                                 } else {

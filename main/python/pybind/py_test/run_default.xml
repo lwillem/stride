@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <run>
-    <age_contact_matrix_file>contact_matrix_flanders_conditional_teachers.xml</age_contact_matrix_file>
+    <age_contact_matrix_file>../../../../stride_omp_python/data/contact_matrix_flanders_conditional_teachers.xml</age_contact_matrix_file>
     <event_log_level>Transmissions</event_log_level>
     <event_output_file>true</event_output_file>
-    <disease_config_file>disease_measles_adaptive_behavior.xml</disease_config_file>
+    <disease_config_file>../../../../stride_omp_python/data/disease_measles_adaptive_behavior.xml</disease_config_file>
     <global_information_policy>NoGlobalInformation</global_information_policy>
-    <holidays_file>holidays_none.csv</holidays_file>
+    <holidays_file>../../resources/data/holidays_none.csv</holidays_file>
     <immunity_profile>None</immunity_profile>
     <immunity_rate>0.8</immunity_rate>
-    <num_days>50</num_days>
+    <num_days>100</num_days>
     <num_participants_survey>10</num_participants_survey>
     <num_threads>1</num_threads>
     <output_cases>true</output_cases>
     <output_persons>false</output_persons>
-    <output_prefix></output_prefix>
+    <output_prefix>./py_test/</output_prefix>
     <output_summary>false</output_summary>
-    <population_file>pop_belgium600k_c500_teachers_censushh.csv</population_file>
+    <population_file>../../../../stride_omp_python/data/pop_belgium600k_c500_teachers_censushh.csv</population_file>
     <population_type>default</population_type>
     <rng_seed>2020</rng_seed>
     <r0>11</r0>
@@ -29,8 +29,4 @@
     <vaccine_link_probability>0</vaccine_link_probability>
     <vaccine_profile>Random</vaccine_profile>
     <vaccine_rate>0.8</vaccine_rate>
-
-    <hospital_category_age>0,19,60,80</hospital_category_age>
-    <hospital_probability_age>0.049,0.03024,0.1197,0.5922</hospital_probability_age>
-    <hospital_mean_delay_age>3,7,7,6</hospital_mean_delay_age>
 </run>

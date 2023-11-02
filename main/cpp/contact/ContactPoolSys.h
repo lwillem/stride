@@ -65,6 +65,9 @@ public:
                 return m_sys[T];
         }
 
+        /// Added for MDP memory management: clear the contact pools
+        void ClearContactPools();
+
 private:
         /// /// Access through non-const reference to ContactPools of type 'id'.
         /// \param id   ContactType::Id of pools container you want to access.

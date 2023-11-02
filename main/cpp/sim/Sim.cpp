@@ -27,6 +27,7 @@
 #include "pop/Population.h"
 #include "sim/SimBuilder.h"
 #include "util/RunConfigManager.h"
+#include "util/StringUtils.h"
 
 #include <omp.h>
 #include <utility>
@@ -43,8 +44,7 @@ Sim::Sim()
       m_population(nullptr), m_rn_man(), m_transmission_profile(),
 	  m_cnt_intensity_householdCluster(0),
       m_is_isolated_from_household(false),
-	  m_public_health_agency(),m_universal_testing(),m_num_daily_imported_cases(0)
-
+	  m_public_health_agency(),m_universal_testing(),m_num_daily_imported_cases(0),m_hospitalisation_config()
 {
 }
 
@@ -83,11 +83,23 @@ void Sim::TimeStep()
 		if (isHouseholdClusteringAllowed && poolSys.RefPools(ContactType::Id::HouseholdCluster).size() > 1){
 			cnt_intensity_householdCluster = m_cnt_intensity_householdCluster;
 		}
+        // Set other distancing factors except for school (requires pool min age)
+        double workplace_distancing_factor = m_calendar->GetWorkplaceDistancingFactor();
+        double community_distancing_factor = m_calendar->GetCommunityDistancingFactor();
+        double collectivity_distancing_factor = m_calendar->GetCollectivityDistancingFactor();
 
         // Import infected cases into the population
         if(m_calendar->GetNumberOfImportedCases() > 0){
         	DiseaseSeeder(m_config, m_rn_man).ImportInfectedCases(m_population, m_calendar->GetNumberOfImportedCases(), simDay, m_transmission_profile, m_rn_handlers[0]);
             logger->info("[IMPORT-CASES] sim_day={} count={}", simDay, m_calendar->GetNumberOfImportedCases());        	
+        }
+
+        // For each age, check school and college closing
+        unsigned int maxAge = population.GetMaxAge();
+        std::vector<bool> areCollegesOff(maxAge + 1);
+        for (unsigned int age = 0; age <= maxAge; age++) {
+            bool isCollegeOff   = m_calendar->IsSchoolClosed(age);
+            areCollegesOff[age] = isCollegeOff;
         }
 
 #pragma omp parallel num_threads(m_num_threads)
@@ -106,24 +118,27 @@ void Sim::TimeStep()
 //						m_calendar->IsSchoolClosed(11), //isSecondarySchoolOff,
 //						m_calendar->IsSchoolClosed(20)); //isCollegeOff);
 
-				unsigned int school_id = population[i].GetPoolId(ContactType::Id::K12School);
-				unsigned int school_age = population[i].GetAge();
-				if(school_id>0){
-					school_age = poolSys.RefPools(ContactType::Id::K12School)[school_id].GetMinAge();
-				}
-				bool isK12SchoolOff = m_calendar->IsSchoolClosed(school_age);
-				bool isCollegeOff   = m_calendar->IsSchoolClosed(population[i].GetAge());
+                unsigned int school_age = population[i].GetAge();
+                bool isCollegeOff = areCollegesOff[school_age];
+                bool isK12SchoolOff;
+                // adjust K12SchoolOff boolean to school type for individual 'i'
+                unsigned int school_id = population[i].GetPoolId(ContactType::Id::K12School);
+                if(school_id>0){
+                    school_age = poolSys.RefPools(ContactType::Id::K12School)[school_id].GetMinAge();
+                    isK12SchoolOff = m_calendar->IsSchoolClosed(school_age);
+                }
+                else { isK12SchoolOff = isCollegeOff; }
 				// update health and presence at different contact pools
 				population[i].Update(isRegularWeekday, isK12SchoolOff, isCollegeOff,
 						isHouseholdClusteringAllowed,
 						m_is_isolated_from_household,
-                        m_rn_handlers[thread_num], 
-                        m_calendar);
+                        m_rn_handlers[thread_num],
+                        simDay);
 			}
         }// end pragma openMP
 
 		 // Perform contact tracing (if activated)
-		 m_public_health_agency.PerformContactTracing(m_population, m_rn_handlers[0], m_calendar);
+		 m_public_health_agency.PerformContactTracing(m_population, m_rn_handlers, m_calendar);
 
 		 // Perform universal testing 
 	     m_universal_testing.PerformUniversalTesting(m_population, m_rn_handlers[0], m_calendar,m_public_health_agency);
@@ -142,9 +157,21 @@ void Sim::TimeStep()
 					}
 #pragma omp for schedule(static)
 					for (size_t i = 1; i < poolSys.RefPools(typ).size(); i++) { // NOLINT
-							infector(poolSys.RefPools(typ)[i], m_contact_profiles[typ], m_transmission_profile,
+                            double typ_distancing_factor;
+                            // account for physical distancing at work
+                            if (typ == ContactType::Id::Workplace) { typ_distancing_factor = workplace_distancing_factor; }
+                            // account for physical distancing in the community
+                            else if (typ == ContactType::Id::PrimaryCommunity || typ == ContactType::Id::SecondaryCommunity) { typ_distancing_factor = community_distancing_factor; }
+                            // account for physical distancing at school
+                            else if (typ == ContactType::Id::K12School || typ == ContactType::Id::College) { typ_distancing_factor = m_calendar->GetSchoolDistancingFactor(poolSys.RefPools(typ)[i].GetMinAge()); }
+                            // account for physical distancing in the collectivity
+                            else if (typ == ContactType::Id::Collectivity) { typ_distancing_factor = collectivity_distancing_factor; }
+                            // account for contact intensity in household clusters
+                            else if (typ == ContactType::Id::HouseholdCluster) { typ_distancing_factor = cnt_intensity_householdCluster; }
+
+                            infector(poolSys.RefPools(typ)[i], m_contact_profiles[typ], m_transmission_profile,
 									 m_rn_handlers[thread_num], simDay, eventLogger,
-									 m_population,cnt_intensity_householdCluster,m_calendar);
+									 m_population, cnt_intensity_householdCluster, typ_distancing_factor);
 					}
 			}
         } // end pragma openMP

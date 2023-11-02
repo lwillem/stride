@@ -49,6 +49,9 @@ void InfectedFileViewer::Update(const sim_event::Id id)
                 m_infectious.push_back(pop->CountInfectiousCases());
                 m_symptomatic.push_back(pop->CountSymptomaticCases());
                 m_infected_total.push_back(pop->GetTotalInfected());
+                // Added hospitalisations
+                m_hospitalised.push_back(pop->CountHospitalisedCases());
+                m_hospitalised_total.push_back(pop->GetTotalHospitalised());
                 break;
         }
         case Id::Finished: {
@@ -66,6 +69,13 @@ void InfectedFileViewer::Update(const sim_event::Id id)
 
         		output::InfectedFile infected_total_file(m_output_prefix, "cases");
         		infected_total_file.Print(m_infected_total);
+
+                // Added hospitalisations
+                output::InfectedFile infected_hospitalised_file(m_output_prefix, "hospitalised");
+                infected_hospitalised_file.Print(m_hospitalised);
+
+                output::InfectedFile infected_hospitalised_total_file(m_output_prefix, "cases_hospitalised");
+                infected_hospitalised_total_file.Print(m_hospitalised_total);
                 break;
         }
         default: break;

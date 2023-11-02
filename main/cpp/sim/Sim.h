@@ -28,6 +28,7 @@
 #include "disease/UniversalTesting.h"
 #include "util/RnMan.h"
 #include "util/RnHandler.h"
+#include "sim/HospitalisationConfig.h"
 
 #include <boost/property_tree/ptree.hpp>
 #include <string>
@@ -110,7 +111,7 @@ private:
         // Introduce new infected cases on a daily basis?
         unsigned int                m_num_daily_imported_cases;
 
-
+        HospitalisationConfig       m_hospitalisation_config; ///< Hospitalisation probabilities and delay configuration.
 };
 
 } // namespace stride

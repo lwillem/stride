@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include <boost/optional.hpp>
+
 namespace stride {
 
 /// Enumerate the various health states with respect to the infection.
@@ -31,7 +33,6 @@ enum class HealthStatus : unsigned short int
         Symptomatic              = 3U,
         InfectiousAndSymptomatic = 4U,
         Recovered                = 5U,
-        Immune                   = 6U
 };
 
 /// Holds a person's health data.
@@ -42,7 +43,8 @@ public:
         explicit Health(unsigned short int start_infectiousness = 0U, unsigned int short start_symptomatic = 0U,
                         unsigned short int time_infectious = 0U, unsigned short int time_symptomatic = 0U,
 						double sympt_cnt_reduction_work_school = 0U, double sympt_cnt_reduction_community=0U,
-						double relative_susceptibility = 0U);
+						double relative_susceptibility = 0U,
+                        boost::optional<double> start_hospitalisation = {});
 
         ///
         unsigned short int GetEndInfectiousness() const { return m_end_infectiousness; }
@@ -55,15 +57,15 @@ public:
 
         ///
         unsigned short int GetStartSymptomatic() const { return m_start_symptomatic; }
+        
+        ///
+        boost::optional<unsigned short int> GetStartHospitalisation() const { return m_start_hospitalisation; }
 
         ///
         unsigned int GetIdIndexCase() const { return m_id_index_case; }
 
         ///
         unsigned int GetIdInfector() const { return m_id_infector; }
-
-        /// Is this person immune?
-        bool IsImmune() const { return m_status == HealthStatus::Immune; }
 
         /// Is this person infected?
         bool IsInfected() const
@@ -96,6 +98,12 @@ public:
 				return m_status == HealthStatus::Exposed;
 		}
 
+		/// Is this person hospitalised?
+		bool IsHospitalised() const { return m_hospitalised; }
+
+		/// Was the person hospitalised at a given point?
+		bool WasHospitalised() const { return m_was_hospitalised; }
+
         /// Have the symptoms started today?
         bool SymptomsStartedToday() const { return GetDiseaseCounter() == m_start_symptomatic; }
 
@@ -104,9 +112,6 @@ public:
 
         /// Is infected X days before?
         bool NumberDaysInfected(unsigned int days_before) const;
-
-        /// Set health state to immune.
-        void SetImmune() { m_status = HealthStatus::Immune; }
 
         /// Set health state to susceptible
         void SetSusceptible() { m_status = HealthStatus::Susceptible; }
@@ -169,6 +174,9 @@ private:
         double			   m_relative_infectiousness;   ///< Relative probability of transmission when infected [0-1]
         double			   m_relative_susceptibility;   ///< Relative probability of acquiring infection upon exposure [0-1]
 
+        boost::optional<unsigned short int> m_start_hospitalisation; ///<Days after the individual needs to be hospitalised (optional, not all individuals end up in the hospital).
+        bool               m_hospitalised;    ///< Is the individual currently hospitalised?
+        bool               m_was_hospitalised;  ///< Was the individual hospitalised at a given point?
 };
 
 } // namespace stride

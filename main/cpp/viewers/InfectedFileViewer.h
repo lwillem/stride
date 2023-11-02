@@ -48,6 +48,9 @@ private:
         std::vector<unsigned int>  m_infectious;
         std::vector<unsigned int>  m_symptomatic;
         std::vector<unsigned int>  m_infected_total;
+        // Added hospitalisations
+        std::vector<unsigned int>  m_hospitalised;
+        std::vector<unsigned int>  m_hospitalised_total;
 
         std::shared_ptr<SimRunner> m_runner;
 };

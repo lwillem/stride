@@ -55,7 +55,7 @@ void SummaryFile::Print(const boost::property_tree::ptree& config_pt, unsigned i
         m_fstream << config_pt.get<string>("run.population_file") << "," << config_pt.get<unsigned int>("run.num_days")
                   << "," << population_size << "," << config_pt.get<unsigned int>("run.num_infected_seeds",-1) << ","
                   << config_pt.get<double>("run.r0") << "," << transmission_probability << ","
-                  << config_pt.get<double>("run.immunity_rate") << "," << config_pt.get<unsigned int>("run.num_threads")
+                  << config_pt.get<double>("run.immunity_rate", -1) << "," << config_pt.get<unsigned int>("run.num_threads")
                   << "," << config_pt.get<unsigned int>("run.rng_seed") << "," << run_time << "," << total_time << ","
                   << num_cases << "," << static_cast<double>(num_cases) / population_size << ","
                   << config_pt.get<string>("run.output_prefix") << "," << config_pt.get<string>("run.start_date") << ","

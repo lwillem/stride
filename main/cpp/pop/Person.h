@@ -25,6 +25,7 @@
 #include "contact/IdSubscriptArray.h"
 #include "disease/Health.h"
 #include "util/RnHandler.h"
+#include "pop/Vaccine.h"
 
 #include <cstddef>
 #include <queue>
@@ -55,7 +56,7 @@ public:
 
 public:
         /// Default construction (for population vector).
-        Person() : m_age(0.0), m_id(0), m_pool_ids(), m_health(), m_in_pools(), m_is_participant(),
+        Person() : m_age(0.0), m_id(0), m_vaccine(), m_pool_ids(), m_health(), m_in_pools(), m_is_participant(),
 		m_non_complier(), m_is_tracing_index(false), m_contact_tracing_list(),
         m_isolated(false), m_events() {}
 
@@ -63,7 +64,7 @@ public:
         Person(unsigned int id, float age, unsigned int householdId, unsigned int k12SchoolId, unsigned int collegeId,
                unsigned int workId, unsigned int primaryCommunityId, unsigned int secondaryCommunityId, unsigned int householdClusterId,
 			   unsigned int collectivityId)
-            : m_age(age), m_id(id), m_pool_ids{householdId, k12SchoolId,        collegeId,
+            : m_age(age), m_id(id), m_vaccine(), m_pool_ids{householdId, k12SchoolId,        collegeId,
                                                workId,      primaryCommunityId, secondaryCommunityId,
 											   householdClusterId, collectivityId},
               m_health(), m_in_pools(true), m_is_participant(false), m_non_complier(false),
@@ -110,7 +111,7 @@ public:
         		bool isHouseholdClusteringAllowed,
         		bool isIsolatedFromHousehold, 
 				util::RnHandler& rnHandler,
-                const std::shared_ptr<Calendar> calendar);
+                unsigned short int simDay);
 
         /// Set the age of the person
         void SetAge(unsigned int newAge) { m_age = newAge; }
@@ -142,10 +143,38 @@ public:
         std::vector<Person*>& GetContactRegister () {
         	return m_contact_tracing_list;
         }
+        /// Comparator for sorting two persons given their pointers
+        static bool compPerson(const Person* a, const Person* b)
+        {
+            return a->GetId() < b->GetId();
+        }
 
         void SetNonComplier(const ContactType::Id& poolType) {  m_non_complier[poolType] = true; }
 
         bool IsNonComplier(const ContactType::Id& poolType) const { return m_non_complier[poolType]; }
+
+        /// Vaccinate
+        void SetVaccine(std::unique_ptr<Vaccine> &v) { m_vaccine = std::move(v); }
+
+        // Is the individual vaccinated?
+        bool IsVaccinated() { return (bool)m_vaccine; }
+
+        /// Get the last vaccine that was administered.
+        Vaccine& GetVaccine() 
+        {
+            if (!m_vaccine)
+                throw std::runtime_error("No vaccine administered");
+            else
+                return *m_vaccine.get();
+        }
+
+        bool IsImmune() const 
+        {
+            if (m_vaccine)
+                return m_vaccine->GetVeSusceptible() == 1.0;
+            else
+                return false;
+        }
 
 private:
         ///< Schedule an event, if the event should take place on simDay, it is executed right away.
@@ -156,6 +185,8 @@ private:
 private:
         float        m_age; ///< The age.
         unsigned int m_id;  ///< The id.
+
+        std::unique_ptr<Vaccine> m_vaccine; ///< Vaccination profile, can be empty
 
         ///< Ids (school, work, etc) of pools you belong to Id value 0 means you do not belong to any
         ///< pool of that type (e.g. school and work are mutually exclusive).

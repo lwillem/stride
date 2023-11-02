@@ -102,23 +102,31 @@ void DiseaseSeeder::ImportInfectedCases(std::shared_ptr<Population> pop, unsigne
                         p.GetHealth().StartInfection(p.GetId(),0,rel_inf);
                         numInfected--;
 
+                        unsigned short int startHospitalisation = -1;
+                        if (p.GetHealth().GetStartHospitalisation()) {
+                            startHospitalisation = p.GetHealth().GetStartHospitalisation().value();
+                        }
+
                         //TODO: make use of Infector template functions
                         if (log_level >= EventLogMode::Id::Transmissions) {
-                                logger->info("[PRIM] {} {} {} {} {} {} {} {} {} {} {} {} {} {}",
+                                logger->info("[PRIM] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}",
                                 		p.GetId(), -1, p.GetAge(), -1, -1, simDay, p.GetId(),
 										p.GetHealth().GetStartInfectiousness(),p.GetHealth().GetEndInfectiousness(),
-										p.GetHealth().GetStartSymptomatic(),p.GetHealth().GetEndSymptomatic(), -1,
+										p.GetHealth().GetStartSymptomatic(),p.GetHealth().GetEndSymptomatic(),
+                                        startHospitalisation, 
+                                        -1,
 										p.GetHealth().GetRelativeInfectiousness(),
 										p.GetHealth().GetRelativeSusceptibility());
 
                         } else if(log_level == EventLogMode::Id::Incidence){
                         	{
-								logger->info("[TRAN_M] {} {} {} {} {}",
+								logger->info("[TRAN_M] {} {} {} {} {} {}",
 											 p.GetAge(),
 											 simDay,
 											 p.GetHealth().GetStartInfectiousness(),
 											 p.GetHealth().GetStartSymptomatic(),
-											 p.GetHealth().GetEndSymptomatic()
+											 p.GetHealth().GetEndSymptomatic(),
+                                             startHospitalisation
 											 );
 							}
                         }
