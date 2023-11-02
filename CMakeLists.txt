@@ -65,6 +65,18 @@ if(STRIDE_INCLUDE_DOC)
 endif()
 
 #============================================================================
+# Configuration for pylibstride
+#============================================================================
+
+OPTION(USE_PYLIBSTRIDE "Activate pybind library" ON)
+IF(USE_PYLIBSTRIDE) # set with: cmake . -DUSE_PYTHON:BOOL=ON
+	set(PYTHON_LIBRARY_DIR ${LIB_INSTALL_LOCATION}/pylib)
+ELSE()
+  MESSAGE(STATUS "USE_PYLIBSTRIDE is not activated ----------")
+ENDIF(USE_PYLIBSTRIDE)
+
+
+#============================================================================
 # Add subdirs
 #============================================================================
 add_subdirectory(main)
