@@ -21,6 +21,7 @@
 
 #include "contact/ContactType.h"
 #include "contact/IdSubscriptArray.h"
+#include "pop/Person.h"
 #include "pop/Population.h"
 #include "pop/SurveySeeder.h"
 #include "util/FileSys.h"
@@ -78,26 +79,25 @@ shared_ptr<Population> PopBuilder::MakePersons(shared_ptr<Population> pop)
         getline(popFile, line); // step over file header
         auto headers   = Split(line, ",");
 
-        unsigned int person_id = 0U;
-
         while (getline(popFile, line)) {
                 const auto values               = Split(line, ",");
                 const auto age                  = FromString<unsigned int>(values[0]);
-                const auto householdId          = FromString<unsigned int>(values[1]);
-                auto schoolId                   = FromString<unsigned int>(values[2]);
-                const auto workId               = FromString<unsigned int>(values[3]);
-                const auto primaryCommunityId   = FromString<unsigned int>(values[4]);
-                const auto secondaryCommunityId = FromString<unsigned int>(values[5]);
+                const auto person_id            = FromString<unsigned int>(values[1]);
+                const auto householdId          = FromString<unsigned int>(values[2]);
+                auto schoolId                   = FromString<unsigned int>(values[3]);
+                const auto workId               = FromString<unsigned int>(values[4]);
+                const auto primaryCommunityId   = FromString<unsigned int>(values[5]);
+                const auto secondaryCommunityId = FromString<unsigned int>(values[6]);
 
                 unsigned int householdClusterId = 0;
-                if(values.size() == 7 && Trim(ToString(headers[6]),ToString('"')) == "household_cluster_id"){
-                	householdClusterId = FromString<unsigned int>(values[6]);
+                if(values.size() == 8 && Trim(ToString(headers[7]),ToString('"')) == "household_cluster_id"){
+                	householdClusterId = FromString<unsigned int>(values[7]);
                 }
 
                 unsigned int collectivityId = 0;
 
-				if(values.size() == 7 && Trim(ToString(headers[6]),ToString('"')) == "collectivity_id"){
-					collectivityId = FromString<unsigned int>(values[6]);
+				if(values.size() == 8 && Trim(ToString(headers[7]),ToString('"')) == "collectivity_id"){
+					collectivityId = FromString<unsigned int>(values[7]);
 				}
 
                 //TODO: rename school types to current approach
@@ -107,9 +107,11 @@ shared_ptr<Population> PopBuilder::MakePersons(shared_ptr<Population> pop)
                 	schoolId = 0;
                 }
 
+                unsigned int newCommunityId = 1;
+
                 pop->CreatePerson(person_id, age, householdId, schoolId, collegeId, workId, primaryCommunityId,
-                                  secondaryCommunityId, householdClusterId, collectivityId);
-                ++person_id;
+                                  secondaryCommunityId, householdClusterId, collectivityId, newCommunityId);
+                ;
         }
 
         popFile.close();
@@ -147,33 +149,34 @@ shared_ptr<Population> PopBuilder::MakePersonsOpt(shared_ptr<Population> pop)
     getline(popFile, line); // step over file header
     auto headers   = Split(line, ",");
     //
-    bool has_extra_column = headers.size() == 7;
+    bool has_extra_column = headers.size() == 8;
     string extra_id = "";
-    if (has_extra_column) { extra_id = Trim(ToString(headers[6]),ToString('"')); }
+    if (has_extra_column) { extra_id = Trim(ToString(headers[7]),ToString('"')); }
     bool household_cluster_id = extra_id == "household_cluster_id";
     bool collectivity_id = extra_id == "collectivity_id";
     const unsigned int defaultHouseholdClusterId = 0;
     const unsigned int defaultCollectivityId = 0;
 
     // Read lines from file
-    unsigned int person_id = 0U;
+    
 
     while (getline(popFile, line)) {
         const auto values               = Split(line, ",");
         const auto age                  = static_cast<unsigned int>(IntFromString(values[0]));
-        const auto householdId          = static_cast<unsigned int>(IntFromString(values[1]));
-        auto schoolId                   = static_cast<unsigned int>(IntFromString(values[2]));
-        const auto workId               = static_cast<unsigned int>(IntFromString(values[3]));
-        const auto primaryCommunityId   = static_cast<unsigned int>(IntFromString(values[4]));
-        const auto secondaryCommunityId = static_cast<unsigned int>(IntFromString(values[5]));
-
+        const auto person_id            = static_cast<unsigned int>(IntFromString(values[1]));
+        const auto householdId          = static_cast<unsigned int>(IntFromString(values[2]));
+        auto schoolId                   = static_cast<unsigned int>(IntFromString(values[3]));
+        const auto workId               = static_cast<unsigned int>(IntFromString(values[4]));
+        const auto primaryCommunityId   = static_cast<unsigned int>(IntFromString(values[5]));
+        const auto secondaryCommunityId = static_cast<unsigned int>(IntFromString(values[6]));
+       
         unsigned int householdClusterId = defaultHouseholdClusterId;
         unsigned int collectivityId = defaultCollectivityId;
-        if (values.size() == 7) {
+        if (values.size() == 8) {
             if (household_cluster_id) {
-                householdClusterId = static_cast<unsigned int>(IntFromString(values[6]));
+                householdClusterId = static_cast<unsigned int>(IntFromString(values[7]));
             } else if (collectivity_id) {
-                collectivityId = static_cast<unsigned int>(IntFromString(values[6]));
+                collectivityId = static_cast<unsigned int>(IntFromString(values[7]));
             }
         }
 
@@ -184,10 +187,13 @@ shared_ptr<Population> PopBuilder::MakePersonsOpt(shared_ptr<Population> pop)
             schoolId = 0;
         }
 
+        unsigned int newCommunityId = 1;
+
         pop->CreatePerson(person_id, age, householdId, schoolId, collegeId, workId, primaryCommunityId,
-                          secondaryCommunityId, householdClusterId, collectivityId);
-        ++person_id;
+                          secondaryCommunityId, householdClusterId, collectivityId, newCommunityId);
+        ;
     }
+
 
     popFile.close();
 
@@ -208,9 +214,60 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
         // Determine maximum pool ids in population.
         // --------------------------------------------------------------
         IdSubscriptArray<unsigned int> maxIds{0U};
+
+        const auto allowed_new_communities = m_config.get<bool>("run.new_community_used");
+        const auto fileName = m_config.get<string>("run.new_community_file");
+        const auto use_install_dirs = m_config.get<bool>("run.use_install_dirs");
+        const auto filePath         = (use_install_dirs) ? FileSys::GetDataDir() /= fileName : filesys::path(fileName);
+        if (!is_regular_file(filePath)) {
+        throw runtime_error(string(__func__) + "> New community file " + filePath.string() + " not present.");
+        }
+
+        if (allowed_new_communities) {
+        for (Id typ : IdList){
+                if (typ == Id::NewCommunity) {
+
+                        ifstream newCommunityFile;
+                        newCommunityFile.open(filePath.string());
+                        if (!newCommunityFile.is_open()) {
+                        throw runtime_error(string(__func__) + "> Error opening new community file " + filePath.string());
+                        }
+
+                        string line;
+                        getline(newCommunityFile, line); // step over file header
+                        auto headers   = Split(line, ",");
+
+
+                        getline(newCommunityFile, line);
+                        const auto values               = Split(line, ",");
+                        const auto person_id            = static_cast<unsigned int>(IntFromString(values[0]));
+                        const auto INS_j_id             = static_cast<unsigned int>(IntFromString(values[1]));
+                        
+                        ;
+
+                        maxIds[typ] = INS_j_id;
+
+                        // maxIds[typ] = 589;
+
+                        m_stride_logger->info("max number of new communities {}.", INS_j_id);
+
+                        m_stride_logger->trace("Done determining max number of New Communities.");
+
+                        newCommunityFile.close();
+       
+                        }
+
+
+                }
+        }
+        
+
         for (const auto& p : *pop) {
-                for (Id typ : IdList) {
+                for (Id typ : IdList) {    
+                        if (typ != Id::NewCommunity) {
                         maxIds[typ] = max(maxIds[typ], p.GetPoolId(typ));
+                        }
+
                 }
         }
         // --------------------------------------------------------------
@@ -231,14 +288,63 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
         // belongs, per type, to the pool with subscript p.GetPoolId(type).
         // Defensive measure: we have a pool for Id 0 and leave it empty.
         // --------------------------------------------------------------
+        
+        std::map<int, Person*> id_pointer_persons;
+        
         for (auto& p : *pop) {
+                unsigned int person_id = p.GetId();
+                id_pointer_persons.insert(pair<int, Person*>(person_id, &p));
+
                 for (Id typ : IdList) {
+                        if (typ != Id::NewCommunity) {
                         const auto poolId = p.GetPoolId(typ);
                         if (poolId > 0) {
                                 pop->RefPoolSys().RefPools(typ)[poolId].AddMember(&p);
                         }
+                        }
                 }
         }
+
+        if (allowed_new_communities) {
+        for (Id typ : IdList) {
+                if (typ == Id::NewCommunity) {
+                        
+                        ifstream newCommunityFile;
+                        newCommunityFile.open(filePath.string());
+                        if (!newCommunityFile.is_open()) {
+                        throw runtime_error(string(__func__) + "> Error opening new community file " + filePath.string());
+                        }
+
+                        string line;
+                        getline(newCommunityFile, line); // step over file header
+                        auto headers   = Split(line, ",");   
+
+                        while (getline(newCommunityFile, line)) {
+                        const auto values               = Split(line, ",");
+                        const auto person_id            = static_cast<unsigned int>(IntFromString(values[0]));
+                        const auto INS_j_id             = static_cast<unsigned int>(IntFromString(values[1]));
+
+                        Person* p=id_pointer_persons[person_id];
+                        pop->RefPoolSys().RefPools(typ)[INS_j_id].AddMember(p);
+                        
+
+                        ;
+
+                        }
+
+                        newCommunityFile.close();
+
+                        m_stride_logger->trace("Done building default population.");
+
+        
+                 }
+
+
+
+
+                }
+        }
+        
 
 
         return pop;

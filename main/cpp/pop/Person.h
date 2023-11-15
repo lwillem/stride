@@ -62,10 +62,10 @@ public:
         /// Constructor: set the person data.
         Person(unsigned int id, float age, unsigned int householdId, unsigned int k12SchoolId, unsigned int collegeId,
                unsigned int workId, unsigned int primaryCommunityId, unsigned int secondaryCommunityId, unsigned int householdClusterId,
-			   unsigned int collectivityId)
+			   unsigned int collectivityId, unsigned int newCommunityId)
             : m_age(age), m_id(id), m_pool_ids{householdId, k12SchoolId,        collegeId,
                                                workId,      primaryCommunityId, secondaryCommunityId,
-											   householdClusterId, collectivityId},
+											   householdClusterId, collectivityId, newCommunityId},
 			  m_individual_contact_factor(1.0),
               m_health(), m_in_pools(true), m_is_participant(false), m_non_complier(false),
 			  m_is_tracing_index(false), m_contact_tracing_list(), m_isolated(false),

@@ -46,7 +46,8 @@ AgeContactProfile::AgeContactProfile(Id poolType, const ptree& contactPt) : std:
              	typeKey = "household";
         } else if (poolType == Id::Collectivity) {
          		typeKey = "collectivity";
-
+        } else if (poolType == Id::NewCommunity) {
+                        typeKey = "primary_community";
         }
 
         // construct XML key

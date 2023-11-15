@@ -16,8 +16,10 @@
     <output_persons>false</output_persons>
     <output_prefix></output_prefix>
     <output_summary>false</output_summary>
-    <population_file>pop_belgium600k_c500_teachers_censushh.csv</population_file>
+    <population_file>pop_belgium100k_c500_teachers_censushh.csv</population_file>
     <population_type>default</population_type>
+    <new_community_file>pop_belgium100k_c500_teachers_censushh_new_community.csv</new_community_file>
+    <new_community_used>true</new_community_used>
     <rng_seed>2020</rng_seed>
     <r0>11</r0>
     <seeding_age_max>99</seeding_age_max>
