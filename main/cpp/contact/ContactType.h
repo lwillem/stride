@@ -42,11 +42,14 @@ enum class Id : unsigned int
         SecondaryCommunity,
 		HouseholdCluster,
 		Collectivity,
-        NewCommunity
+        OtherHouse,
+        RestoCafe,
+        OtherPlace,
+        Transport
 };
 
 /// Number of ContactPool types.
-inline constexpr unsigned int NumOfTypes() { return 9U; }
+inline constexpr unsigned int NumOfTypes() { return 12U; }
 
 /// Check whether string is name of a ContactPoolType::Id.
 bool IsId(const std::string& s);
@@ -70,7 +73,7 @@ struct IDPack
 
 /// Placed separately to please swig and avoid syntax errors there
 using IdPack_t =
-    IDPack<Id::Household, Id::K12School, Id::College, Id::Workplace, Id::PrimaryCommunity, Id::SecondaryCommunity, Id::HouseholdCluster, Id::Collectivity, Id::NewCommunity>;
+    IDPack<Id::Household, Id::K12School, Id::College, Id::Workplace, Id::PrimaryCommunity, Id::SecondaryCommunity, Id::HouseholdCluster, Id::Collectivity, Id::OtherHouse, Id::RestoCafe, Id::OtherPlace, Id::Transport>;
 
 /// A constexpr global variable that gives access to the available Ids
 constexpr IdPack_t IdPack;

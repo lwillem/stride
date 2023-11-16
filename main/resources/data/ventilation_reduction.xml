@@ -9,7 +9,7 @@
 	<HouseholdCluster>0</HouseholdCluster>
 	<Collectivity>0.1</Collectivity>
 	<OtherHouse>0<OtherHouse>
-	<Transport>0.3<Transport>
 	<RestoCafe>0.2<RestoCafe>
 	<OtherPlace>0.5<OtherPlace>
+	<Transport>0.3<Transport>
 </ventilation_reduction>

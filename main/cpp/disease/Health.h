@@ -20,17 +20,6 @@
 
 #pragma once
 
-<<<<<<< HEAD
-=======
-#include "contact/ContactType.h"
-
-<<<<<<< HEAD
-<<<<<<< HEAD
->>>>>>> parent of e445856 (adapting referencing to ContactType::Id)
-=======
->>>>>>> parent of e445856 (adapting referencing to ContactType::Id)
-=======
->>>>>>> parent of e445856 (adapting referencing to ContactType::Id)
 namespace stride {
 
 /// Enumerate the various health states with respect to the infection.
@@ -83,16 +72,6 @@ public:
                        m_status == HealthStatus::InfectiousAndSymptomatic || m_status == HealthStatus::Symptomatic;
         }
 
-<<<<<<< HEAD
-=======
-        // Took the infection place in a "new community"?
-        bool IsNewCommunity() const
-        {
-                return m_infection_poolType == Id::NewCommunity;
-        }
-
-
->>>>>>> parent of e445856 (adapting referencing to ContactType::Id)
         /// Is this person infectious.
         bool IsInfectious() const
         {

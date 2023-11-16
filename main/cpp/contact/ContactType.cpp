@@ -42,8 +42,10 @@ bool IsId(const string& s)
             make_pair("SECONDARY_COMMUNITY", Id::SecondaryCommunity),
 			make_pair("HOUSEHOLD_CLUSTER", Id::HouseholdCluster),
 			make_pair("COLLECTIVITY", Id::Collectivity),
-            make_pair("NEW_COMMUNITY", Id::NewCommunity)
-
+            make_pair("OTHER_HOUSE", Id::OtherHouse),
+            make_pair("RESTO_CAFE", Id::RestoCafe),
+            make_pair("OTHER_PLACE", Id::OtherPlace),
+            make_pair("TRANSPORT", Id::Transport)
         };
         string t{s};
         to_upper(t);
@@ -61,8 +63,10 @@ Id ToId(const string& s)
             make_pair("SECONDARY_COMMUNITY", Id::SecondaryCommunity),
 			make_pair("HOUSEHOLD_CLUSTER", Id::HouseholdCluster),
 			make_pair("COLLECTIVITY", Id::Collectivity),
-            make_pair("NEW_COMMUNITY", Id::NewCommunity)
-
+            make_pair("OTHER_HOUSE", Id::OtherHouse),
+            make_pair("RESTO_CAFE", Id::RestoCafe),
+            make_pair("OTHER_PLACE", Id::OtherPlace),
+            make_pair("TRANSPORT", Id::Transport)
         };
         string t{s};
         to_upper(t);
@@ -80,7 +84,10 @@ string ToString(Id c)
             make_pair(Id::SecondaryCommunity, "SecondaryCommunity"),
 			make_pair(Id::HouseholdCluster, "HouseholdCluster"),
 			make_pair(Id::Collectivity, "Collectivity"),
-            make_pair(Id::NewCommunity, "NewCommunity")
+            make_pair(Id::OtherHouse, "OtherHouse"),
+            make_pair(Id::RestoCafe, "RestoCafe"),
+            make_pair(Id::OtherPlace, "OtherPlace"),
+            make_pair(Id::Transport, "Transport")
         };
         return (names.count(c) == 1) ? names[c] : throw runtime_error("ContactType::ToString> not available:");
 }

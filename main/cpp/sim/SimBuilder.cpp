@@ -81,7 +81,9 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         // --------------------------------------------------------------
         const auto ageContactPt = ReadAgeContactPtree();
         for (Id typ : IdList) {
+                if (typ != ContactType::Id::OtherHouse && typ != ContactType::Id::RestoCafe && typ != ContactType::Id::OtherPlace && typ != ContactType::Id::Transport) {
                 sim->m_contact_profiles[typ] = AgeContactProfile(typ, ageContactPt);
+                }
         }
 
         // --------------------------------------------------------------
