@@ -104,6 +104,7 @@ private:
         // temporary...
         double                      m_cnt_intensity_householdCluster;
         bool                        m_is_isolated_from_household;
+        bool                        m_subpools_community;
 
         PublicHealthAgency          m_public_health_agency;
         UniversalTesting            m_universal_testing;

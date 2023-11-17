@@ -107,10 +107,14 @@ shared_ptr<Population> PopBuilder::MakePersons(shared_ptr<Population> pop)
                 	schoolId = 0;
                 }
 
-                unsigned int newCommunityId = 1;
+                unsigned int otherHouseId = 0;
+                unsigned int restoCafeId = 0;
+                unsigned int otherPlaceId = 0;
+                unsigned int transportId = 0;
+
 
                 pop->CreatePerson(person_id, age, householdId, schoolId, collegeId, workId, primaryCommunityId,
-                                  secondaryCommunityId, householdClusterId, collectivityId, newCommunityId);
+                                  secondaryCommunityId, householdClusterId, collectivityId, otherHouseId, restoCafeId, otherPlaceId, transportId);
                 ;
         }
 
@@ -187,10 +191,13 @@ shared_ptr<Population> PopBuilder::MakePersonsOpt(shared_ptr<Population> pop)
             schoolId = 0;
         }
 
-        unsigned int newCommunityId = 1;
+        unsigned int otherHouseId = 0;
+        unsigned int restoCafeId = 0;
+        unsigned int otherPlaceId = 0;
+        unsigned int transportId = 0;
 
         pop->CreatePerson(person_id, age, householdId, schoolId, collegeId, workId, primaryCommunityId,
-                          secondaryCommunityId, householdClusterId, collectivityId, newCommunityId);
+                          secondaryCommunityId, householdClusterId, collectivityId, otherHouseId, restoCafeId, otherPlaceId, transportId);
         ;
     }
 
@@ -215,56 +222,60 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
         // --------------------------------------------------------------
         IdSubscriptArray<unsigned int> maxIds{0U};
 
-        const auto allowed_new_communities = m_config.get<bool>("run.new_community_used");
-        const auto fileName = m_config.get<string>("run.new_community_file");
+        const auto allowed_subpools_community = m_config.get<bool>("run.subpools_community_used");
+        const auto fileName = m_config.get<string>("run.subpools_community_file");
         const auto use_install_dirs = m_config.get<bool>("run.use_install_dirs");
         const auto filePath         = (use_install_dirs) ? FileSys::GetDataDir() /= fileName : filesys::path(fileName);
         if (!is_regular_file(filePath)) {
-        throw runtime_error(string(__func__) + "> New community file " + filePath.string() + " not present.");
+        throw runtime_error(string(__func__) + "> subpools community file " + filePath.string() + " not present.");
         }
 
-        if (allowed_new_communities) {
-        for (Id typ : IdList){
-                if (typ == Id::NewCommunity) {
+        if (allowed_subpools_communities) {
+    
+                ifstream subpoolsCommunityFile;
+                subpoolsCommunityFile.open(filePath.string());
+                if (!subpoolsCommunityFile.is_open()) {
+                throw runtime_error(string(__func__) + "> Error opening new community file " + filePath.string());
+                }
 
-                        ifstream newCommunityFile;
-                        newCommunityFile.open(filePath.string());
-                        if (!newCommunityFile.is_open()) {
-                        throw runtime_error(string(__func__) + "> Error opening new community file " + filePath.string());
-                        }
+                string line;
+                getline(subpoolsCommunityFile, line); // step over file header
+                auto headers   = Split(line, ",");
 
-                        string line;
-                        getline(newCommunityFile, line); // step over file header
-                        auto headers   = Split(line, ",");
+                while (getline(subpoolsCommunityFile, line)) {
+                const auto values               = Split(line, ",");
+                const auto person_id            = static_cast<unsigned int>(IntFromString(values[0]));
+                const auto subpool_id           = static_cast<unsigned int>(IntFromString(values[1]));
+                const std::string& location     = values[2];
+                const auto duration_hours       = static_cast<unsigned int>(IntFromString(values[3]));
+                const auto duration_minutes     = static_cast<unsigned int>(IntFromString(values[4]));
 
+                ContactType::Id typ = ToId(location)
 
-                        getline(newCommunityFile, line);
-                        const auto values               = Split(line, ",");
-                        const auto person_id            = static_cast<unsigned int>(IntFromString(values[0]));
-                        const auto INS_j_id             = static_cast<unsigned int>(IntFromString(values[1]));
-                        
-                        ;
+                unsigned int last_typ_pool = pop->RefPoolSys().currentPoolIds(typ)
+                if (subpool_id > last_typ_pool) {
+                        pop->RefPoolSys().CreateContactPool(typ);
+                }
 
-                        maxIds[typ] = INS_j_id;
+                Person* p=id_pointer_persons[person_id];
+                pop->RefPoolSys().RefPools(typ)[subpool_id].AddMember(p);
 
-                        // maxIds[typ] = 589;
-
-                        m_stride_logger->info("max number of new communities {}.", INS_j_id);
-
-                        m_stride_logger->trace("Done determining max number of New Communities.");
-
-                        newCommunityFile.close();
-       
-                        }
-
+                ;
 
                 }
+
+                newCommunityFile.close();
+       
+                
+
+
+        
         }
         
 
         for (const auto& p : *pop) {
                 for (Id typ : IdList) {    
-                        if (typ != Id::NewCommunity) {
+                        if (typ != Id::OtherHouse && typ != Id::RestoCafe && typ != Id::OtherPlace && typ != Id::Transport) {
                         maxIds[typ] = max(maxIds[typ], p.GetPoolId(typ));
                         }
 
@@ -274,9 +285,10 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
         // Initialize poolSys with empty ContactPools (even for Id=0).
         // --------------------------------------------------------------
         for (Id typ : IdList) {
+                if (typ != Id::OtherHouse && typ != Id::RestoCafe && typ != Id::OtherPlace && typ != Id::Transport) {
                 for (unsigned int i = 1; i < maxIds[typ] + 1; i++) {
                         pop->RefPoolSys().CreateContactPool(typ);
-                }
+                }}
         }
 
         // --------------------------------------------------------------
@@ -304,47 +316,6 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
                         }
                 }
         }
-
-        if (allowed_new_communities) {
-        for (Id typ : IdList) {
-                if (typ == Id::NewCommunity) {
-                        
-                        ifstream newCommunityFile;
-                        newCommunityFile.open(filePath.string());
-                        if (!newCommunityFile.is_open()) {
-                        throw runtime_error(string(__func__) + "> Error opening new community file " + filePath.string());
-                        }
-
-                        string line;
-                        getline(newCommunityFile, line); // step over file header
-                        auto headers   = Split(line, ",");   
-
-                        while (getline(newCommunityFile, line)) {
-                        const auto values               = Split(line, ",");
-                        const auto person_id            = static_cast<unsigned int>(IntFromString(values[0]));
-                        const auto INS_j_id             = static_cast<unsigned int>(IntFromString(values[1]));
-
-                        Person* p=id_pointer_persons[person_id];
-                        pop->RefPoolSys().RefPools(typ)[INS_j_id].AddMember(p);
-                        
-
-                        ;
-
-                        }
-
-                        newCommunityFile.close();
-
-                        m_stride_logger->trace("Done building default population.");
-
-        
-                 }
-
-
-
-
-                }
-        }
-        
 
 
         return pop;

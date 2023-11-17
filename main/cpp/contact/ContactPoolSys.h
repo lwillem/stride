@@ -71,6 +71,8 @@ private:
         /// \return     The requested reference.
         util::SegmentedVector<ContactPool>& RefPools(ContactType::Id id) { return m_sys[id]; }
 
+        unsigned int currentPoolIds(ContactType::Id id) {return m_currentContactPoolId[id]; }
+
         friend class PopBuilder;
         friend class Sim;
         friend class VentilationHeterogeneitySeeder;

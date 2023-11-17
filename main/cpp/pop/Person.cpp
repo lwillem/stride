@@ -74,7 +74,8 @@ void Person::Update(bool isRegularWeekday, bool isK12SchoolOff, bool isCollegeOf
         bool isIsolatedFromHousehold,
 		util::RnHandler& rnHandler,
         unsigned short int simDay,
-		bool run_simplified)
+		bool run_simplified,
+		bool subpools_community)
         
 {
 
@@ -92,18 +93,39 @@ void Person::Update(bool isRegularWeekday, bool isK12SchoolOff, bool isCollegeOf
 			m_in_pools[Id::SecondaryCommunity] = true;
 			m_in_pools[Id::HouseholdCluster]   = false;
 			m_in_pools[Id::Collectivity]       = false;
+			m_in_pools[Id::OtherHouse]		   = false;
+			m_in_pools[Id::RestoCafe]		   = false;
+			m_in_pools[Id::OtherPlace]         = false;
+			m_in_pools[Id::Transport]          = false;
 			
 
         } else {
         	   // by default: a person is at home (or in their collectivity)
         	   m_in_pools[Id::Household]          = true;
         	   m_in_pools[Id::Collectivity]       = true;
-			   
-
 
         	   // is household clustering allowed?
         	   m_in_pools[Id::HouseholdCluster]   = isHouseholdClusteringAllowed ? true : false;
 
+			   // work with subpools commmunity or with the big communities?
+			   if (subpools_community){
+				m_in_pools[Id::PrimaryCommunity]      = false;
+				m_in_pools[Id::SecondaryCommunity]    = false;
+				m_in_pools[Id::OtherHouse]            = true;
+				m_in_pools[Id::RestoCafe]             = true;
+				m_in_pools[Id::OtherPlace]            = true;
+				m_in_pools[Id::Transport]             = true;
+				if (isRegularWeekday) {
+					m_in_pools[Id::Workplace]          = true;
+				} else{
+					m_in_pools[Id::Workplace]          = false;
+				}
+			   } else{
+				m_in_pools[Id::OtherHouse]            = false;
+				m_in_pools[Id::RestoCafe]             = false;
+				m_in_pools[Id::OtherPlace]            = false;
+				m_in_pools[Id::Transport]             = false;
+			   
         	   // Update presence in contact pools by type of day
         	   if (isRegularWeekday) {
         		   m_in_pools[Id::Workplace]          = true;
@@ -114,6 +136,7 @@ void Person::Update(bool isRegularWeekday, bool isK12SchoolOff, bool isCollegeOf
         	       m_in_pools[Id::PrimaryCommunity]   = true;
         	       m_in_pools[Id::SecondaryCommunity] = false;
         	   }
+			   }
 
         	   // Update presence at school and college
         	   m_in_pools[Id::K12School] = isK12SchoolOff ? false : true;
@@ -151,7 +174,10 @@ void Person::Update(bool isRegularWeekday, bool isK12SchoolOff, bool isCollegeOf
         	        	m_in_pools[Id::SecondaryCommunity] = false;
         	        	m_in_pools[Id::HouseholdCluster]   = false;
         	        	m_in_pools[Id::Collectivity]       = false;  //TODO: correct assumption?!
-						m_in_pools[Id::NewCommunity]	   = false;
+						m_in_pools[Id::OtherHouse]	       = false;
+						m_in_pools[Id::RestoCafe]          = false,
+						m_in_pools[Id::OtherPlace]         = false;
+						m_in_pools[Id::Transport]          = false;
         	     }
         }
 

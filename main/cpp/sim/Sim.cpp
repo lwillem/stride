@@ -134,7 +134,7 @@ void Sim::TimeStep()
 						isHouseholdClusteringAllowed,
 						m_is_isolated_from_household,
                         m_rn_handlers[thread_num], 
-                        simDay, m_run_simplified);
+                        simDay, m_run_simplified, m_subpools_community);
 			}
         }// end pragma openMP
 
