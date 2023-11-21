@@ -40,15 +40,15 @@ public:
         ContactPoolSys();
 
         /// Create a new contact pool of a given type.
-        ContactPool* CreateContactPool(ContactType::Id typeId);
+        ContactPool* CreateContactPool(ContactType::Id typeId, unsigned int day);
 
         /// Templated version of @CreateContactPool for use when type id is fixed.
         /// \tparam T   One of the ContactType::Id's (Household, K12 School, ...).
         /// \return     Pointer to the newly created ContactPool.
         template <ContactType::Id T>
-        ContactPool* CreateContactPool()
+        ContactPool* CreateContactPool(unsigned int day)
         {
-                return m_sys[T].emplace_back(m_currentContactPoolId[T]++, T);
+                return m_sys[T].emplace_back(m_currentContactPoolId[T]++, T, day);
         }
 
         /// Access through const reference to ContactPools of type 'id'.

@@ -33,9 +33,9 @@ ContactPoolSys::ContactPoolSys() : m_currentContactPoolId(), m_sys()
         }
 }
 
-ContactPool* ContactPoolSys::CreateContactPool(ContactType::Id typeId)
+ContactPool* ContactPoolSys::CreateContactPool(ContactType::Id typeId, unsigned int day)
 {
-        return m_sys[typeId].emplace_back(m_currentContactPoolId[typeId]++, typeId);
+        return m_sys[typeId].emplace_back(m_currentContactPoolId[typeId]++, typeId, day);
 }
 
 } // namespace stride

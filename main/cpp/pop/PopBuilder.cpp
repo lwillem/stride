@@ -247,14 +247,15 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
                 const auto person_id            = static_cast<unsigned int>(IntFromString(values[0]));
                 const auto subpool_id           = static_cast<unsigned int>(IntFromString(values[1]));
                 const std::string& location     = values[2];
-                const auto duration_hours       = static_cast<unsigned int>(IntFromString(values[3]));
-                const auto duration_minutes     = static_cast<unsigned int>(IntFromString(values[4]));
+                const auto day                  = static_cast<unsigned int>(IntFromString(values[3]));
+                const auto duration_hours       = static_cast<unsigned int>(IntFromString(values[4]));
+                const auto duration_minutes     = static_cast<unsigned int>(IntFromString(values[5]));
 
                 ContactType::Id typ = ToId(location)
 
                 unsigned int last_typ_pool = pop->RefPoolSys().currentPoolIds(typ)
                 if (subpool_id > last_typ_pool) {
-                        pop->RefPoolSys().CreateContactPool(typ);
+                        pop->RefPoolSys().CreateContactPool(typ,day);
                 }
 
                 Person* p=id_pointer_persons[person_id];
@@ -287,7 +288,7 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
         for (Id typ : IdList) {
                 if (typ != Id::OtherHouse && typ != Id::RestoCafe && typ != Id::OtherPlace && typ != Id::Transport) {
                 for (unsigned int i = 1; i < maxIds[typ] + 1; i++) {
-                        pop->RefPoolSys().CreateContactPool(typ);
+                        pop->RefPoolSys().CreateContactPool(typ, 7);
                 }}
         }
 

@@ -40,7 +40,7 @@ class ContactPool
 {
 public:
         /// Initializing constructor.
-        ContactPool(unsigned int poolId, ContactType::Id type);
+        ContactPool(unsigned int poolId, ContactType::Id type, unsigned int day);
 
         /// Default will do.
         ~ContactPool() = default;
@@ -109,6 +109,8 @@ private:
         unsigned int         m_min_age;      ///< The minimum age of the members
         double               m_ventilation; ///< Percentage of reduction of transmission in the venue
         bool                 m_venue_non_complier; ///< There is ventilation on the venue or not
+        unsigned int         m_day;         ///< day on which the pool is valid, if multiple days, m_day = 7
+        double               m_air_mass;    ///< air_mass in the pool
 };
 
 } // namespace stride
