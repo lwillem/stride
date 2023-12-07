@@ -77,6 +77,9 @@ public:
         /// Get the minimum age of the members
         unsigned int GetMinAge() const {return m_min_age;}
 
+        // Get the day of week of the pool
+        unsigned short int GetDayWeek() const {return m_day_week;} 
+
 public:
         // To iterate over the members.
         using iterator = std::vector<stride::Person*>::iterator;
@@ -109,7 +112,7 @@ private:
         unsigned int         m_min_age;      ///< The minimum age of the members
         double               m_ventilation; ///< Percentage of reduction of transmission in the venue
         bool                 m_venue_non_complier; ///< There is ventilation on the venue or not
-        unsigned int         m_day;         ///< day on which the pool is valid, if multiple days, m_day = 7
+        unsigned short int   m_day_week;    ///< day on which the pool is valid, if multiple days, m_day = 7
         double               m_air_mass;    ///< air_mass in the pool
 };
 

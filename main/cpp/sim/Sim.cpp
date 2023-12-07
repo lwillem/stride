@@ -66,6 +66,7 @@ void Sim::TimeStep()
 
         // Logic where you compute (on the basis of input/config for initial day or on the basis of
         // number of sick persons, duration of epidemic etc) what kind of DaysOff scheme you apply.
+        unsigned short int dayWeek  = m_calender->GetDayOfTheWeek(); 
         const bool isRegularWeekday     = m_calendar->IsRegularWeekday();
         const bool isHouseholdClusteringAllowed    = m_calendar->IsHouseholdClusteringAllowed();
 
@@ -158,6 +159,12 @@ void Sim::TimeStep()
 					}
 #pragma omp for schedule(static)
 					for (size_t i = 1; i < poolSys.RefPools(typ).size(); i++) { // NOLINT
+                        if (typ == ContactType::Id::OtherHouse || ContactType::Id::RestoCafe || ContactType::Id::OtherPlace || ContactType::Id::Transport) {
+                            unsigned short int day_week_pool = poolSys.RefPools(typ)[i].GetDayWeek();
+                            if (day_week_pool != dayWeek){
+                                continue;
+                            }
+                        }
                             double typ_distancing_factor;
                             // account for physical distancing at work
                             if (typ == ContactType::Id::Workplace) { typ_distancing_factor = workplace_distancing_factor; }

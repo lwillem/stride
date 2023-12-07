@@ -55,18 +55,46 @@ public:
 
 public:
         /// Default construction (for population vector).
-        Person() : m_age(0.0), m_id(0), m_pool_ids(), m_individual_contact_factor(1.0), m_health(), m_in_pools(), m_is_participant(),
+        Person() : m_age(0.0), m_id(0), m_pool_ids(), m_pool_durations(), m_pool_contacts(), m_individual_contact_factor(1.0), m_health(), m_in_pools(), m_is_participant(),
 		m_non_complier(), m_is_tracing_index(false), m_contact_tracing_list(),
         m_isolated(false), m_events() {}
 
         /// Constructor: set the person data.
         Person(unsigned int id, float age, unsigned int householdId, unsigned int k12SchoolId, unsigned int collegeId,
                unsigned int workId, unsigned int primaryCommunityId, unsigned int secondaryCommunityId, unsigned int householdClusterId,
-			   unsigned int collectivityId, unsigned int otherHouseId, unsigned int restoCafeId, unsigned int otherPlaceId, unsigned int transportId)
-            : m_age(age), m_id(id), m_pool_ids{householdId, k12SchoolId,        collegeId,
-                                               workId,      primaryCommunityId, secondaryCommunityId,
-											   householdClusterId, collectivityId, otherHouseId, restoCafeId, otherPlaceId, transportId},
-			  m_individual_contact_factor(1.0),
+			   unsigned int collectivityId)
+            : m_age(age), m_id(id), m_pool_ids{{householdId}, {k12SchoolId},        {collegeId},
+                                               {workId},      {primaryCommunityId}, {secondaryCommunityId},
+											   {householdClusterId}, {collectivityId},
+                                                                                        util::SegmentedVector<unsigned int>(7), // empty vector of length 7
+                                                                                        util::SegmentedVector<unsigned int>(7), // empty vector of length 7
+                                                                                        util::SegmentedVector<unsigned int>(7), // empty vector of length 7
+                                                                                        util::SegmentedVector<unsigned int>(7)}, // empty vector of length 7
+                                m_pool_durations{util::SegmentedVector<unsigned int>(1),
+                                                 util::SegmentedVector<unsigned int>(1),
+                                                 util::SegmentedVector<unsigned int>(1),
+                                                 util::SegmentedVector<unsigned int>(1),
+                                                 util::SegmentedVector<unsigned int>(1),
+                                                 util::SegmentedVector<unsigned int>(1),
+                                                 util::SegmentedVector<unsigned int>(1),
+                                                 util::SegmentedVector<unsigned int>(1),
+                                                 util::SegmentedVector<unsigned int>(7),
+                                                 util::SegmentedVector<unsigned int>(7),
+                                                 util::SegmentedVector<unsigned int>(7),
+                                                 util::SegmentedVector<unsigned int>(7)},
+                                m_pool_contacts{util::SegmentedVector<unsigned int>(1),
+                                                util::SegmentedVector<unsigned int>(1),
+                                                util::SegmentedVector<unsigned int>(1),
+                                                util::SegmentedVector<unsigned int>(1),
+                                                util::SegmentedVector<unsigned int>(1),
+                                                util::SegmentedVector<unsigned int>(1),
+                                                util::SegmentedVector<unsigned int>(1),
+                                                util::SegmentedVector<unsigned int>(1),
+                                                util::SegmentedVector<unsigned int>(7),
+                                                util::SegmentedVector<unsigned int>(7),
+                                                util::SegmentedVector<unsigned int>(7),
+                                                util::SegmentedVector<unsigned int>(7)},
+	  m_individual_contact_factor(1.0),
               m_health(), m_in_pools(true), m_is_participant(false), m_non_complier(false),
 			  m_is_tracing_index(false), m_contact_tracing_list(), m_isolated(false),
               m_events()
@@ -159,6 +187,15 @@ public:
 
         bool IsNonComplier(const ContactType::Id& poolType) const { return m_non_complier[poolType]; }
 
+        const util::SegmentedVector<unsigned int>& CPoolIds(ContactType::Id id) const { return m_pool_ids[id]; }
+        util::SegmentedVector<unsigned int>& PoolIds(ContactType::Id id) { return m_pool_ids[id]; }
+
+        const util::SegmentedVector<unsigned int>& CPoolContacts(ContactType::Id id) const { return m_pool_contacts[id]; }
+        util::SegmentedVector<unsigned int>& PoolContacts(ContactType::Id id) { return m_pool_contacts[id]; }
+
+        const util::SegmentedVector<unsigned int>& CPoolDurations(ContactType::Id id) const { return m_pool_durations[id]; }
+        util::SegmentedVector<unsigned int>& PoolDurations(ContactType::Id id) { return m_pool_durations[id]; }
+
 private:
         ///< Schedule an event, if the event should take place on simDay, it is executed right away.
         void ScheduleEvent(unsigned int simDay, const Event &event);
@@ -171,7 +208,11 @@ private:
 
         ///< Ids (school, work, etc) of pools you belong to Id value 0 means you do not belong to any
         ///< pool of that type (e.g. school and work are mutually exclusive).
-        ContactType::IdSubscriptArray<unsigned int> m_pool_ids;
+        ContactType::IdSubscriptArray<util::SegmentedVector<unsigned int>> m_pool_ids;
+
+        ContactType::IdSubscriptArray<util::SegmentedVector<unsigned int>> m_pool_contacts;
+
+        ContactType::IdSubscriptArray<util::SegmentedVector<unsigned int>> m_pool_durations;
 
         ///< Factor with which to scale contact rate in community pools for this individual
         double m_individual_contact_factor;

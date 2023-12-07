@@ -107,14 +107,8 @@ shared_ptr<Population> PopBuilder::MakePersons(shared_ptr<Population> pop)
                 	schoolId = 0;
                 }
 
-                unsigned int otherHouseId = 0;
-                unsigned int restoCafeId = 0;
-                unsigned int otherPlaceId = 0;
-                unsigned int transportId = 0;
-
-
                 pop->CreatePerson(person_id, age, householdId, schoolId, collegeId, workId, primaryCommunityId,
-                                  secondaryCommunityId, householdClusterId, collectivityId, otherHouseId, restoCafeId, otherPlaceId, transportId);
+                                  secondaryCommunityId, householdClusterId, collectivityId);
                 ;
         }
 
@@ -191,13 +185,8 @@ shared_ptr<Population> PopBuilder::MakePersonsOpt(shared_ptr<Population> pop)
             schoolId = 0;
         }
 
-        unsigned int otherHouseId = 0;
-        unsigned int restoCafeId = 0;
-        unsigned int otherPlaceId = 0;
-        unsigned int transportId = 0;
-
         pop->CreatePerson(person_id, age, householdId, schoolId, collegeId, workId, primaryCommunityId,
-                          secondaryCommunityId, householdClusterId, collectivityId, otherHouseId, restoCafeId, otherPlaceId, transportId);
+                          secondaryCommunityId, householdClusterId, collectivityId);
         ;
     }
 
@@ -247,15 +236,14 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
                 const auto person_id            = static_cast<unsigned int>(IntFromString(values[0]));
                 const auto subpool_id           = static_cast<unsigned int>(IntFromString(values[1]));
                 const std::string& location     = values[2];
-                const auto day                  = static_cast<unsigned int>(IntFromString(values[3]));
-                const auto duration_hours       = static_cast<unsigned int>(IntFromString(values[4]));
-                const auto duration_minutes     = static_cast<unsigned int>(IntFromString(values[5]));
-
+                const auto day_week             = static_cast<unsigned int>(IntFromString(values[3]));
+                const auto duration             = static_cast<unsigned int>(IntFromString(values[4]));
+                
                 ContactType::Id typ = ToId(location)
 
                 unsigned int last_typ_pool = pop->RefPoolSys().currentPoolIds(typ)
                 if (subpool_id > last_typ_pool) {
-                        pop->RefPoolSys().CreateContactPool(typ,day);
+                        pop->RefPoolSys().CreateContactPool(typ,day_week);
                 }
 
                 Person* p=id_pointer_persons[person_id];
@@ -263,9 +251,12 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
 
                 ;
 
+                Person person = *p;
+                person.PoolIds(typ)[day_week] = subpool_id;
+                person.PoolDurations(typ)[day_week] = duration;
                 }
 
-                newCommunityFile.close();
+                subpoolsCommunityFile.close();
        
                 
 
