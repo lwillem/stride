@@ -233,7 +233,7 @@ inline double GetContactProbability(const AgeContactProfile& profile, const Pers
 		}
 
                 // adjust contact for individual variation in community and workplace contacts
-        if(pType == Id::PrimaryCommunity || pType == Id::SecondaryCommunity || pType == Id::Workplace){
+        if(pType == Id::PrimaryCommunity || pType == Id::SecondaryCommunity || pType == Id::Workplace || pType == Id::RestoCafe || pType == Id::OtherPlace || pType == Id::Transport){
 
         		double individual_contact_factor_p1 = p1->GetIndividualContactFactor();
         		double individual_contact_factor_p2 = p2->GetIndividualContactFactor();
