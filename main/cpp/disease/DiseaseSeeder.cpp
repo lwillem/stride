@@ -37,9 +37,9 @@ using namespace stride::ContactType;
 using namespace stride::util;
 using namespace std;
 
-ContactDivider::ContactDivider(const ptree& config, RnMan& rnMan) : m_config(config), m_rn_man(rnMan) {}
+DiseaseSeeder::DiseaseSeeder(const ptree& config, RnMan& rnMan) : m_config(config), m_rn_man(rnMan) {}
 
-shared_ptr<Population> DiseaseSeeder::Divide(std::shared_ptr<Population> pop, const TransmissionProfile& transProfile)
+void DiseaseSeeder::Seed(std::shared_ptr<Population> pop, const TransmissionProfile& transProfile, util::RnHandler& rnHandler)
 
 {
 
