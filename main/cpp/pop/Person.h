@@ -117,7 +117,7 @@ public:
         unsigned int GetId() const { return m_id; }
 
         /// Get ID of contactpool_type
-        unsigned int GetPoolId(const ContactType::Id& poolType) const { return m_pool_ids[poolType]; }
+        unsigned int GetPoolId(const ContactType::Id& poolType) const { return m_pool_ids[poolType][0]; }
 
         ///< Factor with which to scale contact rate in community pools for this individual
         double GetIndividualContactFactor() const { return m_individual_contact_factor; }
@@ -153,7 +153,7 @@ public:
         /// Sets (for the type of ContactPool) the Id of the ContactPool the person belongs to.
         void SetPoolId(ContactType::Id type, unsigned int poolId)
         {
-                m_pool_ids[type] = poolId;
+                m_pool_ids[type][0] = poolId;
                 m_in_pools[type] = (poolId != 0); // Means present in Household, absent elsewhere.
         }
 
@@ -189,7 +189,7 @@ public:
 
         const util::SegmentedVector<unsigned int>& CPoolIds(ContactType::Id id) const { return m_pool_ids[id]; }
         util::SegmentedVector<unsigned int>& PoolIds(ContactType::Id id) { return m_pool_ids[id]; }
-
+        
         const util::SegmentedVector<unsigned int>& CPoolContacts(ContactType::Id id) const { return m_pool_contacts[id]; }
         util::SegmentedVector<unsigned int>& PoolContacts(ContactType::Id id) { return m_pool_contacts[id]; }
 

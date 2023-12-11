@@ -76,7 +76,7 @@ void Sim::TimeStep()
         auto&       poolSys       = population.RefPoolSys();
         auto        eventLogger   = population.RefEventLogger();
         const auto  simDay        = m_calendar->GetSimulationDay();
-
+        
         // Select infector, based on tracing
         const auto& infector      = m_public_health_agency.IsContactTracingActive(m_calendar) ? *m_infector_tracing : *m_infector_default;
 
@@ -179,7 +179,7 @@ void Sim::TimeStep()
 
                             infector(poolSys.RefPools(typ)[i], m_contact_profiles[typ], m_transmission_profile,
 									 m_rn_handlers[thread_num], simDay, eventLogger,
-									 m_population, cnt_intensity_householdCluster, typ_distancing_factor);
+									 m_population, cnt_intensity_householdCluster, typ_distancing_factor, dayWeek);
 					}
 			}
         } // end pragma openMP

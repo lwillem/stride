@@ -37,9 +37,10 @@ using namespace stride::ContactType;
 using namespace stride::util;
 using namespace std;
 
-DiseaseSeeder::DiseaseSeeder(const ptree& config, RnMan& rnMan) : m_config(config), m_rn_man(rnMan) {}
+ContactDivider::ContactDivider(const ptree& config, RnMan& rnMan) : m_config(config), m_rn_man(rnMan) {}
 
-void DiseaseSeeder::Seed(std::shared_ptr<Population> pop, const TransmissionProfile& transProfile, util::RnHandler& rnHandler)
+shared_ptr<Population> DiseaseSeeder::Divide(std::shared_ptr<Population> pop, const TransmissionProfile& transProfile)
+
 {
 
 	// Option to select a person to infect by ID, used for verification purposes.

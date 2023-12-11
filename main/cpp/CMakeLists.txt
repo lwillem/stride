@@ -24,6 +24,7 @@ set(STRIDE_SRC
     calendar/Calendar.cpp
     #---
     contact/AgeContactProfile.cpp
+    contact/ContactDivider.cpp
     contact/ContactHeterogeneitySeeder.cpp
     contact/ContactPool.cpp
     contact/ContactPoolSys.cpp

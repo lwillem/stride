@@ -97,7 +97,7 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         HealthSeeder(diseasePt).Seed(sim->m_population, sim->m_transmission_profile, sim->m_rn_handlers);
 
         // --------------------------------------------------------------
-		// Seed population with immunity: naturally or vaccine-induced.
+	// Seed population with immunity: naturally or vaccine-induced.
 	// --------------------------------------------------------------
         ImmunitySeeder(m_config, sim->m_rn_man).Seed(sim->m_population);
 
@@ -129,6 +129,15 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         // Seed population with non-compliant individuals.
         // --------------------------------------------------------------
         ContactHeterogeneitySeeder(m_config, sim->m_rn_man).Seed(sim->m_population);
+
+        // --------------------------------------------------------------
+
+        //---------------------------------------------------------------
+        // Calculate contacts based on age contact profile and duration in location
+        //---------------------------------------------------------------
+        if (sim->m_subpools_community){
+                ContactDivider.Divide(sim->m_population, sim->m_contact_profiles);
+        };
 
         // --------------------------------------------------------------
         // Fill in the ventilation in the contactPoolSys.

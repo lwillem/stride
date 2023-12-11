@@ -173,7 +173,7 @@ using namespace stride::util;
 
 inline double GetContactProbability(const AgeContactProfile& profile, const Person* p1, const Person* p2,
 		size_t pool_size, const ContactType::Id pType, const unsigned min_age_members,
-		std::shared_ptr<Population>& population, double cnt_intensity_householdCluster, double pType_distancing_factor)
+		std::shared_ptr<Population>& population, double cnt_intensity_householdCluster, double pType_distancing_factor, unsigned short int dayWeek)
 {
 
         // initiate a contact adjustment factor, to account for physical distancing and/or contact intensity
@@ -190,8 +190,13 @@ inline double GetContactProbability(const AgeContactProfile& profile, const Pers
 
 
 	// get the reference number of contacts, given age and age-contact profile
-	double reference_num_contacts_p1{profile[EffectiveAge(static_cast<unsigned int>(p1->GetAge()))]};
-        double reference_num_contacts_p2{profile[EffectiveAge(static_cast<unsigned int>(p2->GetAge()))]};
+        if (pType != Id::OtherHouse && pType != Id::RestoCafe && pType != Id::OtherPlace && pType != Id::Transport) {
+	        double reference_num_contacts_p1{profile[EffectiveAge(static_cast<unsigned int>(p1->GetAge()))]};
+                double reference_num_contacts_p2{profile[EffectiveAge(static_cast<unsigned int>(p2->GetAge()))]};
+        } else {
+                double reference_num_contacts_p1 = p1 -> CPoolContacts(pType)[day];
+                double reference_num_contacts_p2 = p2 -> CPoolContacts(pType)[day];
+        }
         const double potential_num_contacts{static_cast<double>(pool_size - 1)};
 
         // adjust contact for distancing
@@ -283,7 +288,7 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
                                  const TransmissionProfile& transProfile, util::RnHandler& rnHandler,
                                  unsigned short int simDay, shared_ptr<spdlog::logger> eventLogger,
 								 std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster,
-                                 double pType_distancing_factor)
+                                 double pType_distancing_factor, unsigned short int dayWeek)
 {
         using LP = LOG_POLICY<LL>;
 
@@ -316,7 +321,7 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
                         }
                         // check for contact
                         const double cProb = GetContactProbability(profile, p1, p2, pSize, pType, min_age_members,
-								population,m_cnt_intensity_householdCluster,pType_distancing_factor);
+								population,m_cnt_intensity_householdCluster,pType_distancing_factor, dayWeek);
                         if (rnHandler.Binomial(cProb)) {
 								const auto  tProb_p1_p2    = transProfile.GetProbability(p1,p2);
 								const auto  tProb_p2_p1    = transProfile.GetProbability(p2,p1);
@@ -374,7 +379,7 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                                    const TransmissionProfile& transProfile, util::RnHandler& rnHandler,
                                    unsigned short int simDay, shared_ptr<spdlog::logger> eventLogger,
 								   std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster,
-                                   double pType_distancing_factor)
+                                   double pType_distancing_factor, unsigned short int dayWeek)
 {
         using LP = LOG_POLICY<LL>;
 
@@ -414,7 +419,7 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                                         continue;
                                 }
                                 const double cProb_p1 = GetContactProbability(profile, p1, p2, pSize, pType, min_age_members,
-															population, m_cnt_intensity_householdCluster, pType_distancing_factor);
+															population, m_cnt_intensity_householdCluster, pType_distancing_factor, dayWeek);
                                 const auto  tProb_p1_p2 = transProfile.GetProbability(p1,p2);
 
                                 const double vProb = 1 - pVentilation; // reduction through ventilation
