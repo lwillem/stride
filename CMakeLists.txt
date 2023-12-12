@@ -29,6 +29,7 @@ project(STRIDE VERSION 1.0 LANGUAGES CXX)
 include(CMakeLocalProject.cmake OPTIONAL)
 
 
+
 #============================================================================
 # INSTALL LOCATION for bin, doc etc.
 #============================================================================
@@ -56,7 +57,6 @@ endif()
 # Configuration for CPP.
 #============================================================================
 include(CMakeCPP.cmake)
-
 
 #============================================================================
 # Configuration for DOC: DOXYGEN
