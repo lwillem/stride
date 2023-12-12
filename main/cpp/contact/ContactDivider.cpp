@@ -67,10 +67,10 @@ shared_ptr<Population> ContactDivider::Divide(shared_ptr<Population> pop, const 
 			unsigned int sizeOtherPlace = poolSys.CRefPools(Id::OtherPlace)[idOtherPlace].size();
 			unsigned int sizeTransport = poolSys.CRefPools(Id::Transport)[idTransport].size();
 			
-			unsigned int durationOtherHouse = p.CPoolDurations(Id::OtherHouse)[day];
-			unsigned int durationRestoCafe = p.CPoolDurations(Id::RestoCafe)[day];
-			unsigned int durationOtherPlace = p.CPoolDurations(Id::OtherPlace)[day];
-			unsigned int durationTransport = p.CPoolDurations(Id::Transport)[day];
+			unsigned int durationOtherHouse = p.PoolDurations(Id::OtherHouse)[day];
+			unsigned int durationRestoCafe = p.PoolDurations(Id::RestoCafe)[day];
+			unsigned int durationOtherPlace = p.PoolDurations(Id::OtherPlace)[day];
+			unsigned int durationTransport = p.PoolDurations(Id::Transport)[day];
 
 			unsigned int totalDuration = durationOtherHouse + durationRestoCafe + durationOtherPlace + durationTransport;
 

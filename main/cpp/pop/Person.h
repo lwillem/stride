@@ -64,44 +64,18 @@ public:
         Person(unsigned int id, float age, unsigned int householdId, unsigned int k12SchoolId, unsigned int collegeId,
                unsigned int workId, unsigned int primaryCommunityId, unsigned int secondaryCommunityId, unsigned int householdClusterId,
 			   unsigned int collectivityId)
-            : m_age(age), m_id(id), m_pool_ids{util::SegmentedVector<unsigned int>{householdId},
-          util::SegmentedVector<unsigned int>{k12SchoolId},
-          util::SegmentedVector<unsigned int>{collegeId},
-          util::SegmentedVector<unsigned int>{workId},
-          util::SegmentedVector<unsigned int>{primaryCommunityId},
-          util::SegmentedVector<unsigned int>{secondaryCommunityId},
-          util::SegmentedVector<unsigned int>{householdClusterId},
-          util::SegmentedVector<unsigned int>{collectivityId},
-          util::SegmentedVector<unsigned int>(7),  // lege vector van lengte 7
-          util::SegmentedVector<unsigned int>(7),  // lege vector van lengte 7
-          util::SegmentedVector<unsigned int>(7),  // lege vector van lengte 7
-          util::SegmentedVector<unsigned int>(7)   // lege vector van lengte 7
-         }, 
-    
-                                m_pool_durations{util::SegmentedVector<unsigned int>(1),
-                                                 util::SegmentedVector<unsigned int>(1),
-                                                 util::SegmentedVector<unsigned int>(1),
-                                                 util::SegmentedVector<unsigned int>(1),
-                                                 util::SegmentedVector<unsigned int>(1),
-                                                 util::SegmentedVector<unsigned int>(1),
-                                                 util::SegmentedVector<unsigned int>(1),
-                                                 util::SegmentedVector<unsigned int>(1),
-                                                 util::SegmentedVector<unsigned int>(7),
-                                                 util::SegmentedVector<unsigned int>(7),
-                                                 util::SegmentedVector<unsigned int>(7),
-                                                 util::SegmentedVector<unsigned int>(7)},
-                                m_pool_contacts{util::SegmentedVector<unsigned int>(1),
-                                                util::SegmentedVector<unsigned int>(1),
-                                                util::SegmentedVector<unsigned int>(1),
-                                                util::SegmentedVector<unsigned int>(1),
-                                                util::SegmentedVector<unsigned int>(1),
-                                                util::SegmentedVector<unsigned int>(1),
-                                                util::SegmentedVector<unsigned int>(1),
-                                                util::SegmentedVector<unsigned int>(1),
-                                                util::SegmentedVector<unsigned int>(7),
-                                                util::SegmentedVector<unsigned int>(7),
-                                                util::SegmentedVector<unsigned int>(7),
-                                                util::SegmentedVector<unsigned int>(7)},
+            : m_age(age), m_id(id), m_pool_ids{{householdId},
+          {k12SchoolId},
+          {collegeId},
+          {workId},
+          {primaryCommunityId},
+          {secondaryCommunityId},
+          {householdClusterId},
+          {collectivityId},
+          {},  
+          {},  
+          {},  
+          {}}, m_pool_durations(), m_pool_contacts(),
 	  m_individual_contact_factor(1.0),
               m_health(), m_in_pools(true), m_is_participant(false), m_non_complier(false),
 			  m_is_tracing_index(false), m_contact_tracing_list(), m_isolated(false),
@@ -195,14 +169,15 @@ public:
 
         bool IsNonComplier(const ContactType::Id& poolType) const { return m_non_complier[poolType]; }
 
-        const util::SegmentedVector<unsigned int>& CPoolIds(ContactType::Id id) const { return m_pool_ids[id]; }
-        util::SegmentedVector<unsigned int>& PoolIds(ContactType::Id id) { return m_pool_ids[id]; }
+        std::array<unsigned int, 7>& PoolIds(ContactType::Id id) { return m_pool_ids[id]; }
+        const std::array<unsigned int, 7>& CPoolIds(ContactType::Id id) const { return m_pool_ids[id]; }
 
-        const util::SegmentedVector<unsigned int>& CPoolDurations(ContactType::Id id) const { return m_pool_durations[id]; }
-        util::SegmentedVector<unsigned int>& PoolDurations(ContactType::Id id) { return m_pool_durations[id]; }
-        
-        const util::SegmentedVector<unsigned int>& CPoolContacts(ContactType::Id id) const { return m_pool_contacts[id]; }
-        util::SegmentedVector<unsigned int>& PoolContacts(ContactType::Id id) { return m_pool_contacts[id]; }
+        std::array<unsigned int, 7>& PoolDurations(ContactType::Id id) { return m_pool_durations[id]; }
+        const std::array<unsigned int, 7>& CPoolDurations(ContactType::Id id) const { return m_pool_durations[id]; }
+
+        std::array<unsigned int, 7>& PoolContacts(ContactType::Id id) { return m_pool_contacts[id]; }
+        const std::array<unsigned int, 7>& CPoolContacts(ContactType::Id id) const { return m_pool_contacts[id]; }
+
 
 private:
         ///< Schedule an event, if the event should take place on simDay, it is executed right away.
@@ -216,11 +191,11 @@ private:
 
         ///< Ids (school, work, etc) of pools you belong to Id value 0 means you do not belong to any
         ///< pool of that type (e.g. school and work are mutually exclusive).
-        ContactType::IdSubscriptArray<util::SegmentedVector<unsigned int>> m_pool_ids;
+        ContactType::IdSubscriptArray<std::array<unsigned int, 7>> m_pool_ids;
 
-        ContactType::IdSubscriptArray<util::SegmentedVector<unsigned int>> m_pool_durations;
+        ContactType::IdSubscriptArray<std::array<unsigned int, 7>> m_pool_durations;
 
-        ContactType::IdSubscriptArray<util::SegmentedVector<unsigned int>> m_pool_contacts;
+        ContactType::IdSubscriptArray<std::array<unsigned int, 7>> m_pool_contacts;
 
         ///< Factor with which to scale contact rate in community pools for this individual
         double m_individual_contact_factor;
