@@ -12,6 +12,9 @@
 #include <random>
 #include <vector>
 #include <algorithm>
+#include <iostream>
+#include <gsl/gsl_randist.h>
+#include <gsl/gsl_rng.h>
 
 using namespace boost::property_tree;
 using namespace stride::util;
@@ -31,6 +34,17 @@ shared_ptr<Population> ContactDivider::Divide(shared_ptr<Population> pop, const 
 
 	auto& logger = population.RefEventLogger();
 
+	// Initialisatie van RNG
+    const gsl_rng_type* rngType;
+    gsl_rng* rng;
+
+    gsl_rng_env_setup();
+    rngType = gsl_rng_default;
+    rng = gsl_rng_alloc(rngType);
+
+	// Aantal categorieën (locaties)
+    const size_t numCategories = 4;
+    
 	for (size_t i = 0; i < population.size(); ++i) {
 		auto &p = population[i];
 
@@ -68,24 +82,25 @@ shared_ptr<Population> ContactDivider::Divide(shared_ptr<Population> pop, const 
 			std::vector<double> probabilities = {probabilityOtherHouse,probabilityRestoCafe,probabilityOtherPlace,probabilityTransport};
     		std::vector<unsigned int> maxContactsPerLocation = {sizeOtherHouse - 1,sizeRestoCafe - 1, sizeOtherPlace - 1, sizeTransport -1};
 
-			std::random_device rd;
-    		std::mt19937 gen(rd());
-    
-    		std::vector<unsigned int> result;
-    		std::multinomial_distribution<unsigned int> distribution(reference_num_contacts_p, probabilities.begin(), probabilities.end());
+			// Resultaten voor elke dag
+    		size_t results[numCategories];
+			bool validDistribution = false;
 
-			// Continue generating until a suitable distribution is found
-    		bool validDistribution = false;
-    		while (!validDistribution) {
-        	result.clear();
-        	result = distribution(gen);
+        	// Blijf proberen totdat een geldige verdeling is verkregen
+        	while (!validDistribution) {
+            // Simuleer multinomiale verdeling
+            gsl_ran_multinomial(rng, numCategories, 1, probabilities, results);
 
-        	// Check if the distribution satisfies the maximum conditions
-        	validDistribution = std::all_of(result.begin(), result.end(), [&](unsigned int contacts) {
-            return contacts <= maxContactsPerLocation[&contacts - &result[0]];
-        	});
-    		}
-
+            // Controleer of de verdeling voldoet aan de maximale contacten per locatie
+            validDistribution = true;
+            for (size_t j = 0; j < numCategories; ++j) {
+                if (results[j] > maxContactsPerLocation[j]) {
+                    validDistribution = false;
+                    break;
+                }
+           	 }
+        	}
+        
 			p.PoolContacts(Id::OtherHouse)[day] = result[0];
 			p.PoolContacts(Id::RestoCafe)[day] = results[1];
 			p.PoolContacts(Id::OtherPlace)[day] = results[2];
@@ -94,6 +109,9 @@ shared_ptr<Population> ContactDivider::Divide(shared_ptr<Population> pop, const 
         } 
 
 	}
+
+	// Vrijgeven van resources
+    gsl_rng_free(rng);
         
 	return pop;
 }
