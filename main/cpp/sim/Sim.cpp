@@ -66,9 +66,9 @@ void Sim::TimeStep()
 
         // Logic where you compute (on the basis of input/config for initial day or on the basis of
         // number of sick persons, duration of epidemic etc) what kind of DaysOff scheme you apply.
-        unsigned short int dayWeek  = m_calendar->GetDayOfTheWeek(); 
-        const bool isRegularWeekday     = m_calendar->IsRegularWeekday();
-        const bool isHouseholdClusteringAllowed    = m_calendar->IsHouseholdClusteringAllowed();
+        const auto  dayWeek      = m_calendar->GetDayOfTheWeek(); 
+        const bool  isRegularWeekday     = m_calendar->IsRegularWeekday();
+        const bool  isHouseholdClusteringAllowed    = m_calendar->IsHouseholdClusteringAllowed();
 
 		// To be used in update of population & contact pools.
         Population& population    = *m_population;
@@ -160,7 +160,7 @@ void Sim::TimeStep()
 #pragma omp for schedule(static)
 					for (size_t i = 1; i < poolSys.RefPools(typ).size(); i++) { // NOLINT
                         if (typ == ContactType::Id::OtherHouse || typ == ContactType::Id::RestoCafe || typ == ContactType::Id::OtherPlace || typ == ContactType::Id::Transport) {
-                            unsigned short int day_week_pool = poolSys.RefPools(typ)[i].GetDayWeek();
+                            const auto day_week_pool = poolSys.RefPools(typ)[i].GetDayWeek();
                             if (day_week_pool != dayWeek){
                                 continue;
                             }
@@ -180,6 +180,7 @@ void Sim::TimeStep()
                             infector(poolSys.RefPools(typ)[i], m_contact_profiles[typ], m_transmission_profile,
 									 m_rn_handlers[thread_num], simDay, eventLogger,
 									 m_population, cnt_intensity_householdCluster, typ_distancing_factor, dayWeek);
+
 					}
 			}
         } // end pragma openMP

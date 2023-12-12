@@ -197,12 +197,12 @@ public:
 
         const util::SegmentedVector<unsigned int>& CPoolIds(ContactType::Id id) const { return m_pool_ids[id]; }
         util::SegmentedVector<unsigned int>& PoolIds(ContactType::Id id) { return m_pool_ids[id]; }
-        
-        const util::SegmentedVector<unsigned int>& CPoolContacts(ContactType::Id id) const { return m_pool_contacts[id]; }
-        util::SegmentedVector<unsigned int>& PoolContacts(ContactType::Id id) { return m_pool_contacts[id]; }
 
         const util::SegmentedVector<unsigned int>& CPoolDurations(ContactType::Id id) const { return m_pool_durations[id]; }
         util::SegmentedVector<unsigned int>& PoolDurations(ContactType::Id id) { return m_pool_durations[id]; }
+        
+        const util::SegmentedVector<unsigned int>& CPoolContacts(ContactType::Id id) const { return m_pool_contacts[id]; }
+        util::SegmentedVector<unsigned int>& PoolContacts(ContactType::Id id) { return m_pool_contacts[id]; }
 
 private:
         ///< Schedule an event, if the event should take place on simDay, it is executed right away.
@@ -218,9 +218,9 @@ private:
         ///< pool of that type (e.g. school and work are mutually exclusive).
         ContactType::IdSubscriptArray<util::SegmentedVector<unsigned int>> m_pool_ids;
 
-        ContactType::IdSubscriptArray<util::SegmentedVector<unsigned int>> m_pool_contacts;
-
         ContactType::IdSubscriptArray<util::SegmentedVector<unsigned int>> m_pool_durations;
+
+        ContactType::IdSubscriptArray<util::SegmentedVector<unsigned int>> m_pool_contacts;
 
         ///< Factor with which to scale contact rate in community pools for this individual
         double m_individual_contact_factor;

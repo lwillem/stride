@@ -40,6 +40,6 @@ typedef void(InfectorExec)(ContactPool& pool, const AgeContactProfile& profile,
                            const TransmissionProfile& trans_profile, util::RnHandler& rnHandler,
                            unsigned short int sim_day, std::shared_ptr<spdlog::logger> event_logger,
 						   std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster,
-                           double pType_distancing_factor);
+                           double pType_distancing_factor, unsigned int day_week);
 
 } // namespace stride
