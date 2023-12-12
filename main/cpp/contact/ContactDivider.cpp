@@ -83,13 +83,13 @@ shared_ptr<Population> ContactDivider::Divide(shared_ptr<Population> pop, const 
     		std::vector<unsigned int> maxContactsPerLocation = {sizeOtherHouse - 1,sizeRestoCafe - 1, sizeOtherPlace - 1, sizeTransport -1};
 
 			// Resultaten voor elke dag
-    		size_t results[numCategories];
+    		std::vector<unsigned int> results(numCategories);
 			bool validDistribution = false;
 
         	// Blijf proberen totdat een geldige verdeling is verkregen
         	while (!validDistribution) {
             // Simuleer multinomiale verdeling
-            gsl_ran_multinomial(rng, numCategories, 1, probabilities, results);
+            gsl_ran_multinomial(rng, numCategories, 1, probabilities.data(), results.data());
 
             // Controleer of de verdeling voldoet aan de maximale contacten per locatie
             validDistribution = true;
@@ -101,7 +101,7 @@ shared_ptr<Population> ContactDivider::Divide(shared_ptr<Population> pop, const 
            	 }
         	}
         
-			p.PoolContacts(Id::OtherHouse)[day] = result[0];
+			p.PoolContacts(Id::OtherHouse)[day] = results[0];
 			p.PoolContacts(Id::RestoCafe)[day] = results[1];
 			p.PoolContacts(Id::OtherPlace)[day] = results[2];
 			p.PoolContacts(Id::Transport)[day] = results[3];
