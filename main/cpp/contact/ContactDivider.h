@@ -24,6 +24,7 @@
 #include <memory>
 
 #include "contact/ContactType.h"
+#include "contact/AgeContactProfiles.h"
 
 
 namespace stride {
@@ -51,7 +52,7 @@ public:
   
     /// \param pop               Population.
     /// \param ageContactProfiles Age Contact Profiles.
-    shared_ptr<Population> Divide(shared_ptr<Population> pop, const AgeContactProfiles& ageContactProfiles)
+    std::shared_ptr<Population> Divide(std::shared_ptr<Population> pop, const AgeContactProfiles& ageContactProfiles);
 
 private:
     const boost::property_tree::ptree& m_config; ///< Run config.

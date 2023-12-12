@@ -25,6 +25,7 @@
 #include "contact/IdSubscriptArray.h"
 #include "disease/Health.h"
 #include "util/RnHandler.h"
+#include "util/SegmentedVector.h"
 
 #include <cstddef>
 #include <queue>
@@ -63,13 +64,20 @@ public:
         Person(unsigned int id, float age, unsigned int householdId, unsigned int k12SchoolId, unsigned int collegeId,
                unsigned int workId, unsigned int primaryCommunityId, unsigned int secondaryCommunityId, unsigned int householdClusterId,
 			   unsigned int collectivityId)
-            : m_age(age), m_id(id), m_pool_ids{{householdId}, {k12SchoolId},        {collegeId},
-                                               {workId},      {primaryCommunityId}, {secondaryCommunityId},
-											   {householdClusterId}, {collectivityId},
-                                                                                        util::SegmentedVector<unsigned int>(7), // empty vector of length 7
-                                                                                        util::SegmentedVector<unsigned int>(7), // empty vector of length 7
-                                                                                        util::SegmentedVector<unsigned int>(7), // empty vector of length 7
-                                                                                        util::SegmentedVector<unsigned int>(7)}, // empty vector of length 7
+            : m_age(age), m_id(id), m_pool_ids{util::SegmentedVector<unsigned int>{householdId},
+          util::SegmentedVector<unsigned int>{k12SchoolId},
+          util::SegmentedVector<unsigned int>{collegeId},
+          util::SegmentedVector<unsigned int>{workId},
+          util::SegmentedVector<unsigned int>{primaryCommunityId},
+          util::SegmentedVector<unsigned int>{secondaryCommunityId},
+          util::SegmentedVector<unsigned int>{householdClusterId},
+          util::SegmentedVector<unsigned int>{collectivityId},
+          util::SegmentedVector<unsigned int>(7),  // lege vector van lengte 7
+          util::SegmentedVector<unsigned int>(7),  // lege vector van lengte 7
+          util::SegmentedVector<unsigned int>(7),  // lege vector van lengte 7
+          util::SegmentedVector<unsigned int>(7)   // lege vector van lengte 7
+         }, 
+    
                                 m_pool_durations{util::SegmentedVector<unsigned int>(1),
                                                  util::SegmentedVector<unsigned int>(1),
                                                  util::SegmentedVector<unsigned int>(1),
@@ -142,7 +150,7 @@ public:
         		bool isHouseholdClusteringAllowed,
         		bool isIsolatedFromHousehold, 
 				util::RnHandler& rnHandler,
-                unsigned short int simDay, bool run_simplified);
+                unsigned short int simDay, bool run_simplified, bool subpools_community);
                 
         /// Set the age of the person
         void SetAge(unsigned int newAge) { m_age = newAge; }

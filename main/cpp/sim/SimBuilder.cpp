@@ -22,6 +22,7 @@
 
 #include "contact/ContactType.h"
 #include "contact/InfectorMap.h"
+#include "contact/ContactDivider.h"
 #include "contact/ContactHeterogeneitySeeder.h"
 #include "contact/VentilationHeterogeneitySeeder.h"
 #include "disease/DiseaseSeeder.h"
@@ -136,7 +137,7 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         // Calculate contacts based on age contact profile and duration in location
         //---------------------------------------------------------------
         if (sim->m_subpools_community){
-                ContactDivider.Divide(sim->m_population, sim->m_contact_profiles);
+                ContactDivider(m_config, sim->m_rn_man).Divide(sim->m_population, sim->m_contact_profiles);
         };
 
         // --------------------------------------------------------------

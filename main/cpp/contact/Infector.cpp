@@ -188,14 +188,16 @@ inline double GetContactProbability(const AgeContactProfile& profile, const Pers
             cnt_adjustment_factor = (1 - pType_distancing_factor);
         }
 
-
+        double reference_num_contacts_p1;
+        double reference_num_contacts_p2;
+        
 	// get the reference number of contacts, given age and age-contact profile
         if (pType != Id::OtherHouse && pType != Id::RestoCafe && pType != Id::OtherPlace && pType != Id::Transport) {
 	        double reference_num_contacts_p1{profile[EffectiveAge(static_cast<unsigned int>(p1->GetAge()))]};
                 double reference_num_contacts_p2{profile[EffectiveAge(static_cast<unsigned int>(p2->GetAge()))]};
         } else {
-                double reference_num_contacts_p1 = p1 -> CPoolContacts(pType)[day];
-                double reference_num_contacts_p2 = p2 -> CPoolContacts(pType)[day];
+                double reference_num_contacts_p1 = p1 -> CPoolContacts(pType)[dayWeek];
+                double reference_num_contacts_p2 = p2 -> CPoolContacts(pType)[dayWeek];
         }
         const double potential_num_contacts{static_cast<double>(pool_size - 1)};
 

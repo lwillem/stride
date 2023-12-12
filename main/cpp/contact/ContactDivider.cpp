@@ -1,5 +1,4 @@
 #include "ContactDivider.h"
-
 #include "contact/AgeContactProfile.h"
 #include "contact/ContactType.h"
 #include "pop/Population.h"
@@ -10,6 +9,9 @@
 
 #include <boost/property_tree/ptree.hpp>
 #include <cassert>
+#include <random>
+#include <vector>
+#include <algorithm>
 
 using namespace boost::property_tree;
 using namespace stride::util;
@@ -30,17 +32,14 @@ shared_ptr<Population> ContactDivider::Divide(shared_ptr<Population> pop, const 
 	auto& logger = population.RefEventLogger();
 
 	for (size_t i = 0; i < population.size(); ++i) {
-		auto &p population[i];
+		auto &p = population[i];
 
 		unsigned int age = p.GetAge();
 
 		for (size_t day = 0; day < 7; day++){
-			if (day == 0 || day == 6) {
-				const AgeContactProfile& profile = ageContactProfiles[Id::PrimaryCommunity];
-			}
-			else {
-				const AgeContactProfile& profile = ageContactProfiles[Id::SecondaryCommunity];
-			}
+	   		const AgeContactProfile& profile = (day == 0 || day == 6) ?
+                                       ageContactProfiles[Id::PrimaryCommunity] :
+                                       ageContactProfiles[Id::SecondaryCommunity];
 
 			double reference_num_contacts_p{profile[EffectiveAge(static_cast<unsigned int>(age))]};
 
@@ -49,10 +48,10 @@ shared_ptr<Population> ContactDivider::Divide(shared_ptr<Population> pop, const 
 			unsigned int idOtherPlace = p.CPoolIds(Id::OtherPlace)[day];
 			unsigned int idTransport = p.CPoolIds(Id::Transport)[day];
 
-			unsigned int sizeOtherHouse = poolSys(Id::OtherHouse)[idOtherHouse].size();
-			unsigned int sizeRestoCafe = poolSys(Id::RestoCafe)[idRestoCafe].size();
-			unsigned int sizeOtherPlace = poolSys(Id::OtherPlace)[idOtherPlace].size();
-			unsigned int sizeTransport = poolSys(Id::Transport)[idTransport].size();
+			unsigned int sizeOtherHouse = poolSys.CRefPools(Id::OtherHouse)[idOtherHouse].size();
+			unsigned int sizeRestoCafe = poolSys.CRefPools(Id::RestoCafe)[idRestoCafe].size();
+			unsigned int sizeOtherPlace = poolSys.CRefPools(Id::OtherPlace)[idOtherPlace].size();
+			unsigned int sizeTransport = poolSys.CRefPools(Id::Transport)[idTransport].size();
 			
 			unsigned int durationOtherHouse = p.CPoolDurations(Id::OtherHouse)[day];
 			unsigned int durationRestoCafe = p.CPoolDurations(Id::RestoCafe)[day];
@@ -97,5 +96,6 @@ shared_ptr<Population> ContactDivider::Divide(shared_ptr<Population> pop, const 
 	}
         
 	return pop;
+}
 
 } // namespace stride

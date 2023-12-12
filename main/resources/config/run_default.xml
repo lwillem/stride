@@ -24,7 +24,7 @@
     <r0>11</r0>
     <seeding_age_max>99</seeding_age_max>
     <seeding_age_min>1</seeding_age_min>
-    <num_infected_seeds>1200</num_infected_seeds>
+    <num_infected_seeds>120</num_infected_seeds>
     <start_date>2020-01-01</start_date>
     <stride_log_level>info</stride_log_level>
     <track_index_case>false</track_index_case>

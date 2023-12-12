@@ -82,7 +82,7 @@ public:
         static void Exec(ContactPool& pool, const AgeContactProfile& profile, const TransmissionProfile& transProfile,
         				 util::RnHandler& rnHandler, unsigned short int simDay, std::shared_ptr<spdlog::logger> eventLogger,
 						 std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster,
-                         double pType_distancing_factor);
+                         double pType_distancing_factor, unsigned short int dayWeek);
 };
 
 /// Time-optimized version (For None || Transmission logging).
@@ -96,7 +96,7 @@ public:
         static void Exec(ContactPool& pool, const AgeContactProfile& profile, const TransmissionProfile& transProfile,
         				 util::RnHandler& rnHandler, unsigned short int simDay, std::shared_ptr<spdlog::logger> eventLogger,
 						 std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster,
-                         double pType_distancing_factor);
+                         double pType_distancing_factor, unsigned short int dayWeek);
 };
 
 /// Explicit instantiations in cpp file.
