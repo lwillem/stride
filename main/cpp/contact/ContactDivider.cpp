@@ -28,6 +28,7 @@ ContactDivider::ContactDivider(const ptree& config, RnMan& rnMan) : m_config(con
 
 shared_ptr<Population> ContactDivider::Divide(shared_ptr<Population> pop, const AgeContactProfiles& ageContactProfiles)
 {
+	std::cout << "Start ContactDivider" << std::endl;
 	auto& population = *pop;
 
 	auto& poolSys = population.CRefPoolSys();

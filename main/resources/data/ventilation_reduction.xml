@@ -8,8 +8,8 @@
 	<SecondaryCommunity>0.4</SecondaryCommunity>
 	<HouseholdCluster>0</HouseholdCluster>
 	<Collectivity>0.1</Collectivity>
-	<OtherHouse>0<OtherHouse>
-	<RestoCafe>0.2<RestoCafe>
-	<OtherPlace>0.5<OtherPlace>
-	<Transport>0.3<Transport>
+	<OtherHouse>0</OtherHouse>
+	<RestoCafe>0.2</RestoCafe>
+	<OtherPlace>0.5</OtherPlace>
+	<Transport>0.3</Transport>
 </ventilation_reduction>

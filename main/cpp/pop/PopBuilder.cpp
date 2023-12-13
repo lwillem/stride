@@ -243,7 +243,7 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
         
         for (auto& p : *pop) {
                 unsigned int person_id = p.GetId();
-                id_pointer_persons.insert(pair<int, Person*>(person_id, &p));
+                id_pointer_persons.emplace(person_id, &p);
 
                 for (Id typ : IdList) {
                         if (typ != Id::OtherHouse && typ != Id::RestoCafe && typ != Id::OtherPlace && typ != Id::Transport) {
@@ -284,6 +284,10 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
                 const auto day_week             = static_cast<unsigned int>(IntFromString(values[3]));
                 const auto duration             = static_cast<unsigned int>(IntFromString(values[4]));
                 
+
+                
+                if (person_id != 0) {
+
                 ContactType::Id typ = ToId(location);
 
                 unsigned int last_typ_pool = pop->RefPoolSys().currentPoolIds(typ);
@@ -291,14 +295,21 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
                         pop->RefPoolSys().CreateContactPool(typ,day_week);
                 }
 
+                
+                
                 Person* p=id_pointer_persons[person_id];
+                
+
                 pop->RefPoolSys().RefPools(typ)[subpool_id].AddMember(p);
 
-                ;
+                
 
                 Person person = *p;
                 person.PoolIds(typ)[day_week] = subpool_id;
                 person.PoolDurations(typ)[day_week] = duration;
+                }
+
+
                 }
 
                 subpoolsCommunityFile.close();
@@ -307,7 +318,7 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
         
 
        
-
+m_stride_logger->info("Building population ready");
         
 
 
