@@ -371,7 +371,6 @@ ref_data_prevalence  <- readRDS(file='tests/regression_rstride_prevalence.rds')
 # Do we have to select reference scenarios?
 if(nrow(project_summary) != nrow(ref_project_summary)){
   ref_project_summary <- ref_project_summary[ref_project_summary$gtester_label %in% unique(project_summary$gtester_label),]
-  project_summary     <- project_summary[project_summary$gtester_label %in% unique(ref_project_summary$gtester_label),]
   ref_data_incidence  <- ref_data_incidence[ref_data_incidence$exp_id %in% unique(ref_project_summary$exp_id),]
   ref_data_prevalence <- ref_data_prevalence[ref_data_prevalence$exp_id %in% unique(ref_project_summary$exp_id),]
   smd_print("REGRESSION TEST DOES NOT CONTAIN ALL SCENARIOS",WARNING = T)
@@ -383,12 +382,15 @@ if(!setequal(project_summary,ref_project_summary)){
   
   smd_print("SUMMARY CHANGED",WARNING = T)
   
+  # remove new rows
+  select_project_summary <- project_summary[project_summary$gtester_label %in% unique(ref_project_summary$gtester_label),]
+  
   # check columns
-  if(all(dim(project_summary) == dim(ref_project_summary))){
-    col_changed <- which(colSums(project_summary != ref_project_summary) > 0)
+  if(all(dim(select_project_summary) == dim(ref_project_summary))){
+    col_changed <- which(colSums(select_project_summary != ref_project_summary) > 0)
     smd_print('column(s) with changes:', paste(names(col_changed),collapse = ','),WARNING = T)
   } else{
-    smd_print(paste(c('Summary dimensions changed:',setdiff(names(project_summary),names(ref_project_summary))),collapse='\n\t\t'),WARNING = T)
+    smd_print(paste(c('Summary dimensions changed:',setdiff(names(select_project_summary),names(ref_project_summary))),collapse='\n\t\t'),WARNING = T)
   }
   
   # remove new column names
@@ -506,7 +508,7 @@ rrv <- function(){
 # update the rstride reference values in the repo (note: local function for LW)
 rrv_repo <- function(){
   stride_repo_dir <- 'tests'
-  stride_repo_dir <- '~/Documents/university/research/stride/repo/stride_lw/main/resources/rstride_test'
+  stride_repo_dir <- '~/Documents/university/research/stride/repo/stride_2023/main/resources/rstride_test'
   saveRDS(project_summary,file=file.path(stride_repo_dir,'regression_rstride_summary.rds'))
   saveRDS(data_incidence,file=file.path(stride_repo_dir,'regression_rstride_incidence.rds'))
   saveRDS(data_prevalence,file=file.path(stride_repo_dir,'regression_rstride_prevalence.rds'))
