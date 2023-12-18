@@ -124,7 +124,7 @@ parse_log_file <- function(config_exp,
   
   # parse event_log (if present)
   event_log_filename <- smd_file_path(output_prefix,'event_log.txt')
-  if(file.exists(event_log_filename)){
+  if(file.exists(event_log_filename) & file.size(event_log_filename)>0){
     
     rstride_out <- parse_event_logfile(event_log_filename,
                                        i_exp,
@@ -148,8 +148,8 @@ parse_log_file <- function(config_exp,
       rstride_out$data_transmission <- NA
     }
     
-  } else { # end if logfile does not existse
-    smd_print("LOGFILE NOT FOUND!!",WARNING = T)
+  } else { # end if logfile does not exist or is empty
+    smd_print("LOGFILE NOT FOUND OR EMPTY!!",WARNING = T)
   }
   
   # convert 'prevalence' files (if present) 
@@ -367,9 +367,10 @@ run_rStride <- function(exp_design               = exp_design,
                        }
 
                        # parse log file if there is no log threshold (NULL or NA) OR if simulated cases < threshold 
-                       if(is.null(config_exp$logparsing_cases_upperlimit) ||
+                       if(config_exp$event_log_level != "None" &&
+                          (is.null(config_exp$logparsing_cases_upperlimit) ||
                           is.na(config_exp$logparsing_cases_upperlimit) ||
-                          run_summary$num_cases < config_exp$logparsing_cases_upperlimit){
+                          run_summary$num_cases < config_exp$logparsing_cases_upperlimit)){
                          
                          # parse log output (and save as rds file)
                          parse_log_file(config_exp, 

@@ -27,7 +27,60 @@ using namespace std;
 
 namespace {
 
-/// Primary LOG_POLICY policy, implements LogMode::None.
+inline void RegisterTransmissionFull (const std::shared_ptr<spdlog::logger>& logger, const Person* p1, const Person* p2,
+					  ContactType::Id type, unsigned short int sim_day, unsigned int id_index_case)
+{
+	unsigned short startHospitalisation = -1;
+	if (p2->GetHealth().GetStartHospitalisation()) {
+		startHospitalisation = p2->GetHealth().GetStartHospitalisation().value();
+	}
+
+	logger->info("[TRAN] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}",
+					 p2->GetId(), p1->GetId(), p2->GetAge(), p1->GetAge(),
+					 ToString(type), sim_day, id_index_case,
+					 p2->GetHealth().GetStartInfectiousness(),p2->GetHealth().GetEndInfectiousness(),
+					 p2->GetHealth().GetStartSymptomatic(),p2->GetHealth().GetEndSymptomatic(),
+					 startHospitalisation,
+					 p1->GetHealth().IsSymptomatic(),
+					 p2->GetHealth().GetRelativeInfectiousness(),
+					 p2->GetHealth().GetRelativeSusceptibility());
+}
+
+inline void RegisterTransmissionPartial (const std::shared_ptr<spdlog::logger>& logger, const Person* p2,
+					  unsigned short int sim_day)
+{
+	unsigned short int startHospitalisation = -1;
+	if (p2->GetHealth().GetStartHospitalisation()) {
+		startHospitalisation = p2->GetHealth().GetStartHospitalisation().value();
+	}
+
+	logger->info("[TRAN_M] {} {} {} {} {} {}",
+				 p2->GetAge(),
+				 sim_day,
+				 p2->GetHealth().GetStartInfectiousness(),
+				 p2->GetHealth().GetStartSymptomatic(),
+				 p2->GetHealth().GetEndSymptomatic(),
+				 startHospitalisation
+				 );
+}
+
+inline void RegisterContact (const std::shared_ptr<spdlog::logger>& logger, const Person* p1, const Person* p2,
+        ContactType::Id type, unsigned short int sim_day, const double cProb, const double tProb)
+	{
+	logger->info("[CONT] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}", p1->GetId(), p1->GetAge(),
+	                                     p2->GetAge(), static_cast<unsigned int>(type == ContactType::Id::Household),
+	                                     static_cast<unsigned int>(type == ContactType::Id::K12School),
+	                                     static_cast<unsigned int>(type == ContactType::Id::College),
+	                                     static_cast<unsigned int>(type == ContactType::Id::Workplace),
+	                                     static_cast<unsigned int>(type == ContactType::Id::PrimaryCommunity),
+	                                     static_cast<unsigned int>(type == ContactType::Id::SecondaryCommunity),
+										 static_cast<unsigned int>(type == ContactType::Id::HouseholdCluster),
+										 static_cast<unsigned int>(type == ContactType::Id::Collectivity),
+										 sim_day,
+										 cProb, tProb,p2->GetHealth().IsSymptomatic(),p1->GetHealth().IsSymptomatic(), p2->GetId());
+}
+
+/// Primary LOG_POLICY policy, implements EventLogMode::None.
 /// \tparam LL
 template <EventLogMode::Id LL>
 class LOG_POLICY
@@ -44,7 +97,7 @@ public:
         }
 };
 
-/// Specialized LOG_POLICY policy LogMode::Incidence.
+/// Specialized LOG_POLICY policy EventLogMode::Incidence.
 template <>
 class LOG_POLICY<EventLogMode::Id::Incidence>
 {
@@ -58,23 +111,11 @@ public:
         static void Trans(const std::shared_ptr<spdlog::logger>& logger, const Person* p1, const Person* p2,
                           ContactType::Id type, unsigned short int sim_day, unsigned int id_index_case)
         {
-                unsigned short int startHospitalisation = -1;
-                if (p2->GetHealth().GetStartHospitalisation()) {
-                    startHospitalisation = p2->GetHealth().GetStartHospitalisation().value();
-                }
-
-                logger->info("[TRAN_M] {} {} {} {} {} {}",
-							 p2->GetAge(),
-							 sim_day,
-							 p2->GetHealth().GetStartInfectiousness(),
-							 p2->GetHealth().GetStartSymptomatic(),
-							 p2->GetHealth().GetEndSymptomatic(),
-                             startHospitalisation
-							 );
+        	RegisterTransmissionPartial(logger,p2,sim_day);
         }
 };
 
-/// Specialized LOG_POLICY policy LogMode::Transmissions.
+/// Specialized LOG_POLICY policy EventLogMode::Transmissions.
 template <>
 class LOG_POLICY<EventLogMode::Id::Transmissions>
 {
@@ -88,24 +129,11 @@ public:
         static void Trans(const std::shared_ptr<spdlog::logger>& logger, const Person* p1, const Person* p2,
                           ContactType::Id type, unsigned short int sim_day, unsigned int id_index_case)
         {
-                unsigned short startHospitalisation = -1;
-                if (p2->GetHealth().GetStartHospitalisation()) {
-                    startHospitalisation = p2->GetHealth().GetStartHospitalisation().value();
-                }
-
-                logger->info("[TRAN] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}", 
-                             p2->GetId(), p1->GetId(), p2->GetAge(), p1->GetAge(),
-                             ToString(type), sim_day, id_index_case,
-							 p2->GetHealth().GetStartInfectiousness(),p2->GetHealth().GetEndInfectiousness(),
-							 p2->GetHealth().GetStartSymptomatic(),p2->GetHealth().GetEndSymptomatic(),
-                             startHospitalisation,
-							 p1->GetHealth().IsSymptomatic(),
-							 p2->GetHealth().GetRelativeInfectiousness(),
-							 p2->GetHealth().GetRelativeSusceptibility());
+        	RegisterTransmissionFull(logger,p1,p2,type,sim_day,id_index_case);
         }
 };
 
-/// Specialized LOG_POLICY policy LogMode::Participants.
+/// Specialized LOG_POLICY policy EventLogMode::Participants.
 template <>
 class LOG_POLICY<EventLogMode::Id::Participants>
 {
@@ -114,43 +142,19 @@ public:
                             ContactType::Id type, unsigned short int sim_day, const double cProb, const double tProb)
         {
                if (p1->IsSurveyParticipant()) {
-                        logger->info("[CONT] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}", p1->GetId(), p1->GetAge(),
-                                     p2->GetAge(), static_cast<unsigned int>(type == ContactType::Id::Household),
-                                     static_cast<unsigned int>(type == ContactType::Id::K12School),
-                                     static_cast<unsigned int>(type == ContactType::Id::College),
-                                     static_cast<unsigned int>(type == ContactType::Id::Workplace),
-                                     static_cast<unsigned int>(type == ContactType::Id::PrimaryCommunity),
-                                     static_cast<unsigned int>(type == ContactType::Id::SecondaryCommunity),
-									 static_cast<unsigned int>(type == ContactType::Id::HouseholdCluster),
-									 static_cast<unsigned int>(type == ContactType::Id::Collectivity),
-									 sim_day,
-									 cProb, tProb,p2->GetHealth().IsSymptomatic(),p1->GetHealth().IsSymptomatic(), p2->GetId());
+            	   RegisterContact(logger,p1,p2,type,sim_day,cProb,tProb);
                }
         }
 
         static void Trans(const std::shared_ptr<spdlog::logger>& logger, const Person* p1, const Person* p2,
                           ContactType::Id type, unsigned short int sim_day, unsigned int id_index_case)
         {
-
-			unsigned short startHospitalisation = -1;
-			if (p2->GetHealth().GetStartHospitalisation()) {
-				startHospitalisation = p2->GetHealth().GetStartHospitalisation().value();
-			}
-
-			logger->info("[TRAN] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}",
-							 p2->GetId(), p1->GetId(), p2->GetAge(), p1->GetAge(),
-							 ToString(type), sim_day, id_index_case,
-							 p2->GetHealth().GetStartInfectiousness(),p2->GetHealth().GetEndInfectiousness(),
-							 p2->GetHealth().GetStartSymptomatic(),p2->GetHealth().GetEndSymptomatic(),
-							 startHospitalisation,
-							 p1->GetHealth().IsSymptomatic(),
-							 p2->GetHealth().GetRelativeInfectiousness(),
-							 p2->GetHealth().GetRelativeSusceptibility());
+        	RegisterTransmissionFull(logger,p1,p2,type,sim_day,id_index_case);
         }
 };
 
 
-/// Specialized LOG_POLICY policy LogMode::All.
+/// Specialized LOG_POLICY policy EventLogMode::All.
 template <>
 class LOG_POLICY<EventLogMode::Id::All>
 {
@@ -158,36 +162,13 @@ public:
         static void Contact(const std::shared_ptr<spdlog::logger>& logger, const Person* p1, const Person* p2,
                             ContactType::Id type, unsigned short int sim_day, const double cProb, const double tProb)
         {
-                        logger->info("[CONT] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}", p1->GetId(), p1->GetAge(),
-                                     p2->GetAge(), static_cast<unsigned int>(type == ContactType::Id::Household),
-                                     static_cast<unsigned int>(type == ContactType::Id::K12School),
-                                     static_cast<unsigned int>(type == ContactType::Id::College),
-                                     static_cast<unsigned int>(type == ContactType::Id::Workplace),
-                                     static_cast<unsigned int>(type == ContactType::Id::PrimaryCommunity),
-                                     static_cast<unsigned int>(type == ContactType::Id::SecondaryCommunity),
-									 static_cast<unsigned int>(type == ContactType::Id::HouseholdCluster),
-									 static_cast<unsigned int>(type == ContactType::Id::Collectivity),
-									 sim_day,
-									 cProb, tProb,p2->GetHealth().IsSymptomatic(),p1->GetHealth().IsSymptomatic(), p2->GetId());
+            RegisterContact(logger,p1,p2,type,sim_day,cProb,tProb);
         }
 
         static void Trans(const std::shared_ptr<spdlog::logger>& logger, const Person* p1, const Person* p2,
                           ContactType::Id type, unsigned short int sim_day, unsigned int id_index_case)
         {
-        	unsigned short startHospitalisation = -1;
-			if (p2->GetHealth().GetStartHospitalisation()) {
-				startHospitalisation = p2->GetHealth().GetStartHospitalisation().value();
-			}
-
-			logger->info("[TRAN] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}",
-							 p2->GetId(), p1->GetId(), p2->GetAge(), p1->GetAge(),
-							 ToString(type), sim_day, id_index_case,
-							 p2->GetHealth().GetStartInfectiousness(),p2->GetHealth().GetEndInfectiousness(),
-							 p2->GetHealth().GetStartSymptomatic(),p2->GetHealth().GetEndSymptomatic(),
-							 startHospitalisation,
-							 p1->GetHealth().IsSymptomatic(),
-							 p2->GetHealth().GetRelativeInfectiousness(),
-							 p2->GetHealth().GetRelativeSusceptibility());
+        	RegisterTransmissionFull(logger,p1,p2,type,sim_day,id_index_case);
         }
 };
 
@@ -303,7 +284,7 @@ namespace stride {
 using namespace stride::util;
 
 //-------------------------------------------------------------------------------------------------
-// Definition for EventLogMode::All, and ContactLogMode::Participants
+// Definition for EventLogMode::All, and EventLogMode::Participants
 // both with track_index_case false and true.
 //-------------------------------------------------------------------------------------------------
 template <EventLogMode::Id LL, bool TIC, bool TO>
@@ -393,7 +374,7 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
 }
 
 //-------------------------------------------------------------------------------------------
-// Definition for ContactLogMode::None and ContactLogMode::Transmissions
+// Definition for ContactLogMode::None and EventLogMode::Transmissions
 // both with track_index_case false and true.
 //-------------------------------------------------------------------------------------------
 template <EventLogMode::Id LL, bool TIC>

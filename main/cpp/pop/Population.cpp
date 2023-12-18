@@ -53,7 +53,7 @@ std::shared_ptr<Population> Population::Create(const boost::property_tree::ptree
         // Create empty population & and give it a InfectorLogger.
         // --------------------------------------------------------------
         const auto pop = Create();
-        if (config.get<bool>("run.event_output_file", true)) {
+        if(EventLogMode::ToMode(config.get<string>("run.event_log_level", "None")) > EventLogMode::Id::None) {
                 const auto prefix       = config.get<string>("run.output_prefix");
                 const auto logPath      = FileSys::BuildPath(prefix, "event_log.txt");
                 pop->RefEventLogger()   = LogUtils::CreateRotatingLogger("event_logger", logPath.string());
