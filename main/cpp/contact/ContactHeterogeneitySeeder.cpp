@@ -42,6 +42,7 @@ shared_ptr<Population> ContactHeterogeneitySeeder::Seed(shared_ptr<Population> p
 
 	auto& population = *pop;
 
+	const EventLogMode::Id log_level   = EventLogMode::ToMode(m_config.get<string>("run.event_log_level", "None"));
 	auto& logger = population.RefEventLogger();
 
 	boost::optional<string> contact_distribution = m_config.get_optional<string>("run.contact_distribution");
@@ -63,8 +64,10 @@ shared_ptr<Population> ContactHeterogeneitySeeder::Seed(shared_ptr<Population> p
 				population[i].SetIndividualContactFactor(individual_contact_factor);
 
 				// Log person details
-				logger->info("[CNTH] {} {}", population[i].GetId(), individual_contact_factor);
-
+				if (log_level == EventLogMode::Id::All) {
+					logger->info("[CNTH] {} {}",
+							population[i].GetId(), individual_contact_factor);
+				}
 			}
 
 		}

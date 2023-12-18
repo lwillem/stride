@@ -86,7 +86,7 @@ exp_design <- expand.grid(r0                            = 2.5,
 
 # all contacts ----
 exp_design_all <- exp_design
-exp_design_all$event_log_level            <- 'All'
+exp_design_all$event_log_level            <- 'Participants'
 exp_design_all$gtester_label              <- 'covid_all'
  
 # daily seeding ----

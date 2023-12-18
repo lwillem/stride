@@ -36,17 +36,20 @@ if(0==1){
   exp_id <- i_exp;bool_parse_tracing=TRUE
 }
 parse_event_logfile <- function(event_logfile,exp_id,
-                                bool_parse_tracing=TRUE)  # reducted transmission output
+                                bool_parse_tracing=TRUE)  # reduced transmission output
 {
 
   # terminal message
   cat("PARSING LOGFILE:",event_logfile,fill=TRUE)
 
   # get LOG categories, by reading file line by line and select 1st column
-  data_log_cat <- fread(event_logfile, sep=' ', fill=TRUE,
-                           select = 1)
+  # create sed command to remove all info except the log_tag
+  cmd_sed <- paste(c("sed s/].*/]/g"),collapse=' -e ')
+  
+  # read file line by line and select the remaining tag
+  data_log_cat <- fread(cmd=paste(cmd_sed,event_logfile))
   data_log_cat <- unlist(unique(data_log_cat))
-
+  
   # initialise output variables
   rstride_out <- list()
   
