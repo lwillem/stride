@@ -427,7 +427,7 @@ if(!(exists('.rstride'))){
 .rstride$log_levels_exist <- function(design_of_experiment = exp_design){
   
   valid_levels <- design_of_experiment$event_log_level %in% 
-    c('None','Incidence','Transmissions','All','ContactTracing')
+    c('None','Incidence','Transmissions','All','ContactTracing','Participants')
   
   if(any(!valid_levels)){
     smd_print('INVALID LOG LEVEL(S):', 

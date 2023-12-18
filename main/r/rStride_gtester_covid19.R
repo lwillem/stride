@@ -71,9 +71,12 @@ exp_design <- expand.grid(r0                            = 2.5,
                           gtester_label                  = 'covid_base',
                           event_log_level                = 'Transmissions',
                           
-                          hospital_category_age         = paste(0,19,60,80,sep=','),
-                          hospital_probability_age      = paste(0.049,0.03024,0.1197,0.5922,sep=','),
-                          hospital_mean_delay_age       = paste(3,7,7,6,sep=','),
+                          # hospital_category_age         = paste(0,19,60,80,sep=','),
+                          # hospital_probability_age      = paste(0.049,0.03024,0.1197,0.5922,sep=','),
+                          # hospital_mean_delay_age       = paste(3,7,7,6,sep=','),
+                          hospital_category_age         = paste(0,sep=','),
+                          hospital_probability_age      = paste(0,sep=','),
+                          hospital_mean_delay_age       = paste(0,sep=','),
                           
                           disease_susceptibility_age      = NA,
                           disease_susceptibility_agecat   = NA,
@@ -84,11 +87,23 @@ exp_design <- expand.grid(r0                            = 2.5,
                           
                           stringsAsFactors = F)
 
-# all contacts ----
+# Contacts: virtual survey ---- 
 exp_design_all <- exp_design
 exp_design_all$event_log_level            <- 'Participants'
-exp_design_all$gtester_label              <- 'covid_all'
- 
+exp_design_all$gtester_label              <- 'covid_logParticipants'
+
+# no logging ----
+exp_design_none <- exp_design
+exp_design_none$event_log_level            <- 'None'
+exp_design_none$gtester_label              <- 'covid_none'
+
+# hospital admission
+exp_design_hosp <- exp_design
+exp_design_hosp$hospital_category_age         <- paste(0,19,60,80,sep=',')
+exp_design_hosp$hospital_probability_age      <- paste(0.049,0.03024,0.1197,0.5922,sep=',')
+exp_design_hosp$hospital_mean_delay_age       <- paste(3,7,7,6,sep=',')
+exp_design_hosp$gtester_label                 <- 'covid_hosp'
+
 # daily seeding ----
 exp_design_daily <- exp_design
 exp_design_daily$num_daily_imported_cases <- 10
@@ -217,7 +232,8 @@ exp_design <- rbind(exp_design, exp_design_all,
                     exp_design_fitting,exp_design_fitting_adapt,
                     exp_design_fitting_agegroup,
                     exp_design_collectivity,exp_design_collectivity_isolation,
-                    exp_design_collectivity_mixing)
+                    exp_design_collectivity_mixing,
+                    exp_design_none, exp_design_hosp)
 
 
 # add a unique seed for each run
@@ -225,7 +241,8 @@ exp_design <- rbind(exp_design, exp_design_all,
 exp_design$rng_seed <- 1:nrow(exp_design)
 dim(exp_design)
 
-# align rng seeds for "base" and "suscept", "transm" and "fitting" tests
+# align rng seeds for "base" with "none", "suscept", "transm" and "fitting" tests
+exp_design$rng_seed[grepl('covid_none',exp_design$gtester_label)]    <- exp_design$rng_seed[exp_design$gtester_label %in% c('covid_base')]
 exp_design$rng_seed[grepl('covid_suscept',exp_design$gtester_label)] <- exp_design$rng_seed[exp_design$gtester_label %in% c('covid_base')]
 exp_design$rng_seed[grepl('covid_transm',exp_design$gtester_label)]  <- exp_design$rng_seed[exp_design$gtester_label %in% c('covid_base')]
 exp_design$rng_seed[grepl('covid_fitting',exp_design$gtester_label)] <- exp_design$rng_seed[exp_design$gtester_label %in% c('covid_base')]
@@ -354,6 +371,7 @@ ref_data_prevalence  <- readRDS(file='tests/regression_rstride_prevalence.rds')
 # Do we have to select reference scenarios?
 if(nrow(project_summary) != nrow(ref_project_summary)){
   ref_project_summary <- ref_project_summary[ref_project_summary$gtester_label %in% unique(project_summary$gtester_label),]
+  project_summary     <- project_summary[project_summary$gtester_label %in% unique(ref_project_summary$gtester_label),]
   ref_data_incidence  <- ref_data_incidence[ref_data_incidence$exp_id %in% unique(ref_project_summary$exp_id),]
   ref_data_prevalence <- ref_data_prevalence[ref_data_prevalence$exp_id %in% unique(ref_project_summary$exp_id),]
   smd_print("REGRESSION TEST DOES NOT CONTAIN ALL SCENARIOS",WARNING = T)
