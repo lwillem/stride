@@ -16,38 +16,11 @@
 #############################################################################
 
 #================================================================================================
-# Copy the rStride scripts to the bin folder.
+# Copy the Python scripts to the bin folder.
 #================================================================================================
-# rStride main files
-INSTALL(DIRECTORY
-	   rstride
-	DESTINATION ${BIN_INSTALL_LOCATION}
-	PATTERN "*.Rproj*" EXCLUDE
-	PATTERN "*.Rhistory" EXCLUDE
-)
 
-# rStride analysis scripts
-INSTALL( FILES 			
-            rStride_abc.R
-            rStride_abc_age.R
-            rStride_abc_collectivity.R
-            rStride_all.R
-            rStride_contacts.R
-            rStride_create_config.R
-            rStride_ensemble.R
-            rStride_param.R
-            rStride_parse_output.R
-            rStride_explore.R
-            rStride_gtester_covid19.R
-            rStride_r0.R 	
-            rStride_intervention_baseline.R
-            rStride_intervention.R		 	 
-            rStride_universal_testing.R
-            rStride_pop.R
-			rStride_MDP.R
+# Superspreading project scripts
+add_subdirectory(superspreading_scripts)
 
-	DESTINATION ${BIN_INSTALL_LOCATION}  
-	PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_WRITE GROUP_READ
-)
 
 #############################################################################

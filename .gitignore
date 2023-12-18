@@ -23,6 +23,8 @@ Thumbs.db
 #------------------------------------
 /.cproject
 /.project
+*.cproject
+*.project
 /MakeLocalConfig
 /.settings/
 target*/
@@ -91,6 +93,11 @@ doc/doxygen/Doxyfile
 doc/doxygen/html
 doc/doxygen/latex
 doc/doxygen/tex
+
+#----------------
+# Python stuff 
+#----------------
+*__pycache__/
 
 #----------------
 # R stuff

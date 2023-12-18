@@ -37,7 +37,8 @@ enum class Id
         None          = 0U,
         Incidence     = 1U,
         Transmissions = 2U,
-        All           = 3U
+		Participants	  = 3U,
+        All           = 4U
 };
 
 /// Converts a LogMode value to corresponding name.

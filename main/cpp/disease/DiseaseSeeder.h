@@ -48,6 +48,8 @@ public:
         /// Import infected cases into the population
         void ImportInfectedCases(std::shared_ptr<Population> pop, unsigned int numInfected, unsigned int simDay, const TransmissionProfile& transProfile, util::RnHandler& rnHandler);
 
+        ///
+        void SeedInfectedById(std::shared_ptr<Population> pop, unsigned int infectedId, const TransmissionProfile& transProfile, util::RnHandler& rnHandler);
 
 private:
         const boost::property_tree::ptree& m_config; ///< Run config.

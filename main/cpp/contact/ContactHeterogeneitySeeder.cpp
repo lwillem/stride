@@ -18,7 +18,7 @@
  * Implementation for the NonComplianceSeeder class.
  */
 
-#include "NonComplianceSeeder.h"
+#include "ContactHeterogeneitySeeder.h"
 
 #include "pop/Population.h"
 #include "util/Exception.h"
@@ -35,10 +35,43 @@ using namespace std;
 
 namespace stride {
 
-NonComplianceSeeder::NonComplianceSeeder(const ptree& config, RnMan& rnMan) : m_config(config), m_rn_man(rnMan) {}
+ContactHeterogeneitySeeder::ContactHeterogeneitySeeder(const ptree& config, RnMan& rnMan) : m_config(config), m_rn_man(rnMan) {}
 
-shared_ptr<Population> NonComplianceSeeder::Seed(shared_ptr<Population> pop)
+shared_ptr<Population> ContactHeterogeneitySeeder::Seed(shared_ptr<Population> pop)
 {
+
+	auto& population = *pop;
+
+	auto& logger = population.RefEventLogger();
+
+	boost::optional<string> contact_distribution = m_config.get_optional<string>("run.contact_distribution");
+
+	if (contact_distribution) {
+
+		// Get target overdispersion
+		double contact_distribution_overdispersion = m_config.get<double>("run.contact_distribution_overdispersion");
+
+		if (*contact_distribution == "Gamma") {
+			// Use distribution with mean 1 and overdispersion = contact_distribution_overdispersion
+			double shape = contact_distribution_overdispersion;
+			double scale = 1 / shape;
+			auto gamma_generator = m_rn_man.GetGammaGenerator(shape, scale, 0U);
+
+			// Seed community contact factors
+			for (size_t i = 0; i < population.size(); ++i) {
+				auto individual_contact_factor = gamma_generator();
+				population[i].SetIndividualContactFactor(individual_contact_factor);
+
+				// Log person details
+				logger->info("[CNTH] {} {}", population[i].GetId(), individual_contact_factor);
+
+			}
+
+		}
+	}
+
+
+	// Seed non-compliance
 
 	// Non-compliance by age
 
@@ -75,7 +108,7 @@ shared_ptr<Population> NonComplianceSeeder::Seed(shared_ptr<Population> pop)
 }
 
 template <Id pooltype>
-void NonComplianceSeeder::SeedPools(std::shared_ptr<Population> pop, string nonComplianceType, std::vector<double> nonComplianceByAge) {
+void ContactHeterogeneitySeeder::SeedPools(std::shared_ptr<Population> pop, string nonComplianceType, std::vector<double> nonComplianceByAge) {
 	auto generator0to1 = m_rn_man.GetUniform01Generator(0U);
 
 	if (nonComplianceType == "Random") {
@@ -195,7 +228,7 @@ void NonComplianceSeeder::SeedPools(std::shared_ptr<Population> pop, string nonC
 }
 
 
-bool NonComplianceSeeder::RegisterNonComplier(std::shared_ptr<Population> pop, Person& p, Id pooltype)
+bool ContactHeterogeneitySeeder::RegisterNonComplier(std::shared_ptr<Population> pop, Person& p, Id pooltype)
 {
 	Population& population  = *pop;
 	auto&       logger      = population.RefEventLogger();

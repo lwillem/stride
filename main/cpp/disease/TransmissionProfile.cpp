@@ -179,7 +179,7 @@ double TransmissionProfile::GetIndividualInfectiousness(RnHandler& generator) co
 		double shape = m_transmission_probability_distribution_overdispersion;
 		double scale = m_transmission_probability / shape;
 
-		boost::math::gamma_distribution<double> gamma_dist = boost::math::gamma_distribution<double>(shape, scale);
+		boost::math::gamma_distribution<double> gamma_dist = boost::math::gamma_distribution<double>(shape, scale); // FIXME: Be consistent in which implementation of Gamma distribution to use
 
 		double cdf1 = cdf(gamma_dist, 0.0);
 		double cdf2 = cdf(gamma_dist, 1.0);

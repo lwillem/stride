@@ -87,6 +87,12 @@ public:
                 return ContainerType::at(i).variate_generator(trng::uniform_int_dist(a, b));
         }
 
+        /// Return a generator for doubles from a Gamma distribution with a given shape and scale
+        std::function<double()> GetGammaGenerator(double shape, double scale, unsigned int i = 0U)
+		{
+        		return ContainerType::at(i).variate_generator(std::gamma_distribution<double>(shape, scale));
+		}
+
         /// Return generator for integers [0, n-1[ with non-negative weights p_j (i=0,..,n-1) using i-th random engine.
         //std::function<int()> GetDiscreteGenerator(const std::vector<double>& weights, unsigned int i = 0U)
         //{

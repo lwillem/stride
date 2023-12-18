@@ -90,9 +90,11 @@ private:
         unsigned int                m_num_threads;                   ///< The number of (OpenMP) threads.
         bool                        m_track_index_case;              ///< General simulation or tracking index case.
 
+        bool                        m_run_simplified;   ///< Run simplified simulations: all persons are present in their clusters all the time
+
         std::shared_ptr<Calendar>   m_calendar;         ///< Management of calendar.
         AgeContactProfiles          m_contact_profiles; ///< Contact profiles w.r.t age.
-        std::vector<util::RnHandler> m_rn_handlers;     ///< Random number handlers (random numbers & binomial trials).
+        std::vector<util::RnHandler> m_rn_handlers;     ///< Random number handlers (random numbers & binomial trials). //TODO confusing to have both rn_handlers and rn_managers?
         InfectorExec*               m_infector_default; ///< Executes optimized transmission loops in contact pools.
         InfectorExec*               m_infector_tracing; ///< Executes all or optimized transmission loops in contact pools.
         std::shared_ptr<Population> m_population;       ///< Pointer to the Population.

@@ -42,6 +42,13 @@ DiseaseSeeder::DiseaseSeeder(const ptree& config, RnMan& rnMan) : m_config(confi
 void DiseaseSeeder::Seed(std::shared_ptr<Population> pop, const TransmissionProfile& transProfile, util::RnHandler& rnHandler)
 {
 
+	// Option to select a person to infect by ID, used for verification purposes.
+	boost::optional<unsigned int> infected_seed_id_as_input = m_config.get_optional<unsigned int>("run.infected_seed_id");
+
+	if (infected_seed_id_as_input) {
+		auto infected_seed_id = *infected_seed_id_as_input;
+		SeedInfectedById(pop, infected_seed_id, transProfile, rnHandler);
+	} else {
         // --------------------------------------------------------------
         // Get number of infected persons to seed
         // --------------------------------------------------------------
@@ -79,6 +86,7 @@ void DiseaseSeeder::Seed(std::shared_ptr<Population> pop, const TransmissionProf
         // Add infected seeds to the population
         // --------------------------------------------------------------
         ImportInfectedCases(pop, numInfected, 0, transProfile, rnHandler);
+	}
 }
 
 void DiseaseSeeder::ImportInfectedCases(std::shared_ptr<Population> pop, unsigned int numInfected, unsigned int simDay, const TransmissionProfile& transProfile, util::RnHandler& rnHandler)
@@ -99,7 +107,7 @@ void DiseaseSeeder::ImportInfectedCases(std::shared_ptr<Population> pop, unsigne
                 Person& p = pop->at(static_cast<size_t>(generator()));
                 if (p.GetHealth().IsSusceptible() && (p.GetAge() >= sAgeMin) && (p.GetAge() <= sAgeMax)) {
                         double rel_inf = transProfile.GetIndividualInfectiousness(rnHandler);
-                        p.GetHealth().StartInfection(p.GetId(),0,rel_inf);
+                        p.GetHealth().StartInfection(p.GetId(),0,rel_inf); // TODO why is infector_id 0 here? it is logged as -1 for index cases
                         numInfected--;
 
                         unsigned short int startHospitalisation = -1;
@@ -128,7 +136,8 @@ void DiseaseSeeder::ImportInfectedCases(std::shared_ptr<Population> pop, unsigne
 											 p.GetHealth().GetEndSymptomatic(),
                                              startHospitalisation
 											 );
-							}
+                        	}
+
                         }
 
                         // register as survey participant
@@ -137,6 +146,40 @@ void DiseaseSeeder::ImportInfectedCases(std::shared_ptr<Population> pop, unsigne
                         sSeeder.RegisterParticipant(pop,p);
                 }
         }
+}
+
+void DiseaseSeeder::SeedInfectedById(std::shared_ptr<Population> pop, unsigned int infectedId, const TransmissionProfile& transProfile, util::RnHandler& rnHandler) {
+    const EventLogMode::Id log_level   = EventLogMode::ToMode(m_config.get<string>("run.event_log_level", "None"));
+    auto&        logger      = pop->RefEventLogger();
+
+	Person& p = pop->at(static_cast<size_t>(infectedId));
+	if (p.GetHealth().IsSusceptible()) {
+		double rel_inf = transProfile.GetIndividualInfectiousness(rnHandler);
+		p.GetHealth().StartInfection(p.GetId(), -1, rel_inf);
+
+		// TODO: make use of Infector template functions? Or use template functions for DiseaseSeeder?
+		if (log_level >= EventLogMode::Id::Transmissions) {
+			logger->info("[PRIM] {} {} {} {} {} {} {} {} {} {} {} {} {} {}",
+                	p.GetId(), -1, p.GetAge(), -1, -1, 0, p.GetId(),
+				p.GetHealth().GetStartInfectiousness(),p.GetHealth().GetEndInfectiousness(),
+				p.GetHealth().GetStartSymptomatic(),p.GetHealth().GetEndSymptomatic(), -1,
+				p.GetHealth().GetRelativeInfectiousness(),
+				p.GetHealth().GetRelativeSusceptibility());
+		} else if (log_level == EventLogMode::Id::Incidence) {
+			logger->info("[TRAN_M] {} {} {} {} {}",
+				p.GetAge(),
+				0,
+				p.GetHealth().GetStartInfectiousness(),
+				p.GetHealth().GetStartSymptomatic(),
+				p.GetHealth().GetEndSymptomatic());
+		}
+
+        // register as survey participant
+        //TODO: add link with logLevel
+        SurveySeeder sSeeder(m_config,m_rn_man);
+        sSeeder.RegisterParticipant(pop,p);
+
+	}
 }
 
 

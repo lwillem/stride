@@ -40,6 +40,7 @@ using namespace EventLogMode;
 
 Sim::Sim()
     : m_config(), m_event_log_mode(Id::None), m_num_threads(1U), m_track_index_case(false),
+	  m_run_simplified(false),
       m_calendar(nullptr), m_contact_profiles(), m_rn_handlers(), m_infector_default(),m_infector_tracing(),
       m_population(nullptr), m_rn_man(), m_transmission_profile(),
 	  m_cnt_intensity_householdCluster(0),
@@ -132,8 +133,8 @@ void Sim::TimeStep()
 				population[i].Update(isRegularWeekday, isK12SchoolOff, isCollegeOff,
 						isHouseholdClusteringAllowed,
 						m_is_isolated_from_household,
-                        m_rn_handlers[thread_num],
-                        simDay);
+                        m_rn_handlers[thread_num], 
+                        simDay, m_run_simplified);
 			}
         }// end pragma openMP
 

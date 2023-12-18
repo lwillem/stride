@@ -56,7 +56,7 @@ public:
 
 public:
         /// Default construction (for population vector).
-        Person() : m_age(0.0), m_id(0), m_vaccine(), m_pool_ids(), m_health(), m_in_pools(), m_is_participant(),
+        Person() : m_age(0.0), m_id(0), m_vaccine(), m_pool_ids(), m_individual_contact_factor(1.0), m_health(), m_in_pools(), m_is_participant(),
 		m_non_complier(), m_is_tracing_index(false), m_contact_tracing_list(),
         m_isolated(false), m_events() {}
 
@@ -67,6 +67,7 @@ public:
             : m_age(age), m_id(id), m_vaccine(), m_pool_ids{householdId, k12SchoolId,        collegeId,
                                                workId,      primaryCommunityId, secondaryCommunityId,
 											   householdClusterId, collectivityId},
+			  m_individual_contact_factor(1.0),
               m_health(), m_in_pools(true), m_is_participant(false), m_non_complier(false),
 			  m_is_tracing_index(false), m_contact_tracing_list(), m_isolated(false),
               m_events()
@@ -91,6 +92,9 @@ public:
         /// Get ID of contactpool_type
         unsigned int GetPoolId(const ContactType::Id& poolType) const { return m_pool_ids[poolType]; }
 
+        ///< Factor with which to scale contact rate in community pools for this individual
+        double GetIndividualContactFactor() const { return m_individual_contact_factor; }
+
         /// Check if a person is present today in a given contact pool
         bool IsInPool(const ContactType::Id& poolType) const { return m_in_pools[poolType]; }
 
@@ -111,8 +115,8 @@ public:
         		bool isHouseholdClusteringAllowed,
         		bool isIsolatedFromHousehold, 
 				util::RnHandler& rnHandler,
-                unsigned short int simDay);
-
+                unsigned short int simDay, bool run_simplified);
+                
         /// Set the age of the person
         void SetAge(unsigned int newAge) { m_age = newAge; }
 
@@ -125,6 +129,9 @@ public:
                 m_pool_ids[type] = poolId;
                 m_in_pools[type] = (poolId != 0); // Means present in Household, absent elsewhere.
         }
+
+        ///< Set factor with which to scale contact rate in workplace and community pools for this individual
+        void SetIndividualContactFactor(double factor) { m_individual_contact_factor = factor; }
 
          /// Set this person as index case for track&trace strategies
         void SetTracingIndexCase(){ m_is_tracing_index = true; }
@@ -191,6 +198,9 @@ private:
         ///< Ids (school, work, etc) of pools you belong to Id value 0 means you do not belong to any
         ///< pool of that type (e.g. school and work are mutually exclusive).
         ContactType::IdSubscriptArray<unsigned int> m_pool_ids;
+
+        ///< Factor with which to scale contact rate in community pools for this individual
+        double m_individual_contact_factor;
 
         ///< Health info (immune, infected, etc) for this person.
         Health m_health;

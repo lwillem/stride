@@ -76,6 +76,11 @@ std::function<int()> RnMan::GetUniformIntGenerator(int a, int b, unsigned int i)
         return m_rn->GetUniformIntGenerator(a, b, i);
 }
 
+std::function<double()> RnMan::GetGammaGenerator(double shape, double scale, unsigned int i)
+{
+	return m_rn->GetGammaGenerator(shape, scale, i);
+}
+
 std::function<int()> RnMan::GetDiscreteGenerator(const vector<double>& weights, unsigned int i)
 {
         return m_rn->GetDiscreteGenerator(weights.begin(), weights.end(), i);

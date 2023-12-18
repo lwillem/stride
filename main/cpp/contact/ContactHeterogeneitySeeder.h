@@ -36,15 +36,17 @@ class RnMan;
 }
 
 /**
- * Seed non-compliers to social distancing measures in the population
+ * Seed contact heterogeneity in the population,
+ * either through non-compliers to social distancing measures
+ * or through adding a distribution to contact rates in the community pools
  */
-class NonComplianceSeeder
+class ContactHeterogeneitySeeder
 {
 public:
 	/// Initialize Seeder.
 	/// \param config 		Configuration parameters.
 	/// \param rnMan			Random number manager.
-	NonComplianceSeeder(const boost::property_tree::ptree& config, util::RnMan& rnMan);
+	ContactHeterogeneitySeeder(const boost::property_tree::ptree& config, util::RnMan& rnMan);
 
     /// Seeds the population with non-compliers.
     /// \param pop               Population.
