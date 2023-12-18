@@ -45,8 +45,8 @@ exp_param_list <- get_exp_param_default(bool_revised_model_param = T,
                                         bool_min_restrictive = F)
 
 # contact parameters
-exp_param_list$event_log_level           <- "All"
-#exp_param_list$num_days                  <- 7
+exp_param_list$event_log_level           <- "Participants"
+exp_param_list$num_days                  <- 3
 exp_param_list$num_infected_seeds        <- 1
 exp_param_list$num_participants_survey   <- 4999
 exp_param_list$num_seeds                 <- 1

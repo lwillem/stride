@@ -48,8 +48,8 @@ parse_event_logfile <- function(event_logfile,exp_id,
   
   # read file line by line and select the remaining tag
   data_log_cat <- fread(cmd=paste(cmd_sed,event_logfile))
-  data_log_cat <- unlist(unique(data_log_cat))
-  
+  data_log_cat <- unique(unlist(c(names(data_log_cat),data_log_cat))) #fix: the first value was seen as col.name
+
   # initialise output variables
   rstride_out <- list()
   
@@ -104,6 +104,13 @@ parse_event_logfile <- function(event_logfile,exp_id,
                                                       log_cat       = c("PRIM","TRAN","TRAN_M"),
                                                       colnames_all  = header_transm,
                                                       exp_id        = exp_id)
+  # make sure there is at least one row (with NA's)
+  if(is.null(nrow(rstride_out$data_transmission))){
+    dummy_transmission <- data.table(t(header_transm))
+    names(dummy_transmission)  <- header_transm
+    dummy_transmission[] <- NA
+    rstride_out$data_transmission <- dummy_transmission
+  }
   
   ###################### #
   ## CONTACT DATA     ####

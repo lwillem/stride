@@ -440,23 +440,25 @@ get_main_transmission_statistics <- function(data_transm,
 }
 
 # Function to generate summary tables
-# colname_date <- 'infection_date'; colname_value <- 'cnt_location'; prefix <- 'location';
-#colname_date <- 'date_hosp_adm'; colname_value <- 'age_cat'; prefix <- 'hosp';
-# colname_date <- 'infection_date'; colname_value <-'age_cat';prefix <- 'new_infections'
-# data_transm <- ref_case_data_table; colname_date="DATE";colname_value='AGEGROUP';prefix='d'
+# colname_date <- 'infection_date'; colname_value <-'age_cat';prefix <- 'new_infections';colname_opt=age_cat_all
 get_summary_table <- function(data_transm,colname_date,colname_value,prefix,colname_opt=NA){
 
-  # overal summary
+  # overall summary
   summary_table_general         <- data_transm[,.N,by=colname_date]
   names(summary_table_general)  <- c('sim_date',prefix)
 
   # specific summary
   summary_table                  <- dcast(data_transm, formula(paste(colname_date, '~' ,colname_value)), value.var='ID', length)
   
-  # if not all categories were persent, add column with 0's
+  # if not all categories were present, add column with 0's
   if(all(!is.na(colname_opt)) & any(!colname_opt %in% names(summary_table))){
     summary_table[,c(colname_opt[!colname_opt %in% names(summary_table)]):=0]
     setcolorder(summary_table,c(colname_date,colname_opt))# reorder
+  }
+  
+  # fix: make sure that column names with NA are removed (cfr. empty matrix)
+  if(any(grepl('NA',names(summary_table)))){
+    summary_table[,eval(names(summary_table)[grepl('NA',names(summary_table))]):=NULL,]
   }
   
   # update names
@@ -469,6 +471,15 @@ get_summary_table <- function(data_transm,colname_date,colname_value,prefix,coln
   # R versions: 3.5.3 (MACOS) vs. 3.5.1 (VSC)
   summary_table <- na.omit(summary_table,cols='sim_date')
 
+  # fix: if there are no rows left, add row with zeros
+  if(nrow(summary_table)==0){
+    dummy_table <- data.table(t(names(summary_table)))
+    names(dummy_table) <- names(summary_table)
+    dummy_table[] <- 0
+    dummy_table$sim_date <- NA
+    summary_table <- dummy_table
+  }
+  
   #check
   head(summary_table)
   
