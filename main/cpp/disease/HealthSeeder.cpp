@@ -113,7 +113,7 @@ void HealthSeeder::Seed(const std::shared_ptr<stride::Population>& pop, const Ho
                         boost::optional<double> daysToHospitalisation = {};
                         if(!isSymptomatic){
                         	timeSymptomatic = 0;
-                        } else {
+                        } else if(hc.GetProbability(population[i].GetAge()) > 0) {
                             const bool isHospitalised = gen01() <= hc.GetProbability(population[i].GetAge());
                             if (isHospitalised) {
                                 double variance = Sample(hospitalisationVariance, gen01()) - 1; // -1, 0 or 1
