@@ -31,9 +31,9 @@ INSTALL( FILES
             rStride_abc.R
             rStride_abc_age.R
             rStride_abc_collectivity.R
-            rStride_all.R
             rStride_contacts.R
             rStride_create_config.R
+            rStride_baseline.R
             rStride_ensemble.R
             rStride_param.R
             rStride_parse_output.R

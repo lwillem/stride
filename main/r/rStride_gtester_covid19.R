@@ -14,7 +14,7 @@
 #  see http://www.gnu.org/licenses/.
 #
 #
-#  Copyright 2020, Willem L
+#  Copyright 2023, Willem L
 ############################################################################ #
 #
 # Call this script from the main project folder (containing bin, config, lib, ...)
@@ -29,6 +29,7 @@ rm(list=ls())
 
 # Load rStride
 source('./bin/rstride/rStride.R')
+source('./bin/rStride_intervention_baseline.R')
 
 # set directory postfix (optional)
 dir_postfix <- '_gtester'
@@ -44,7 +45,7 @@ dir_postfix <- '_gtester'
 num_seeds  <- 5
 
 # add parameters and values to combine in a full-factorial grid
-exp_design <- expand.grid(r0                            = 2.5,
+exp_design_base <- expand.grid(r0                            = 2.5,
                           num_days                      = 30,
                           rng_seed                      = seq(num_seeds),
                           num_participants_survey       = 10,   
@@ -88,29 +89,29 @@ exp_design <- expand.grid(r0                            = 2.5,
                           stringsAsFactors = F)
 
 # Contacts: virtual survey ---- 
-exp_design_all <- exp_design
+exp_design_all <- exp_design_base
 exp_design_all$event_log_level            <- 'Participants'
 exp_design_all$gtester_label              <- 'covid_logParticipants'
 
 # no logging ----
-exp_design_none <- exp_design
+exp_design_none <- exp_design_base
 exp_design_none$event_log_level            <- 'None'
 exp_design_none$gtester_label              <- 'covid_none'
 
 # hospital admission
-exp_design_hosp <- exp_design
+exp_design_hosp <- exp_design_base
 exp_design_hosp$hospital_category_age         <- paste(0,19,60,80,sep=',')
 exp_design_hosp$hospital_probability_age      <- paste(0.049,0.03024,0.1197,0.5922,sep=',')
 exp_design_hosp$hospital_mean_delay_age       <- paste(3,7,7,6,sep=',')
 exp_design_hosp$gtester_label                 <- 'covid_hosp'
 
 # daily seeding ----
-exp_design_daily <- exp_design
+exp_design_daily <- exp_design_base
 exp_design_daily$num_daily_imported_cases <- 10
 exp_design_daily$gtester_label            <- 'covid_daily'
 
 # distancing ----
-exp_design_dist <- exp_design
+exp_design_dist <- exp_design_base
 exp_design_dist$holidays_file              <- 'calendar_belgium_2020_covid19_exit_school_adjusted.csv'
 exp_design_dist$cnt_reduction_workplace    <- 0.3;
 exp_design_dist$cnt_reduction_other        <- 0.4;
@@ -120,13 +121,13 @@ exp_design_dist$gtester_label              <- 'covid_distancing'
 
 
 # age_15min ----
-exp_design_15min <- exp_design
+exp_design_15min <- exp_design_base
 exp_design_15min$disease_config_file     <- 'disease_covid19_age_15min.xml'
 exp_design_15min$age_contact_matrix_file <- 'contact_matrix_flanders_conditional_teachers_15min.xml'
 exp_design_15min$gtester_label           <- 'covid_15min'
 
 # householdCluster ----
-exp_design_hhcl <- exp_design
+exp_design_hhcl <- exp_design_base
 exp_design_hhcl$population_file       <- 'pop_belgium600k_c500_teachers_censushh_extended3_size2.csv'
 exp_design_hhcl$cnt_intensity_householdCluster <- 4/7
 exp_design_hhcl$holidays_file         <- 'calendar_belgium_2020_covid19_exit_schoolcategory_adjusted.csv'
@@ -137,7 +138,7 @@ exp_design_hhcl$gtester_label         <- 'covid_hhcl'
 # TODO
 
 # contact tracing ----
-exp_design_cts <- exp_design
+exp_design_cts <- exp_design_base
 exp_design_cts$detection_probability        <- 0.5
 exp_design_cts$holidays_file                <- 'calendar_belgium_2020_covid19_exit_schoolcategory_adjusted.csv'
 exp_design_cts$start_date                   <- '2020-06-01'
@@ -155,34 +156,34 @@ exp_design_cts_all$gtester_label            <- 'covid_tracing_all'
 
 # age-specific susceptibility: baseline ----
 # note: this should provide exact the same results as 'covid_base'
-exp_design_susceptible <- exp_design
+exp_design_susceptible <- exp_design_base
 exp_design_susceptible$gtester_label            <- 'covid_suscept'
 tmp_susceptible  <- rep(1,100)
 exp_design_susceptible$disease_susceptibility_agecat <- paste(0:99,collapse=',')
 exp_design_susceptible$disease_susceptibility_age <- paste(tmp_susceptible,collapse=',')
 
 # age-specific susceptibility: adapted
-exp_design_susceptible_adapt <- exp_design
+exp_design_susceptible_adapt <- exp_design_base
 exp_design_susceptible_adapt$gtester_label            <- 'covid_suscept_adapt'
 tmp_susceptible[-seq(1,91,9)] <- 0.90
 exp_design_susceptible_adapt$disease_susceptibility_agecat <- paste(0:99,collapse=',')
 exp_design_susceptible_adapt$disease_susceptibility_age <- paste(tmp_susceptible,collapse=',')
 
 # individual-based transmission: baseline ----
-exp_design_transm <- exp_design
+exp_design_transm <- exp_design_base
 exp_design_transm$gtester_label            <- 'covid_transm'
 exp_design_transm$transmission_probability_distribution   <- 'Constant'
 exp_design_transm$transmission_probability_distribution_overdispersion   <- 0
 
 # individual-based transmission: adapted
-exp_design_transm_adapt <- exp_design
+exp_design_transm_adapt <- exp_design_base
 exp_design_transm_adapt$gtester_label            <- 'covid_transm_gamma'
 exp_design_transm_adapt$transmission_probability_distribution   <- 'Gamma'
 exp_design_transm_adapt$transmission_probability_distribution_overdispersion   <- 0.8
 
 
 # fitting transmission and susceptibility: baseline ----
-exp_design_fitting <- exp_design
+exp_design_fitting <- exp_design_base
 exp_design_fitting$gtester_label            <- 'covid_fitting'
 # b0 <- 0.124492138353664; b1 <- 39.6458896077442            # from: disease_covid19_lognormal 
 b0 <- 0.14743616688954;  b1 <- 43.9598287259418              # from: disease_covid19_age  
@@ -207,23 +208,33 @@ exp_design_fitting_agegroup$disease_susceptibility_age <- paste(c(0.02,t_base,0.
 exp_design_fitting_agegroup$disease_susceptibility_agecat <- c('0,18,59,70')
 
 # collectivity ----
-exp_design_collectivity <- exp_design
+exp_design_collectivity <- exp_design_base
 exp_design_collectivity$population_file              <- 'pop_belgium600k_c500_teachers_censushh_collectivity.csv'
 exp_design_collectivity$age_contact_matrix_file      <- 'contact_matrix_flanders_conditional_teachers_collectivity20.xml'
 exp_design_collectivity$gtester_label                <- 'covid_collectivity'
 
 # collectivity population, but in strict isolation
-exp_design_collectivity_isolation <- exp_design
+exp_design_collectivity_isolation <- exp_design_base
 exp_design_collectivity_isolation$population_file    <- 'pop_belgium600k_c500_teachers_censushh_collectivity.csv'
 exp_design_collectivity_isolation$gtester_label      <- 'covid_collectivity_isolation'
 
 # collectivity mixing, default population
-exp_design_collectivity_mixing <- exp_design
+exp_design_collectivity_mixing <- exp_design_base
 exp_design_collectivity_mixing$age_contact_matrix_file  <- 'contact_matrix_flanders_conditional_teachers_collectivity20.xml'
 exp_design_collectivity_mixing$gtester_label            <- 'covid_collectivity_mixing'
 
+# default param ----
+exp_design_default_param <- exp_design_base
+exp_design_default_param[,names(get_covid19_default_param())] <- get_covid19_default_param()
+exp_design_default_param[,!names(exp_design_default_param) %in% names(exp_design_base)] <- NULL
+exp_design_default_param$population_file              <- 'pop_belgium600k_c500_teachers_censushh.csv'
+exp_design_default_param$num_days                     <- 60
+exp_design_default_param$gtester_label                <- 'covid_default_param'
+# names(exp_design) %in% names(exp_design_default_param)
+# names(exp_design_default_param) %in% names(exp_design)
+
 # rbind all designs
-exp_design <- rbind(exp_design, exp_design_all,
+exp_design <- rbind(exp_design_base, exp_design_all,
                     exp_design_cts_all, exp_design_cts,
                     exp_design_daily, exp_design_dist,
                     exp_design_15min, exp_design_hhcl,
@@ -233,7 +244,8 @@ exp_design <- rbind(exp_design, exp_design_all,
                     exp_design_fitting_agegroup,
                     exp_design_collectivity,exp_design_collectivity_isolation,
                     exp_design_collectivity_mixing,
-                    exp_design_none, exp_design_hosp)
+                    exp_design_none, exp_design_hosp,
+                    exp_design_default_param)
 
 
 # add a unique seed for each run
@@ -253,6 +265,7 @@ exp_design$rng_seed[grepl('covid_fitting',exp_design$gtester_label)] <- exp_desi
 #exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_collectivity','covid_collectivity_isolation','covid_collectivity_mixing'),]
 #exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_fitting_base','covid_fitting_adapt'),]
 #exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_transm','covid_transm_gamma'),]
+#exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_default_param'),]
  # exp_design <- exp_design[grepl('_base',exp_design$gtester_label) |
  #                            grepl('_collectivity',exp_design$gtester_label) |
  #                            grepl('_fitting',exp_design$gtester_label),]
@@ -505,7 +518,7 @@ rrv <- function(){
   smd_print('NEW REFERENCE VALES STORED: LOCAL')
 }
 
-# update the rstride reference values in the repo (note: local function for LW)
+# update the rStride reference values in the repo (note: local function for LW)
 rrv_repo <- function(){
   stride_repo_dir <- 'tests'
   stride_repo_dir <- '~/Documents/university/research/stride/repo/stride_2023/main/resources/rstride_test'

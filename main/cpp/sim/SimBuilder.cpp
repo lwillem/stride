@@ -57,11 +57,14 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         sim->m_event_log_mode                = EventLogMode::ToMode(m_config.get<string>("run.event_log_level", "None"));
         sim->m_rn_man                        = std::move(rnMan);
 
-        auto ageCategories = Tokenize<unsigned int>(m_config.get<string>("run.hospital_category_age","0"), ",");
-        auto probabilities = Tokenize<double>(m_config.get<string>("run.hospital_probability_age","0"), ",");
-        auto delays = Tokenize<double>(m_config.get<string>("run.hospital_mean_delay_age","0"), ",");
-        double probability_factor = m_config.get<double>("run.hosp_probability_factor",1);
-        sim->m_hospitalisation_config = HospitalisationConfig(ageCategories, probabilities, delays, probability_factor);
+        // --------------------------------------------------------------
+		// Read hospitalisation and setup HospitalisationConfig
+		// --------------------------------------------------------------
+        auto ageCategories                   = Tokenize<unsigned int>(m_config.get<string>("run.hospital_category_age","0"), ",");
+        auto probabilities                   = Tokenize<double>(m_config.get<string>("run.hospital_probability_age","0"), ",");
+        auto delays                          = Tokenize<double>(m_config.get<string>("run.hospital_mean_delay_age","0"), ",");
+        double probability_factor            = m_config.get<double>("run.hosp_probability_factor",1);
+        sim->m_hospitalisation_config        = HospitalisationConfig(ageCategories, probabilities, delays, probability_factor);
 
         // --------------------------------------------------------------
         // Contact handlers, each with generator bound to different

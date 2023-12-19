@@ -14,10 +14,10 @@
 #  see http://www.gnu.org/licenses/.
 #
 #
-#  Copyright 2020, Willem L, Libin P
+#  Copyright 2023, Willem L, Libin P
 ############################################################################ #
 #
-# Baseline settings for rStride intervention scenarios
+# Baseline settings for rStride COVID-19 intervention scenarios
 #
 ############################################################################ #
 
@@ -26,32 +26,27 @@
 ################################## #
 
 # get default parameter values to combine in a full-factorial grid
-get_exp_param_default <- function(bool_child_param = FALSE, 
-                                  bool_min_restrictive = FALSE,
-                                  bool_revised_model_param = FALSE,
-                                  bool_age_specific_param = FALSE){
+get_covid19_default_param <- function(){
    
-   out <- list(r0                            = seq(3.4,3.4,0.1),
+   ## parameters from a20201031_132800_param4_d73_05k_n10_parameter_pareto_incidence_single_hosp
+   out <- list(r0                             = 3.42,
                 num_days                      = 196,
                 num_seeds                     = 10,
                 num_participants_survey       = 30,
-                num_infected_seeds            = 510,
-                disease_config_file           = "disease_covid19_age.xml",
-                population_file               = c("pop_belgium11M_c500_teachers_censushh.csv"),
+                num_infected_seeds            = 263,
+                disease_config_file           = "disease_covid19_lognorm.xml",
+                population_file               = "pop_belgium11M_c500_teachers_censushh.csv",
                 age_contact_matrix_file       = "contact_matrix_flanders_conditional_teachers.xml",
-                start_date                    = c('2020-02-17'),
+                start_date                    = '2020-02-17',
                 holidays_file                 = 'calendar_belgium_2020_covid19_exit_school_adjusted.csv',
-                cnt_reduction_workplace       = 0.8,
+                cnt_reduction_workplace       = 0.86,
                 cnt_reduction_other           = 0.85,
-                compliance_delay_workplace    = 6,
-                compliance_delay_other        = 6,
-                compliance_delay_collectivity = 1, # dummy, since not used in original setting
+                compliance_delay_workplace    = 7,
+                compliance_delay_other        = 7,
                 num_daily_imported_cases      = 0,
-                cnt_reduction_workplace_exit  = c(0.50,0.75),  
-                cnt_reduction_other_exit      = c(0.70,0.85),
-                cnt_reduction_school_exit     = 0.5,
-                cnt_reduction_collectivity    = 0.0, # no reduction, during lockdown
-                cnt_baseline_collectivity     = 0.0, # no reduction, by default
+                cnt_reduction_workplace_exit  = 0.86,  
+                cnt_reduction_other_exit      = 0.85,
+                cnt_reduction_school_exit     = 1,
                 cnt_intensity_householdCluster = 0,
                 detection_probability          = 0,
                 tracing_efficiency_household   = 0.9, 
@@ -65,104 +60,29 @@ get_exp_param_default <- function(bool_child_param = FALSE,
                 event_log_level                 = "Transmissions",
 
                 # factor for parameter estimation and fitting
-                hosp_probability_factor        = 1,
+                hosp_probability_factor        = 0.40,
                
-                # unversal testing
-                unitest_pool_allocation       = c("data/pop_belgium11M_c500_pool_allocation_$unitest_pool_size.csv"),
-                unitest_fnr                   = c(0.01),
-                unitest_n_tests_per_day       = 0, #c(25000),
-                unitest_pool_size             = c(32),
-                unitest_test_compliance       = c(0.9),
-                unitest_isolation_compliance  = c(0.8),
+                # universal testing
+                unitest_pool_allocation       = "data/pop_belgium11M_c500_pool_allocation_$unitest_pool_size.csv",
+                unitest_fnr                   = 0.01,
+                unitest_n_tests_per_day       = 0,
+                unitest_pool_size             = 32,
+                unitest_test_compliance       = 0.9,
+                unitest_isolation_compliance  = 0.8,
                
-               # hospital admissions
-                hospital_category_age         = paste(0,19,60,80,sep=','),
-                hospital_probability_age      = paste(0.049,0.03024,0.1197,0.5922,sep=','),
-                hospital_mean_delay_age       = paste(3,7,7,6,sep=','),
+               # hospital admissions (relative proportions)
+               # reference: hospital survey data by age (Faes et al) 
+               # update on 19/10 : hospital admissions in week 11-13 / simulated sympt cases by age in R0 calibration 2020-09-17
+                hospital_category_age         = paste(c(seq(0,80,10)),collapse=','),
+                hospital_probability_age      = paste(c(0.091,0.009,0.044,0.033,0.057,0.075,0.143,0.373,1.000 ),collapse=','),
+                hospital_mean_delay_age       = paste(3,3,7,7,7,7,6,6,1,sep=','),
                 
                # threshold for log parsing (default is NA == no threshold)
                logparsing_cases_upperlimit    = NA
                
           )
    
-    if(bool_revised_model_param){
-      # relative proportions
-      # reference: hospital survey data by age (faes et al) 
-      # update on 19/10 : hospital admissions in week 11-13 / simulated sympt cases by age in R0 callibration 2020-09-17
-      out$hospital_category_age         = paste(c(seq(0,80,10)),collapse=',')
-      out$hospital_probability_age      = paste(c(0.091,0.009,0.044,0.033,0.057,0.075,0.143,0.373,1.000 ),collapse=',') # still requires rescaling
-      out$hospital_mean_delay_age       = paste(3,3,7,7,7,7,6,6,1,sep=',')
-      
-      # disease history: literature based distributions
-      out$disease_config_file <- 'disease_covid19_lognorm.xml'
-      
-      ## parameters from a20201031_132800_param4_d73_05k_n10_parameter_pareto_incidence_single_hosp
-      out$r0 <- 3.42
-      out$num_infected_seeds <- 263 
-      out$hosp_probability_factor <- 0.40
-      out$cnt_reduction_workplace <- 0.86 
-      out$cnt_reduction_other     <- 0.85 
-      out$compliance_delay_workplace <- 7 
-      out$compliance_delay_other  <- 7
-
-      #out$num_seeds <- NA
-      
-   }
-   
-   # change parameters if childrens infectiousness is 1/2 compared to adults
-   if(bool_child_param){ 
-      
-      # update on 19/10 : hospital admissions in week 11-13 / simulated sympt cases by age in R0_child callibration 2020-09-17
-      out$hospital_category_age         = paste(c(seq(0,80,10)),collapse=',')
-      out$hospital_probability_age      = paste(c(0.221,0.018,0.041,0.033,0.056,0.071,0.139,0.367,1.000),collapse=',') # still requires rescaling
-      out$hospital_mean_delay_age       = paste(3,3,7,7,7,7,6,6,1,sep=',')
-      
-      # parameters from a20201031_132751_param4_child_d73_05k_n10_parameter_pareto_incidence_single_hosp
-      out$disease_config_file <- "disease_covid19_lognorm_child.xml"
-      out$r0 <- 3.37
-      out$num_infected_seeds <- 255
-      out$hosp_probability_factor <- 0.35
-      out$cnt_reduction_workplace <- 0.76
-      out$cnt_reduction_other     <- 0.86
-      out$compliance_delay_workplace <- 6
-      out$compliance_delay_other  <- 7
-   }
-   
-   if(bool_age_specific_param){
-      
-      # updated parameters
-      out$population_file               <- "pop_belgium11M_c500_teachers_censushh_collectivity.csv"
-      out$age_contact_matrix_file       <- "contact_matrix_flanders_conditional_teachers_collectivity20.xml"
-      out$hospital_category_age         <- paste(c(seq(0,80,10)),collapse=',')
-      out$hospital_mean_delay_age       <- paste(3,3,7,7,7,7,6,6,1,sep=',')
-      out$disease_config_file           <- 'disease_covid19_lognorm.xml'
-      
-      # based on: "20210224_16276_col3a_c35_n105_p010_h1"
-      out$compliance_delay_workplace  <- 7
-      out$compliance_delay_other      <- 7
-      out$compliance_delay_collectivity <- 7
-      out$num_infected_seeds          <- 307
-      out$cnt_reduction_workplace     <- 0.7682221
-      out$cnt_reduction_other         <- 0.8793729
-      out$cnt_baseline_collectivity   <- 0.5
-      out$cnt_reduction_collectivity  <- 0.7009966
-      
-      out$disease_susceptibility_age <- "0.1176923,0.05574399,0.06930532,0.07327394,0.06308314,0.11793085,0.08956135,0.1710099,0.08928561"
-      out$disease_susceptibility_agecat <- out$hospital_category_age
-      out$transmission_probability      <- 1
-  
-      out$hospital_probability_age   <- "0.029185022,0.015756289,0.023497016,0.018588676,0.018792145,0.026975605,0.047568101,0.0624074,0.10151618"
-      out$hosp_probability_factor    <- 1
-   }
-   
-   # select least stringent social mixing assumptions
-   if(bool_min_restrictive){
-      out$cnt_reduction_workplace_exit <- min(out$cnt_reduction_workplace_exit)
-      out$cnt_reduction_other_exit <- min(out$cnt_reduction_other_exit)
-   }  
-   
-   
-   # number of paralel workers
+   # number of parallel workers (on UA cluster)
    out$num_parallel_workers <- 50
    
    # return parameters

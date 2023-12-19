@@ -72,7 +72,7 @@ inspect_prevalence_data <- function(project_dir)
   
   for(sim_dates in sim_dates_opt){
     
-    y_lim <- range(data_prevalence_exposed,data_prevalence_infectious)
+    y_lim <- range(data_prevalence_exposed,data_prevalence_infectious,na.rm = T)
     if(!any(sim_dates == sim_dates_all[1])){
       y_lim <- c(0,3e4)
     }
