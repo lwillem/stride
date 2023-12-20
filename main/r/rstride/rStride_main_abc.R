@@ -23,7 +23,15 @@
 #' Main rStride function for ABC
 # abc_function_param <- c(15,3.4,256,0.4,0.85,7.4,0.85,4.51)
 #abc_function_param <- c(41,4,400,0.4,0.85,7.4,0.85,4.51)
-# abc_function_param <- run_param; remove_run_output <- FALSE
+#  abc_function_param <- c(rng_seed = 100,
+# r0 = 3,
+# num_infected_seeds= 400,
+# hosp_probability_factor=0.4,
+# cnt_reduction_workplace=0.85,
+# compliance_delay_workplace=7.4,
+# cnt_reduction_other=0.85,
+# compliance_delay_other=4.51
+# ); remove_run_output <- FALSE
 
 ################################################ #
 ## RUN  ----
@@ -102,10 +110,17 @@ run_rStride_abc <- function(abc_function_param,
   date_t0                    <- as.Date('2020-03-13')
   cnt_reduction_workplace    <- config_exp$cnt_reduction_workplace
   compliance_delay_workplace <- config_exp$compliance_delay_workplace
+  cnt_reduction_community    <- config_exp$cnt_reduction_other
+  compliance_delay_community <- config_exp$compliance_delay_other
+  
 
   # include lockdown parameters
-  config_exp$temporal_distancing_workplace    <- c_str(get_linear_approx(0,cnt_reduction_workplace,compliance_delay_workplace))
-  config_exp$dates_distancing_workplace       <- c_str(paste(date_t0+c(0:7)))
+  config_exp$temporal_distancing_workplace    <- c_str(cnt_reduction_workplace)
+  config_exp$dates_distancing_workplace       <- c_str(paste(date_t0))
+  config_exp$distancing_workplace_delay       <- c_str(compliance_delay_workplace)
+  config_exp$temporal_distancing_community    <- c_str(cnt_reduction_community)
+  config_exp$dates_distancing_community       <- c_str(paste(date_t0))
+  config_exp$distancing_community_delay       <- c_str(compliance_delay_community)
   
 
   ################################## #
@@ -121,8 +136,11 @@ run_rStride_abc <- function(abc_function_param,
    config_exp$output_prefix <- output_prefix 
    
    # Temporary fix to include the lockdown/exit parameters into the calendar (backward compatibility)
-   if(any(config_exp[grepl('cnt_reduction_workplace',names(config_exp)) | 
-                     grepl('cnt_reduction_other',names(config_exp))] > 0)){
+   param_distancing <- config_exp[grepl('cnt_reduction_workplace',names(config_exp)) |   # OR colname contains reduction_workplace
+                                     grepl('cnt_reduction_other',names(config_exp)) |   # OR colname contains reduction_other
+                                     grepl('distancing',names(config_exp)) &            # OR colname contains distancing)
+                                     !is.na(config_exp)]                                  # AND different from NA 
+   if(any(param_distancing> 0)){
       config_exp  <- integrate_lockdown_parameters_into_calendar(config_exp)
       #smd_print("Deprecated lockdown and exit parameters merged into the calendar. Please make use of the updated calendar features",WARNING = T)
    }

@@ -238,16 +238,16 @@ create_calendar_file <- function(file_name_tag='2020_2021',show_plots = FALSE,fi
   # dcal_workplace_distancing[date %in% seq(as.Date('2020-03-14'),as.Date('2020-05-03'),1),value := 1.0]
   # 
   # 
-  # community distancing
-  data.table(category = "community_distancing",
-             #date     = seq(as.Date('2020-03-14'),as.Date('2020-05-24'),1),
-             date     = seq(as.Date(date_start),as.Date(date_end),1),
-             value    = 0.0,
-             type = 'double',
-             age = NA_integer_,
-             stringsAsFactors = F
-  ) -> dcal_community_distancing
-  dcal_community_distancing[date %in% seq(as.Date('2020-03-14'),as.Date('2020-05-24'),1),value := 1.0]
+  # # community distancing
+  # data.table(category = "community_distancing",
+  #            #date     = seq(as.Date('2020-03-14'),as.Date('2020-05-24'),1),
+  #            date     = seq(as.Date(date_start),as.Date(date_end),1),
+  #            value    = 0.0,
+  #            type = 'double',
+  #            age = NA_integer_,
+  #            stringsAsFactors = F
+  # ) -> dcal_community_distancing
+  # dcal_community_distancing[date %in% seq(as.Date('2020-03-14'),as.Date('2020-05-24'),1),value := 1.0]
   
   # collectivity distancing
   data.table(category = "collectivity_distancing",
@@ -502,7 +502,8 @@ adjust_calendar_file <- function(db_category, db_update, file_name, db_age = 'NA
   #date_out   <- date_out[date_out<=as.Date("2021-12-31")]
   df_update_full  <- approx(x=as.Date(df_update[,1]),
                             y=df_update[,2],
-                            xout = as.Date(date_out))
+                            xout = as.Date(date_out),
+                            method="linear")
   names(df_update_full) <- c('date','value')
 
   # integrate (new) values in calendar
@@ -622,15 +623,15 @@ integrate_lockdown_parameters_into_calendar <- function(config_exp){
   # config_exp$compliance_delay_workplace <- 0
   # config_exp$cnt_reduction_workplace_exit <- 0
   
-  # integreate community distancing
-  adjust_calendar_file(db_category =  "community_distancing",
-                       db_update = data.frame(c(as.character(date_t0),0),
-                                              c(as.character(date_compliance_other),config_exp$cnt_reduction_other),
-                                              c(as.character(date_exit_other-1),config_exp$cnt_reduction_other),
-                                              c(as.character(date_exit_other),config_exp$cnt_reduction_other_exit),
-                                              c(as.character(date_end),config_exp$cnt_reduction_other_exit)),
-                       file_name = config_exp$holidays_file,
-                       show_plots = T)
+  # # integreate community distancing
+  # adjust_calendar_file(db_category =  "community_distancing",
+  #                      db_update = data.frame(c(as.character(date_t0),0),
+  #                                             c(as.character(date_compliance_other),config_exp$cnt_reduction_other),
+  #                                             c(as.character(date_exit_other-1),config_exp$cnt_reduction_other),
+  #                                             c(as.character(date_exit_other),config_exp$cnt_reduction_other_exit),
+  #                                             c(as.character(date_end),config_exp$cnt_reduction_other_exit)),
+  #                      file_name = config_exp$holidays_file,
+  #                      show_plots = T)
   # config_exp$cnt_reduction_other <- 1
   # config_exp$compliance_delay_other <- 0
   # config_exp$cnt_reduction_other_exit <- 0
@@ -649,17 +650,19 @@ integrate_lockdown_parameters_into_calendar <- function(config_exp){
   if('temporal_distancing_workplace' %in% names(config_exp)){
     include_temporal_distancing_factors(db_category    = 'workplace_distancing',
                                         db_values_char = config_exp$temporal_distancing_workplace,
+                                        db_delay_char  = config_exp$distancing_workplace_delay,
                                         file_name      = config_exp$holidays_file,
                                         show_plots     = T,
-                                        db_dates_char       = config_exp$dates_distancing_workplace)
+                                        db_dates_char  = config_exp$dates_distancing_workplace)
   }
   
   if('temporal_distancing_community' %in% names(config_exp)){
     include_temporal_distancing_factors(db_category    = 'community_distancing',
-                                        db_values_char = paste(config_exp$cnt_reduction_other,config_exp$temporal_distancing_community,sep=','),
+                                        db_values_char = config_exp$temporal_distancing_community,
+                                        db_delay_char  = config_exp$distancing_community_delay,
                                         file_name      = config_exp$holidays_file,
                                         show_plots     = T,
-                                        db_dates_char       = config_exp$dates_distancing_community)
+                                        db_dates_char  = config_exp$dates_distancing_community)
   }
   
   if('temporal_distancing_collectivity' %in% names(config_exp)){
@@ -692,10 +695,11 @@ integrate_lockdown_parameters_into_calendar <- function(config_exp){
 
 # db_category <- 'distancing_workplace'
 # db_values <- seq(0.8,0.9,length=12)
-include_temporal_distancing_factors <- function(db_category,db_values_char,file_name,show_plots=T,db_dates_char=NA){
+include_temporal_distancing_factors <- function(db_category,db_values_char,db_delay_char,file_name,show_plots=T,db_dates_char=NA){
   
   # split given value string, into numerical values
   db_values <- as.numeric(unlist(strsplit(db_values_char,',')))
+  db_delay  <- as.numeric(unlist(strsplit(db_delay_char,',')))
   
   if(is.na(db_dates_char)){
     # Start with May 1st using the lockdown measure
@@ -716,8 +720,17 @@ include_temporal_distancing_factors <- function(db_category,db_values_char,file_
     db_dates <- as.Date(unlist(strsplit(db_dates_char,',')))
   }
   
+  
+  # account for delay in compliance
+  db_dates  <- c(db_dates[1],db_dates + db_delay,db_dates[-1])
+  db_values <- c(0,db_values,db_values[-length(db_values)])
+  
+  # sort
+  db_values <- db_values[order(as.Date(db_dates))]
+  db_dates  <- db_dates[order(as.Date(db_dates))]
+  
   # add right tail
-  db_dates <- c(db_dates,db_dates[length(db_dates)]+365)
+  db_dates  <- c(db_dates,db_dates[length(db_dates)]+365)
   db_values <- c(db_values,db_values[length(db_values)])
   
   adjust_calendar_file(db_category = db_category,

@@ -88,6 +88,10 @@ exp_design_base <- expand.grid(r0                            = 2.5,
                           
                           temporal_distancing_workplace = NA,
                           dates_distancing_workplace = NA,
+                          distancing_workplace_delay = NA,
+                          temporal_distancing_community = NA,
+                          dates_distancing_community = NA,
+                          distancing_community_delay = NA,
                           
                           stringsAsFactors = F)
 
@@ -120,6 +124,12 @@ exp_design_dist$cnt_reduction_workplace    <- 0.3;
 exp_design_dist$cnt_reduction_other        <- 0.4;
 exp_design_dist$compliance_delay_workplace <- 3;  # cpp tester: 2
 exp_design_dist$compliance_delay_other     <- 4;  # cpp tester: 3
+exp_design_dist$temporal_distancing_workplace <- 0.3;
+exp_design_dist$dates_distancing_workplace    <- '2020-03-13';
+exp_design_dist$distancing_workplace_delay    <- 3  
+exp_design_dist$temporal_distancing_community <- 0.4;
+exp_design_dist$dates_distancing_community    <- '2020-03-13';
+exp_design_dist$distancing_community_delay    <- 4 
 exp_design_dist$gtester_label              <- 'covid_distancing'
 
 
@@ -268,7 +278,7 @@ exp_design$rng_seed[grepl('covid_fitting',exp_design$gtester_label)] <- exp_desi
 #exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_collectivity','covid_collectivity_isolation','covid_collectivity_mixing'),]
 #exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_fitting_base','covid_fitting_adapt'),]
 #exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_transm','covid_transm_gamma'),]
-exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_default_param'),]
+#exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_default_param','covid_distancing'),]
  # exp_design <- exp_design[grepl('_base',exp_design$gtester_label) |
  #                            grepl('_collectivity',exp_design$gtester_label) |
  #                            grepl('_fitting',exp_design$gtester_label),]
@@ -513,10 +523,9 @@ ref_rstride_out_abc <- readRDS(file='tests/regression_rstride_out_abc.rds')
 if(setequal(rstride_out_abc,ref_rstride_out_abc)){
   smd_print("rSTRIDE ABC OK")
 } else{
-  
   smd_print("rSTRIDE ABC CHANGED!",WARNING = T)
   stride_diff <- setdiff(rstride_out_abc,ref_rstride_out_abc)
-  smd_print(names(diff_summary),WARNING = T)
+  smd_print(names(stride_diff),WARNING = T)
 }
 
 # terminal message

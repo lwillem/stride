@@ -325,8 +325,11 @@ run_rStride <- function(exp_design               = exp_design,
                        config_exp          = create_config_exp(config_default, output_prefix, exp_design, i_exp)
                        
                        # Temporary fix to include the lockdown/exit parameters into the calendar (backward compatibility)
-                       if(any(config_exp[grepl('cnt_reduction_workplace',names(config_exp)) | 
-                                         grepl('cnt_reduction_other',names(config_exp))] > 0)){
+                       param_distancing <- config_exp[grepl('cnt_reduction_workplace',names(config_exp)) |   # OR colname contains reduction_workplace
+                                                          grepl('cnt_reduction_other',names(config_exp)) |   # OR colname contains reduction_other
+                                                          grepl('distancing',names(config_exp)) &            # OR colname contains distancing)
+                                                        !is.na(config_exp)]                                  # AND different from NA 
+                       if(any(param_distancing> 0)){
                          config_exp  <- integrate_lockdown_parameters_into_calendar(config_exp)
                          #smd_print("Deprecated lockdown and exit parameters merged into the calendar. Please make use of the updated calendar features",WARNING = T)
                        }
