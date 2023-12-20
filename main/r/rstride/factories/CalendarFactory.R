@@ -226,18 +226,18 @@ create_calendar_file <- function(file_name_tag='2020_2021',show_plots = FALSE,fi
   #       * community
   #       * household clusters
   
-  # workplace distancing
-  data.table(category = "workplace_distancing",
-             #date     = seq(as.Date('2020-03-14'),as.Date('2020-05-03'),1),
-             date     = seq(as.Date(date_start),as.Date(date_end),1),
-             value    = 0.0,
-             type     = 'double',
-             age = NA_integer_,
-             stringsAsFactors = F
-  ) -> dcal_workplace_distancing
-  dcal_workplace_distancing[date %in% seq(as.Date('2020-03-14'),as.Date('2020-05-03'),1),value := 1.0]
-  
-  
+  # # workplace distancing
+  # data.table(category = "workplace_distancing",
+  #            #date     = seq(as.Date('2020-03-14'),as.Date('2020-05-03'),1),
+  #            date     = seq(as.Date(date_start),as.Date(date_end),1),
+  #            value    = 0.0,
+  #            type     = 'double',
+  #            age = NA_integer_,
+  #            stringsAsFactors = F
+  # ) -> dcal_workplace_distancing
+  # dcal_workplace_distancing[date %in% seq(as.Date('2020-03-14'),as.Date('2020-05-03'),1),value := 1.0]
+  # 
+  # 
   # community distancing
   data.table(category = "community_distancing",
              #date     = seq(as.Date('2020-03-14'),as.Date('2020-05-24'),1),
@@ -468,34 +468,67 @@ adjust_calendar_file <- function(db_category, db_update, file_name, db_age = 'NA
   d_calendar_all[, age_char := as.character(age)]
   d_calendar_all[is.na(age_char), age_char := 'NA']
   
+  d_calendar_categories <- c('general', 
+                             'schools_closed', 
+                             'workplace_distancing',
+                             'collectivity_distancing', 
+                             'community_distancing', 
+                             'contact_tracing', 
+                             'household_clustering', 
+                             'imported_cases', 
+                             'universal_testing')
+  
   # check category
-  if(!db_category %in% unique(d_calendar_all$category)){
+  if(!db_category %in% d_calendar_categories){
     smd_print("CALENDAR CATEGORY UNKNOWN => STOP CALENDAR ADJUSTMENT")
-    smd_print("CALENDAR CATEGORY OPTIONS:", paste0(unique(d_calendar_all$category),collapse=', '))
-    
+    smd_print("CALENDAR CATEGORY OPTIONS:", paste0(d_calendar_categories,collapse=', '))
     return(NA)
   }
   
-  # extrapolate given dates and values
-  db_update  <- data.frame(t(db_update))
-  date_out   <- seq(min(as.Date(db_update[,1])),max(as.Date(db_update[,1])),1)
-  # date_out   <- date_out[date_out<=max(d_calendar_all$date)]
-  date_out   <- date_out[date_out<=as.Date("2021-12-31")]
-  db_update  <- approx(x=as.Date(db_update[,1]),
-                      y=db_update[,2],
-                      xout = date_out)
-  names(db_update) <- c('date','value')
-
   
-  # update values for all given date and ages
+  # create data.frame with all information to extrapolate
+  df_update  <- data.frame(t(db_update))
+  date_out   <- seq(min(as.Date(df_update[,1])),max(as.Date(df_update[,1])),1)
+  date_out   <- date_out[date_out<=max(d_calendar_all$date)]
+  
+  # # if db_category is not present yet, extend first value
+  # if(!db_category %in% unique(d_calendar_all$category)){
+  #   df_update       <- df_update[c(1,1:nrow(df_update)),]
+  #   df_update$V1[1] <- min(d_calendar_all$date)
+  #   date_out        <- sort(unique(d_calendar_all$date))
+  # }
+
+  # extrapolate given dates and values
+  #date_out   <- date_out[date_out<=as.Date("2021-12-31")]
+  df_update_full  <- approx(x=as.Date(df_update[,1]),
+                            y=df_update[,2],
+                            xout = as.Date(date_out))
+  names(df_update_full) <- c('date','value')
+
+  # integrate (new) values in calendar
   for(i_db_age in as.character(db_age)){
-    d_calendar_all[as.character(date) %in% as.character(db_update$date) &
-                      category == db_category &
-                      age_char == i_db_age, 
-                   value := db_update$value ]
+    if(db_category %in% unique(d_calendar_all$category)){
+      # replace
+      d_calendar_all[as.character(date) %in% as.character(df_update_full$date) &
+                        category == db_category &
+                        age_char == i_db_age, 
+                     value := df_update_full$value ]
+      } else {
+        # include
+        dcal_new <- data.table(category = db_category,
+                               date     = paste(df_update_full$date),
+                               value    = df_update_full$value,
+                               type     = 'double',
+                               age = ifelse(i_db_age == 'NA', NA_integer_,as.numeric(i_db_age)),
+                               age_char = i_db_age,
+                               stringsAsFactors = F
+        ) 
+        d_calendar_all <- rbind(d_calendar_all,dcal_new) 
+      }
   }
 
-  d_calendar_all[as.character(date) %in% as.character(db_update$date) &
+  # check
+  d_calendar_all[as.character(date) %in% as.character(df_update_full$date) &
                    category == db_category &
                    age_char == db_age]
   
@@ -578,13 +611,13 @@ integrate_lockdown_parameters_into_calendar <- function(config_exp){
 
   
   # integreate workplace distancing
-  adjust_calendar_file(db_category =  "workplace_distancing",
-                       db_update = data.frame(c(as.character(date_t0),0),
-                                              c(as.character(date_compliance_wp),config_exp$cnt_reduction_workplace),
-                                              c(as.character(date_exit_wp-1),config_exp$cnt_reduction_workplace),
-                                              c(as.character(date_exit_wp),config_exp$cnt_reduction_workplace_exit),
-                                              c(as.character(date_end),config_exp$cnt_reduction_workplace_exit)),
-                       file_name = config_exp$holidays_file )
+  # adjust_calendar_file(db_category =  "workplace_distancing",
+  #                      db_update = data.frame(c(as.character(date_t0),0),
+  #                                             c(as.character(date_compliance_wp),config_exp$cnt_reduction_workplace),
+  #                                             c(as.character(date_exit_wp-1),config_exp$cnt_reduction_workplace),
+  #                                             c(as.character(date_exit_wp),config_exp$cnt_reduction_workplace_exit),
+  #                                             c(as.character(date_end),config_exp$cnt_reduction_workplace_exit)),
+  #                      file_name = config_exp$holidays_file )
   # config_exp$cnt_reduction_workplace <- 1
   # config_exp$compliance_delay_workplace <- 0
   # config_exp$cnt_reduction_workplace_exit <- 0
@@ -602,7 +635,7 @@ integrate_lockdown_parameters_into_calendar <- function(config_exp){
   # config_exp$compliance_delay_other <- 0
   # config_exp$cnt_reduction_other_exit <- 0
   
-  # integreate collectivity distancing
+  # integrate collectivity distancing
   if(!any(is.null(c(config_exp$cnt_baseline_collectivity,config_exp$cnt_reduction_collectivity)))){
     adjust_calendar_file(db_category =  "collectivity_distancing",
                          db_update = data.frame(c(as.character(date_start),config_exp$cnt_baseline_collectivity),
@@ -615,7 +648,7 @@ integrate_lockdown_parameters_into_calendar <- function(config_exp){
   
   if('temporal_distancing_workplace' %in% names(config_exp)){
     include_temporal_distancing_factors(db_category    = 'workplace_distancing',
-                                        db_values_char = paste(config_exp$cnt_reduction_workplace,config_exp$temporal_distancing_workplace,sep=','),
+                                        db_values_char = config_exp$temporal_distancing_workplace,
                                         file_name      = config_exp$holidays_file,
                                         show_plots     = T,
                                         db_dates_char       = config_exp$dates_distancing_workplace)

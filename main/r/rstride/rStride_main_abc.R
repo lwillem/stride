@@ -75,7 +75,7 @@ run_rStride_abc <- function(abc_function_param,
   # set event_log_level to "Incidence"
   config_exp$event_log_level <- 'Incidence'
   
-  # incorportate experiment-specific parameter values
+  # incorporate experiment-specific parameter values
   model_param_update <- readRDS(file.path('./sim_output',run_tag,'model_param_update.rds'))
   config_exp[names(model_param_update)] <- model_param_update
  
@@ -98,6 +98,14 @@ run_rStride_abc <- function(abc_function_param,
   config_exp$compliance_delay_other     <- round(config_exp$compliance_delay_other)
   config_exp$num_daily_imported_cases   <- round(config_exp$num_daily_imported_cases)
   
+   # define 2020 lockdown parameters
+  date_t0                    <- as.Date('2020-03-13')
+  cnt_reduction_workplace    <- config_exp$cnt_reduction_workplace
+  compliance_delay_workplace <- config_exp$compliance_delay_workplace
+
+  # include lockdown parameters
+  config_exp$temporal_distancing_workplace    <- c_str(get_linear_approx(0,cnt_reduction_workplace,compliance_delay_workplace))
+  config_exp$dates_distancing_workplace       <- c_str(paste(date_t0+c(0:7)))
   
 
   ################################## #

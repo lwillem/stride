@@ -14,7 +14,7 @@
 #  see http://www.gnu.org/licenses/.
 #
 #
-#  Copyright 2023, Willem L
+#  Copyright 2023
 ############################################################################ #
 #
 # Call this script from the main project folder (containing bin, config, lib, ...)
@@ -85,6 +85,9 @@ exp_design_base <- expand.grid(r0                            = 2.5,
                           transmission_probability_distribution_overdispersion = NA,
 
                           transmission_probability = NA,
+                          
+                          temporal_distancing_workplace = NA,
+                          dates_distancing_workplace = NA,
                           
                           stringsAsFactors = F)
 
@@ -230,8 +233,8 @@ exp_design_default_param[,!names(exp_design_default_param) %in% names(exp_design
 exp_design_default_param$population_file              <- 'pop_belgium600k_c500_teachers_censushh.csv'
 exp_design_default_param$num_days                     <- 60
 exp_design_default_param$gtester_label                <- 'covid_default_param'
-# names(exp_design) %in% names(exp_design_default_param)
-# names(exp_design_default_param) %in% names(exp_design)
+names(exp_design_base) %in% names(exp_design_default_param)
+names(exp_design_default_param) %in% names(exp_design_base)
 
 # rbind all designs
 exp_design <- rbind(exp_design_base, exp_design_all,
@@ -265,7 +268,7 @@ exp_design$rng_seed[grepl('covid_fitting',exp_design$gtester_label)] <- exp_desi
 #exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_collectivity','covid_collectivity_isolation','covid_collectivity_mixing'),]
 #exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_fitting_base','covid_fitting_adapt'),]
 #exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_transm','covid_transm_gamma'),]
-#exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_default_param'),]
+exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_default_param'),]
  # exp_design <- exp_design[grepl('_base',exp_design$gtester_label) |
  #                            grepl('_collectivity',exp_design$gtester_label) |
  #                            grepl('_fitting',exp_design$gtester_label),]
@@ -278,7 +281,7 @@ table(exp_design$gtester_label)
 project_dir <- run_rStride(exp_design               = exp_design,
                            dir_postfix              = dir_postfix,
                            ignore_stdout            = TRUE,
-                           remove_run_output        = TRUE )
+                           remove_run_output        = FALSE )
 
 
 ##################################### #
@@ -386,8 +389,18 @@ if(nrow(project_summary) != nrow(ref_project_summary)){
   ref_project_summary <- ref_project_summary[ref_project_summary$gtester_label %in% unique(project_summary$gtester_label),]
   ref_data_incidence  <- ref_data_incidence[ref_data_incidence$exp_id %in% unique(ref_project_summary$exp_id),]
   ref_data_prevalence <- ref_data_prevalence[ref_data_prevalence$exp_id %in% unique(ref_project_summary$exp_id),]
+
+  # adjust exp_id (i.e. this is based on the number of experiments, but make sure the other parameters are similar)
+  ref_project_summary$exp_id <- 1:nrow(ref_project_summary)
+
   smd_print("REGRESSION TEST DOES NOT CONTAIN ALL SCENARIOS",WARNING = T)
 }
+
+# fix: use base name of file names (and get rid of project-specific file paths)
+ref_project_summary$holidays_file <- basename(ref_project_summary$holidays_file)
+project_summary$holidays_file     <- basename(project_summary$holidays_file)
+
+
 
 ## COMPARE SUMMARY ----
 

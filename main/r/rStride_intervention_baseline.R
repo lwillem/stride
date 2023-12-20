@@ -82,10 +82,28 @@ get_covid19_default_param <- function(){
                
           )
    
+   
+   # 2020 lock down parameters
+   date_t0                    <- as.Date('2020-03-13')
+   cnt_reduction_workplace    <- 0.86
+   cnt_reduction_school       <- 0.86
+   cnt_reduction_other        <- 0.85
+   compliance_delay_workplace <- 7
+   compliance_delayschool     <- 0
+   compliance_delay_other     <- 7
+   
+   # include lock down parameters
+   out$temporal_distancing_workplace    <- c_str(get_linear_approx(0,cnt_reduction_workplace,compliance_delay_workplace))
+   out$dates_distancing_workplace       <- c_str(paste(date_t0+c(0:7)))
+   
    # number of parallel workers (on UA cluster)
    out$num_parallel_workers <- 50
    
    # return parameters
    return(out)
+}
+
+get_linear_approx <- function(level_start,level_end,delay){
+   return(approx(y = c(level_start,level_end),x = c(0,delay),xout = 0:delay)$y)
 }
 
