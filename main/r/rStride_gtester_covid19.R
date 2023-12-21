@@ -93,6 +93,10 @@ exp_design_base <- expand.grid(r0                            = 2.5,
                           dates_distancing_community = NA,
                           distancing_community_delay = NA,
                           
+                          temporal_imported_cases = NA,
+                          dates_imported_cases = NA,
+                          imported_cases_delay = NA,
+                      
                           stringsAsFactors = F)
 
 # Contacts: virtual survey ---- 
@@ -115,7 +119,11 @@ exp_design_hosp$gtester_label                 <- 'covid_hosp'
 # daily seeding ----
 exp_design_daily <- exp_design_base
 exp_design_daily$num_daily_imported_cases <- 10
+exp_design_daily$temporal_imported_cases  <- c_str(10)
+exp_design_daily$dates_imported_cases     <- c_str('2020-03-01')
+exp_design_daily$imported_cases_delay     <- c_str(1)
 exp_design_daily$gtester_label            <- 'covid_daily'
+
 
 # distancing ----
 exp_design_dist <- exp_design_base
@@ -435,30 +443,35 @@ if(!setequal(project_summary,ref_project_summary)){
   # remove redundant exp
   ref_project_summary <- ref_project_summary[,names(ref_project_summary) %in% names(select_project_summary)]
   
-  # get difference
-  diff_summary    <- setdiff(select_project_summary,ref_project_summary)
-  if(length(diff_summary)>1 && all(dim(select_project_summary) == dim(ref_project_summary))){
-    smd_print(names(diff_summary),WARNING = T)
-    
-    flag <- rowSums(select_project_summary[,names(diff_summary)] != ref_project_summary[,names(diff_summary)])>0
+  # get difference (excluding _id columns)
+  diff_summary    <- setdiff(select_project_summary[,!grepl('_id',names(select_project_summary))],
+                             ref_project_summary[,!grepl('_id',names(select_project_summary))])
+  if(length(diff_summary)>0 && all(dim(select_project_summary) == dim(ref_project_summary))){
+    smd_print('CHANGES: ',names(diff_summary),WARNING = T)
+    flag <- (select_project_summary[,names(diff_summary)] != ref_project_summary[,names(diff_summary)])
+   if(length(diff_summary)>1) {
+     flag <- rowSums(flag)>0
+   } 
     smd_print('EXP_ID with changes:', paste(unique(select_project_summary$gtester_label[flag]),collapse = ','))
     select_project_summary[flag,c('gtester_label',names(diff_summary))] ==
     ref_project_summary[flag,c('gtester_label',names(diff_summary))]
     
-    #par(mfrow=c(1,2),mar=c(8,4,4,2))
-    par(mar=c(8,4,4,2))
-    y_lim <- range(pretty(c(ref_project_summary$num_cases,select_project_summary$num_cases)))
-    boxplot(num_cases ~ gtester_label,
-            data=ref_project_summary,main='REFERENCE',ylim=y_lim, las=2,xlab='');grid()
-    boxplot(num_cases ~ gtester_label,
-            data=ref_project_summary,main='BOTH',ylim=y_lim, las=2,xlab='');grid()
-    boxplot(num_cases ~ gtester_label,
-            data=select_project_summary,add=T,
-            col=alpha(2,0.4),main='',ylim=y_lim,las=2,xlab='')  ;
-    legend('bottomleft',c('reference','new'),fill=c(1,alpha(2,0.4)) ,cex=0.8)
-    grid() 
-    par(mfrow=c(1,1),mar=c(8,4,4,2))
-
+    if("num_cases" %in% names(diff_summary)){
+      #par(mfrow=c(1,2),mar=c(8,4,4,2))
+      par(mar=c(8,4,4,2))
+      y_lim <- range(pretty(c(ref_project_summary$num_cases,select_project_summary$num_cases)))
+      bplt_ref <- boxplot(num_cases ~ gtester_label,
+                          data=ref_project_summary,main='REFERENCE',ylim=y_lim, las=2,xlab='');grid()
+      boxplot(num_cases ~ gtester_label,
+              data=ref_project_summary,main='BOTH',ylim=y_lim, las=2,xlab='');grid()
+      bplt_new <- boxplot(num_cases ~ gtester_label,
+                          data=select_project_summary,add=T,
+                          col=alpha(2,0.4),main='',ylim=y_lim,las=2,xlab='')  ;
+      bool_different <- colSums(bplt_new$stats != bplt_ref$stats) >0
+      legend('topleft',c('reference','new','changed'),col=c(1,alpha(2,0.4),4),pch=c('I','I','*'),cex=0.8)
+      points(1:length(bool_different),rep(0,length(bool_different)),col=4*bool_different,pch='*',cex=3)
+      par(mfrow=c(1,1),mar=c(8,4,4,2))
+    }
   }
   #print(head(diff_summary))
 } else{
@@ -482,7 +495,7 @@ if(setequal(data_incidence[,names(data_incidence) != 'exp_id'],
   }
   
   
-  diff_incidence  <- setdiff(data_incidence,ref_data_incidence)
+  diff_incidence  <- setdiff(data_incidence[,names(data_incidence) != 'exp_id'],ref_data_incidence[,names(data_incidence) != 'exp_id'])
   if(length(diff_incidence)>0){ 
     smd_print("INCIDENCE CHANGED",WARNING = T)
     smd_print(names(diff_incidence),WARNING = T)

@@ -271,15 +271,15 @@ create_calendar_file <- function(file_name_tag='2020_2021',show_plots = FALSE,fi
   ## 3. Imported cases                 ####
   ########################################### #
   
-  data.table(category = "imported_cases",
-             # date     = seq(as.Date('2020-07-01'),as.Date('2020-08-31'),1),
-             date     = seq(as.Date(date_start),as.Date(date_end),1),
-             value    = 0,
-             type = 'boolean',
-             age = NA_integer_,
-             stringsAsFactors = F
-  ) -> dcal_imported_cases
-  dcal_imported_cases[date %in% seq(as.Date('2020-07-01'),as.Date('2020-08-31'),1),value := 1]
+  # data.table(category = "imported_cases",
+  #            # date     = seq(as.Date('2020-07-01'),as.Date('2020-08-31'),1),
+  #            date     = seq(as.Date(date_start),as.Date(date_end),1),
+  #            value    = 0,
+  #            type = 'boolean',
+  #            age = NA_integer_,
+  #            stringsAsFactors = F
+  # ) -> dcal_imported_cases
+  # dcal_imported_cases[date %in% seq(as.Date('2020-07-01'),as.Date('2020-08-31'),1),value := 1]
   
   ########################################### #
   ##  4. Contact tracing                 ####
@@ -369,8 +369,7 @@ plot_calendar <- function(dt_calendar, filename_calendar_full, show_plots = TRUE
     dt_calendar$date <- as.Date(dt_calendar$date)
     
     # x_lim      <- range(dt_calendar$date)
-    x_lim      <- as.Date(c('2020-02-01','2020-12-31'))
-    x_lab_year <- paste(unique(year(dt_calendar$date)),sep='-')
+    x_lim      <- c(as.Date('2020-02-01'),max(dt_calendar$date))
     i_cat <- category_opt[2]
     for(i_cat in category_opt){
       plot(x   = dt_calendar[category == i_cat,date],
@@ -383,8 +382,8 @@ plot_calendar <- function(dt_calendar, filename_calendar_full, show_plots = TRUE
            #lwd=2,
            main = i_cat,
            bty='n',
-           xlab = x_lab_year,
-           ylab = unique(dt_calendar[,type]),
+           xlab = '',
+           ylab = unique(dt_calendar[category == i_cat,type]),
            xaxt = 'n'
       )
       add_x_axis(x_lim)
@@ -410,8 +409,8 @@ plot_calendar <- function(dt_calendar, filename_calendar_full, show_plots = TRUE
            #lwd=2,
            main = i_cat,
            bty='n',
-           xlab = x_lab_year,
-           ylab = unique(dt_calendar[,type]),
+           xlab = '',
+           ylab = unique(dt_calendar[category == i_cat,type]),
            xaxt = 'n'
       )
       add_x_axis(x_lim)
@@ -428,7 +427,7 @@ plot_calendar <- function(dt_calendar, filename_calendar_full, show_plots = TRUE
            pch  = 15,
            main = i_cat,
            bty='n',
-           xlab = x_lab_year,
+           xlab = '',
            ylab = 'age',
            xaxt = 'n'
       )
@@ -475,7 +474,7 @@ adjust_calendar_file <- function(db_category, db_update, file_name, db_age = 'NA
                              'community_distancing', 
                              'contact_tracing', 
                              'household_clustering', 
-                             'imported_cases', 
+                             'import_cases', 
                              'universal_testing')
   
   # check category
@@ -508,24 +507,20 @@ adjust_calendar_file <- function(db_category, db_update, file_name, db_age = 'NA
 
   # integrate (new) values in calendar
   for(i_db_age in as.character(db_age)){
-    if(db_category %in% unique(d_calendar_all$category)){
-      # replace
-      d_calendar_all[as.character(date) %in% as.character(df_update_full$date) &
-                        category == db_category &
-                        age_char == i_db_age, 
-                     value := df_update_full$value ]
-      } else {
-        # include
-        dcal_new <- data.table(category = db_category,
-                               date     = paste(df_update_full$date),
-                               value    = df_update_full$value,
-                               type     = 'double',
-                               age = ifelse(i_db_age == 'NA', NA_integer_,as.numeric(i_db_age)),
-                               age_char = i_db_age,
-                               stringsAsFactors = F
-        ) 
-        d_calendar_all <- rbind(d_calendar_all,dcal_new) 
-      }
+    # remove old values (if any)
+    d_calendar_all <- d_calendar_all[!(as.character(date) %in% as.character(df_update_full$date) &
+                                       category == db_category &
+                                       age_char == i_db_age),]
+    # include new values
+    dcal_new <- data.table(category = db_category,
+                           date     = paste(df_update_full$date),
+                           value    = df_update_full$value,
+                           type     = 'double',
+                           age = ifelse(i_db_age == 'NA', NA_integer_,as.numeric(i_db_age)),
+                           age_char = i_db_age,
+                           stringsAsFactors = F
+    ) 
+    d_calendar_all <- rbind(d_calendar_all,dcal_new) 
   }
 
   # check
@@ -571,8 +566,32 @@ replace_calendar_value <- function(file_name,db_category,value_orig,value_new,sh
 # create calendar file comparable to the original lockdown/exit parameter structure
 integrate_lockdown_parameters_into_calendar <- function(config_exp){
 
-  file_name <- smd_file_path(config_exp$output_prefix,'calendar_belgium_covid19_v1_1_param.csv')
-  config_exp$holidays_file <- create_calendar_file(file_name = file_name, show_plots = T)
+  # if there are not distancing parameters, return original config_exp
+  param_calendar <- config_exp[grepl('cnt_reduction_workplace',names(config_exp)) |   # OR colname contains reduction_workplace
+                                   grepl('cnt_reduction_other',names(config_exp)) |     # OR colname contains reduction_other
+                                   grepl('temporal',names(config_exp)) |                # OR colname contains temporal
+                                   grepl('distancing',names(config_exp)) &              # OR colname contains distancing)
+                                   !is.na(config_exp)]                                  # AND different from NA 
+  param_calendar <- unlist(param_calendar)
+  param_calendar[is.na(param_calendar)] <- 0
+
+  if(length(param_calendar) == 0 || !any(param_calendar!=0)){
+    return(config_exp)
+  }
+  
+  # # else, modify calendar
+  file_name_new <- smd_file_path(config_exp$output_prefix,'calendar_belgium_covid19_v1_1_param.csv')
+  file_name_exp <- file.path('data',config_exp$holidays_file)
+  # config_exp$holidays_file <- create_calendar_file(file_name = file_name, show_plots = T)
+  
+  if(file.exists(file_name_exp)){
+    file.copy(from=file_name_exp,
+              to = file_name_new,overwrite = TRUE)
+    config_exp$holidays_file <- file_name_new
+  } else{
+    config_exp$holidays_file <- create_calendar_file(file_name = file_name_new, show_plots = T)
+  }
+ 
   
   # set dates
   date_start            <- config_exp$start_date
@@ -584,31 +603,31 @@ integrate_lockdown_parameters_into_calendar <- function(config_exp){
   date_exit_other       <- as.Date('2020-05-25')
   date_end              <- as.Date('2020-12-31')
   
-  # integrate school distancing (general: K6)
-  replace_calendar_value(file_name = config_exp$holidays_file,
-                         db_category =  "schools_closed",
-                         value_orig = 0.5,
-                         value_new = config_exp$cnt_reduction_school_exit,
-                         show_plots = T)
-  
-  # integrate school distancing: secondary
-  replace_calendar_value(file_name = config_exp$holidays_file,
-                         db_category =  "schools_closed",
-                         value_orig = 0.2,
-                         value_new = ifelse('cnt_reduction_school_exit_secondary' %in% names(config_exp),
-                                            config_exp$cnt_reduction_school_exit_secondary,
-                                            config_exp$cnt_reduction_school_exit),
-                         show_plots = T)
-
-  
-  # integrate school distancing: tertiary)
-  replace_calendar_value(file_name = config_exp$holidays_file,
-                         db_category =  "schools_closed",
-                         value_orig = 0.3,
-                         value_new = ifelse('cnt_reduction_school_exit_tertiary' %in% names(config_exp),
-                                            config_exp$cnt_reduction_school_exit_tertiary,
-                                            config_exp$cnt_reduction_school_exit),
-                         show_plots = T)
+  # # integrate school distancing (general: K6)
+  # replace_calendar_value(file_name = config_exp$holidays_file,
+  #                        db_category =  "schools_closed",
+  #                        value_orig = 0.5,
+  #                        value_new = config_exp$cnt_reduction_school_exit,
+  #                        show_plots = T)
+  # 
+  # # integrate school distancing: secondary
+  # replace_calendar_value(file_name = config_exp$holidays_file,
+  #                        db_category =  "schools_closed",
+  #                        value_orig = 0.2,
+  #                        value_new = ifelse('cnt_reduction_school_exit_secondary' %in% names(config_exp),
+  #                                           config_exp$cnt_reduction_school_exit_secondary,
+  #                                           config_exp$cnt_reduction_school_exit),
+  #                        show_plots = T)
+  # 
+  # 
+  # # integrate school distancing: tertiary)
+  # replace_calendar_value(file_name = config_exp$holidays_file,
+  #                        db_category =  "schools_closed",
+  #                        value_orig = 0.3,
+  #                        value_new = ifelse('cnt_reduction_school_exit_tertiary' %in% names(config_exp),
+  #                                           config_exp$cnt_reduction_school_exit_tertiary,
+  #                                           config_exp$cnt_reduction_school_exit),
+  #                        show_plots = T)
 
   
   # integreate workplace distancing
@@ -674,15 +693,13 @@ integrate_lockdown_parameters_into_calendar <- function(config_exp){
   }
   
   if('temporal_imported_cases' %in% names(config_exp)){
-    include_temporal_distancing_factors(db_category    = 'imported_cases',
-                                        db_values_char = paste(0,config_exp$temporal_imported_cases,sep=','),
+    include_temporal_distancing_factors(db_category    = 'import_cases',
+                                        db_values_char = c_str(config_exp$temporal_imported_cases),
+                                        db_delay_char  = config_exp$imported_cases_delay,
                                         file_name      = config_exp$holidays_file,
                                         show_plots     = T,
-                                        db_dates_char  = config_exp$dates_imported_cases)
+                                        db_dates_char  = paste(config_exp$dates_imported_cases))
   }
-  
-  
-
   
   #TODO: add household cluster mixing
   
@@ -697,6 +714,10 @@ integrate_lockdown_parameters_into_calendar <- function(config_exp){
 # db_values <- seq(0.8,0.9,length=12)
 include_temporal_distancing_factors <- function(db_category,db_values_char,db_delay_char,file_name,show_plots=T,db_dates_char=NA){
   
+  # check input parameters
+  if(!any(is.na(c(db_category,db_values_char,db_delay_char,db_dates_char))))
+  {
+    
   # split given value string, into numerical values
   db_values <- as.numeric(unlist(strsplit(db_values_char,',')))
   db_delay  <- as.numeric(unlist(strsplit(db_delay_char,',')))
@@ -737,6 +758,8 @@ include_temporal_distancing_factors <- function(db_category,db_values_char,db_de
                        db_update   = rbind(as.character(db_dates),db_values),
                        file_name   = file_name,
                        show_plots  = T)
+  
+  } # end if-clause on is.na
 }
 
 # Create a calendar file and fill in contact reduction values

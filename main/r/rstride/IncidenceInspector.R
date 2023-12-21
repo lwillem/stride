@@ -687,7 +687,7 @@ plot_distancing <- function(project_summary){
 add_x_axis <- function(sim_dates,bool_numeric=FALSE,num_ticks = 7,bool_grid = TRUE,las=1){
   
   # set date format (character vs numeric)
-  date_format <- ifelse(bool_numeric,'%e/%m','%e %b')
+  date_format <- ifelse(bool_numeric,'%e/%m/%y',"%e %b '%y")
   
   x_ticks <- pretty(sim_dates,num_ticks-2)
   axis(1,x_ticks, format(x_ticks,date_format),cex.axis=0.9,las=las)
