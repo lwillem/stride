@@ -474,7 +474,7 @@ adjust_calendar_file <- function(db_category, db_update, file_name, db_age = 'NA
                              'community_distancing', 
                              'contact_tracing', 
                              'household_clustering', 
-                             'import_cases', 
+                             'imported_cases', 
                              'universal_testing')
   
   # check category
@@ -693,7 +693,7 @@ integrate_lockdown_parameters_into_calendar <- function(config_exp){
   }
   
   if('temporal_imported_cases' %in% names(config_exp)){
-    include_temporal_distancing_factors(db_category    = 'import_cases',
+    include_temporal_distancing_factors(db_category    = 'imported_cases',
                                         db_values_char = c_str(config_exp$temporal_imported_cases),
                                         db_delay_char  = config_exp$imported_cases_delay,
                                         file_name      = config_exp$holidays_file,

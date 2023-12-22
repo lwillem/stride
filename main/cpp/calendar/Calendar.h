@@ -176,9 +176,6 @@ private:
 			return (GetDayOfTheWeek() == 6 || GetDayOfTheWeek() == 0);
 		}
 
-		/// Initialize the calendar (json)
-        void Initialize(const boost::property_tree::ptree& configPt);
-
 
 		/// Initialize the calendar (csv)
         void Initialize_csv(const boost::property_tree::ptree& configPt);

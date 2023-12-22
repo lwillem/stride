@@ -122,6 +122,8 @@ run_rStride_abc <- function(abc_function_param,
   config_exp$dates_distancing_community       <- c_str(paste(date_t0))
   config_exp$distancing_community_delay       <- c_str(compliance_delay_community)
   
+  # define holiday file with covid-19 lockdown parameters
+  config_exp$holidays_file <- 'calendar_belgium_2020_covid19_exit_school_adjusted.csv'
 
   ################################## #
   ## RUN                          ####
@@ -135,16 +137,9 @@ run_rStride_abc <- function(abc_function_param,
    output_prefix       = smd_file_path(project_dir,exp_tag,.verbose=FALSE)
    config_exp$output_prefix <- output_prefix 
    
-   # Temporary fix to include the lockdown/exit parameters into the calendar (backward compatibility)
-   param_distancing <- config_exp[grepl('cnt_reduction_workplace',names(config_exp)) |   # OR colname contains reduction_workplace
-                                     grepl('cnt_reduction_other',names(config_exp)) |   # OR colname contains reduction_other
-                                     grepl('distancing',names(config_exp)) &            # OR colname contains distancing)
-                                     !is.na(config_exp)]                                  # AND different from NA 
-   if(any(param_distancing> 0)){
-      config_exp  <- integrate_lockdown_parameters_into_calendar(config_exp)
-      #smd_print("Deprecated lockdown and exit parameters merged into the calendar. Please make use of the updated calendar features",WARNING = T)
-   }
-   
+   # include temporal parameters into the calendar
+   config_exp  <- integrate_lockdown_parameters_into_calendar(config_exp)
+ 
    # save the config as XML file
    config_exp_filename = paste0(output_prefix,".xml")
    save_config_xml(config_exp, config_exp_filename)

@@ -118,7 +118,7 @@ exp_design_hosp$gtester_label                 <- 'covid_hosp'
 
 # daily seeding ----
 exp_design_daily <- exp_design_base
-exp_design_daily$num_daily_imported_cases <- 10
+exp_design_daily$num_daily_imported_cases <- NA
 exp_design_daily$temporal_imported_cases  <- c_str(10)
 exp_design_daily$dates_imported_cases     <- c_str('2020-03-01')
 exp_design_daily$imported_cases_delay     <- c_str(1)
@@ -469,7 +469,7 @@ if(!setequal(project_summary,ref_project_summary)){
                           col=alpha(2,0.4),main='',ylim=y_lim,las=2,xlab='')  ;
       bool_different <- colSums(bplt_new$stats != bplt_ref$stats) >0
       legend('topleft',c('reference','new','changed'),col=c(1,alpha(2,0.4),4),pch=c('I','I','*'),cex=0.8)
-      points(1:length(bool_different),rep(0,length(bool_different)),col=4*bool_different,pch='*',cex=3)
+      points(1:length(bool_different)+0.5,bplt_new$stats[3,],col=4*bool_different,pch='*',cex=3)
       par(mfrow=c(1,1),mar=c(8,4,4,2))
     }
   }
