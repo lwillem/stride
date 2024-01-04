@@ -57,22 +57,23 @@ shared_ptr<Population> ContactDivider::Divide(shared_ptr<Population> pop, const 
                                        ageContactProfiles[Id::SecondaryCommunity];
 
 			double reference_num_contacts_p{profile[EffectiveAge(static_cast<unsigned int>(age))]};
+			int rounded_reference_num_contacts_p = static_cast<int>(floor(reference_num_contacts_p));
 
 			unsigned int idOtherHouse = p.CPoolIds(Id::OtherHouse)[day];
 			unsigned int idRestoCafe = p.CPoolIds(Id::RestoCafe)[day];
 			unsigned int idOtherPlace = p.CPoolIds(Id::OtherPlace)[day];
 			unsigned int idTransport = p.CPoolIds(Id::Transport)[day];
-
+		
 			unsigned int sizeOtherHouse = poolSys.CRefPools(Id::OtherHouse)[idOtherHouse].size();
 			unsigned int sizeRestoCafe = poolSys.CRefPools(Id::RestoCafe)[idRestoCafe].size();
 			unsigned int sizeOtherPlace = poolSys.CRefPools(Id::OtherPlace)[idOtherPlace].size();
 			unsigned int sizeTransport = poolSys.CRefPools(Id::Transport)[idTransport].size();
-			
+						
 			unsigned int durationOtherHouse = p.PoolDurations(Id::OtherHouse)[day];
 			unsigned int durationRestoCafe = p.PoolDurations(Id::RestoCafe)[day];
 			unsigned int durationOtherPlace = p.PoolDurations(Id::OtherPlace)[day];
 			unsigned int durationTransport = p.PoolDurations(Id::Transport)[day];
-
+			
 			unsigned int totalDuration = durationOtherHouse + durationRestoCafe + durationOtherPlace + durationTransport;
 
         	double probabilityOtherHouse = static_cast<double>(durationOtherHouse) / totalDuration;
@@ -90,7 +91,7 @@ shared_ptr<Population> ContactDivider::Divide(shared_ptr<Population> pop, const 
         	// Blijf proberen totdat een geldige verdeling is verkregen
         	while (!validDistribution) {
             // Simuleer multinomiale verdeling
-            gsl_ran_multinomial(rng, numCategories, 1, probabilities.data(), results.data());
+            gsl_ran_multinomial(rng, numCategories, rounded_reference_num_contacts_p, probabilities.data(), results.data());
 
             // Controleer of de verdeling voldoet aan de maximale contacten per locatie
             validDistribution = true;
@@ -106,7 +107,7 @@ shared_ptr<Population> ContactDivider::Divide(shared_ptr<Population> pop, const 
 			p.PoolContacts(Id::RestoCafe)[day] = results[1];
 			p.PoolContacts(Id::OtherPlace)[day] = results[2];
 			p.PoolContacts(Id::Transport)[day] = results[3];
-
+			
         } 
 
 	}

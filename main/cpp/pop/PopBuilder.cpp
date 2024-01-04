@@ -329,10 +329,10 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
                 pop->RefPoolSys().RefPools(typ)[subpool_id].AddMember(p);
                 }
                 
-                Person person = *p;
+                Person& person = *p;
 
                 person.PoolIds(typ)[day_week] = subpool_id;
-                
+                                
                 person.PoolDurations(typ)[day_week] = duration;
 
                 }
