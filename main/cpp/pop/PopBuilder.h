@@ -63,6 +63,7 @@ private:
         std::shared_ptr<spdlog::logger>    m_stride_logger; /// Logger for build process.
 };
 
+
 // Transform strings to unsigned integers faster than FromString
 inline unsigned long IntFromString(const std::string& s)
 {
