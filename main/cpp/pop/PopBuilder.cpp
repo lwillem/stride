@@ -236,7 +236,7 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
         for (Id typ : IdList) {
                 if (typ != Id::OtherHouse && typ != Id::RestoCafe && typ != Id::OtherPlace && typ != Id::Transport) {
                 for (unsigned int i = 1; i < maxIds[typ] + 1; i++) {
-                        pop->RefPoolSys().CreateContactPool(typ, 7);
+                        pop->RefPoolSys().CreateContactPool(typ);
                 }}
         }
 
@@ -301,15 +301,8 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
         const auto day_week = static_cast<unsigned int>(IntFromString(values[3]));
         const auto duration = static_cast<unsigned int>(IntFromString(values[4]));
 
-        // printen tijdens inlezen bestand
-                  if (subpool_id > 0)   {          
-                cout << "Processing line " << line_number << ": " << line << endl; // Print lijnnummer en inhoud van de lijn
-                  }
-           
+                  
                 ContactType::Id typ = ToId(location);
-
-                // unsigned int last_typ_pool = pop->RefPoolSys().currentPoolIds(typ);
-   
 
                 if (line_number < 5) {
                 maxIds[typ] = subpool_id;
@@ -321,27 +314,25 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
                 for (Id typ : IdList) {
                         if (typ == Id::OtherHouse || typ == Id::RestoCafe || typ == Id::OtherPlace || typ == Id::Transport) {
                                 for (unsigned int i = 1; i < maxIds[typ] + 1; i++) {
-                                pop->RefPoolSys().CreateContactPool(typ, day_week);
+                                        
+                                pop->RefPoolSys().CreateContactPool(typ);
                 }}}
 
                 }
 
                 if (line_number > 4) {
-              
-                //if (subpool_id > last_typ_pool) {
-                //       pop->RefPoolSys().CreateContactPool(typ,day_week);
-                //unsigned int new_last_typ_pool = pop->RefPoolSys().currentPoolIds(typ);
-
-                //}
-           
+                              
                 Person* p=id_pointer_persons[person_id];
                                
                 if (subpool_id > 0) {
+                pop->RefPoolSys().RefPools(typ)[subpool_id].SetDayWeek(day_week);
                 pop->RefPoolSys().RefPools(typ)[subpool_id].AddMember(p);
                 }
                 
                 Person person = *p;
+
                 person.PoolIds(typ)[day_week] = subpool_id;
+                
                 person.PoolDurations(typ)[day_week] = duration;
 
                 }

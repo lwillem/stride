@@ -157,11 +157,15 @@ void Sim::TimeStep()
 						(typ == ContactType::Id::HouseholdCluster && !isHouseholdClusteringAllowed)) {
 							continue;
 					}
+
 #pragma omp for schedule(static)
 					for (size_t i = 1; i < poolSys.RefPools(typ).size(); i++) { // NOLINT
+                    
                         if (typ == ContactType::Id::OtherHouse || typ == ContactType::Id::RestoCafe || typ == ContactType::Id::OtherPlace || typ == ContactType::Id::Transport) {
                             const auto day_week_pool = poolSys.RefPools(typ)[i].GetDayWeek();
                             if (day_week_pool != dayWeek){
+                            std::cout << day_week_pool << std::endl;    
+                           
                                 continue;
                             }
                         }

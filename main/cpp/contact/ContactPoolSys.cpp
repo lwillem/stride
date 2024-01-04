@@ -28,14 +28,14 @@ namespace stride {
 ContactPoolSys::ContactPoolSys() : m_currentContactPoolId(), m_sys()
 {
    for (Id typ : IdList) {
-                m_sys[typ].emplace_back(ContactPool(0U, typ, 0U));
+                m_sys[typ].emplace_back(ContactPool(0U, typ));
                 m_currentContactPoolId[typ] = 1;
         }
 }
 
-ContactPool* ContactPoolSys::CreateContactPool(ContactType::Id typeId, unsigned int day)
+ContactPool* ContactPoolSys::CreateContactPool(ContactType::Id typeId)
 {
-        return m_sys[typeId].emplace_back(m_currentContactPoolId[typeId]++, typeId, day);
+        return m_sys[typeId].emplace_back(m_currentContactPoolId[typeId]++, typeId);
 }
 
 } // namespace stride
