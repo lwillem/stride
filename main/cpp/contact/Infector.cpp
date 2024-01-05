@@ -188,17 +188,12 @@ inline double GetContactProbability(const AgeContactProfile& profile, const Pers
         // initiate a contact adjustment factor, to account for physical distancing and/or contact intensity
         double cnt_adjustment_factor = 1;
 
-        // account for contact intensity in household clusters
-        if (pType == Id::HouseholdCluster){
-            cnt_adjustment_factor = cnt_intensity_householdCluster;
-        }
         // Check if one of the persons is a non-complier to social distancing measures in this particular pooltype
-        else if ((not p1->IsNonComplier(pType)) and (not p2->IsNonComplier(pType))) {
+        if ((not p1->IsNonComplier(pType)) and (not p2->IsNonComplier(pType))) {
             cnt_adjustment_factor = (1 - pType_distancing_factor);
         }
 
-
-		// get the reference number of contacts, given age and age-contact profile
+        // get the reference number of contacts, given age and age-contact profile
 		double reference_num_contacts_p1{profile[EffectiveAge(static_cast<unsigned int>(p1->GetAge()))]};
         double reference_num_contacts_p2{profile[EffectiveAge(static_cast<unsigned int>(p2->GetAge()))]};
         const double potential_num_contacts{static_cast<double>(pool_size - 1)};
@@ -291,7 +286,7 @@ template <EventLogMode::Id LL, bool TIC, bool TO>
 void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& profile,
                                  const TransmissionProfile& transProfile, util::RnHandler& rnHandler,
                                  unsigned short int simDay, shared_ptr<spdlog::logger> eventLogger,
-								 std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster,
+								 std::shared_ptr<Population> population, double cnt_intensity_householdCluster,
                                  double pType_distancing_factor)
 {
         using LP = LOG_POLICY<LL>;
@@ -324,7 +319,7 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
                         }
                         // check for contact
                         const double cProb = GetContactProbability(profile, p1, p2, pSize, pType, min_age_members,
-								population,m_cnt_intensity_householdCluster,pType_distancing_factor);
+								population,cnt_intensity_householdCluster,pType_distancing_factor);
                         if (rnHandler.Binomial(cProb)) {
 								const auto  tProb_p1_p2    = transProfile.GetProbability(p1,p2);
 								const auto  tProb_p2_p1    = transProfile.GetProbability(p2,p1);
@@ -381,7 +376,7 @@ template <EventLogMode::Id LL, bool TIC>
 void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& profile,
                                    const TransmissionProfile& transProfile, util::RnHandler& rnHandler,
                                    unsigned short int simDay, shared_ptr<spdlog::logger> eventLogger,
-								   std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster,
+								   std::shared_ptr<Population> population, double cnt_intensity_householdCluster,
                                    double pType_distancing_factor)
 {
         using LP = LOG_POLICY<LL>;
@@ -421,7 +416,7 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                                         continue;
                                 }
                                 const double cProb_p1 = GetContactProbability(profile, p1, p2, pSize, pType, min_age_members,
-															population, m_cnt_intensity_householdCluster, pType_distancing_factor);
+															population, cnt_intensity_householdCluster, pType_distancing_factor);
                                 const auto  tProb_p1_p2   = transProfile.GetProbability(p1,p2);
                                 if (rnHandler.Binomial(cProb_p1, tProb_p1_p2)) {
 

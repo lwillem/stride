@@ -136,6 +136,12 @@ public:
 		/// Check if household clustering is allowed
 		bool IsHouseholdClusteringAllowed() const
 		{
+			 return m_household_clustering[m_day_index] > 0.0;
+		}
+
+		// Get social interaction level for household clusters
+		double GetHouseholdClusteringLevel() const
+		{
 			 return m_household_clustering[m_day_index];
 		}
 
@@ -184,12 +190,12 @@ private:
         boost::gregorian::date              m_date_start;                 ///< Start simulation.
         boost::gregorian::date              m_date_end;                   ///< End simulation.
         std::vector<bool> m_public_holidays;            ///< Vector of public holidays
-        std::vector<double> m_workplace_distancing;     ///< Vector with social distancing level enforcement at work places
-        std::vector<double> m_community_distancing;     ///< Vector with social distancing level enforcement in the community
-        std::vector<double> m_collectivity_distancing;  ///< Vector with social distancing level enforcement in collectivities
+        std::vector<double> m_workplace_distancing;     ///< Vector with daily social distancing level enforcement at work places
+        std::vector<double> m_community_distancing;     ///< Vector with daily social distancing level enforcement in the community
+        std::vector<double> m_collectivity_distancing;  ///< Vector with daily social distancing level enforcement in collectivities
         std::vector<bool> m_contact_tracing;            ///< Vector of days with case finding measures
         std::vector<bool> m_universal_testing;          ///< Vector of days with universal testing measures
-        std::vector<bool> m_household_clustering;       ///< Vector of days when household clusters are allowed
+        std::vector<double> m_household_clustering;     ///< Vector with daily social interaction level within household clusters
 
         std::vector<unsigned int>m_imported_cases; ///<Vector of days when cases are imported (~daily seeding activated)
 

@@ -43,7 +43,6 @@ Sim::Sim()
 	  m_run_simplified(false),
       m_calendar(nullptr), m_contact_profiles(), m_rn_handlers(), m_infector_default(),m_infector_tracing(),
       m_population(nullptr), m_rn_man(), m_transmission_profile(),
-	  m_cnt_intensity_householdCluster(0),
       m_is_isolated_from_household(false),
 	  m_public_health_agency(),m_universal_testing(),m_num_daily_imported_cases(0),m_hospitalisation_config()
 {
@@ -82,7 +81,7 @@ void Sim::TimeStep()
         // set HouseholdCluster intensity
         double cnt_intensity_householdCluster = 0.0;
 		if (isHouseholdClusteringAllowed && poolSys.RefPools(ContactType::Id::HouseholdCluster).size() > 1){
-			cnt_intensity_householdCluster = m_cnt_intensity_householdCluster;
+			cnt_intensity_householdCluster = m_calendar->GetHouseholdClusteringLevel();
 		}
         // Set other distancing factors except for school (requires pool min age)
         double workplace_distancing_factor = m_calendar->GetWorkplaceDistancingFactor();
@@ -168,7 +167,7 @@ void Sim::TimeStep()
                             // account for physical distancing in the collectivity
                             else if (typ == ContactType::Id::Collectivity) { typ_distancing_factor = collectivity_distancing_factor; }
                             // account for contact intensity in household clusters
-                            else if (typ == ContactType::Id::HouseholdCluster) { typ_distancing_factor = cnt_intensity_householdCluster; }
+                            else if (typ == ContactType::Id::HouseholdCluster) { typ_distancing_factor = 1-cnt_intensity_householdCluster; }
 
                             infector(poolSys.RefPools(typ)[i], m_contact_profiles[typ], m_transmission_profile,
 									 m_rn_handlers[thread_num], simDay, eventLogger,

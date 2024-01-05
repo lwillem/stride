@@ -45,7 +45,7 @@ dir_postfix <- '_gtester'
 num_seeds  <- 5
 
 # add parameters and values to combine in a full-factorial grid
-exp_design_base <- expand.grid(r0                            = 2.5,
+exp_design_base <- expand.grid(r0                       = 2.5,
                           num_days                      = 30,
                           rng_seed                      = seq(num_seeds),
                           num_participants_survey       = 10,   
@@ -55,20 +55,13 @@ exp_design_base <- expand.grid(r0                            = 2.5,
                           age_contact_matrix_file       = 'contact_matrix_flanders_conditional_teachers.xml',
                           start_date                    = '2020-03-05',
                           holidays_file                 = 'holidays_belgium_2019_2021.csv',
-                          cnt_reduction_workplace       = 0,
-                          cnt_reduction_other           = 0,
-                          compliance_delay_workplace    = 0,
-                          compliance_delay_other        = 0,
-                          num_daily_imported_cases      = 0,
-                          cnt_reduction_workplace_exit  = 0,
-                          cnt_reduction_other_exit      = 0,
-                          cnt_reduction_school_exit     = 0,
-                          cnt_intensity_householdCluster = 0,
+
                           detection_probability          = 0,
                           tracing_efficiency_household   = 0,
                           tracing_efficiency_other       = 0,
                           case_finding_capacity          = 0,
                           test_false_negative            = 0,
+                          
                           gtester_label                  = 'covid_base',
                           event_log_level                = 'Transmissions',
                           
@@ -86,16 +79,20 @@ exp_design_base <- expand.grid(r0                            = 2.5,
 
                           transmission_probability = NA,
                           
-                          temporal_distancing_workplace = NA,
-                          dates_distancing_workplace = NA,
+                          distancing_workplace_ratio = NA,
+                          distancing_workplace_date  = NA,
                           distancing_workplace_delay = NA,
-                          temporal_distancing_community = NA,
-                          dates_distancing_community = NA,
+                          distancing_community_ratio = NA,
+                          distancing_community_date  = NA,
                           distancing_community_delay = NA,
                           
-                          temporal_imported_cases = NA,
-                          dates_imported_cases = NA,
-                          imported_cases_delay = NA,
+                          imported_cases_number = NA,
+                          imported_cases_date   = NA,
+                          imported_cases_delay  = NA,
+                          
+                          household_clustering_ratio = NA,
+                          household_clustering_delay = NA,
+                          household_clustering_date = NA,
                       
                           stringsAsFactors = F)
 
@@ -118,26 +115,21 @@ exp_design_hosp$gtester_label                 <- 'covid_hosp'
 
 # daily seeding ----
 exp_design_daily <- exp_design_base
-exp_design_daily$num_daily_imported_cases <- NA
-exp_design_daily$temporal_imported_cases  <- c_str(10)
-exp_design_daily$dates_imported_cases     <- c_str('2020-03-01')
-exp_design_daily$imported_cases_delay     <- c_str(1)
+exp_design_daily$imported_cases_number    <- c_str(10)
+exp_design_daily$imported_cases_date      <- c_str('2020-03-02')
+exp_design_daily$imported_cases_delay     <- c_str(0)
 exp_design_daily$gtester_label            <- 'covid_daily'
 
 
 # distancing ----
 exp_design_dist <- exp_design_base
 exp_design_dist$holidays_file              <- 'calendar_belgium_2020_covid19_exit_school_adjusted.csv'
-exp_design_dist$cnt_reduction_workplace    <- 0.3;
-exp_design_dist$cnt_reduction_other        <- 0.4;
-exp_design_dist$compliance_delay_workplace <- 3;  # cpp tester: 2
-exp_design_dist$compliance_delay_other     <- 4;  # cpp tester: 3
-exp_design_dist$temporal_distancing_workplace <- 0.3;
-exp_design_dist$dates_distancing_workplace    <- '2020-03-13';
-exp_design_dist$distancing_workplace_delay    <- 3  
-exp_design_dist$temporal_distancing_community <- 0.4;
-exp_design_dist$dates_distancing_community    <- '2020-03-13';
-exp_design_dist$distancing_community_delay    <- 4 
+exp_design_dist$distancing_workplace_ratio <- 0.3;
+exp_design_dist$distancing_workplace_date  <- '2020-03-13';
+exp_design_dist$distancing_workplace_delay <- 3  
+exp_design_dist$distancing_community_ratio <- 0.4;
+exp_design_dist$distancing_community_date  <- '2020-03-13';
+exp_design_dist$distancing_community_delay <- 4 
 exp_design_dist$gtester_label              <- 'covid_distancing'
 
 
@@ -150,9 +142,12 @@ exp_design_15min$gtester_label           <- 'covid_15min'
 # householdCluster ----
 exp_design_hhcl <- exp_design_base
 exp_design_hhcl$population_file       <- 'pop_belgium600k_c500_teachers_censushh_extended3_size2.csv'
-exp_design_hhcl$cnt_intensity_householdCluster <- 4/7
 exp_design_hhcl$holidays_file         <- 'calendar_belgium_2020_covid19_exit_schoolcategory_adjusted.csv'
+# exp_design_hhcl$holidays_file         <- 'calendar_belgium_2020_covid19_exit_schoolcategory_adjusted_hhclustering.csv' # hardcoded ratio of 4/7
 exp_design_hhcl$start_date            <- '2020-06-01'
+exp_design_hhcl$household_clustering_ratio <- 4/7
+exp_design_hhcl$household_clustering_delay <- 0
+exp_design_hhcl$household_clustering_date <- '2020-06-01'
 exp_design_hhcl$gtester_label         <- 'covid_hhcl'
 
 # unitesting ----
@@ -319,10 +314,10 @@ rstride_out_abc <- run_rStride_abc(c(rng_seed = 100,
                                      r0 = 3, 
                                      num_infected_seeds= 400, 
                                      hosp_probability_factor=0.4,
-                                     cnt_reduction_workplace=0.85,
-                                     compliance_delay_workplace=7.4,
-                                     cnt_reduction_other=0.85,
-                                     compliance_delay_other=4.51
+                                     distancing_workplace_ratio=0.85,
+                                     distancing_workplace_delay=7.4,
+                                     distancing_community_ratio=0.85,
+                                     distancing_community_delay=4.51
                                      )
                                    )
 
@@ -522,8 +517,9 @@ if(setequal(data_incidence[,names(data_incidence) != 'exp_id'],
 }
 
 ## COMPARE PREVALENCE ----
-if(setequal(data_prevalence[,names(data_prevalence) != 'exp_id'],
-            ref_data_prevalence[,names(ref_data_prevalence) != 'exp_id'])){ 
+sel_col <- names(data_prevalence)[names(data_prevalence) != 'exp_id'] # make sure the same (number of) days are compared
+if(setequal(data_prevalence[,sel_col],
+            ref_data_prevalence[,sel_col])){ 
   smd_print("PREVALENCE OK")
 } else{
   smd_print("PREVALENCE CHANGED",WARNING = T)

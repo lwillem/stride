@@ -103,7 +103,6 @@ private:
         TransmissionProfile         m_transmission_profile; ///< Profile of disease.
 
         // temporary...
-        double                      m_cnt_intensity_householdCluster;
         bool                        m_is_isolated_from_household;
 
         PublicHealthAgency          m_public_health_agency;

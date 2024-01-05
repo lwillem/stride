@@ -13,7 +13,7 @@
 #  see http://www.gnu.org/licenses/.
 #
 #
-#  Copyright 2020, Willem L
+#  Copyright 2023, Willem L
 ############################################################################ #
 # 
 # ABC controller for the Stride model
@@ -21,18 +21,19 @@
 ############################################################################ #
 
 #' Main rStride function for ABC
+if(0==1){
 # abc_function_param <- c(15,3.4,256,0.4,0.85,7.4,0.85,4.51)
 # abc_function_param <- c(41,4,400,0.4,0.85,7.4,0.85,4.51)
 abc_function_param <- c(rng_seed = 100,
-r0 = 3,
-num_infected_seeds= 400,
-hosp_probability_factor=0.4,
-cnt_reduction_workplace=0.85,
-compliance_delay_workplace=7.4,
-cnt_reduction_other=0.85,
-compliance_delay_other=4.51
-); remove_run_output <- FALSE
-
+                        r0 = 3,
+                        num_infected_seeds= 400,
+                        hosp_probability_factor=0.4,
+                        distancing_workplace_ratio=0.85,
+                        distancing_workplace_delay=7.4,
+                        distancing_community_ratio=0.85,
+                        distancing_community_delay=4.51
+                        ); remove_run_output <- FALSE
+}
 ################################################ #
 ## RUN  ----
 ################################################ #
@@ -92,35 +93,26 @@ run_rStride_abc <- function(abc_function_param,
      names(abc_function_param) <- c('rng_seed',names(readRDS(file.path('./sim_output',run_tag,'stride_prior.rds'))))
   }
 
-   # copy parameter values
-   for(i_param in names(abc_function_param)){
-      config_exp[i_param]  <- abc_function_param[i_param]
-   }
+  # make sure "number" and "delay" parameters are coded as integer value
+  sel_integer <- grepl('num',names(abc_function_param)) | grepl('delay',names(abc_function_param))
+  abc_function_param[sel_integer] <- round(abc_function_param[sel_integer])
+  
+  # copy parameter values
+  for(i_param in names(abc_function_param)){
+     config_exp[i_param]  <- abc_function_param[i_param]
+  }
   
   # aggregate age-specific parameters
   config_exp <- collapse_age_param(config_exp)
 
-  # make sure some input parameters are coded as integer value
-  config_exp$num_infected_seeds         <- round(config_exp$num_infected_seeds )
-  config_exp$compliance_delay_workplace <- round(config_exp$compliance_delay_workplace)
-  config_exp$compliance_delay_other     <- round(config_exp$compliance_delay_other)
-  config_exp$num_daily_imported_cases   <- round(config_exp$num_daily_imported_cases)
-  
-   # define 2020 lockdown parameters
+  # define 2020 lockdown start
   date_t0                    <- as.Date('2020-03-13')
-  cnt_reduction_workplace    <- config_exp$cnt_reduction_workplace
-  compliance_delay_workplace <- config_exp$compliance_delay_workplace
-  cnt_reduction_community    <- config_exp$cnt_reduction_other
-  compliance_delay_community <- config_exp$compliance_delay_other
-  
-
-  # include lockdown parameters
-  config_exp$temporal_distancing_workplace    <- c_str(cnt_reduction_workplace)
-  config_exp$dates_distancing_workplace       <- c_str(paste(date_t0))
-  config_exp$distancing_workplace_delay       <- c_str(compliance_delay_workplace)
-  config_exp$temporal_distancing_community    <- c_str(cnt_reduction_community)
-  config_exp$dates_distancing_community       <- c_str(paste(date_t0))
-  config_exp$distancing_community_delay       <- c_str(compliance_delay_community)
+  # config_exp$distancing_workplace_ratio       <- c_str(cnt_reduction_workplace)
+  config_exp$distancing_workplace_date        <- c_str(paste(date_t0))
+  # config_exp$distancing_workplace_delay       <- c_str(compliance_delay_workplace)
+  # config_exp$distancing_community_ratio       <- c_str(cnt_reduction_community)
+  config_exp$distancing_community_date        <- c_str(paste(date_t0))
+  # config_exp$distancing_community_delay       <- c_str(compliance_delay_community)
   
   # define holiday file with covid-19 lockdown parameters
   config_exp$holidays_file <- 'calendar_belgium_2020_covid19_exit_school_adjusted.csv'

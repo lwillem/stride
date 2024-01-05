@@ -1,7 +1,7 @@
 ############################################################################ #
 #  This file is part of the Stride software. 
 #
-#  Copyright 2021, Willem L
+#  Copyright 2023, Willem L
 ############################################################################ #
 #
 # TO CREATE CALENDAR FILE(S) FOR 2019-2021
@@ -568,10 +568,10 @@ integrate_lockdown_parameters_into_calendar <- function(config_exp){
 
   # if there are not distancing parameters, return original config_exp
   param_calendar <- config_exp[grepl('cnt_reduction_workplace',names(config_exp)) |   # OR colname contains reduction_workplace
-                                   grepl('cnt_reduction_other',names(config_exp)) |     # OR colname contains reduction_other
-                                   grepl('temporal',names(config_exp)) |                # OR colname contains temporal
-                                   grepl('distancing',names(config_exp)) &              # OR colname contains distancing)
-                                   !is.na(config_exp)]                                  # AND different from NA 
+                                   grepl('clustering',names(config_exp)) |            # OR colname contains clustering
+                                   grepl('imported',names(config_exp)) |              # OR colname contains imported
+                                   grepl('distancing',names(config_exp)) &            # OR colname contains distancing)
+                                   !is.na(config_exp)]                                # AND different from NA 
   param_calendar <- unlist(param_calendar)
   param_calendar[is.na(param_calendar)] <- 0
 
@@ -592,116 +592,50 @@ integrate_lockdown_parameters_into_calendar <- function(config_exp){
     config_exp$holidays_file <- create_calendar_file(file_name = file_name_new, show_plots = T)
   }
  
-  
-  # set dates
-  date_start            <- config_exp$start_date
-  date_t0               <- as.Date('2020-03-13')
-  date_compliance_wp    <- date_t0 + config_exp$compliance_delay_workplace
-  date_compliance_other <- date_t0 + config_exp$compliance_delay_other
-  date_compliance_collectivity <- date_t0 + config_exp$compliance_delay_collectivity
-  date_exit_wp          <- as.Date('2020-05-04')
-  date_exit_other       <- as.Date('2020-05-25')
-  date_end              <- as.Date('2020-12-31')
-  
-  # # integrate school distancing (general: K6)
-  # replace_calendar_value(file_name = config_exp$holidays_file,
-  #                        db_category =  "schools_closed",
-  #                        value_orig = 0.5,
-  #                        value_new = config_exp$cnt_reduction_school_exit,
-  #                        show_plots = T)
-  # 
-  # # integrate school distancing: secondary
-  # replace_calendar_value(file_name = config_exp$holidays_file,
-  #                        db_category =  "schools_closed",
-  #                        value_orig = 0.2,
-  #                        value_new = ifelse('cnt_reduction_school_exit_secondary' %in% names(config_exp),
-  #                                           config_exp$cnt_reduction_school_exit_secondary,
-  #                                           config_exp$cnt_reduction_school_exit),
-  #                        show_plots = T)
-  # 
-  # 
-  # # integrate school distancing: tertiary)
-  # replace_calendar_value(file_name = config_exp$holidays_file,
-  #                        db_category =  "schools_closed",
-  #                        value_orig = 0.3,
-  #                        value_new = ifelse('cnt_reduction_school_exit_tertiary' %in% names(config_exp),
-  #                                           config_exp$cnt_reduction_school_exit_tertiary,
-  #                                           config_exp$cnt_reduction_school_exit),
-  #                        show_plots = T)
-
-  
-  # integreate workplace distancing
-  # adjust_calendar_file(db_category =  "workplace_distancing",
-  #                      db_update = data.frame(c(as.character(date_t0),0),
-  #                                             c(as.character(date_compliance_wp),config_exp$cnt_reduction_workplace),
-  #                                             c(as.character(date_exit_wp-1),config_exp$cnt_reduction_workplace),
-  #                                             c(as.character(date_exit_wp),config_exp$cnt_reduction_workplace_exit),
-  #                                             c(as.character(date_end),config_exp$cnt_reduction_workplace_exit)),
-  #                      file_name = config_exp$holidays_file )
-  # config_exp$cnt_reduction_workplace <- 1
-  # config_exp$compliance_delay_workplace <- 0
-  # config_exp$cnt_reduction_workplace_exit <- 0
-  
-  # # integreate community distancing
-  # adjust_calendar_file(db_category =  "community_distancing",
-  #                      db_update = data.frame(c(as.character(date_t0),0),
-  #                                             c(as.character(date_compliance_other),config_exp$cnt_reduction_other),
-  #                                             c(as.character(date_exit_other-1),config_exp$cnt_reduction_other),
-  #                                             c(as.character(date_exit_other),config_exp$cnt_reduction_other_exit),
-  #                                             c(as.character(date_end),config_exp$cnt_reduction_other_exit)),
-  #                      file_name = config_exp$holidays_file,
-  #                      show_plots = T)
-  # config_exp$cnt_reduction_other <- 1
-  # config_exp$compliance_delay_other <- 0
-  # config_exp$cnt_reduction_other_exit <- 0
-  
-  # integrate collectivity distancing
-  if(!any(is.null(c(config_exp$cnt_baseline_collectivity,config_exp$cnt_reduction_collectivity)))){
-    adjust_calendar_file(db_category =  "collectivity_distancing",
-                         db_update = data.frame(c(as.character(date_start),config_exp$cnt_baseline_collectivity),
-                                                c(as.character(date_t0),config_exp$cnt_baseline_collectivity),
-                                                c(as.character(date_compliance_collectivity),config_exp$cnt_reduction_collectivity),
-                                                c(as.character(date_end),config_exp$cnt_reduction_collectivity)),
-                         file_name = config_exp$holidays_file,
-                         show_plots = T)
-  }
-  
-  if('temporal_distancing_workplace' %in% names(config_exp)){
+  if('distancing_workplace_ratio' %in% names(config_exp)){
     include_temporal_distancing_factors(db_category    = 'workplace_distancing',
-                                        db_values_char = config_exp$temporal_distancing_workplace,
+                                        db_values_char = config_exp$distancing_workplace_ratio,
                                         db_delay_char  = config_exp$distancing_workplace_delay,
                                         file_name      = config_exp$holidays_file,
                                         show_plots     = T,
-                                        db_dates_char  = config_exp$dates_distancing_workplace)
+                                        db_dates_char  = config_exp$distancing_workplace_date)
   }
   
-  if('temporal_distancing_community' %in% names(config_exp)){
+  if('distancing_community_ratio' %in% names(config_exp)){
     include_temporal_distancing_factors(db_category    = 'community_distancing',
-                                        db_values_char = config_exp$temporal_distancing_community,
+                                        db_values_char = config_exp$distancing_community_ratio,
                                         db_delay_char  = config_exp$distancing_community_delay,
                                         file_name      = config_exp$holidays_file,
                                         show_plots     = T,
-                                        db_dates_char  = config_exp$dates_distancing_community)
+                                        db_dates_char  = config_exp$distancing_community_date)
   }
   
-  if('temporal_distancing_collectivity' %in% names(config_exp)){
+  if('distancing_collectivity_ratio' %in% names(config_exp)){
     include_temporal_distancing_factors(db_category    = 'collectivity_distancing',
-                                        db_values_char = paste(config_exp$cnt_reduction_collectivity,config_exp$temporal_distancing_collectivity,sep=','),
+                                        db_values_char = config_exp$distancing_collectivity_ratio,
+                                        db_delay_char  = config_exp$distancing_collectivity_delay,
                                         file_name      = config_exp$holidays_file,
                                         show_plots     = T,
-                                        db_dates_char  = config_exp$dates_distancing_collectivity)
+                                        db_dates_char  = config_exp$distancing_collectivity_date)
   }
   
-  if('temporal_imported_cases' %in% names(config_exp)){
+  if('imported_cases_number' %in% names(config_exp)){
     include_temporal_distancing_factors(db_category    = 'imported_cases',
-                                        db_values_char = c_str(config_exp$temporal_imported_cases),
+                                        db_values_char = config_exp$imported_cases_number,
                                         db_delay_char  = config_exp$imported_cases_delay,
                                         file_name      = config_exp$holidays_file,
                                         show_plots     = T,
-                                        db_dates_char  = paste(config_exp$dates_imported_cases))
+                                        db_dates_char  = config_exp$imported_cases_date)
   }
   
-  #TODO: add household cluster mixing
+  if('household_clustering_ratio' %in% names(config_exp)){
+    include_temporal_distancing_factors(db_category    = 'household_clustering',
+                                        db_values_char = config_exp$household_clustering_ratio,
+                                        db_delay_char  = config_exp$household_clustering_delay,
+                                        file_name      = config_exp$holidays_file,
+                                        show_plots     = T,
+                                        db_dates_char  = config_exp$household_clustering_date)
+  }
   
   # # fix for calendar path
   config_exp$holidays_file <- paste0('../',config_exp$holidays_file)
@@ -715,33 +649,27 @@ integrate_lockdown_parameters_into_calendar <- function(config_exp){
 include_temporal_distancing_factors <- function(db_category,db_values_char,db_delay_char,file_name,show_plots=T,db_dates_char=NA){
   
   # check input parameters
-  if(!any(is.na(c(db_category,db_values_char,db_delay_char,db_dates_char))))
+  vector_input_param <- c(db_category,db_values_char,db_delay_char,db_dates_char)
+  if(!any(is.na(vector_input_param)) & all(vector_input_param != "NA"))
   {
-    
+   
+  # make sure input prameters are "character" types
+  db_values_char <- c_str(db_values_char)
+  db_delay_char  <- c_str(db_delay_char)
+  db_dates_char  <- paste(db_dates_char)
+  
   # split given value string, into numerical values
   db_values <- as.numeric(unlist(strsplit(db_values_char,',')))
   db_delay  <- as.numeric(unlist(strsplit(db_delay_char,',')))
+  db_dates  <- as.Date(unlist(strsplit(db_dates_char,',')))
   
-  if(is.na(db_dates_char)){
-    # Start with May 1st using the lockdown measure
-    date_start <- as.Date('2020-05-01') # use lockdown values
-    
-    # Create list with eligible dates for given values (flexible, constant day of the month)
-    # note: max number of days per month = 31, max period = 31*number of values
-    date_day_select <- 1
-    date_all      <- seq(date_start,date_start+(31*length(db_values)),1)
-    db_dates      <- date_all[as.numeric(format(date_all,'%d')) == date_day_select]
-    
-    # safety check!
-    if(length(db_values) < length(db_dates)){
-      db_dates <- db_dates[1:(length(db_values))]
-    }
-    
-  } else{
-    db_dates <- as.Date(unlist(strsplit(db_dates_char,',')))
+  # account for delay == 0 by using "db_date-1" and "delay 1" 
+  bool_delay_zero <- db_delay == 0
+  if(any(bool_delay_zero)){
+    db_delay[bool_delay_zero] <- 1
+    db_dates[bool_delay_zero] <- db_dates[bool_delay_zero] - 1
   }
-  
-  
+ 
   # account for delay in compliance
   db_dates  <- c(db_dates[1],db_dates + db_delay,db_dates[-1])
   db_values <- c(0,db_values,db_values[-length(db_values)])

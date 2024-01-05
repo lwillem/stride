@@ -125,7 +125,6 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
 		// Set Public Health Agency
 		// --------------------------------------------------------------
         sim->m_public_health_agency.Initialize(m_config);
-		sim->m_cnt_intensity_householdCluster       = m_config.get<double>("run.cnt_intensity_householdCluster",0);
 		sim->m_is_isolated_from_household           = m_config.get<bool>("run.is_isolated_from_household",false);
 
         // --------------------------------------------------------------

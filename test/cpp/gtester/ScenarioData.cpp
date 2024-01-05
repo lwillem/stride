@@ -57,7 +57,7 @@ tuple<ptree, unsigned int, double> ScenarioData::Get(string tag)
 		{"measles_26", 600000U},  {"r0_0", 1200U},     {"r0_4", 3400U},     {"r0_8", 9500U},
 		{"r0_12", 23000U},        {"r0_16", 45000U},   {"covid19_base", 82500U}, {"covid19_logParticipants", 81000U},
 		{"covid19_daily", 91000U},{"covid19_distancing", 18700U}, {"covid19_age_15min",90000U},
-		{"covid19_householdclusters", 46000U}, {"covid19_tracing",41000U}, {"covid19_tracing_all",39000U},
+		{"covid19_householdclusters", 47000U}, {"covid19_tracing",41000U}, {"covid19_tracing_all",39000U},
 		{"covid19_transm", 82500U},{"covid19_transm_gamma", 72300U},
 		{"covid19_suscept", 82500U},{"covid19_suscept_age", 82500U},{"covid19_suscept_adapt", 56650U},
 		{"covid19_fitting", 82500U},{"covid19_fitting_adapt", 41100U},
@@ -70,7 +70,7 @@ tuple<ptree, unsigned int, double> ScenarioData::Get(string tag)
 		{"measles_26", 5.0e-02},  {"r0_0", 5.0e-02},    {"r0_4", 1.0e-01},        {"r0_8", 1.0e-01},
 		{"r0_12", 5.0e-02},       {"r0_16", 5.0e-02},   {"covid19_base", 1.0e-01},  {"covid19_logParticipants", 1.0e-01},
 		{"covid19_daily", 1.0e-01},{"covid19_distancing", 1.0e-01},{"covid19_age_15min",1.0e-1},
-		{"covid19_householdclusters", 1.5e-01}, // more stochastic effects observed
+		{"covid19_householdclusters", 1.0e-01}, // more stochastic effects observed
 		{"covid19_tracing",1.0e-01}, {"covid19_tracing_all",1.0e-01},
 		{"covid19_transm", 1.0e-01},{"covid19_transm_gamma", 1.0e-01},
 		{"covid19_suscept", 1.0e-01},{"covid19_suscept_age", 1.0e-01},{"covid19_suscept_adapt", 1.0e-01},
@@ -139,10 +139,11 @@ tuple<ptree, unsigned int, double> ScenarioData::Get(string tag)
 			pt.put("run.age_contact_matrix_file", "contact_matrix_flanders_conditional_teachers_15min.xml");
 	}
 	if (tag == "covid19_householdclusters") {
-			pt.put("run.holidays_file", "calendar_belgium_2020_covid19_exit_schoolcategory_adjusted.csv");
+			pt.put("run.holidays_file", "calendar_belgium_2020_covid19_exit_schoolcategory_adjusted_hhclustering.csv");
+//			pt.put("run.holidays_file", "calendar_belgium_2020_covid19_exit_schoolcategory_adjusted.csv");
 			pt.put("run.start_date", "2020-06-01");
 			pt.put("run.population_file", "pop_belgium600k_c500_teachers_censushh_extended3_size2.csv");
-			pt.put("run.cnt_intensity_householdCluster", 4/7);
+			pt.put("run.event_log_level", "Transmissions");
 	}
 	// set default tracing parameters
 	if (tag == "covid19_tracing" || tag == "covid19_tracing_all") {

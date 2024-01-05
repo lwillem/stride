@@ -144,7 +144,7 @@ void Calendar::Initialize_csv(const ptree& configPt)
 					if(category == "workplace_distancing") {  m_workplace_distancing[date_index] = value; }
 					if(category == "community_distancing") {  m_community_distancing[date_index] = value; }
 					if(category == "collectivity_distancing"){m_collectivity_distancing[date_index] = value; }
-					if(category == "household_clustering") {  m_household_clustering[date_index] = value_boolean; }
+					if(category == "household_clustering") {  m_household_clustering[date_index] = value;}
 					if(category == "contact_tracing")      {  m_contact_tracing[date_index] = value_boolean; }
 					if(category == "universal_testing")    {  m_universal_testing[date_index] = value_boolean; }
 					if(category == "imported_cases")

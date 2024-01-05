@@ -39,14 +39,14 @@ get_covid19_default_param <- function(){
                 age_contact_matrix_file       = "contact_matrix_flanders_conditional_teachers.xml",
                 start_date                    = '2020-02-17',
                 holidays_file                 = 'calendar_belgium_2020_covid19_exit_school_adjusted.csv',
-                cnt_reduction_workplace       = 0.86,
-                cnt_reduction_other           = 0.85,
-                compliance_delay_workplace    = 7,
-                compliance_delay_other        = 7,
-                num_daily_imported_cases      = 0,
-                cnt_reduction_workplace_exit  = 0.86,  
-                cnt_reduction_other_exit      = 0.85,
-                cnt_reduction_school_exit     = 1,
+                # cnt_reduction_workplace       = 0.86,
+                # cnt_reduction_other           = 0.85,
+                # compliance_delay_workplace    = 7,
+                # compliance_delay_other        = 7,
+                # num_daily_imported_cases      = 0,
+                # cnt_reduction_workplace_exit  = 0.86,  
+                # cnt_reduction_other_exit      = 0.85,
+                # cnt_reduction_school_exit     = 1,
                 cnt_intensity_householdCluster = 0,
                 detection_probability          = 0,
                 tracing_efficiency_household   = 0.9, 
@@ -89,25 +89,25 @@ get_covid19_default_param <- function(){
    cnt_reduction_school       <- 1
    cnt_reduction_other        <- 0.85
    compliance_delay_workplace <- 7
-   compliance_delayschool     <- 0
+   compliance_delay_school    <- 0
    compliance_delay_other     <- 7
    
-   # include lock down parameters
-   # out$temporal_distancing_workplace    <- c_str(get_linear_approx(0,cnt_reduction_workplace,compliance_delay_workplace))
-   # out$dates_distancing_workplace       <- c_str(paste(date_t0+c(0:7)))
-   # out$temporal_distancing_community        <- c_str(get_linear_approx(0,cnt_reduction_other,compliance_delay_other))
-   # out$dates_distancing_community           <- c_str(paste(date_t0+c(0:7)))
+   # include 2020 lock-down parameters
+   out$distancing_workplace_ratio         <- c_str(cnt_reduction_workplace)
+   out$distancing_workplace_date          <- c_str(paste(date_t0))
+   out$distancing_workplace_delay         <- c_str(7)
    
-   out$temporal_distancing_workplace        <- c_str(cnt_reduction_workplace)
-   out$dates_distancing_workplace           <- c_str(paste(date_t0))
-   out$distancing_workplace_delay           <- c_str(7)
-   
-   out$temporal_distancing_community        <- c_str(cnt_reduction_other)
-   out$dates_distancing_community           <- c_str(paste(date_t0))
-   out$distancing_community_delay           <- c_str(7)
+   out$distancing_community_ratio        <- c_str(cnt_reduction_other)
+   out$distancing_community_date         <- c_str(paste(date_t0))
+   out$distancing_community_delay        <- c_str(7)
    
    # number of parallel workers (on UA cluster)
    out$num_parallel_workers <- 50
+   
+   # # household clustering?
+   # out$distancing_householdCluster_ratio <- c_str(1)
+   # out$distancing_householdCluster_date  <- c_str(out$start_date)
+   # out$distancing_householdCluster_delay <- c_str(1)
    
    # return parameters
    return(out)
