@@ -310,6 +310,7 @@ smd_print("START ABC FUNCTION TEST")
 model_param_abc <- exp_design[exp_design$gtester_label %in% c('covid_base'),]
 model_param_abc <- exp_design[1,]
 model_param_abc$event_log_level <- "Incidence"
+if(!exists('project_dir')){project_dir <- smd_file_path('sim_output/abc_test') }
 setwd(project_dir)
 saveRDS(model_param_abc,'model_param_update.rds')
 
@@ -447,7 +448,7 @@ if(!setequal(project_summary,ref_project_summary)){
   diff_summary    <- setdiff(select_project_summary[,!grepl('_id',names(select_project_summary))],
                              ref_project_summary[,!grepl('_id',names(select_project_summary))])
   if(length(diff_summary)>0 && all(dim(select_project_summary) == dim(ref_project_summary))){
-    smd_print('CHANGES: ',names(diff_summary),WARNING = T)
+    smd_print('CHANGES: ',paste(names(diff_summary),collapse = ', '),WARNING = T)
     flag <- (select_project_summary[,names(diff_summary)] != ref_project_summary[,names(diff_summary)])
    if(length(diff_summary)>1) {
      flag <- rowSums(flag)>0

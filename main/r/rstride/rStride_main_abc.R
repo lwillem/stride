@@ -22,16 +22,16 @@
 
 #' Main rStride function for ABC
 # abc_function_param <- c(15,3.4,256,0.4,0.85,7.4,0.85,4.51)
-#abc_function_param <- c(41,4,400,0.4,0.85,7.4,0.85,4.51)
-#  abc_function_param <- c(rng_seed = 100,
-# r0 = 3,
-# num_infected_seeds= 400,
-# hosp_probability_factor=0.4,
-# cnt_reduction_workplace=0.85,
-# compliance_delay_workplace=7.4,
-# cnt_reduction_other=0.85,
-# compliance_delay_other=4.51
-# ); remove_run_output <- FALSE
+# abc_function_param <- c(41,4,400,0.4,0.85,7.4,0.85,4.51)
+abc_function_param <- c(rng_seed = 100,
+r0 = 3,
+num_infected_seeds= 400,
+hosp_probability_factor=0.4,
+cnt_reduction_workplace=0.85,
+compliance_delay_workplace=7.4,
+cnt_reduction_other=0.85,
+compliance_delay_other=4.51
+); remove_run_output <- FALSE
 
 ################################################ #
 ## RUN  ----
@@ -131,10 +131,10 @@ run_rStride_abc <- function(abc_function_param,
   
   # create experiment tag
   i_exp   <- rng_seed
-  exp_tag <- .rstride$create_exp_tag(i_exp)
+  exp_tag <- .rstride$create_exp_tag(i_exp,prefix='abc')
   
    # set output files prefix
-   output_prefix       = smd_file_path(project_dir,exp_tag,.verbose=FALSE)
+   output_prefix       = smd_file_path(project_dir,exp_tag,.verbose=FALSE,.overwrite = TRUE)
    config_exp$output_prefix <- output_prefix 
    
    # include temporal parameters into the calendar
