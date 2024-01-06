@@ -181,17 +181,12 @@ using namespace stride::ContactType;
 using namespace stride::util;
 
 inline double GetContactProbability(const AgeContactProfile& profile, const Person* p1, const Person* p2,
-		size_t pool_size, const ContactType::Id pType, const unsigned min_age_members,
+		size_t pool_size, const ContactType::Id pType,
 		std::shared_ptr<Population>& population, double cnt_intensity_householdCluster, double pType_distancing_factor)
 {
 
         // initiate a contact adjustment factor, to account for physical distancing and/or contact intensity
-        double cnt_adjustment_factor = 1;
-
-        // Check if one of the persons is a non-complier to social distancing measures in this particular pooltype
-        if ((not p1->IsNonComplier(pType)) and (not p2->IsNonComplier(pType))) {
-            cnt_adjustment_factor = (1 - pType_distancing_factor);
-        }
+        double cnt_adjustment_factor = 1 - pType_distancing_factor;
 
         // get the reference number of contacts, given age and age-contact profile
 		double reference_num_contacts_p1{profile[EffectiveAge(static_cast<unsigned int>(p1->GetAge()))]};
@@ -236,7 +231,7 @@ inline double GetContactProbability(const AgeContactProfile& profile, const Pers
 			contact_probability = individual_contact_probability_p2;
 		}
 
-                // adjust contact for individual variation in community and workplace contacts
+        // adjust contact for individual variation in community and workplace contacts
         if(pType == Id::PrimaryCommunity || pType == Id::SecondaryCommunity || pType == Id::Workplace){
 
         		double individual_contact_factor_p1 = p1->GetIndividualContactFactor();
@@ -246,13 +241,7 @@ inline double GetContactProbability(const AgeContactProfile& profile, const Pers
         }
 
 
-        // choose a random probability
-        //double contact_probability = individual_contact_probability_p1;
-        //if (rnHandler.Binomial(0.5)) {
-        	//	contact_probability = individual_contact_probability_p2;
-        //}
-
-        	    // limit probability to 0.999
+   	    // limit probability to 0.999
         if (contact_probability >= 1) {
         	contact_probability = 0.999;
         }
@@ -296,9 +285,6 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
         const auto& pMembers = pool.m_members;
         const auto  pSize    = pMembers.size();
 
-        // get minimum age of the members (relevant for school settings)
-        const unsigned int min_age_members = pool.GetMinAge();
-
         // check all contacts
         for (size_t i_person1 = 0; i_person1 < pSize; i_person1++) {
                 // check if member is present today
@@ -318,8 +304,8 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
                                 continue;
                         }
                         // check for contact
-                        const double cProb = GetContactProbability(profile, p1, p2, pSize, pType, min_age_members,
-								population,cnt_intensity_householdCluster,pType_distancing_factor);
+                        const double cProb = GetContactProbability(profile, p1, p2, pSize, pType,
+                        		population,cnt_intensity_householdCluster,pType_distancing_factor);
                         if (rnHandler.Binomial(cProb)) {
 								const auto  tProb_p1_p2    = transProfile.GetProbability(p1,p2);
 								const auto  tProb_p2_p1    = transProfile.GetProbability(p2,p1);
@@ -396,9 +382,6 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
         const auto& pMembers = pool.m_members;
         const auto  pSize    = pMembers.size();
 
-        // get minimum age of the members (relevant for school settings)
-        const unsigned int min_age_members = pool.GetMinAge();
-
         // match infectious and susceptible members, skip last part (immune members)
         for (size_t i_infected = 0; i_infected < num_cases; i_infected++) {
                 // check if member is present today
@@ -415,7 +398,7 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                                 if (!p2->IsInPool(pType)) {
                                         continue;
                                 }
-                                const double cProb_p1 = GetContactProbability(profile, p1, p2, pSize, pType, min_age_members,
+                                const double cProb_p1 = GetContactProbability(profile, p1, p2, pSize, pType,
 															population, cnt_intensity_householdCluster, pType_distancing_factor);
                                 const auto  tProb_p1_p2   = transProfile.GetProbability(p1,p2);
                                 if (rnHandler.Binomial(cProb_p1, tProb_p1_p2)) {

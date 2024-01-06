@@ -61,7 +61,6 @@ parse_event_logfile <- function(event_logfile,exp_id,
   # - CONT    contact event
   # - VACC    additional immunization
   # - TRACE   contact tracing
-  # - NCOM    non-compliance to social distancing measures
 
   ###################### #
   ## PARTICIPANT DATA ####
@@ -149,25 +148,6 @@ parse_event_logfile <- function(event_logfile,exp_id,
                                                   exp_id        = exp_id)
   }
 
-  ########################################## #
-  ## NON-COMPLIANCE                       ####
-  ########################################## # 
-  header_ncompliance   <- c('local_id', 'part_age', 
-                           'household_id', 'noncomplier_household',
-                           'school_id', 'noncomplier_school',
-                           'college_id', 'noncomplier_college',
-                           'workplace_id',  'noncomplier_workplace',
-                           #'hh_cluster_id', 'noncomplier_hh_cluster',
-                           'prim_comm_id','noncomplier_prim_comm',
-                           'sec_comm_id', 'noncomplier_sec_comm')
-  
-
-  rstride_out$ncompliance <- reformat_log_data(event_logfile = event_logfile,
-                                               data_log_cat  = data_log_cat,
-                                               log_cat       = "NCOM",
-                                               colnames_all  = header_ncompliance,
-                                               exp_id        = exp_id)
-  
   # print CLI message and return
   cat("LOG PARSING COMPLETE",fill=TRUE)
   return(rstride_out)
