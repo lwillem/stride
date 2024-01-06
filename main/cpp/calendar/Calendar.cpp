@@ -38,7 +38,7 @@ Calendar::Calendar(const ptree& configPt,unsigned int num_days) :
 		m_date(), m_date_start(), m_date_end(), m_public_holidays(num_days),
 		m_workplace_distancing(num_days), m_community_distancing(num_days), m_collectivity_distancing(num_days),
 		m_contact_tracing(num_days),
-		m_universal_testing(num_days), m_household_clustering(num_days), m_imported_cases(num_days,0U),
+		m_household_clustering(num_days), m_imported_cases(num_days,0U),
 		m_school_closures(100, vector<double>(num_days)),
         //
         m_weekday(), m_day(), m_day_index()
@@ -146,7 +146,6 @@ void Calendar::Initialize_csv(const ptree& configPt)
 					if(category == "collectivity_distancing"){m_collectivity_distancing[date_index] = value; }
 					if(category == "household_clustering") {  m_household_clustering[date_index] = value;}
 					if(category == "contact_tracing")      {  m_contact_tracing[date_index] = value_boolean; }
-					if(category == "universal_testing")    {  m_universal_testing[date_index] = value_boolean; }
 					if(category == "imported_cases")
 					{
 						unsigned int num_cases = FromString<unsigned int>(calendar_item[2]);

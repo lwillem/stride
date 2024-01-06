@@ -150,8 +150,6 @@ exp_design_hhcl$household_clustering_delay <- 0
 exp_design_hhcl$household_clustering_date <- '2020-06-01'
 exp_design_hhcl$gtester_label         <- 'covid_hhcl'
 
-# unitesting ----
-# TODO
 
 # contact tracing ----
 exp_design_cts <- exp_design_base

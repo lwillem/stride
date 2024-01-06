@@ -25,7 +25,6 @@
 #include "contact/InfectorExec.h"
 #include "disease/PublicHealthAgency.h"
 #include "disease/TransmissionProfile.h"
-#include "disease/UniversalTesting.h"
 #include "mdp/AgeGroup.h"
 #include "mdp/Vaccines.h"
 #include "util/RnMan.h"

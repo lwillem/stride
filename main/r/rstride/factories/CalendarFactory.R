@@ -15,7 +15,6 @@
 #       * household clusters
 # 3. Imported cases (covid19)
 # 4. Contact tracing (covid19)
-# 5. Universal testing (covid19)
 #
 ############################################################################ #
 
@@ -294,19 +293,6 @@ create_calendar_file <- function(file_name_tag='2020_2021',show_plots = FALSE,fi
   ) -> dcal_contact_tracing
   
   ########################################### #
-  ## 5. Universal testing                 ####
-  ########################################### #
-
-  data.table(category = "universal_testing",
-             date     = seq(as.Date('2020-05-11'),as.Date('2020-08-31'),1),
-             value    = 1,
-             type = 'boolean',
-             age = NA_integer_,
-             stringsAsFactors = F
-  ) -> dcal_universal_testing
-  
-  
-  ########################################### #
   ## MERGE HOLIDAYS & OTHER CALENDAR ITEMS ####
   ########################################### #
   
@@ -474,8 +460,7 @@ adjust_calendar_file <- function(db_category, db_update, file_name, db_age = 'NA
                              'community_distancing', 
                              'contact_tracing', 
                              'household_clustering', 
-                             'imported_cases', 
-                             'universal_testing')
+                             'imported_cases')
   
   # check category
   if(!db_category %in% d_calendar_categories){
@@ -923,20 +908,6 @@ create_new_cnt_calendar_file <- function(file_name, config_exp, end_date="2021-1
              age = NA_integer_,
              stringsAsFactors = F
   ) -> dcal_contact_tracing
-
-  ######################################### #
-  ## Universal testing                 ####
-  ######################################### #
-
-  data.table(category = "universal_testing",
-             # date     = seq(as.Date('2020-05-11'),as.Date('2020-08-31'),1),  # TODO: fixed days?
-             date     = seq(as.Date(date_start),as.Date(date_end),1),
-             value    = 0,  # TODO: from config
-             type = 'boolean',
-             age = NA_integer_,
-             stringsAsFactors = F
-  ) -> dcal_universal_testing
-
 
   ############################################# #
   ## MERGE HOLIDAYS & OTHER CALENDAR ITEMS ####

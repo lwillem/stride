@@ -116,11 +116,7 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         DiseaseSeeder(m_config, sim->m_rn_man).Seed(sim->m_population, sim->m_transmission_profile, sim->m_rn_handlers[0]);
         sim->m_num_daily_imported_cases = m_config.get<double>("run.num_daily_imported_cases",0);
 
-        // --------------------------------------------------------------
-		// Set Universal Testing 
-        // --------------------------------------------------------------
-        sim->m_universal_testing.Initialize(m_config);
-        
+
         // --------------------------------------------------------------
 		// Set Public Health Agency
 		// --------------------------------------------------------------

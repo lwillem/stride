@@ -37,7 +37,6 @@ set(STRIDE_SRC
     disease/ImmunitySeeder.cpp
     disease/PublicHealthAgency.cpp
     disease/TransmissionProfile.cpp
-    disease/UniversalTesting.cpp
     #---
     execs/ControlHelper.cpp
     execs/SimController.cpp

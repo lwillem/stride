@@ -61,8 +61,6 @@ parse_event_logfile <- function(event_logfile,exp_id,
   # - CONT    contact event
   # - VACC    additional immunization
   # - TRACE   contact tracing
-  # - UNITEST] universal test log
-  # - UNITEST-ISOLATE universal test strategy isolations
   # - NCOM    non-compliance to social distancing measures
 
   ###################### #
@@ -151,29 +149,6 @@ parse_event_logfile <- function(event_logfile,exp_id,
                                                   exp_id        = exp_id)
   }
 
-  
-  ########################################## #
-  ## UNIVERSAL TESTING: LOG  ####
-  ########################################## # 
-  header_testing          <- c('sim_day', 'unitest_day_in_sweep')
-  
-  rstride_out$data_unitest <- reformat_log_data(event_logfile = event_logfile,
-                                                data_log_cat  = data_log_cat,
-                                                log_cat       = "UNITEST",
-                                                colnames_all  = header_testing,
-                                                exp_id        = exp_id)
-  ########################################## #
-  ## UNIVERSAL TESTING: ISOLATION  ####
-  ########################################## # 
-  header_testing_iso      <- c('pcr_pool_id', 'household_id', 'local_id', 'is_infected', 'isolation_delay', 'sim_day')
-  
-  rstride_out$data_unitest_iso <- reformat_log_data(event_logfile = event_logfile,
-                                                    data_log_cat  = data_log_cat,
-                                                    log_cat       = "UNITEST-ISOLATE",
-                                                    colnames_all  = header_testing_iso,
-                                                    exp_id        = exp_id)
-  
-
   ########################################## #
   ## NON-COMPLIANCE                       ####
   ########################################## # 
@@ -208,7 +183,6 @@ parse_event_logfile <- function(event_logfile,exp_id,
 # 
 # # log_cat       = "CONT"
 # # colnames_all <- header_cnt
-log_cat       = "UNITEST-ISOLATE"
 # colnames_all  = header_testing_iso
 #  colnames_all <- header_transm
 # exp_id <- 2
@@ -218,7 +192,6 @@ reformat_log_data <- function(event_logfile,data_log_cat,log_cat,colnames_all,ex
   log_cat <- paste0(log_cat,']')
   
   # check if the given log category is present
-  #FIX for unitest: gsub
   if(!any(sapply(log_cat,grepl,data_log_cat))){
     return(NA)
   }

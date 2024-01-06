@@ -62,14 +62,6 @@ get_covid19_default_param <- function(){
                 # factor for parameter estimation and fitting
                 hosp_probability_factor        = 0.40,
                
-                # universal testing
-                unitest_pool_allocation       = "data/pop_belgium11M_c500_pool_allocation_$unitest_pool_size.csv",
-                unitest_fnr                   = 0.01,
-                unitest_n_tests_per_day       = 0,
-                unitest_pool_size             = 32,
-                unitest_test_compliance       = 0.9,
-                unitest_isolation_compliance  = 0.8,
-               
                # hospital admissions (relative proportions)
                # reference: hospital survey data by age (Faes et al) 
                # update on 19/10 : hospital admissions in week 11-13 / simulated sympt cases by age in R0 calibration 2020-09-17
@@ -105,9 +97,9 @@ get_covid19_default_param <- function(){
    out$num_parallel_workers <- 50
    
    # # household clustering?
-   # out$distancing_householdCluster_ratio <- c_str(1)
-   # out$distancing_householdCluster_date  <- c_str(out$start_date)
-   # out$distancing_householdCluster_delay <- c_str(1)
+   # out$household_clustering_ratio_ratio <- c_str(4/7)
+   # out$household_clustering_ratio_date  <- c_str(out$start_date)
+   # out$household_clustering_ratio_delay <- c_str(0)
    
    # return parameters
    return(out)

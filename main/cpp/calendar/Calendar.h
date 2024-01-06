@@ -127,12 +127,6 @@ public:
 			 return m_contact_tracing[m_day_index];
 		}
 
-  		/// Check if universal testing is place
-		bool IsUniversalTestingActivated() const
-		{
-			 return m_universal_testing[m_day_index];
-		}
-
 		/// Check if household clustering is allowed
 		bool IsHouseholdClusteringAllowed() const
 		{
@@ -194,7 +188,6 @@ private:
         std::vector<double> m_community_distancing;     ///< Vector with daily social distancing level enforcement in the community
         std::vector<double> m_collectivity_distancing;  ///< Vector with daily social distancing level enforcement in collectivities
         std::vector<bool> m_contact_tracing;            ///< Vector of days with case finding measures
-        std::vector<bool> m_universal_testing;          ///< Vector of days with universal testing measures
         std::vector<double> m_household_clustering;     ///< Vector with daily social interaction level within household clusters
 
         std::vector<unsigned int>m_imported_cases; ///<Vector of days when cases are imported (~daily seeding activated)

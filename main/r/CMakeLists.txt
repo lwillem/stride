@@ -42,7 +42,6 @@ INSTALL( FILES
             rStride_r0.R 	
             rStride_intervention_baseline.R
             rStride_intervention.R		 	 
-            rStride_universal_testing.R
             rStride_pop.R
 			rStride_MDP.R
 
