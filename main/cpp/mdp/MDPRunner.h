@@ -10,7 +10,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with the software. If not, see <http://www.gnu.org/licenses/>.
  *
- *  Copyright 2017, Kuylen E, Willem L, Broeckhove J
+ *  Copyright 2024
  */
 
 /**
@@ -20,8 +20,6 @@
 
 #pragma once
 
-#include "sim/event/Id.h"
-#include "sim/event/Subject.h"
 #include "sim/SimRunner.h"
 #include "util/Stopwatch.h"
 
@@ -41,7 +39,6 @@ class Population;
  * \li invokes the simulator builder (@see SimulatorBuilder)
  * \li manages elapsed time clock
  * \li manages time steps
- * \linotifies viewers of its events (@see sim_event::Id)
  */
 class MDPRunner : public SimRunner
 {

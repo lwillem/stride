@@ -50,8 +50,6 @@ set(STRIDE_SRC
     sim/Sim.cpp
     sim/SimBuilder.cpp
     sim/HospitalisationConfig.cpp
-    sim/event/Id.cpp
-    sim/event/Subject.cpp
     #---
     util/ConfigInfo.cpp
     util/CSV.cpp
@@ -61,14 +59,9 @@ set(STRIDE_SRC
     util/Rn.cpp
     util/RnMan.cpp
     util/RunConfigManager.cpp
+    util/SummaryFile.cpp
     util/TimeStamp.cpp
     util/TimeToString.cpp
-    #---
-    viewers/CliViewer.cpp
-    viewers/InfectedFile.cpp
-    viewers/InfectedFileViewer.cpp
-    viewers/SummaryFile.cpp
-    viewers/SummaryFileViewer.cpp
 )
 
 #============================================================================

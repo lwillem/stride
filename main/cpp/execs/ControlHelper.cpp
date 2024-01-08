@@ -10,7 +10,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with the software. If not, see <http://www.gnu.org/licenses/>.
  *
- *  Copyright 2017, 2018, Kuylen E, Willem L, Broeckhove J
+ *  Copyright 2024
  */
 
 /**
@@ -26,9 +26,6 @@
 #include "util/FileSys.h"
 #include "util/LogUtils.h"
 #include "util/TimeStamp.h"
-#include "viewers/CliViewer.h"
-#include "viewers/InfectedFileViewer.h"
-#include "viewers/SummaryFileViewer.h"
 
 #include <boost/property_tree/xml_parser.hpp>
 #include <regex>
@@ -135,26 +132,15 @@ void ControlHelper::LogStartup()
         m_stride_logger->trace("Config :\n {}", spretty.str());
 }
 
-void ControlHelper::RegisterViewers(shared_ptr<SimRunner> runner)
-{
-        // Command line viewer
-        m_stride_logger->info("Registering CliViewer");
-        const auto cli_v = make_shared<viewers::CliViewer>(runner, m_stride_logger);
-        runner->Register(cli_v, bind(&viewers::CliViewer::Update, cli_v, placeholders::_1));
-
-        // Infection counts viewer
-        if (m_config.get<bool>("run.output_cases", false)) {
-                m_stride_logger->info("Registering InfectedFileViewer");
-                const auto v = make_shared<viewers::InfectedFileViewer>(runner, m_output_prefix);
-                runner->Register(v, bind(&viewers::InfectedFileViewer::Update, v, placeholders::_1));
-        }
-
-        // Summary viewer
-        if (m_config.get<bool>("run.output_summary", false)) {
-                m_stride_logger->info("Registering SummaryFileViewer");
-                const auto v = make_shared<viewers::SummaryFileViewer>(runner, m_output_prefix);
-                runner->Register(v, bind(&viewers::SummaryFileViewer::Update, v, placeholders::_1));
-        }
-}
+//void ControlHelper::RegisterViewers(shared_ptr<SimRunner> runner)
+//{
+//
+//        // Summary viewer
+//        if (m_config.get<bool>("run.output_summary", false)) {
+//                m_stride_logger->info("Registering SummaryFileViewer");
+//                const auto v = make_shared<viewers::SummaryFileViewer>(runner, m_output_prefix);
+//                runner->Register(v, bind(&viewers::SummaryFileViewer::Update, v, placeholders::_1));
+//        }
+//}
 
 } // namespace stride

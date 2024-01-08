@@ -10,7 +10,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with the software. If not, see <http://www.gnu.org/licenses/>.
  *
- *  Copyright 2017, 2018, Kuylen E, Willem L, Broeckhove J
+ *  Copyright 2024
  */
 
 /**
@@ -40,7 +40,6 @@ class SimRunner;
  * \li checks the file system environment
  * \li interprets and executes the ouput prefix
  * \li install a stride logger
- * \li a utility method to register the appropriate viewers
  */
 class ControlHelper
 {
@@ -67,9 +66,6 @@ protected:
 
         /// Logs info on setup for cli environment to stride_logger.
         void LogStartup();
-
-        /// Register the viewers of the SimRunner.
-        void RegisterViewers(std::shared_ptr<SimRunner> runner);
 
         /// Logs info on setup for cli environment to stride_logger.
         void Shutdown();

@@ -10,7 +10,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with the software. If not, see <http://www.gnu.org/licenses/>.
  *
- *  Copyright 2017, Kuylen E, Willem L, Broeckhove J
+ *  Copyright 2024
  */
 
 /**
@@ -25,7 +25,6 @@
 #include <boost/property_tree/ptree.hpp>
 
 namespace stride {
-namespace output {
 
 using namespace std;
 using namespace stride::util;
@@ -64,5 +63,4 @@ void SummaryFile::Print(const boost::property_tree::ptree& config_pt, unsigned i
                   << config_pt.get<string>("run.disease_config_file") << endl;
 }
 
-} // namespace output
 } // namespace stride

@@ -22,7 +22,6 @@
 #include "pop/Population.h"
 #include "sim/Sim.h"
 
-using namespace stride::sim_event;
 using namespace boost::property_tree;
 using namespace std;
 
@@ -31,9 +30,7 @@ namespace stride {
 MDPRunner::MDPRunner(const ptree& configPt, shared_ptr<Sim> sim)
         : SimRunner(configPt, sim), m_clock("total_clock"), m_config(configPt), m_sim(std::move(sim))
 {
-    Notify(Id::SetupBegin);
     m_clock.Start();
-    Notify(Id::SetupEnd);
 }
 
 void MDPRunner::Step()
@@ -41,14 +38,8 @@ void MDPRunner::Step()
     // Prelims.
     m_clock.Start();
 
-    // We are AtStart: no steps have taken yet, so signal AtStart.
-    if (m_sim->GetCalendar()->GetSimulationDay() == 0) {
-        Notify(Id::AtStart);
-    }
-
     // Execute and signal Stepped
     m_sim->TimeStep();
-    Notify(Id::Stepped);
 
     m_clock.Stop();
 }
@@ -56,7 +47,7 @@ void MDPRunner::Step()
 void MDPRunner::End()
 {
     m_clock.Stop();
-    Notify(Id::Finished);
+    PrintSummary();
     m_clock.Reset();
 }
 

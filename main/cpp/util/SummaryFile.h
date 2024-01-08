@@ -15,36 +15,39 @@
 
 /**
  * @file
- * Header for the InfectedFile class.
+ * Header for the SummaryFile class.
  */
 
 #pragma once
 
+#include <boost/property_tree/ptree_fwd.hpp>
 #include <fstream>
 #include <string>
-#include <vector>
 
 namespace stride {
-namespace output {
 
 /**
- * Produces a file with daily count of infected persons.
+ * Produces a file with simulation summary output.
  */
-class InfectedFile
+class SummaryFile
 {
 public:
         /// Constructor: initialize.
-        InfectedFile(const std::string& output_dir = "output", const std::string& file_name = "cases");
+        explicit SummaryFile(const std::string& output_prefix = "output");
 
         /// Destructor: close the file stream.
-        ~InfectedFile();
+        ~SummaryFile();
 
-        /// Print the given cases with corresponding tag.
-        void Print(const std::vector<unsigned int>& infectionCounts);
+        /// Print the given output with corresponding tag.
+        void Print(const boost::property_tree::ptree& config_pt, unsigned int population_size, unsigned int num_cases,
+                   double transmission_probability, unsigned int run_time, unsigned int total_time);
+
+private:
+        /// Generate file name and open the file stream.
+        void Initialize(const std::string& output_dir);
 
 private:
         std::ofstream m_fstream; ///< The file stream.
 };
 
-} // namespace output
 } // namespace stride

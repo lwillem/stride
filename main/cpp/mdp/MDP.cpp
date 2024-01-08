@@ -122,7 +122,7 @@ void MDP::Create_(const boost::property_tree::ptree& config, int seed,
     // Sim scenario: step , build a runner, register viewers.
     // -----------------------------------------------------------------------------------------
     auto runner = make_shared<MDPRunner>(m_config, m_simulator);
-    RegisterViewers(runner);
+    //RegisterViewers(runner);
     m_runner = runner;
 
     // -----------------------------------------------------------------------------------------

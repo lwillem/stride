@@ -10,7 +10,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with the software. If not, see <http://www.gnu.org/licenses/>.
  *
- *  Copyright 2017, Kuylen E, Willem L, Broeckhove J
+ *  Copyright 2024
  */
 
 /**
@@ -20,8 +20,6 @@
 
 #pragma once
 
-#include "sim/event/Id.h"
-#include "sim/event/Subject.h"
 #include "util/Stopwatch.h"
 
 #include <boost/property_tree/ptree.hpp>
@@ -34,22 +32,19 @@ class Sim;
 class Population;
 
 /**
- * The simulation runner drive simulator throufgh time steps.
+ * The simulation runner drives the simulator through time steps.
  * It's functions are:
  * \li invokes the simulator builder (@see SimulatorBuilder)
  * \li manages elapsed time clock
  * \li manages time steps
- * \linotifies viewers of its events (@see sim_event::Id)
  */
-class SimRunner : public util::Subject<stride::sim_event::Id>
+class SimRunner
 {
 public:
         /// Initialization with property tree.
         /// \param configPt config info for run and for config of simulator
         explicit SimRunner(const boost::property_tree::ptree& configPt, std::shared_ptr<Sim> sim);
 
-        /// Destructor
-        ~SimRunner() override = default;
 
         /// Return the run & sim configuration.
         const util::Stopwatch<>& GetClock() const { return m_clock; }
@@ -65,6 +60,9 @@ public:
 
         /// Run simulator for numSteps steps/days.
         void Run(unsigned int numSteps);
+
+        /// Print summary file
+        void PrintSummary();
 
 private:
         util::Stopwatch<>           m_clock;  ///< Stopwatch for timing the computation.

@@ -311,7 +311,7 @@ if(!(exists('.rstride'))){
     # continue if data_all is not NULL
     if(any(!is.null(data_all))){
 
-      # make data.frame #TODO: contine with data.table 
+      # make data.frame #TODO: continue with data.table 
       data_all <- as.data.frame(data_all)
 
       # make id's unique => by adding a exp_id tag with leading zero's

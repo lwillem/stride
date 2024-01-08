@@ -10,7 +10,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with the software. If not, see <http://www.gnu.org/licenses/>.
  *
- *  Copyright 2017, 2018, Kuylen E, Willem L, Broeckhove J
+ *  Copyright 2024
  */
 
 /**
@@ -66,8 +66,8 @@ void SimController::Control()
         // Sim scenario: step , build a runner, register viewers and run.
         // -----------------------------------------------------------------------------------------
         auto runner = make_shared<SimRunner>(m_config, m_simulator);
-        RegisterViewers(runner);
         runner->Run();
+        runner->PrintSummary();
 }
 
 } // namespace stride

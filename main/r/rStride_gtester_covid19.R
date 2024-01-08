@@ -516,7 +516,7 @@ if(setequal(data_incidence[,names(data_incidence) != 'exp_id'],
 
 ## COMPARE PREVALENCE ----
 sel_col <- names(data_prevalence)[names(data_prevalence) != 'exp_id'] # make sure the same (number of) days are compared
-if(setequal(data_prevalence[,sel_col],
+if(!is.null(sel_col) && setequal(data_prevalence[,sel_col],
             ref_data_prevalence[,sel_col])){ 
   smd_print("PREVALENCE OK")
 } else{

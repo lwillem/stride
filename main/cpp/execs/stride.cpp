@@ -10,7 +10,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with the software. If not, see <http://www.gnu.org/licenses/>.
  *
- *  Copyright 2017, 2018, Kuylen E, Willem L, Broeckhove J
+ *  Copyright 2024
  */
 
 /**
@@ -48,29 +48,10 @@ int main(int argc, char** argv)
                 // -----------------------------------------------------------------------------------------
                 CmdLine cmd("stride", ' ', "2.0");
 
-
-                string si = "File are read from the appropriate (config, data) directories of the "
-                            "stride install directory. If false, files are read and written to the "
-                            "local directory. \nDefaults to true.";
-                SwitchArg installedArg("i", "installed", si, cmd, true);
-
-                string           so = "Override configuration file parameters with values provided here.";
-                MultiArg<string> overrideArg("o", "override", so, false, "<NAME>=<VALUE>", cmd);
-
-                string sc = "Specifies the run configuration parameters. The format may be "
-                            "either -c file=<file> or -c name=<name>. The first is mostly "
-                            "used and may be shortened to -c <file>. The second refers to "
-                            "built-in configurations specified by their name."
+                string sc = "Specifies the run configuration parameters. The format may be  is -c <file> ."
                             "\nDefaults to -c file=run_default.xml";
                 ValueArg<string> configArg("c", "config", sc, false, "run_default.xml", "CONFIGURATION", cmd);
 
-                vector<string>           execs{"clean", "sim"};
-                ValuesConstraint<string> vc(execs);
-                string                   se = "Execute the corresponding function:"
-                            "  \n\t clean:  cleans configuration and writes it to a new file."
-                            "  \n\t sim:    runs the simulator and is the default."
-                            "\nDefaults to --exec sim.";
-                ValueArg<string> execArg("e", "exec", se, false, "sim", &vc, cmd);
 
                 cmd.parse(argc, static_cast<const char* const*>(argv));
 
@@ -80,20 +61,8 @@ int main(int argc, char** argv)
                 auto  config = configArg.getValue();
                 ptree configPt;
 
-                if (regex_search(config, regex("^name="))) {
-                        config   = regex_replace(config, regex(string("^name=")), string(""));
-                        configPt = RunConfigManager::Create(config);
-                } else {
-                        config = regex_replace(config, regex(string("^file=")), string(""));
-                        const filesys::path configPath =
-                            (installedArg.getValue()) ? FileSys::GetConfigDir() /= config : filesys::path(config);
-                        configPt = FileSys::ReadPtreeFile(configPath);
-                }
-
-                for (const auto& p_assignment : overrideArg.getValue()) {
-                        const auto v = util::Tokenize<string>(p_assignment, "=");
-                        configPt.put("run." + v[0], v[1]);
-                }
+                const filesys::path configPath = FileSys::GetConfigDir() /= config;
+                configPt = FileSys::ReadPtreeFile(configPath);
 
                 // -----------------------------------------------------------------------------------------
                 // config and run simulation in cli
@@ -109,8 +78,6 @@ int main(int argc, char** argv)
 
 				// activate the controller
 				SimController(configPt).Control();
-
-
 
 
         } catch (exception& e) {

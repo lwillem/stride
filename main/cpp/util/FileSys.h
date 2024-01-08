@@ -37,7 +37,7 @@ namespace util {
 class FileSys
 {
 public:
-        /// String represents a directory path (relative or absolute) iff it contains
+        /// String represents a directory path (relative or absolute) if it contains
         /// at least one / (may be a trailing one).
         static bool IsDirectoryString(const std::string& s);
 
