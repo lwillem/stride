@@ -13,8 +13,7 @@
 #include <vector>
 #include <algorithm>
 #include <iostream>
-#include <gsl/gsl_randist.h>
-#include <gsl/gsl_rng.h>
+#include <functional>
 
 using namespace boost::property_tree;
 using namespace stride::util;
@@ -28,6 +27,7 @@ ContactDivider::ContactDivider(const ptree& config, RnMan& rnMan) : m_config(con
 
 shared_ptr<Population> ContactDivider::Divide(shared_ptr<Population> pop, const AgeContactProfiles& ageContactProfiles)
 {
+
 	std::cout << "Start ContactDivider" << std::endl;
 	auto& population = *pop;
 
@@ -35,20 +35,13 @@ shared_ptr<Population> ContactDivider::Divide(shared_ptr<Population> pop, const 
 
 	auto& logger = population.RefEventLogger();
 
-	// Initialisatie van RNG
-    const gsl_rng_type* rngType;
-    gsl_rng* rng;
-
-    gsl_rng_env_setup();
-    rngType = gsl_rng_default;
-    rng = gsl_rng_alloc(rngType);
-
 	// Aantal categorieën (locaties)
     const size_t numCategories = 4;
+
+	std::mt19937 rng{std::random_device{}()};
     
 	for (size_t i = 0; i < population.size(); ++i) {
 		auto &p = population[i];
-
 		unsigned int age = p.GetAge();
 
 		for (size_t day = 0; day < 7; day++){
@@ -84,37 +77,36 @@ shared_ptr<Population> ContactDivider::Divide(shared_ptr<Population> pop, const 
 			std::vector<double> probabilities = {probabilityOtherHouse,probabilityRestoCafe,probabilityOtherPlace,probabilityTransport};
     		std::vector<unsigned int> maxContactsPerLocation = {sizeOtherHouse - 1,sizeRestoCafe - 1, sizeOtherPlace - 1, sizeTransport -1};
 
-			// Resultaten voor elke dag
-    		std::vector<unsigned int> results(numCategories);
-			bool validDistribution = false;
+			// Maak een vector met indices van 0 tot probabilities.size() - 1
+    		std::vector<unsigned int> indices(probabilities.size());
+    		std::iota(indices.begin(), indices.end(), 0);
 
-        	// Blijf proberen totdat een geldige verdeling is verkregen
-        	while (!validDistribution) {
-            // Simuleer multinomiale verdeling
-            gsl_ran_multinomial(rng, numCategories, rounded_reference_num_contacts_p, probabilities.data(), results.data());
+    		// Sorteer indices op basis van aflopende kansen
+    		std::sort(indices.begin(), indices.end(), [&probabilities](unsigned int i1, unsigned int i2) {
+        	return probabilities[i1] > probabilities[i2]; });
 
-            // Controleer of de verdeling voldoet aan de maximale contacten per locatie
-            validDistribution = true;
-            for (size_t j = 0; j < numCategories; ++j) {
-                if (results[j] > maxContactsPerLocation[j]) {
-                    validDistribution = false;
-                    break;
-                }
-           	 }
-        	}
+    		// Initialiseer resultaten
+    		std::vector<unsigned int> results(probabilities.size(), 0);
+
+    		// Bepaal het aantal te verdelen contacten
+    		unsigned int totalContacts = rounded_reference_num_contacts_p;  
+
+    		// Verdeel het totale aantal contacten over de categorieën op basis van hun kansen
+    		for (unsigned int index : indices) {
+    			unsigned int maxCount = std::min(maxContactsPerLocation[index], totalContacts);
+    			std::binomial_distribution<unsigned int> distribution(maxCount, probabilities[index]);
+    			results[index] = distribution(rng);  
+    			totalContacts -= results[index];
+			}
         
 			p.PoolContacts(Id::OtherHouse)[day] = results[0];
 			p.PoolContacts(Id::RestoCafe)[day] = results[1];
 			p.PoolContacts(Id::OtherPlace)[day] = results[2];
 			p.PoolContacts(Id::Transport)[day] = results[3];
-			
         } 
 
 	}
 
-	// Vrijgeven van resources
-    gsl_rng_free(rng);
-        
 	return pop;
 }
 
