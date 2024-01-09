@@ -13,10 +13,10 @@
 #  along with the software. If not, see <http://www.gnu.org/licenses/>.
 #  see http://www.gnu.org/licenses/.
 #
-#  Copyright 2019, Willem L, Kuylen E & Broeckhove J
+#  Copyright 2024, 
 ############################################################################ #
 # 
-# Helpfunction(s) to parse the log file(s)
+# Helper function(s) to parse the log file(s)
 #
 ############################################################################ #
 
@@ -58,9 +58,11 @@ parse_event_logfile <- function(event_logfile,exp_id,
   # - PRIM    seed infection
   # - TRAN    transmission event
   # - TRAN_M  transmission event (minimal info)
+  # - PREVALENCE burden of disease
   # - CONT    contact event
   # - VACC    additional immunization
   # - TRACE   contact tracing
+
 
   ###################### #
   ## PARTICIPANT DATA ####
@@ -108,6 +110,19 @@ parse_event_logfile <- function(event_logfile,exp_id,
     dummy_transmission[] <- NA
     rstride_out$data_transmission <- dummy_transmission
   }
+  
+  ###################### #
+  ## PREVALENCE DATA  ####
+  ###################### # 
+  header_prevelence   <- c('sim_day', 'total_infected', 'total_hospital', 'prevalence_infected', 'prevalence_exposed', 
+                           'prevalence_infectious','prevalence_symptomatic', 'prevalence_hospital', 'total_non_immune',
+                           'total_new_infections', 'prevalence_recovered')
+  
+  rstride_out$data_prevalence <- reformat_log_data(event_logfile = event_logfile,
+                                                   data_log_cat  = data_log_cat,
+                                                   log_cat       = "PREVALENCE",
+                                                   colnames_all  = header_prevelence,
+                                                   exp_id        = exp_id)
   
   ###################### #
   ## CONTACT DATA     ####

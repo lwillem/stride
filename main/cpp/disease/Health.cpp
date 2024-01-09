@@ -40,6 +40,10 @@ Health::Health(unsigned short int start_infectiousness, unsigned short int start
         m_hospitalised(false),
         m_was_hospitalised(false)
 {
+	// the infection ends if both infectious period and symptomatic periods (if present) are over.
+	m_end_infection = (m_end_symptomatic > m_end_infectiousness) && (m_end_symptomatic != m_start_symptomatic)?
+			m_end_symptomatic :
+			m_end_infectiousness;
 }
 
 
@@ -69,7 +73,7 @@ void Health::StopInfection()
         AssertThrow(IsInfected(), "Person not infected", nullptr);
         m_status = HealthStatus::Recovered;
         m_hospitalised = false;
-        ResetDiseaseCounter();
+        //ResetDiseaseCounter();
 }
 
 void Health::Update()
@@ -93,17 +97,22 @@ void Health::Update()
 			if (GetDiseaseCounter() == m_end_symptomatic) {
 				if (m_status == HealthStatus::InfectiousAndSymptomatic) {
 						m_status = HealthStatus::Infectious;
-				} else if (m_status != HealthStatus::Infectious) {
-					 StopInfection();
+				} else if(m_status == HealthStatus::Symptomatic) { //
+						m_status = HealthStatus::Exposed;
 				}
 			}
 			if (GetDiseaseCounter() == m_end_infectiousness) {
 				if (m_status == HealthStatus::InfectiousAndSymptomatic) {
 						m_status = HealthStatus::Symptomatic;
-				} else {
-						StopInfection();
+				} else if(m_status == HealthStatus::Infectious){
+						m_status = HealthStatus::Exposed;
 				}
 			}
+
+			if(GetDiseaseCounter() == m_end_infection){
+				StopInfection();
+			}
+
             //check whether a hospitalisation start date was defined, if so, 
             //compare it to the disease counter
             if (m_start_hospitalisation && GetDiseaseCounter() == m_start_hospitalisation) {

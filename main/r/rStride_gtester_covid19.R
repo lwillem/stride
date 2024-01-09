@@ -481,11 +481,13 @@ if(setequal(data_incidence[,names(data_incidence) != 'exp_id'],
   missing_colnames_new <- !names(data_incidence) %in% names(ref_data_incidence)
   if(any(missing_colnames_new)){
     smd_print('INCIDENCE columns added:', paste(names(data_incidence)[missing_colnames_new],collapse = ','),WARNING = T)
+    data_incidence <- data_incidence[,!missing_colnames_new]
   }
   
   missing_colnames_ref <- !names(ref_data_incidence) %in% names(data_incidence)
   if(any(missing_colnames_ref)){
     smd_print('INCIDENCE columns missing:', paste(names(ref_data_incidence)[missing_colnames_ref],collapse = ','),WARNING = T)
+    ref_data_incidence <- ref_data_incidence[,!missing_colnames_ref]
   }
   
   

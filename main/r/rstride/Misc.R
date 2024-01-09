@@ -289,20 +289,6 @@ if(!(exists('.rstride'))){
       # select output type
       data_exp        <- data_exp_all[[data_type]]
       
-      # for prevalence data, check the number of days
-      if(grepl('prevalence',data_type)){
-
-        # create full-size data frame to include the maximum number of days
-        data_tmp        <- data.frame(matrix(NA,ncol=max(project_summary$num_days)+2)) # +1 for day 0 and +1 for exp_id
-        names(data_tmp) <-  c(paste0('day',0:max(project_summary$num_days)),
-                                'exp_id')
-
-        # insert the experiment data
-        data_tmp[names(data_exp)] <- data_exp
-
-          # replace the experiment data by the newly constructed data.frame
-          data_exp <- data_tmp
-        }
         
         # return
         data_exp

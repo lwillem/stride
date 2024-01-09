@@ -33,16 +33,18 @@ inspect_prevalence_data <- function(project_dir)
   input_opt_design   <- .rstride$get_variable_model_param(project_summary)
   
   # get all prevalence output
-  data_prevalence_infected      <- .rstride$load_aggregated_output(project_dir,'data_prevalence_infected')
-  data_prevalence_exposed       <- .rstride$load_aggregated_output(project_dir,'data_prevalence_exposed')
-  data_prevalence_infectious    <- .rstride$load_aggregated_output(project_dir,'data_prevalence_infectious')
-  data_prevalence_symptomatic   <- .rstride$load_aggregated_output(project_dir,'data_prevalence_symptomatic')
-  data_prevalence_total         <- .rstride$load_aggregated_output(project_dir,'data_prevalence_total')
+  data_prevalence               <- .rstride$load_aggregated_output(project_dir,'data_prevalence')
   
-  if(length(data_prevalence_total) == 1 && is.na(data_prevalence_total)){
+  if(length(data_prevalence) == 1 && is.na(data_prevalence)){
     smd_print('NO PREVALENCE DATA AVAILABLE.')
     return(NA)
   }
+  
+  # get specific prevalence output
+  data_prevalence_infected    <- get_prevalence_matrix(data_prevalence,'prevalence_infected')
+  data_prevalence_exposed     <- get_prevalence_matrix(data_prevalence,'prevalence_exposed')
+  data_prevalence_infectious  <- get_prevalence_matrix(data_prevalence,'prevalence_infectious')
+  data_prevalence_symptomatic <- get_prevalence_matrix(data_prevalence,'prevalence_symptomatic')
   
   #TODO: re-use Incidence 'pcolor'
   # set color definitions and other layout definitions
@@ -61,8 +63,8 @@ inspect_prevalence_data <- function(project_dir)
   .rstride$create_pdf(project_dir,'prevalence',width = 6, height = 2.5)
   par(mar=c(3,5,1,3))
   
-  col_days <- which(grepl('day',names(data_prevalence_exposed)))
-  sim_dates_all <- range(as.Date(project_summary$start_date[1]) + (1:length(col_days))-1)
+  # col_days <- which(grepl('day',names(data_prevalence_exposed)))
+  sim_dates_all <- range(as.Date(project_summary$start_date[1]) + (1:ncol(data_prevalence))-1)
   #sim_dates[2] <- sim_dates[2] - 68
   
   sim_dates_opt <- list(sim_dates_all,
@@ -92,15 +94,15 @@ inspect_prevalence_data <- function(project_dir)
   for(i_exp in 1:nrow(data_prevalence_exposed)){
     
     flag_exp <- project_summary$exp_id == i_exp
-    sim_date <- as.Date(project_summary$start_date[flag_exp]) + (1:length(col_days))-1
+    sim_date <- as.Date(project_summary$start_date[flag_exp]) + (1:ncol(data_prevalence_exposed))-1
       lines(x = sim_date,
-           y = data_prevalence_exposed[i_exp,col_days],
+           y = data_prevalence_exposed[i_exp,],
            col = pcolor$E)
       lines(x = sim_date,
-            y = data_prevalence_infectious[i_exp,col_days],
+            y = data_prevalence_infectious[i_exp,],
             col = pcolor$I)
       lines(x = sim_date,
-            y = data_prevalence_symptomatic[i_exp,col_days],
+            y = data_prevalence_symptomatic[i_exp,],
             col = pcolor$S)
   }
   
@@ -111,7 +113,14 @@ inspect_prevalence_data <- function(project_dir)
   
 }
 
-
+get_prevalence_matrix <- function(data_prevalence,col_name){
+  num_days <- length(unique(data_prevalence$sim_date))
+  num_exp  <- length(unique(data_prevalence$exp_id))
+  return(matrix(data_prevalence[,col_name],
+                nrow=num_exp,
+                ncol=num_days,
+                byrow = TRUE))
+}
 
 # define the legend with all categories
 add_legend_prevalence <- function(pcolor,legend_pos = 'topleft'){

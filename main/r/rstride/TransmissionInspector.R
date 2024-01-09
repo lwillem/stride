@@ -262,9 +262,16 @@ get_transmission_statistics <- function(data_transm,
   
   # setup data.table
   data_transm[,ID := 1:nrow(data_transm),]
+  
+  # adjust for infected seeds, which have an Health update before the 1 transmission events (hence are infected at day -1)
+  data_transm[,infection_date_adjust := infection_date]                                # make copy
+  data_transm[is.na(infector_id),infection_date_adjust := infection_date-1]            # adjust for infected seeds
+  
+  # add recovery dates
+  data_transm[, date_end_infectious := infection_date_adjust + end_infectiousness ] # account for infectious period
+  data_transm[, date_end_symptomatic := infection_date_adjust + end_symptoms ]      # account for symptomatic period
+  data_transm[, date_recovered := pmax(date_end_infectious,date_end_symptomatic,na.rm = TRUE)] # total infected period
 
-  # add recovery date
-  data_transm[, date_recovered := infection_date + end_infectiousness]
   
   if(length(unique(data_transm$exp_id))>1){
     smd_print("TRANSMISSION STATISTICS ERROR: MULTIPLE EXPERIMENTS !!", WARNING = T, FORCED = T)
@@ -318,15 +325,17 @@ get_transmission_statistics <- function(data_transm,
   # infections: captured in the "main statistics"   
   
   # infectious
-  data_transm[, date_infectiousness := infection_date + start_infectiousness]
+  data_transm[, date_infectiousness := infection_date_adjust + start_infectiousness]
   summary_infectious  <- get_summary_table(data_transm,'date_infectiousness','age_cat','new_infectious_cases',age_cat_all)
   
   # symptomatic
-  data_transm[, date_symptomatic := infection_date + start_symptoms]
+  data_transm[, date_symptomatic := infection_date_adjust + start_symptoms]
   summary_symptomatic <- get_summary_table(data_transm,'date_symptomatic','age_cat','new_symptomatic_cases',age_cat_all)
   
-  # recovered
-  summary_recovered   <- get_summary_table(data_transm,'date_recovered','age_cat','new_recovered_cases',age_cat_all)
+  # recovered: total, infectious, symptomatic
+  summary_recovered           <- get_summary_table(data_transm,'date_recovered',NA,'new_recovered_cases',NA)
+  summary_end_infectious      <- get_summary_table(data_transm,'date_end_infectious',NA,'new_end_infectious',NA)
+  summary_end_symptomatic     <- get_summary_table(data_transm,'date_end_symptomatic',NA,'new_end_symptomatic',NA)
   
   # hospital admission: captured in the "main statistics"     
   
@@ -339,7 +348,7 @@ get_transmission_statistics <- function(data_transm,
   ref_dates <- seq(as.Date('2020-02-24'),as.Date('2020-03-08'),1)
   summary_out[,doubling_time_march:=NA_real_]
   summary_out[sim_date %in% ref_dates, doubling_time_march :=  get_doubling_time(new_infections)]
-  summary_out[,doubling_time_march]
+  #summary_out[,doubling_time_march]
 
   ## (A)SYMPTOMATIC TRANSMISSION    ----
   summary_symptomatic_infectors <- data_transm[,.(num_symptomatic_infectors = sum(infector_is_symptomatic,na.rm=T)), by=c('sim_date')]
@@ -375,6 +384,16 @@ get_transmission_statistics <- function(data_transm,
   summary_out    <- merge(summary_out,summary_symptomatic_infectors,all.x = TRUE)
   summary_out    <- merge(summary_out,summary_location,all.x = TRUE)
 
+  # add recoveries, to calculate the prevalence
+  summary_out    <- merge(summary_out,summary_recovered,all.x = TRUE)
+  summary_out    <- merge(summary_out,summary_end_infectious,all.x = TRUE)
+  summary_out    <- merge(summary_out,summary_end_symptomatic,all.x = TRUE)
+  
+  ## PREVALENCE
+  summary_out[,prevalence_infected    := cumsum(replace_na(new_infections,0) - replace_na(new_recovered_cases,0))]
+  summary_out[,prevalence_infectious  := cumsum(replace_na(new_infectious_cases,0) - replace_na(new_end_infectious,0))]
+  summary_out[,prevalence_symptomatic := cumsum(replace_na(new_symptomatic_cases,0) - replace_na(new_end_symptomatic,0))]
+  
   ## CUMULATIVE STATS
   summary_out[,cumulative_infectious_cases := cumsum_na(new_infectious_cases)]
   summary_out[,cumulative_symptomatic_cases := cumsum_na(new_symptomatic_cases)]
@@ -444,28 +463,30 @@ get_main_transmission_statistics <- function(data_transm,
 get_summary_table <- function(data_transm,colname_date,colname_value,prefix,colname_opt=NA){
 
   # overall summary
-  summary_table_general         <- data_transm[,.N,by=colname_date]
-  names(summary_table_general)  <- c('sim_date',prefix)
+  summary_table         <- data_transm[,.N,by=colname_date]
+  names(summary_table)  <- c('sim_date',prefix)
 
-  # specific summary
-  summary_table                  <- dcast(data_transm, formula(paste(colname_date, '~' ,colname_value)), value.var='ID', length)
+  if(!any(is.na(colname_value))){
+    # specific summary
+    summary_table_specific          <- dcast(data_transm, formula(paste(colname_date, '~' ,colname_value)), value.var='ID', length)
+    
+    # if not all categories were present, add column with 0's
+    if(all(!is.na(colname_opt)) & any(!colname_opt %in% names(summary_table_specific))){
+      summary_table_specific[,c(colname_opt[!colname_opt %in% names(summary_table_specific)]):=0]
+      setcolorder(summary_table_specific,c(colname_date,colname_opt))# reorder
+    }
+    
+    # fix: make sure that column names with NA are removed (cfr. empty matrix)
+    if(any(grepl('NA',names(summary_table_specific)))){
+      summary_table_specific[,eval(names(summary_table_specific)[grepl('NA',names(summary_table_specific))]):=NULL,]
+    }
+    
+    # update names
+    names(summary_table_specific)           <- c('sim_date',paste(prefix,names(summary_table_specific)[-1],sep='_'))
   
-  # if not all categories were present, add column with 0's
-  if(all(!is.na(colname_opt)) & any(!colname_opt %in% names(summary_table))){
-    summary_table[,c(colname_opt[!colname_opt %in% names(summary_table)]):=0]
-    setcolorder(summary_table,c(colname_date,colname_opt))# reorder
+    # merge
+    summary_table <- merge(summary_table,summary_table_specific)
   }
-  
-  # fix: make sure that column names with NA are removed (cfr. empty matrix)
-  if(any(grepl('NA',names(summary_table)))){
-    summary_table[,eval(names(summary_table)[grepl('NA',names(summary_table))]):=NULL,]
-  }
-  
-  # update names
-  names(summary_table)           <- c('sim_date',paste(prefix,names(summary_table)[-1],sep='_'))
-
-  # merge
-  summary_table <- merge(summary_table,summary_table_general)
   
   # omit NA's (default on LW's MACOS but not on VSC cluster)
   # R versions: 3.5.3 (MACOS) vs. 3.5.1 (VSC)

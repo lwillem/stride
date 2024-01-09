@@ -143,6 +143,17 @@ parse_log_file <- function(config_exp,
     rstride_out$data_incidence <- get_transmission_statistics(rstride_out$data_transmission,
                                                               sim_date_range)
     
+    # if prevalence data available, store separately
+    if(any(grepl('prevalence',names(rstride_out$data_incidence)))){
+      rstride_out$data_prevalence <- rstride_out$data_incidence[,c('sim_date','exp_id',
+                                                                   'prevalence_infected',
+                                                                   'prevalence_infectious',
+                                                                   'prevalence_symptomatic')]
+      rstride_out$data_prevalence$prevalence_exposed <- NA
+    } else{
+      rstride_out$data_prevalence <- NA
+    }
+    
     # if transmission data should not be stored, replace item by NA
     if(!get_transmission_rdata){
       rstride_out$data_transmission <- NA
@@ -152,12 +163,6 @@ parse_log_file <- function(config_exp,
     smd_print("LOGFILE NOT FOUND OR EMPTY!!",WARNING = T)
   }
   
-  # convert 'prevalence' files (if present) 
-  rstride_out$data_prevalence_infected    <- get_prevalence_data(config_exp,'infected.csv')
-  rstride_out$data_prevalence_exposed     <- get_prevalence_data(config_exp,'exposed.csv')
-  rstride_out$data_prevalence_infectious  <- get_prevalence_data(config_exp,'infectious.csv')
-  rstride_out$data_prevalence_symptomatic <- get_prevalence_data(config_exp,'symptomatic.csv')
-  rstride_out$data_prevalence_total       <- get_prevalence_data(config_exp,'cases.csv')
   
   # save list with all results
   exp_tag <- .rstride$create_exp_tag(i_exp)
@@ -392,7 +397,7 @@ run_rStride <- function(exp_design               = exp_design,
   # print final statement
   smd_print('COMPLETE:',nrow(exp_design),'/',nrow(exp_design))
   
-  # save overal summary
+  # save overall summary
   write.table(par_out,file=file.path(project_dir,paste0(run_tag,'_summary.csv')),sep=',',row.names=F)
   
   ################################## #

@@ -114,7 +114,7 @@ inspect_participant_data <- function(project_dir, save_pdf = TRUE)
       abline(h=0.5)
     }
     
-    # days asymptomitic & infectious ####
+    # days asymptomatic & infectious ####
     start_symtomatic <- data_part$start_symptomatic
     start_symtomatic[is.na(data_part$start_symptomatic)] <- data_part$end_infectiousness[is.na(data_part$start_symptomatic)]
     days_asymptomatic_infectious <- start_symtomatic - data_part$start_infectiousness
@@ -128,15 +128,18 @@ inspect_participant_data <- function(project_dir, save_pdf = TRUE)
     
     # fraction symptomatic by age ####
     tbl_sympt_age <- table(!is.na(data_part$start_symptomatic),data_part$part_age)
-    plot(tbl_sympt_age[2,]/colSums(tbl_sympt_age),
-         xlab='age',
-         ylab = 'Relative frequency symptomatic')
-    abline(h=sum(tbl_sympt_age[2,]) / sum(tbl_sympt_age))
-    legend('topleft',
-           'mean',
-           col = 1,
-           lwd = 1,
-           cex=0.8)
+    if(nrow(tbl_sympt_age)==2){
+      plot(tbl_sympt_age[2,]/colSums(tbl_sympt_age),
+           xlab='age',
+           ylab = 'Relative frequency symptomatic')
+      abline(h=sum(tbl_sympt_age[2,]) / sum(tbl_sympt_age))
+      legend('topleft',
+             'mean',
+             col = 1,
+             lwd = 1,
+             cex=0.8)
+    }
+    
     
     # ## POPULATION
     population_age <- as.data.frame(table(part_age = data_part$part_age))

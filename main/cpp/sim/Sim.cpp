@@ -173,6 +173,10 @@ void Sim::TimeStep()
 			}
         } // end pragma openMP
 
+//        // log prevalence? (time consuming!)
+//        m_population->LogPrevalence(simDay);
+
+        // flush event logger and advance one day
         m_population->RefEventLogger()->flush();
         m_calendar->AdvanceDay();
 }

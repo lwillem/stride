@@ -74,6 +74,13 @@ public:
                        m_status == HealthStatus::InfectiousAndSymptomatic || m_status == HealthStatus::Symptomatic;
         }
 
+        /// Is this person infected today?
+		bool IsInfectedToday() const
+		{
+			return IsInfected() && m_disease_counter == 0;
+		}
+
+
         /// Is this person infectious.
         bool IsInfectious() const
         {
@@ -164,6 +171,7 @@ private:
         unsigned short int m_start_symptomatic;    ///< Days after infection to become symptomatic.
         unsigned short int m_end_infectiousness;   ///< Days after infection to end infectious state.
         unsigned short int m_end_symptomatic;      ///< Days after infection to end symptomatic state.
+        unsigned short int m_end_infection;        ///< Days after infection to end infection state.
 
         unsigned int       m_id_index_case;        ///< ID of the index case, given infection
         unsigned int       m_id_infector;          ///< ID of the infector, given infection

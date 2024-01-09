@@ -46,11 +46,11 @@ std::shared_ptr<Population> Population::Create(const boost::property_tree::ptree
                                                std::shared_ptr<spdlog::logger> strideLogger)
 {
         if (!strideLogger) {
-                strideLogger = LogUtils::CreateNullLogger("Population_logger");
+                strideLogger = LogUtils::CreateNullLogger("stride_logger");
         }
 
         // --------------------------------------------------------------
-        // Create empty population & and give it a InfectorLogger.
+        // Create empty population & and give it an EventLogger.
         // --------------------------------------------------------------
         const auto pop = Create();
         if(EventLogMode::ToMode(config.get<string>("run.event_log_level", "None")) > EventLogMode::Id::None) {
@@ -117,6 +117,16 @@ unsigned int Population::CountInfectedCases() const
         return total;
 }
 
+unsigned int Population::CountNewlyInfectedCases() const
+{
+        unsigned int total{0U};
+        for (const auto& p : *this) {
+                const auto& h = p.GetHealth();
+                total += h.IsInfectedToday();
+        }
+        return total;
+}
+
 unsigned int Population::CountExposedCases() const
 {
         unsigned int total{0U};
@@ -167,6 +177,16 @@ unsigned int Population::GetTotalHospitalised() const
         return total;
 }
 
+unsigned int Population::CountRecoveredCases() const
+{
+        unsigned int total{0U};
+        for (const auto& p : *this) {
+            const auto& h = p.GetHealth();
+            total += h.IsRecovered();
+        }
+        return total;
+}
+
 unsigned int Population::GetAtRisk() const
 {
         unsigned int total{0U};
@@ -199,6 +219,25 @@ unsigned int Population::GetPoolSize(ContactType::Id typeId, const Person* p) co
 
 	// return ContactPool size
 	return m_pool_sys.CRefPools(typeId)[poolId].size();
+}
+
+void Population::LogPrevalence(unsigned short int simDay){
+
+	// log the current burden of disease prevalance
+	m_event_logger->info("[PREVALENCE] {} {} {} {} {} {} {} {} {} {} {}",
+			simDay,
+			GetTotalInfected(),
+			GetTotalHospitalised(),
+			CountInfectedCases(),
+			CountExposedCases(),
+			CountInfectiousCases(),
+			CountSymptomaticCases(),
+			CountHospitalisedCases(),
+			GetAtRisk(),
+			CountNewlyInfectedCases(),
+			CountRecoveredCases()
+			);
+
 }
 
 

@@ -64,6 +64,9 @@ public:
         /// Get the current number of infected cases.
         unsigned int CountInfectedCases() const;
 
+        /// Get the number of new infected cases today
+        unsigned int CountNewlyInfectedCases() const;
+
         /// Get the current number of exposed cases.
         unsigned int CountExposedCases() const;
 
@@ -78,6 +81,9 @@ public:
 
         /// Get the cumulative number of hospitalisations.
         unsigned int GetTotalHospitalised() const;
+
+        /// Get the current number of recoverd cases.
+        unsigned int CountRecoveredCases() const;
 
         /// Get the number of people at risk in the population
         unsigned int GetAtRisk() const;
@@ -97,6 +103,8 @@ public:
         /// Get the ContactPool size of a given type and id
         unsigned int GetPoolSize(ContactType::Id typeId, const Person* p) const;
 
+        /// Log the current disease prevalence in the population. Time consuming!
+        void LogPrevalence(unsigned short int simDay);
 
 private:
         /// Non-trivial default constructor.
