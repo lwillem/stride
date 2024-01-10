@@ -76,6 +76,9 @@ public:
         /// Get the current number of symptomatic cases.
         unsigned int CountSymptomaticCases() const;
 
+        /// Get the current number of infectious and symptomatic cases.
+        unsigned int CountInfectiousSymptomaticCases() const;
+
         /// Get the current number of hospitalised cases.
         unsigned int CountHospitalisedCases() const;
 

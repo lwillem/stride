@@ -157,6 +157,15 @@ unsigned int Population::CountSymptomaticCases() const
         return total;
 }
 
+unsigned int Population::CountInfectiousSymptomaticCases() const
+{
+        unsigned int total{0U};
+        for (const auto& p : *this) {
+                const auto& h = p.GetHealth();
+                total += h.IsInfectious() & h.IsSymptomatic();
+        }
+        return total;
+}
 unsigned int Population::CountHospitalisedCases() const
 {
         unsigned int total{0U};
@@ -224,7 +233,7 @@ unsigned int Population::GetPoolSize(ContactType::Id typeId, const Person* p) co
 void Population::LogPrevalence(unsigned short int simDay){
 
 	// log the current burden of disease prevalance
-	m_event_logger->info("[PREVALENCE] {} {} {} {} {} {} {} {} {} {} {}",
+	m_event_logger->info("[PREVALENCE] {} {} {} {} {} {} {} {} {} {} {} {}",
 			simDay,
 			GetTotalInfected(),
 			GetTotalHospitalised(),
@@ -232,6 +241,7 @@ void Population::LogPrevalence(unsigned short int simDay){
 			CountExposedCases(),
 			CountInfectiousCases(),
 			CountSymptomaticCases(),
+			CountInfectiousSymptomaticCases(),
 			CountHospitalisedCases(),
 			GetAtRisk(),
 			CountNewlyInfectedCases(),

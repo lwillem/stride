@@ -143,7 +143,13 @@ parse_log_file <- function(config_exp,
     rstride_out$data_incidence <- get_transmission_statistics(rstride_out$data_transmission,
                                                               sim_date_range)
     
-    # if prevalence data available, store separately
+    # if prevalence data available from stride event log, store with another name
+    # note: this can be used to check other code
+    if(any(grepl('prevalence',names(rstride_out)))){
+      rstride_out$data_log_prevalence <- rstride_out$data_prevalence
+    }
+    
+    # if prevalence data available from transmission statistics, store separately
     if(any(grepl('prevalence',names(rstride_out$data_incidence)))){
       rstride_out$data_prevalence <- rstride_out$data_incidence[,c('sim_date','exp_id',
                                                                    'prevalence_infected',

@@ -115,7 +115,7 @@ parse_event_logfile <- function(event_logfile,exp_id,
   ## PREVALENCE DATA  ####
   ###################### # 
   header_prevelence   <- c('sim_day', 'total_infected', 'total_hospital', 'prevalence_infected', 'prevalence_exposed', 
-                           'prevalence_infectious','prevalence_symptomatic', 'prevalence_hospital', 'total_non_immune',
+                           'prevalence_infectious','prevalence_symptomatic', 'prevalence_infectious_symptomatic', 'prevalence_hospital', 'total_non_immune',
                            'total_new_infections', 'prevalence_recovered')
   
   rstride_out$data_prevalence <- reformat_log_data(event_logfile = event_logfile,
