@@ -383,12 +383,12 @@ plot_final_sizes <- function(project_summary){
 par(mfrow=c(1,1))
 plot_final_sizes(project_summary)
 
-# load the incidence output
+# load incidence output
 data_incidence     <- .rstride$load_aggregated_output(project_dir,'data_incidence')
 dim(data_incidence)
 
-# get all tracing output
-data_prevalence <- .rstride$load_aggregated_output(project_dir,'data_prevalence_symptomatic')
+# get prevalence output
+data_prevalence <- .rstride$load_aggregated_output(project_dir,'data_prevalence')
 dim(data_prevalence)
 
 ## Load reference data
@@ -409,6 +409,7 @@ if(nrow(project_summary) != nrow(ref_project_summary)){
 }
 
 # fix: use base name of file names (and get rid of project-specific file paths)
+# note: this is not needed any more (2024-01-10)
 ref_project_summary$holidays_file <- basename(ref_project_summary$holidays_file)
 project_summary$holidays_file     <- basename(project_summary$holidays_file)
 
@@ -478,20 +479,18 @@ if(setequal(data_incidence[,names(data_incidence) != 'exp_id'],
   smd_print("INCIDENCE OK")
 } else{
   
-  missing_colnames_new <- !names(data_incidence) %in% names(ref_data_incidence)
-  if(any(missing_colnames_new)){
-    smd_print('INCIDENCE columns added:', paste(names(data_incidence)[missing_colnames_new],collapse = ','),WARNING = T)
-    data_incidence <- data_incidence[,!missing_colnames_new]
+  missing_colnames_new <- names(data_incidence)[!names(data_incidence) %in% names(ref_data_incidence)]
+  if(length(missing_colnames_new)>0){
+    smd_print('INCIDENCE columns added:', paste(missing_colnames_new,collapse = ','),WARNING = T)
   }
   
-  missing_colnames_ref <- !names(ref_data_incidence) %in% names(data_incidence)
-  if(any(missing_colnames_ref)){
-    smd_print('INCIDENCE columns missing:', paste(names(ref_data_incidence)[missing_colnames_ref],collapse = ','),WARNING = T)
-    ref_data_incidence <- ref_data_incidence[,!missing_colnames_ref]
+  missing_colnames_ref <- names(ref_data_incidence)[!names(ref_data_incidence) %in% names(data_incidence)]
+  if(length(missing_colnames_ref)>0){
+    smd_print('INCIDENCE columns missing:', paste(missing_colnames_ref,collapse = ','),WARNING = T)
   }
   
-  
-  diff_incidence  <- setdiff(data_incidence[,names(data_incidence) != 'exp_id'],ref_data_incidence[,names(data_incidence) != 'exp_id'])
+  compare_col <- names(ref_data_incidence)[!names(ref_data_incidence) %in% c('exp_id',missing_colnames_ref,missing_colnames_new)]
+  diff_incidence  <- setdiff(data_incidence[,compare_col],ref_data_incidence[,compare_col])
   if(length(diff_incidence)>0){ 
     smd_print("INCIDENCE CHANGED",WARNING = T)
     smd_print(names(diff_incidence),WARNING = T)
@@ -510,15 +509,17 @@ if(setequal(data_incidence[,names(data_incidence) != 'exp_id'],
       #head(data_incidence[names(diff_incidence)])
       
     } else { # dimensions changed!!
-      smd_print('INCIDENCE ISSUE: dimensions changed',WARNING = T)
+      smd_print('INCIDENCE ISSUE: dimensions changed',WARNING = TRUE)
 
     }
+  } else {
+    smd_print("OVERLAPPING INCIDENCE OK",WARNING = FALSE)
   }
 }
 
 ## COMPARE PREVALENCE ----
-sel_col <- names(data_prevalence)[names(data_prevalence) != 'exp_id'] # make sure the same (number of) days are compared
-if(!is.null(sel_col) && setequal(data_prevalence[,sel_col],
+sel_col <- names(data_prevalence)[names(data_prevalence) %in% names(ref_data_prevalence)] # make sure the same columns are compared
+if(length(sel_col)>0 && setequal(data_prevalence[,sel_col],
             ref_data_prevalence[,sel_col])){ 
   smd_print("PREVALENCE OK")
 } else{
@@ -542,28 +543,27 @@ if(setequal(rstride_out_abc,ref_rstride_out_abc)){
 smd_print('REGRESSION TEST COMPLETE')
 
 # short call for "reset reference values"
-rrv <- function(){
-  saveRDS(project_summary,file='tests/regression_rstride_summary.rds')
-  saveRDS(data_incidence, file='tests/regression_rstride_incidence.rds')
-  saveRDS(data_prevalence,file='tests/regression_rstride_prevalence.rds')
-  saveRDS(rstride_out_abc,file='tests/regression_rstride_out_abc.rds')
-  smd_print('NEW REFERENCE VALES STORED: LOCAL')
+rrv <- function(stride_repo_dir = 'tests'){
+  
+  saveRDS(project_summary,
+          file=file.path(stride_repo_dir,'regression_rstride_summary.rds'))
+  saveRDS(.rstride$load_aggregated_output(project_dir,'data_incidence'), 
+          file=file.path(stride_repo_dir,'regression_rstride_incidence.rds'))
+  saveRDS(.rstride$load_aggregated_output(project_dir,'data_prevalence'),
+          file=file.path(stride_repo_dir,'regression_rstride_prevalence.rds'))
+  saveRDS(rstride_out_abc,
+          file=file.path(stride_repo_dir,'regression_rstride_out_abc.rds'))
+  
+  pdf(file=file.path(stride_repo_dir,'regression_rstride_summary.pdf'))
+    plot_final_sizes(project_summary)
+  dev.off()
+  
+  smd_print('NEW REFERENCE VALES STORED IN FOLDER:',stride_repo_dir)
 }
 
 # update the rStride reference values in the repo (note: local function for LW)
 rrv_repo <- function(){
-  stride_repo_dir <- 'tests'
   stride_repo_dir <- '~/Documents/university/research/stride/repo/stride_2023/main/resources/rstride_test'
-  saveRDS(project_summary,file=file.path(stride_repo_dir,'regression_rstride_summary.rds'))
-  saveRDS(data_incidence,file=file.path(stride_repo_dir,'regression_rstride_incidence.rds'))
-  saveRDS(data_prevalence,file=file.path(stride_repo_dir,'regression_rstride_prevalence.rds'))
-  saveRDS(rstride_out_abc,file=file.path(stride_repo_dir,'regression_rstride_out_abc.rds'))
-  
-  pdf(file=file.path(stride_repo_dir,'regression_rstride_summary.pdf'))
-  plot_final_sizes(project_summary)
-  dev.off()
-  
-  smd_print('NEW REFERENCE VALES STORED: IN STRIDE REPOSITORY')
-  rrv()
+  rrv(stride_repo_dir = stride_repo_dir)
 }
 

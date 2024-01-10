@@ -97,6 +97,10 @@ if(!(exists('.rstride'))){
   # set NA as character
   project_summary[is.na(project_summary)] <- 'NA'
   
+  # use the basename of the (experiment-specific) holidays file
+  # note: this file is based on other parameters, hence differences should be captured elsewhere
+  project_summary$holidays_file <- basename(project_summary$holidays_file)
+  
   # return the data.frame
   return(project_summary)
 }
@@ -333,12 +337,19 @@ if(!(exists('.rstride'))){
   # load project summary
   project_summary <- .rstride$load_project_summary(project_dir)
   
-  # get ouput filenames
+  # get output filenames
   dir_files       <- dir(project_dir,full.names = TRUE)
   output_filename <- dir_files[grepl(file_type,dir_files)]
   
   # if the file does not exists, return NA
   if(length(output_filename)==0){
+    return(NA)
+  }
+  
+  # if there are multiple file names that match, return NA
+  if(length(output_filename)>1){
+    smd_print("Multiple file names with model output matched with ",file_type, WARNING = TRUE)
+    stop('in .rstride$load_aggregated_output()')
     return(NA)
   }
   

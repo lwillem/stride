@@ -153,9 +153,12 @@ parse_log_file <- function(config_exp,
     if(any(grepl('prevalence',names(rstride_out$data_incidence)))){
       rstride_out$data_prevalence <- rstride_out$data_incidence[,c('sim_date','exp_id',
                                                                    'prevalence_infected',
+                                                                   'prevalence_exposed',
                                                                    'prevalence_infectious',
-                                                                   'prevalence_symptomatic')]
-      rstride_out$data_prevalence$prevalence_exposed <- NA
+                                                                   'prevalence_symptomatic',
+                                                                   'prevalence_infectious_symptomatic')]
+      # remove columns related to prevalence
+      rstride_out$data_incidence[, grep("prevalence", colnames(rstride_out$data_incidence)):=NULL]
     } else{
       rstride_out$data_prevalence <- NA
     }

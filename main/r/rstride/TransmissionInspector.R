@@ -271,7 +271,16 @@ get_transmission_statistics <- function(data_transm,
   data_transm[, date_end_infectious := infection_date_adjust + end_infectiousness ] # account for infectious period
   data_transm[, date_end_symptomatic := infection_date_adjust + end_symptoms ]      # account for symptomatic period
   data_transm[, date_recovered := pmax(date_end_infectious,date_end_symptomatic,na.rm = TRUE)] # total infected period
-
+  
+  # infectious and symptomatic
+  data_transm[, date_start_infectious_symptomatic := infection_date_adjust + pmax(start_infectiousness,start_symptoms)]
+  data_transm[, date_end_infectious_symptomatic := pmin(date_end_infectious,date_end_symptomatic)]
+  
+  # account for non-overlapping symptomatic and infectious periods
+  data_transm[date_start_infectious_symptomatic > date_end_infectious_symptomatic,
+              date_start_infectious_symptomatic := NA,]
+  data_transm[is.na(date_start_infectious_symptomatic) ,
+              date_end_infectious_symptomatic := NA,]
   
   if(length(unique(data_transm$exp_id))>1){
     smd_print("TRANSMISSION STATISTICS ERROR: MULTIPLE EXPERIMENTS !!", WARNING = T, FORCED = T)
@@ -337,6 +346,9 @@ get_transmission_statistics <- function(data_transm,
   summary_end_infectious      <- get_summary_table(data_transm,'date_end_infectious',NA,'new_end_infectious',NA)
   summary_end_symptomatic     <- get_summary_table(data_transm,'date_end_symptomatic',NA,'new_end_symptomatic',NA)
   
+  summary_new_infectious_symptomatic   <- get_summary_table(data_transm,'date_start_infectious_symptomatic',NA,'new_infectious_symptomatic_cases',NA)
+  summary_end_infectious_symptomatic     <- get_summary_table(data_transm,'date_end_infectious_symptomatic',NA,'new_end_infectious_symptomatic',NA)
+  
   # hospital admission: captured in the "main statistics"     
   
   ## DOUBLING TIME      ----
@@ -388,15 +400,23 @@ get_transmission_statistics <- function(data_transm,
   summary_out    <- merge(summary_out,summary_recovered,all.x = TRUE)
   summary_out    <- merge(summary_out,summary_end_infectious,all.x = TRUE)
   summary_out    <- merge(summary_out,summary_end_symptomatic,all.x = TRUE)
+  summary_out    <- merge(summary_out,summary_new_infectious_symptomatic,all.x = TRUE)
+  summary_out    <- merge(summary_out,summary_end_infectious_symptomatic,all.x = TRUE)
   
-  ## PREVALENCE
+  ## PREVALENCE ----
   summary_out[,prevalence_infected    := cumsum(replace_na(new_infections,0) - replace_na(new_recovered_cases,0))]
   summary_out[,prevalence_infectious  := cumsum(replace_na(new_infectious_cases,0) - replace_na(new_end_infectious,0))]
   summary_out[,prevalence_symptomatic := cumsum(replace_na(new_symptomatic_cases,0) - replace_na(new_end_symptomatic,0))]
+  summary_out[,prevalence_infectious_symptomatic := cumsum(replace_na(new_infectious_symptomatic_cases,0) - replace_na(new_end_infectious_symptomatic,0))]
+  summary_out[,prevalence_exposed     := prevalence_infected - prevalence_infectious - prevalence_symptomatic + prevalence_infectious_symptomatic]
   
   ## CUMULATIVE STATS
   summary_out[,cumulative_infectious_cases := cumsum_na(new_infectious_cases)]
   summary_out[,cumulative_symptomatic_cases := cumsum_na(new_symptomatic_cases)]
+  
+  ## CLEAN ----
+  # remove columns required to calculate prevalence estimates
+  summary_out[, grep("new_end", colnames(summary_out)):=NULL]
   
   # return
   return(summary_out)
