@@ -296,12 +296,12 @@ get_transmission_statistics <- function(data_transm,
   # day of infection: case
   infection_time <- data.table(local_id       = data_transm$local_id,
                                infector_id    = data_transm$infector_id,
-                               infection_date = data_transm$sim_date,          #TODO: use adjusted infection_date
+                               infection_date = data_transm$infection_date,          
                                recoverd_date  = data_transm$date_recovered)
   
   # day of infection: infector
   infector_time  <- data.table(infector_id            = data_transm$local_id,
-                               infector_infection_date = data_transm$sim_date) #TODO: use adjusted infection_date
+                               infector_infection_date = data_transm$infection_date)
   
   
   # set infector_id for infected seeds to -1
