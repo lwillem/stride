@@ -85,7 +85,7 @@ public:
         /// Get the cumulative number of hospitalisations.
         unsigned int GetTotalHospitalised() const;
 
-        /// Get the current number of recoverd cases.
+        /// Get the current number of recovered cases.
         unsigned int CountRecoveredCases() const;
 
         /// Get the number of people at risk in the population

@@ -89,12 +89,14 @@ parse_event_logfile <- function(event_logfile,exp_id,
                              'start_infectiousness',
                              'start_symptoms',
                              'end_symptoms',
-                             'hospital_admission_start')
+                             'hospital_admission_start',
+                             'hospital_admission_end')
   } else {
     header_transm       <- c('local_id', 'infector_id','part_age',
                              'infector_age','pool_type','sim_day','id_index_case',
                              'start_infectiousness','end_infectiousness','start_symptoms','end_symptoms',
                              'hospital_admission_start',
+                             'hospital_admission_end',
                              'infector_is_symptomatic','part_rel_infectiousness','part_rel_susceptibility')
   }
   
@@ -115,7 +117,7 @@ parse_event_logfile <- function(event_logfile,exp_id,
   ## PREVALENCE DATA  ####
   ###################### # 
   header_prevelence   <- c('sim_day', 'total_infected', 'total_hospital', 'prevalence_infected', 'prevalence_exposed', 
-                           'prevalence_infectious','prevalence_symptomatic', 'prevalence_infectious_symptomatic', 'prevalence_hospital', 'total_non_immune',
+                           'prevalence_infectious','prevalence_symptomatic', 'prevalence_infectious_symptomatic', 'prevalence_hospitalised', 'total_non_immune',
                            'total_new_infections', 'prevalence_recovered')
   
   rstride_out$data_prevalence <- reformat_log_data(event_logfile = event_logfile,

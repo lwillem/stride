@@ -30,17 +30,18 @@ void HospitalisationConfig::NoHospitalisationInit()
     }
 }
 
-HospitalisationConfig::HospitalisationConfig() : m_probabilities(), m_delays()
+HospitalisationConfig::HospitalisationConfig() : m_probabilities(), m_delays(), m_length_of_stay(0U)
 {
     NoHospitalisationInit();
 }
 
 HospitalisationConfig::HospitalisationConfig(
         std::vector<unsigned int> ageCategories,
-        std::vector<double> probabilities, std::vector<double> delays, double probability_factor)
-        : m_probabilities(), m_delays()
+        std::vector<double> probabilities, std::vector<double> delays, double probability_factor,
+		unsigned short int length_of_stay)
+        : m_probabilities(), m_delays(),m_length_of_stay(length_of_stay)
 {
-    //default initialisation
+    //default initialization
     NoHospitalisationInit();
 
     //parse the age category probabilities/delays

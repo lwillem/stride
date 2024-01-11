@@ -13,7 +13,7 @@
 #  see http://www.gnu.org/licenses/.
 #
 #
-#  Copyright 2020, Willem L
+#  Copyright 2024
 ############################################################################# #
 #
 # HELP FUNCTIONS FOR rSTRIDE PRE- AND POST-PROCESSING                       

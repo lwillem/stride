@@ -251,29 +251,32 @@ get_transmission_statistics <- function(data_transm,
                                         sim_date_range)
 {
   
+  # setup data.table
+  data_transm[,ID := 1:nrow(data_transm),]
+  
+  # set sim_date equal to reported infection date
+  data_transm[,sim_date := infection_date] 
+  
+  # adjust for infected seeds, which have an Health update before the 1 transmission events (hence are infected at day -1)
+  if('infector_id' %in% names(data_transm)){
+    data_transm[,infection_date := infection_date]                                # make copy
+    data_transm[is.na(infector_id),infection_date := infection_date-1]            # adjust for infected seeds
+  }
   # 1. Get main statistics
   summary_out <- get_main_transmission_statistics(data_transm,sim_date_range)
-  
   
   # 2. Get additional statistics (if possible)
   if(!'infector_id' %in% names(data_transm)){
     return(summary_out)
   }
   
-  # setup data.table
-  data_transm[,ID := 1:nrow(data_transm),]
-  
-  # adjust for infected seeds, which have an Health update before the 1 transmission events (hence are infected at day -1)
-  data_transm[,infection_date_adjust := infection_date]                                # make copy
-  data_transm[is.na(infector_id),infection_date_adjust := infection_date-1]            # adjust for infected seeds
-  
   # add recovery dates
-  data_transm[, date_end_infectious := infection_date_adjust + end_infectiousness ] # account for infectious period
-  data_transm[, date_end_symptomatic := infection_date_adjust + end_symptoms ]      # account for symptomatic period
+  data_transm[, date_end_infectious := infection_date + end_infectiousness ] # account for infectious period
+  data_transm[, date_end_symptomatic := infection_date + end_symptoms ]      # account for symptomatic period
   data_transm[, date_recovered := pmax(date_end_infectious,date_end_symptomatic,na.rm = TRUE)] # total infected period
   
   # infectious and symptomatic
-  data_transm[, date_start_infectious_symptomatic := infection_date_adjust + pmax(start_infectiousness,start_symptoms)]
+  data_transm[, date_start_infectious_symptomatic := infection_date + pmax(start_infectiousness,start_symptoms)]
   data_transm[, date_end_infectious_symptomatic := pmin(date_end_infectious,date_end_symptomatic)]
   
   # account for non-overlapping symptomatic and infectious periods
@@ -281,6 +284,9 @@ get_transmission_statistics <- function(data_transm,
               date_start_infectious_symptomatic := NA,]
   data_transm[is.na(date_start_infectious_symptomatic) ,
               date_end_infectious_symptomatic := NA,]
+  
+  # hospitalisation (note: hospital admissions are part of the main statistics function)
+  data_transm[, date_end_hospitalisation := infection_date + hospital_admission_end]
   
   if(length(unique(data_transm$exp_id))>1){
     smd_print("TRANSMISSION STATISTICS ERROR: MULTIPLE EXPERIMENTS !!", WARNING = T, FORCED = T)
@@ -290,12 +296,12 @@ get_transmission_statistics <- function(data_transm,
   # day of infection: case
   infection_time <- data.table(local_id       = data_transm$local_id,
                                infector_id    = data_transm$infector_id,
-                               infection_date = data_transm$infection_date,
+                               infection_date = data_transm$sim_date,          #TODO: use adjusted infection_date
                                recoverd_date  = data_transm$date_recovered)
   
   # day of infection: infector
   infector_time  <- data.table(infector_id            = data_transm$local_id,
-                               infector_infection_date = data_transm$infection_date)
+                               infector_infection_date = data_transm$sim_date) #TODO: use adjusted infection_date
   
   
   # set infector_id for infected seeds to -1
@@ -334,11 +340,11 @@ get_transmission_statistics <- function(data_transm,
   # infections: captured in the "main statistics"   
   
   # infectious
-  data_transm[, date_infectiousness := infection_date_adjust + start_infectiousness]
+  data_transm[, date_infectiousness := infection_date + start_infectiousness]
   summary_infectious  <- get_summary_table(data_transm,'date_infectiousness','age_cat','new_infectious_cases',age_cat_all)
   
   # symptomatic
-  data_transm[, date_symptomatic := infection_date_adjust + start_symptoms]
+  data_transm[, date_symptomatic := infection_date + start_symptoms]
   summary_symptomatic <- get_summary_table(data_transm,'date_symptomatic','age_cat','new_symptomatic_cases',age_cat_all)
   
   # recovered: total, infectious, symptomatic
@@ -349,7 +355,8 @@ get_transmission_statistics <- function(data_transm,
   summary_new_infectious_symptomatic   <- get_summary_table(data_transm,'date_start_infectious_symptomatic',NA,'new_infectious_symptomatic_cases',NA)
   summary_end_infectious_symptomatic     <- get_summary_table(data_transm,'date_end_infectious_symptomatic',NA,'new_end_infectious_symptomatic',NA)
   
-  # hospital admission: captured in the "main statistics"     
+  # hospital admission: captured in the "main statistics"   
+  summary_end_hospitalisation <- get_summary_table(data_transm,'date_end_hospitalisation',NA,'new_end_hospitalisation',NA)
   
   ## DOUBLING TIME      ----
   # calculate cumulative cases and double time
@@ -402,6 +409,7 @@ get_transmission_statistics <- function(data_transm,
   summary_out    <- merge(summary_out,summary_end_symptomatic,all.x = TRUE)
   summary_out    <- merge(summary_out,summary_new_infectious_symptomatic,all.x = TRUE)
   summary_out    <- merge(summary_out,summary_end_infectious_symptomatic,all.x = TRUE)
+  summary_out    <- merge(summary_out,summary_end_hospitalisation,all.x = TRUE)
   
   ## PREVALENCE ----
   summary_out[,prevalence_infected    := cumsum(replace_na(new_infections,0) - replace_na(new_recovered_cases,0))]
@@ -409,6 +417,7 @@ get_transmission_statistics <- function(data_transm,
   summary_out[,prevalence_symptomatic := cumsum(replace_na(new_symptomatic_cases,0) - replace_na(new_end_symptomatic,0))]
   summary_out[,prevalence_infectious_symptomatic := cumsum(replace_na(new_infectious_symptomatic_cases,0) - replace_na(new_end_infectious_symptomatic,0))]
   summary_out[,prevalence_exposed     := prevalence_infected - prevalence_infectious - prevalence_symptomatic + prevalence_infectious_symptomatic]
+  summary_out[,prevalence_hospitalised:= cumsum(replace_na(new_hospital_admissions,0) - replace_na(new_end_hospitalisation,0))]
   
   ## CUMULATIVE STATS
   summary_out[,cumulative_infectious_cases := cumsum_na(new_infectious_cases)]
@@ -427,12 +436,7 @@ get_transmission_statistics <- function(data_transm,
 get_main_transmission_statistics <- function(data_transm,
                                              sim_date_range)
 {
-  # setup data.table
-  data_transm[,ID := 1:nrow(data_transm),]
-  
-  ## RENAME DATE COLUMN
-  data_transm[,sim_date := infection_date]
-  
+ 
   # AGE CATEGORIES     ----
   age_breaks               <- c(seq(0,80,10),110)
   data_transm[,age_cat_num := .(cut(part_age,age_breaks,include.lowest = T,right = T)),]
@@ -447,9 +451,9 @@ get_main_transmission_statistics <- function(data_transm,
   
   ## INCIDENCE ----
   # infections
-  summary_infections   <- get_summary_table(data_transm,'infection_date','age_cat','new_infections',age_cat_all)
+  summary_infections   <- get_summary_table(data_transm,'sim_date','age_cat','new_infections',age_cat_all)
   
-  # hospital admission     
+  # hospital admission    
   data_transm[, date_hosp_adm := infection_date + hospital_admission_start]
   summary_hospital          <- get_summary_table(data_transm,'date_hosp_adm','age_cat','new_hospital_admissions',age_cat_all)
   
@@ -524,6 +528,9 @@ get_summary_table <- function(data_transm,colname_date,colname_value,prefix,coln
   #check
   head(summary_table)
   
+  #sort
+  setorder(summary_table,sim_date)
+
   # return
   return(summary_table)
 }

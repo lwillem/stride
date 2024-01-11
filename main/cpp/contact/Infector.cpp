@@ -30,17 +30,21 @@ namespace {
 inline void RegisterTransmissionFull (const std::shared_ptr<spdlog::logger>& logger, const Person* p1, const Person* p2,
 					  ContactType::Id type, unsigned short int sim_day, unsigned int id_index_case)
 {
-	unsigned short startHospitalisation = -1;
+	short int startHospitalisation = -1;
+	short int endHospitalisation = -1;
 	if (p2->GetHealth().GetStartHospitalisation()) {
 		startHospitalisation = p2->GetHealth().GetStartHospitalisation().value();
+		endHospitalisation = p2->GetHealth().GetEndHospitalisation().value();
+
 	}
 
-	logger->info("[TRAN] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}",
+	logger->info("[TRAN] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}",
 					 p2->GetId(), p1->GetId(), p2->GetAge(), p1->GetAge(),
 					 ToString(type), sim_day, id_index_case,
 					 p2->GetHealth().GetStartInfectiousness(),p2->GetHealth().GetEndInfectiousness(),
 					 p2->GetHealth().GetStartSymptomatic(),p2->GetHealth().GetEndSymptomatic(),
 					 startHospitalisation,
+					 endHospitalisation,
 					 p1->GetHealth().IsSymptomatic(),
 					 p2->GetHealth().GetRelativeInfectiousness(),
 					 p2->GetHealth().GetRelativeSusceptibility());
@@ -49,18 +53,22 @@ inline void RegisterTransmissionFull (const std::shared_ptr<spdlog::logger>& log
 inline void RegisterTransmissionPartial (const std::shared_ptr<spdlog::logger>& logger, const Person* p2,
 					  unsigned short int sim_day)
 {
-	unsigned short int startHospitalisation = -1;
+	short int startHospitalisation = -1;
+	short int endHospitalisation = -1;
 	if (p2->GetHealth().GetStartHospitalisation()) {
 		startHospitalisation = p2->GetHealth().GetStartHospitalisation().value();
-	}
+		endHospitalisation = p2->GetHealth().GetEndHospitalisation().value();
 
-	logger->info("[TRAN_M] {} {} {} {} {} {}",
+		}
+
+	logger->info("[TRAN_M] {} {} {} {} {} {} {}",
 				 p2->GetAge(),
 				 sim_day,
 				 p2->GetHealth().GetStartInfectiousness(),
 				 p2->GetHealth().GetStartSymptomatic(),
 				 p2->GetHealth().GetEndSymptomatic(),
-				 startHospitalisation
+				 startHospitalisation,
+				 endHospitalisation
 				 );
 }
 

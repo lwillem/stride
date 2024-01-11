@@ -14,7 +14,7 @@
 #  see http://www.gnu.org/licenses/.
 #
 #
-#  Copyright 2023, Willem L, Libin P
+#  Copyright 2024
 ############################################################################ #
 #
 # Baseline settings for rStride COVID-19 intervention scenarios
@@ -68,6 +68,9 @@ get_covid19_default_param <- function(){
                 hospital_category_age         = paste(c(seq(0,80,10)),collapse=','),
                 hospital_probability_age      = paste(c(0.091,0.009,0.044,0.033,0.057,0.075,0.143,0.373,1.000 ),collapse=','),
                 hospital_mean_delay_age       = paste(3,3,7,7,7,7,6,6,1,sep=','),
+               
+               # stochastic compartment model ('OCTO')  
+               hospital_length_of_stay        = 12,
                 
                # threshold for log parsing (default is NA == no threshold)
                logparsing_cases_upperlimit    = NA

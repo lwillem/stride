@@ -233,7 +233,7 @@ get_hospital_incidence_age <- function(age_breaks_str = NA){
     ref_data <- read.csv(ref_data_file_name,header = T)
   } else{
     ref_data <- read.csv(backup_file,header = T)
-    smd_print("!! USING DUMMY FILE FOR AGE SPECIFIC HOSPITAL ADMISSIONS !!")
+    smd_print("!! USING DUMMY REFERENCE FILE FOR AGE SPECIFIC HOSPITAL ADMISSIONS !!")
   }
   
   # reformat

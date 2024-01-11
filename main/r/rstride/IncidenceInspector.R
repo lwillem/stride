@@ -13,7 +13,7 @@
 #  see http://www.gnu.org/licenses/.
 #
 #
-#  Copyright 2020, Willem L
+#  Copyright 2024
 ############################################################################# #
 #
 # MODEL INCIDENCE EXPLORATION
@@ -22,7 +22,7 @@
 
 
 #' @param project_dir   name of the project folder
-inspect_incidence_data <- function(project_dir, num_selection = 4, bool_add_param=TRUE)
+inspect_incidence_data <- function(project_dir, bool_add_param=TRUE)
 {
   # command line message
   smd_print('INSPECT INCIDENCE DATA...')

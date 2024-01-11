@@ -71,6 +71,7 @@ exp_design_base <- expand.grid(r0                       = 2.5,
                           hospital_category_age         = paste(0,sep=','),
                           hospital_probability_age      = paste(0,sep=','),
                           hospital_mean_delay_age       = paste(0,sep=','),
+                          hospital_length_of_stay       = 0,
                           
                           disease_susceptibility_age      = NA,
                           disease_susceptibility_agecat   = NA,
@@ -106,11 +107,12 @@ exp_design_none <- exp_design_base
 exp_design_none$event_log_level            <- 'None'
 exp_design_none$gtester_label              <- 'covid_none'
 
-# hospital admission
+# hospital admission ----
 exp_design_hosp <- exp_design_base
 exp_design_hosp$hospital_category_age         <- paste(0,19,60,80,sep=',')
 exp_design_hosp$hospital_probability_age      <- paste(0.049,0.03024,0.1197,0.5922,sep=',')
 exp_design_hosp$hospital_mean_delay_age       <- paste(3,7,7,6,sep=',')
+exp_design_hosp$hospital_length_of_stay       <- 12
 exp_design_hosp$gtester_label                 <- 'covid_hosp'
 
 # daily seeding ----
@@ -493,7 +495,10 @@ if(setequal(data_incidence[,names(data_incidence) != 'exp_id'],
   diff_incidence  <- setdiff(data_incidence[,compare_col],ref_data_incidence[,compare_col])
   if(length(diff_incidence)>0){ 
     smd_print("INCIDENCE CHANGED",WARNING = T)
-    smd_print(names(diff_incidence),WARNING = T)
+    
+    diff_incidence_colnames <- names(diff_incidence)[names(diff_incidence) %in% names(ref_data_incidence)]
+    diff_incidence_colnames <- unique(gsub('_age.*','',diff_incidence_colnames))
+    smd_print(diff_incidence_colnames,WARNING = T)
     
     if(all(dim(data_incidence) == dim(ref_data_incidence))){
       flag <- rowSums(data_incidence[,names(diff_incidence)] != ref_data_incidence[,names(diff_incidence)],na.rm=T)>0
@@ -502,8 +507,11 @@ if(setequal(data_incidence[,names(data_incidence) != 'exp_id'],
       smd_print('gtester_label with changes:', paste(unique(project_summary$gtester_label[project_summary$exp_id %in% data_incidence$exp_id[flag]]),collapse = ','))
       # ref_data_incidence[flag,names(diff_incidence)]    
       
-      # bool_colnames <- names(diff_incidence)[names(diff_incidence) %in% names(ref_data_incidence)]
-      # bool_colnames
+      # db_changes <- data.frame(exp_id = data_incidence$exp_id,
+      #                          num_changes = rowSums(data_incidence[,names(diff_incidence)] != ref_data_incidence[,names(diff_incidence)],na.rm=T))
+      # db_changes <- merge(db_changes,project_summary,by='exp_id')
+      # aggregate(num_changes ~ gtester_label,data=db_changes,sum)
+      
       # head(data_incidence[,bool_colnames])
       # head(ref_data_incidence[,bool_colnames])
       #head(data_incidence[names(diff_incidence)])

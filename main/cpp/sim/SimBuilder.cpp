@@ -64,7 +64,8 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         auto probabilities                   = Tokenize<double>(m_config.get<string>("run.hospital_probability_age","0"), ",");
         auto delays                          = Tokenize<double>(m_config.get<string>("run.hospital_mean_delay_age","0"), ",");
         double probability_factor            = m_config.get<double>("run.hosp_probability_factor",1);
-        sim->m_hospitalisation_config        = HospitalisationConfig(ageCategories, probabilities, delays, probability_factor);
+        unsigned short int length_of_stay    = m_config.get<unsigned short int>("run.hospital_length_of_stay",0);
+        sim->m_hospitalisation_config        = HospitalisationConfig(ageCategories, probabilities, delays, probability_factor,length_of_stay);
 
         // --------------------------------------------------------------
         // Contact handlers, each with generator bound to different

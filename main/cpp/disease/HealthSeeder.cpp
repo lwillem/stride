@@ -110,7 +110,8 @@ void HealthSeeder::Seed(const std::shared_ptr<stride::Population>& pop, const Ho
 
 
                         const bool isSymptomatic = gen01() <= m_probability_symptomatic[population[i].GetAge()];
-                        boost::optional<double> daysToHospitalisation = {};
+                        boost::optional<unsigned short int> daysToHospitalisation = {};
+                        boost::optional<unsigned short int> daysToLeaveHospital = {};
                         if(!isSymptomatic){
                         	timeSymptomatic = 0;
                         } else if(hc.GetProbability(population[i].GetAge()) > 0) {
@@ -118,6 +119,10 @@ void HealthSeeder::Seed(const std::shared_ptr<stride::Population>& pop, const Ho
                             if (isHospitalised) {
                                 double variance = Sample(hospitalisationVariance, gen01()) - 1; // -1, 0 or 1
                                 daysToHospitalisation = startSymptomatic + hc.GetDelay(population[i].GetAge()) + variance;
+                                daysToLeaveHospital   = daysToHospitalisation.value() + hc.GetLengthOfStay();
+
+                                // Make sure symptoms persist during hospital admission
+                                timeSymptomatic = daysToLeaveHospital.value() - startSymptomatic;
                             } 
                         }
 
@@ -127,7 +132,8 @@ void HealthSeeder::Seed(const std::shared_ptr<stride::Population>& pop, const Ho
                             Health(startInfectiousness, startSymptomatic, timeInfectious, timeSymptomatic,
                             		m_sympt_cnt_reduction_work_school,m_sympt_cnt_reduction_community,
                             		relative_susceptibility,
-                                    daysToHospitalisation);
+                                    daysToHospitalisation,
+									daysToLeaveHospital);
                 }
         }
 }

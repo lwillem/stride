@@ -28,7 +28,8 @@ Health::Health(unsigned short int start_infectiousness, unsigned short int start
                unsigned short int time_infectious, unsigned short int time_symptomatic,
 				double sympt_cnt_reduction_work_school, double sympt_cnt_reduction_community,
 				double relative_susceptibility,
-                boost::optional<double> start_hospitalisation)
+                boost::optional<unsigned short int> start_hospitalisation,
+				boost::optional<unsigned short int> end_hospitalisation)
     : m_disease_counter(0U), m_status(HealthStatus::Susceptible), m_start_infectiousness(start_infectiousness),
       m_start_symptomatic(start_symptomatic), m_end_infectiousness(start_infectiousness + time_infectious),
       m_end_symptomatic(start_symptomatic + time_symptomatic), m_id_index_case(0U), m_id_infector(0U),
@@ -37,6 +38,7 @@ Health::Health(unsigned short int start_infectiousness, unsigned short int start
         m_relative_infectiousness(0U),
 		m_relative_susceptibility(relative_susceptibility),
         m_start_hospitalisation(start_hospitalisation),
+		m_end_hospitalisation(end_hospitalisation),
         m_hospitalised(false),
         m_was_hospitalised(false)
 {
@@ -108,17 +110,15 @@ void Health::Update()
 						m_status = HealthStatus::Exposed;
 				}
 			}
-
+			//check whether a hospitalisation start date was defined, if so,
+			//compare it to the disease counter
+			if (m_start_hospitalisation && GetDiseaseCounter() == m_start_hospitalisation.value()) {
+				m_hospitalised = true;
+				m_was_hospitalised = true;
+			}
 			if(GetDiseaseCounter() == m_end_infection){
 				StopInfection();
 			}
-
-            //check whether a hospitalisation start date was defined, if so, 
-            //compare it to the disease counter
-            if (m_start_hospitalisation && GetDiseaseCounter() == m_start_hospitalisation) {
-                m_hospitalised = true;
-                m_was_hospitalised = true;
-            }
         }
 }
 

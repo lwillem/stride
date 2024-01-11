@@ -44,7 +44,8 @@ public:
                         unsigned short int time_infectious = 0U, unsigned short int time_symptomatic = 0U,
 						double sympt_cnt_reduction_work_school = 0U, double sympt_cnt_reduction_community=0U,
 						double relative_susceptibility = 0U,
-                        boost::optional<double> start_hospitalisation = {});
+                        boost::optional<unsigned short int> start_hospitalisation = {},
+						boost::optional<unsigned short int> end_hospitalisation = {});
 
         ///
         unsigned short int GetEndInfectiousness() const { return m_end_infectiousness; }
@@ -60,6 +61,9 @@ public:
         
         ///
         boost::optional<unsigned short int> GetStartHospitalisation() const { return m_start_hospitalisation; }
+
+        ///
+        boost::optional<unsigned short int> GetEndHospitalisation() const { return m_end_hospitalisation; }
 
         ///
         unsigned int GetIdIndexCase() const { return m_id_index_case; }
@@ -134,23 +138,19 @@ public:
         void Update();
 
         /// Get contact reduction in school/work pools when symptomatic infected
-        double GetSymptomaticCntReductionWorkSchool() const { return m_sympt_cnt_reduction_work_school; };
+        double GetSymptomaticCntReductionWorkSchool() const { return m_sympt_cnt_reduction_work_school; }
 
         /// Get contact reduction in community pools when symptomatic infected
-        double GetSymptomaticCntReductionCommunity() const { return m_sympt_cnt_reduction_community; };
+        double GetSymptomaticCntReductionCommunity() const { return m_sympt_cnt_reduction_community; }
 
 		/// Is this individual PCR detectable?
 		bool IsPcrDetectable(unsigned int detectable_delay) const { return GetDiseaseCounter() >= detectable_delay; }
 
         /// Get relative infectiousness
-        double GetRelativeInfectiousness() const {
-        		return m_relative_infectiousness;
-        }
+        double GetRelativeInfectiousness() const { return m_relative_infectiousness; }
 
         /// Get relative probability to acquire infection
-		double GetRelativeSusceptibility() const {
-				return m_relative_susceptibility;
-		}
+		double GetRelativeSusceptibility() const {	return m_relative_susceptibility; }
 
 
 private:
@@ -183,6 +183,7 @@ private:
         double			   m_relative_susceptibility;   ///< Relative probability of acquiring infection upon exposure [0-1]
 
         boost::optional<unsigned short int> m_start_hospitalisation; ///<Days after the individual needs to be hospitalised (optional, not all individuals end up in the hospital).
+        boost::optional<unsigned short int> m_end_hospitalisation;   ///<Days after the individual leaves the hospital (optional, not all individuals end up in the hospital).
         bool               m_hospitalised;    ///< Is the individual currently hospitalised?
         bool               m_was_hospitalised;  ///< Was the individual hospitalised at a given point?
 };
