@@ -37,7 +37,9 @@ get_covid19_default_param <- function(){
                 disease_config_file           = "disease_covid19_lognorm.xml",
                 population_file               = "pop_belgium11M_c500_teachers_censushh.csv",
                 age_contact_matrix_file       = "contact_matrix_flanders_conditional_teachers.xml",
-                start_date                    = '2020-02-17',
+               
+               # update 2024-01-12: shifted from 17/2 to 16/2 because infected cases are now introduced on day 0 instead of -1 
+                start_date                    = '2020-02-16', 
                 holidays_file                 = 'calendar_belgium_2020_covid19_exit_school_adjusted.csv',
                 # cnt_reduction_workplace       = 0.86,
                 # cnt_reduction_other           = 0.85,

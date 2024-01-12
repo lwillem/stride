@@ -14,7 +14,7 @@
 #  see http://www.gnu.org/licenses/.
 #
 #
-#  Copyright 2023
+#  Copyright 2024
 ############################################################################ #
 #
 # Call this script from the main project folder (containing bin, config, lib, ...)
@@ -46,14 +46,14 @@ num_seeds  <- 5
 
 # add parameters and values to combine in a full-factorial grid
 exp_design_base <- expand.grid(r0                       = 2.5,
-                          num_days                      = 30,
+                          num_days                      = 31,
                           rng_seed                      = seq(num_seeds),
                           num_participants_survey       = 10,   
                           num_infected_seeds            = 540,
                           disease_config_file           = 'disease_covid19_age.xml',
                           population_file               = 'pop_belgium600k_c500_teachers_censushh.csv',
                           age_contact_matrix_file       = 'contact_matrix_flanders_conditional_teachers.xml',
-                          start_date                    = '2020-03-05',
+                          start_date                    = '2020-03-04',
                           holidays_file                 = 'holidays_belgium_2019_2021.csv',
 
                           detection_probability          = 0,
@@ -244,7 +244,7 @@ exp_design_default_param <- exp_design_base
 exp_design_default_param[,names(get_covid19_default_param())] <- get_covid19_default_param()
 exp_design_default_param[,!names(exp_design_default_param) %in% names(exp_design_base)] <- NULL
 exp_design_default_param$population_file              <- 'pop_belgium600k_c500_teachers_censushh.csv'
-exp_design_default_param$num_days                     <- 60
+exp_design_default_param$num_days                     <- 61
 exp_design_default_param$gtester_label                <- 'covid_default_param'
 names(exp_design_base) %in% names(exp_design_default_param)
 names(exp_design_default_param) %in% names(exp_design_base)

@@ -148,6 +148,7 @@ public:
 		void UpdateCntReduction(std::vector<double> workplace_distancing, std::vector<double> community_distancing,
                                 std::vector<double> collectivity_distancing);
 
+		void RegisterInfectedSeeds(unsigned int num_infected_seeds);
 private:
 
 		unsigned short int GetDayIndex(boost::gregorian::date date) const;

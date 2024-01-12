@@ -257,10 +257,6 @@ get_transmission_statistics <- function(data_transm,
   # set sim_date equal to reported infection date
   data_transm[,sim_date := infection_date] 
   
-  # adjust for infected seeds, which have an Health update before the 1 transmission events (hence are infected at day -1)
-  if('infector_id' %in% names(data_transm)){
-    data_transm[is.na(infector_id) & sim_day == 0,infection_date := infection_date-1]            # adjust for infected seeds
-  }
   
   # 1. Get main statistics
   # note: summary_out contains at least the "sim_date_rage", but other dates are possible

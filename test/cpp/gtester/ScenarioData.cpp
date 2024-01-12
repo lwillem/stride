@@ -141,7 +141,7 @@ tuple<ptree, unsigned int, double> ScenarioData::Get(string tag)
 	if (tag == "covid19_householdclusters") {
 			pt.put("run.holidays_file", "calendar_belgium_2020_covid19_exit_schoolcategory_adjusted_hhclustering.csv");
 //			pt.put("run.holidays_file", "calendar_belgium_2020_covid19_exit_schoolcategory_adjusted.csv");
-			pt.put("run.start_date", "2020-06-01");
+			pt.put("run.start_date", "2020-05-31");
 			pt.put("run.population_file", "pop_belgium600k_c500_teachers_censushh_extended3_size2.csv");
 			pt.put("run.event_log_level", "Transmissions");
 	}
@@ -149,7 +149,7 @@ tuple<ptree, unsigned int, double> ScenarioData::Get(string tag)
 	if (tag == "covid19_tracing" || tag == "covid19_tracing_all") {
 		    pt.put("run.event_log_level", "Transmissions");
 			pt.put("run.holidays_file", "calendar_belgium_2020_covid19_exit_schoolcategory_adjusted.csv");
-			pt.put("run.start_date", "2020-06-01");
+			pt.put("run.start_date", "2020-05-31");
 			pt.put("run.detection_probability", 0.5);
 			pt.put("run.tracing_efficiency_household", 1.0);
 			pt.put("run.tracing_efficiency_other", 0.7);

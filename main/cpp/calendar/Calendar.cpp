@@ -173,6 +173,10 @@ void Calendar::Initialize_csv(const ptree& configPt)
 		calendarFile.close();
 }
 
+void Calendar::RegisterInfectedSeeds(unsigned int num_infected_seeds) {
+	m_imported_cases[0] = num_infected_seeds;
+}
+
 void Calendar::UpdateCntReduction(std::vector<double> workplace_distancing, std::vector<double> community_distancing,
                                   std::vector<double> collectivity_distancing)
 {

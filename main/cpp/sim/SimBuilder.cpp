@@ -114,9 +114,15 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         // --------------------------------------------------------------
         // Seed population with infection.
         // --------------------------------------------------------------
-        DiseaseSeeder(m_config, sim->m_rn_man).Seed(sim->m_population, sim->m_transmission_profile, sim->m_rn_handlers[0]);
-        sim->m_num_daily_imported_cases = m_config.get<double>("run.num_daily_imported_cases",0);
-
+        // Option to select a person to infect by ID, used for verification purposes.
+		boost::optional<unsigned int> infected_seed_id_as_input = m_config.get_optional<unsigned int>("run.infected_seed_id");
+		if (infected_seed_id_as_input) {
+			DiseaseSeeder(m_config, sim->m_rn_man).Seed(sim->m_population, sim->m_transmission_profile, sim->m_rn_handlers[0]);
+		} else {
+			const auto numInfectedSeeds = m_config.get<unsigned int>("run.num_infected_seeds",0);
+			sim->GetCalendar()->RegisterInfectedSeeds(numInfectedSeeds);
+		}
+		sim->m_num_daily_imported_cases = m_config.get<double>("run.num_daily_imported_cases",0);
 
         // --------------------------------------------------------------
 		// Set Public Health Agency

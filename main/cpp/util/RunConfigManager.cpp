@@ -169,7 +169,7 @@ string RunConfigManager::CreateTestsCovid19()
         <immunity_link_probability>0</immunity_link_probability>
         <immunity_profile>Random</immunity_profile>
         <immunity_rate>0</immunity_rate>
-        <num_days>30</num_days>
+        <num_days>31</num_days>
         <num_participants_survey>10</num_participants_survey>
         <num_threads>1</num_threads>
         <output_prefix></output_prefix>
@@ -180,7 +180,7 @@ string RunConfigManager::CreateTestsCovid19()
         <num_infected_seeds>540</num_infected_seeds>
         <seeding_age_min>1</seeding_age_min>
         <seeding_age_max>99</seeding_age_max>
-        <start_date>2020-03-05</start_date>
+        <start_date>2020-03-04</start_date>
         <stride_log_level>info</stride_log_level>
         <track_index_case>false</track_index_case>
         <use_install_dirs>true</use_install_dirs>

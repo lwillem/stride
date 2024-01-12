@@ -14,7 +14,7 @@
 #  see http://www.gnu.org/licenses/.
 #
 #
-#  Copyright 2023, Willem L.
+#  Copyright 2024, Willem L.
 ############################################################################ #
 #
 # Call this script from the main project folder (containing bin, config, lib, ...)
@@ -44,18 +44,20 @@ dir_postfix <- '_baseline'
 exp_param_list <- get_covid19_default_param()
 
 # change population file
-#exp_param_list$population_file <- 'pop_belgium600k_c500_teachers_censushh.csv'
-exp_param_list$population_file <- 'pop_belgium1000k_c500_teachers_censushh.csv'
+exp_param_list$population_file <- 'pop_belgium600k_c500_teachers_censushh.csv'
+#exp_param_list$population_file <- 'pop_belgium1000k_c500_teachers_censushh.csv'
 
 # change parameters and values to combine in a full-factorial grid
 exp_param_list$num_days <- 300
 exp_param_list$num_parallel_workers <- 8
-exp_param_list$event_log_level <- c("Incidence")
+#exp_param_list$event_log_level <- c("Incidence")
+exp_param_list$event_log_level <- c("Transmissions")
 exp_param_list$num_seeds<- 2
  
-exp_param_list$temporal_distancing_workplace    <- c_str(exp_param_list$temporal_distancing_workplace,0.50)
-exp_param_list$dates_distancing_workplace       <- c_str(exp_param_list$dates_distancing_workplace,'2020-05-01')
-# 
+exp_param_list$distancing_workplace_ratio    <- c_str(exp_param_list$distancing_workplace_ratio,0.2)
+exp_param_list$distancing_workplace_date     <- c_str(exp_param_list$distancing_workplace_date,'2020-09-01')
+exp_param_list$distancing_workplace_delay    <- c_str(exp_param_list$distancing_workplace_delay,7)
+ 
 # exp_param_list$temporal_distancing_community      <- c_str(0.70,0.4,0.8)
 # exp_param_list$dates_distancing_community         <- c_str('2020-05-01','2020-08-15','2020-10-01','2020-11-01')
 # 
@@ -84,7 +86,8 @@ dim(exp_design)
 ################################## #
 project_dir <- run_rStride(exp_design               = exp_design,
                            dir_postfix              = dir_postfix,
-                           num_parallel_workers     = exp_param_list$num_parallel_workers)
+                           num_parallel_workers     = exp_param_list$num_parallel_workers,
+                           remove_run_output        = FALSE)
 
 
 ############################# #
@@ -126,7 +129,7 @@ inspect_transmission_dynamics(project_dir)
 ############################# #
 ## CONTACT TRACING         ####
 ############################# #
-inspect_tracing_data(project_dir)
+#inspect_tracing_data(project_dir)
 
 
 
