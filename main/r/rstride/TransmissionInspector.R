@@ -259,15 +259,19 @@ get_transmission_statistics <- function(data_transm,
   
   # adjust for infected seeds, which have an Health update before the 1 transmission events (hence are infected at day -1)
   if('infector_id' %in% names(data_transm)){
-    data_transm[,infection_date := infection_date]                                # make copy
-    data_transm[is.na(infector_id),infection_date := infection_date-1]            # adjust for infected seeds
+    data_transm[is.na(infector_id) & sim_day == 0,infection_date := infection_date-1]            # adjust for infected seeds
   }
+  
   # 1. Get main statistics
+  # note: summary_out contains at least the "sim_date_rage", but other dates are possible
+  # if disease-related events took place. 
   summary_out <- get_main_transmission_statistics(data_transm,sim_date_range)
   
   # 2. Get additional statistics (if possible)
   if(!'infector_id' %in% names(data_transm)){
-    return(summary_out)
+    # note: initially infected cases can be infected before the simulation start
+    return(summary_out[sim_date >= min(sim_date_range) &
+                         sim_date <= max(sim_date_range),])
   }
   
   # add recovery dates
@@ -428,11 +432,14 @@ get_transmission_statistics <- function(data_transm,
   summary_out[, grep("new_end", colnames(summary_out)):=NULL]
   
   # return
-  return(summary_out)
+  return(summary_out[sim_date >= min(sim_date_range) &
+                       sim_date <= max(sim_date_range),])
 }
 
 
 # separate function with main statistics
+# note: the results contains at least the "sim_date_rage", but other dates are possible
+# if disease-related events took place
 get_main_transmission_statistics <- function(data_transm,
                                              sim_date_range)
 {
@@ -446,12 +453,13 @@ get_main_transmission_statistics <- function(data_transm,
   age_cat_all <- paste0('age',1:(length(age_breaks)-1))
   
   # set all dates
-  summary_date <- data.table(sim_date = seq(min(sim_date_range),max(sim_date_range),1))
+  all_dates <- c(sim_date_range,data_transm$infection_date)
+  summary_date <- data.table(sim_date = seq(min(all_dates),max(all_dates),1))
   setkey(summary_date,'sim_date')
   
   ## INCIDENCE ----
   # infections
-  summary_infections   <- get_summary_table(data_transm,'sim_date','age_cat','new_infections',age_cat_all)
+   summary_infections   <- get_summary_table(data_transm,'infection_date','age_cat','new_infections',age_cat_all)
   
   # hospital admission    
   data_transm[, date_hosp_adm := infection_date + hospital_admission_start]
@@ -462,6 +470,9 @@ get_main_transmission_statistics <- function(data_transm,
   
   # average number of secondary cases, upon recovery
   summary_out    <- merge(summary_out,summary_hospital,all.x = TRUE)
+  
+  # set NA's as a result of the merge operation to 0
+  summary_out[is.na(summary_out)] <- 0
   
   # add exp_id
   summary_out$exp_id <- unique(data_transm$exp_id)

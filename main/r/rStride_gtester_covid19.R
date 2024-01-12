@@ -419,7 +419,8 @@ project_summary$holidays_file     <- basename(project_summary$holidays_file)
 
 ## COMPARE SUMMARY ----
 
-if(!setequal(project_summary,ref_project_summary)){ 
+if(!setequal(project_summary[,!grepl('_id',names(project_summary))],
+             ref_project_summary[,!grepl('_id',names(ref_project_summary))])){ 
   
   smd_print("SUMMARY CHANGED",WARNING = T)
   
@@ -463,10 +464,12 @@ if(!setequal(project_summary,ref_project_summary)){
               data=ref_project_summary,main='BOTH',ylim=y_lim, las=2,xlab='');grid()
       bplt_new <- boxplot(num_cases ~ gtester_label,
                           data=select_project_summary,add=T,
+                          border=2,
                           col=alpha(2,0.4),main='',ylim=y_lim,las=2,xlab='')  ;
       bool_different <- colSums(bplt_new$stats != bplt_ref$stats) >0
       legend('topleft',c('reference','new','changed'),col=c(1,alpha(2,0.4),4),pch=c('I','I','*'),cex=0.8)
-      points(1:length(bool_different)+0.5,bplt_new$stats[3,],col=4*bool_different,pch='*',cex=3)
+      points(which(bool_different)+0.5,bplt_new$stats[3,bool_different],col=4,pch='*',cex=3)
+      
       par(mfrow=c(1,1),mar=c(8,4,4,2))
     }
   }
@@ -500,6 +503,9 @@ if(setequal(data_incidence[,names(data_incidence) != 'exp_id'],
     diff_incidence_colnames <- unique(gsub('_age.*','',diff_incidence_colnames))
     smd_print(diff_incidence_colnames,WARNING = T)
     
+    # include "exp_id" column, to make sure there are at least 2 columns for the rowSums
+    diff_incidence$exp_id <- data_incidence$exp_id
+    
     if(all(dim(data_incidence) == dim(ref_data_incidence))){
       flag <- rowSums(data_incidence[,names(diff_incidence)] != ref_data_incidence[,names(diff_incidence)],na.rm=T)>0
       smd_print('EXP_ID with changes:', paste(unique(data_incidence$exp_id[flag]),collapse = ','))
@@ -526,7 +532,7 @@ if(setequal(data_incidence[,names(data_incidence) != 'exp_id'],
 }
 
 ## COMPARE PREVALENCE ----
-sel_col <- names(data_prevalence)[names(data_prevalence) %in% names(ref_data_prevalence)] # make sure the same columns are compared
+sel_col <- names(data_prevalence)[names(data_prevalence) %in% names(ref_data_prevalence) & names(data_prevalence) != 'exp_id'] # make sure the same columns are compared
 if(length(sel_col)>0 && setequal(data_prevalence[,sel_col],
             ref_data_prevalence[,sel_col])){ 
   smd_print("PREVALENCE OK")

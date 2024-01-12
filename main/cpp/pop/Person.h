@@ -110,12 +110,15 @@ public:
         //Is the individual being isolated?
         bool InIsolation() const { return m_isolated; }
 
-        /// Daily update of the isolation status, health status and presence in contact pools.
-        void Update(bool isRegularWeekday, bool isK12SchoolOff, bool isCollegeOff,
+        /// Daily update of the isolation status and presence in contact pools.
+        void UpdatePresence(bool isRegularWeekday, bool isK12SchoolOff, bool isCollegeOff,
         		bool isHouseholdClusteringAllowed,
         		bool isIsolatedFromHousehold, 
 				util::RnHandler& rnHandler,
                 unsigned short int simDay, bool run_simplified);
+
+        /// Daily update of the health status.
+		void UpdateHealth();
                 
         /// Set the age of the person
         void SetAge(unsigned int newAge) { m_age = newAge; }

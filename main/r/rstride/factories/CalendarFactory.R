@@ -543,9 +543,24 @@ replace_calendar_value <- function(file_name,db_category,value_orig,value_new,sh
   # save as csv 
   write.table(d_calendar_all,
               file = file_name,sep=',',row.names=F,quote=F)
+}
+
+exclude_calendar_category <- function(file_name,db_category,show_plots=FALSE){
   
+  # read calendar file
+  d_calendar_all <- data.table(read.table(file=file_name,sep=',',header=T))
   
+  # remove category (if present)
+  d_calendar_all <- d_calendar_all[category != db_category,]
   
+  # explore
+  plot_calendar(dt_calendar            = d_calendar_all,
+                filename_calendar_full = file_name,
+                show_plots             = show_plots)
+  
+  # save as csv 
+  write.table(d_calendar_all,
+              file = file_name,sep=',',row.names=F,quote=F)
 }
 
 # create calendar file comparable to the original lockdown/exit parameter structure
@@ -638,7 +653,7 @@ include_temporal_distancing_factors <- function(db_category,db_values_char,db_de
   if(!any(is.na(vector_input_param)) & all(vector_input_param != "NA"))
   {
    
-  # make sure input prameters are "character" types
+  # make sure input parameters are "character" types
   db_values_char <- c_str(db_values_char)
   db_delay_char  <- c_str(db_delay_char)
   db_dates_char  <- paste(db_dates_char)

@@ -88,6 +88,17 @@ void Sim::TimeStep()
         double community_distancing_factor = m_calendar->GetCommunityDistancingFactor();
         double collectivity_distancing_factor = m_calendar->GetCollectivityDistancingFactor();
 
+        // Update Health before introducing new cases (infected on simDay)
+#pragma omp parallel num_threads(m_num_threads)
+        {
+        	const auto thread_num = static_cast<unsigned int>(omp_get_thread_num());
+#pragma omp for schedule(static)
+        	for (size_t i = 0; i < population.size(); ++i) {
+        		population[i].UpdateHealth();
+
+			}
+		} // end pragma openMP
+
         // Import infected cases into the population
         if(m_calendar->GetNumberOfImportedCases() > 0){
         	DiseaseSeeder(m_config, m_rn_man).ImportInfectedCases(m_population, m_calendar->GetNumberOfImportedCases(), simDay, m_transmission_profile, m_rn_handlers[0]);
@@ -129,7 +140,7 @@ void Sim::TimeStep()
                 }
                 else { isK12SchoolOff = isCollegeOff; }
 				// update health and presence at different contact pools
-				population[i].Update(isRegularWeekday, isK12SchoolOff, isCollegeOff,
+				population[i].UpdatePresence(isRegularWeekday, isK12SchoolOff, isCollegeOff,
 						isHouseholdClusteringAllowed,
 						m_is_isolated_from_household,
                         m_rn_handlers[thread_num], 

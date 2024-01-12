@@ -69,21 +69,14 @@ void Person::Isolate(unsigned int simDay, unsigned int from, unsigned int to)
 }
 
 //TODO: boolean args can be obtained from the calendar
-void Person::Update(bool isRegularWeekday, bool isK12SchoolOff, bool isCollegeOff,
+void Person::UpdatePresence(bool isRegularWeekday, bool isK12SchoolOff, bool isCollegeOff,
 		bool isHouseholdClusteringAllowed,
         bool isIsolatedFromHousehold,
 		util::RnHandler& rnHandler,
         unsigned short int simDay,
 		bool run_simplified)
 {
-
         UpdateEvents(simDay);
-
-		if (m_vaccine)
-			m_vaccine->AddDayToCounter();
-
-        // Update health and disease status
-        m_health.Update();
 
         if (run_simplified) {
         	m_in_pools[Id::Household]          = true;
@@ -157,6 +150,15 @@ void Person::Update(bool isRegularWeekday, bool isK12SchoolOff, bool isCollegeOf
         }
 
 } // Person::Update()
+
+void Person::UpdateHealth()
+{
+	if (m_vaccine)
+		m_vaccine->AddDayToCounter();
+
+	// Update health and disease status
+	m_health.Update();
+}
 
 bool operator>(const Person::Event& lhs, const Person::Event& rhs)
 {
