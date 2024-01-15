@@ -568,16 +568,17 @@ rrv <- function(stride_repo_dir = 'tests'){
   saveRDS(rstride_out_abc,
           file=file.path(stride_repo_dir,'regression_rstride_out_abc.rds'))
   
-  pdf(file=file.path(stride_repo_dir,'regression_rstride_summary.pdf'))
+  pdf(file=file.path(stride_repo_dir,'regression_rstride_summary.pdf'),14,7)
     plot_final_sizes(project_summary)
   dev.off()
   
   smd_print('NEW REFERENCE VALES STORED IN FOLDER:',stride_repo_dir)
 }
 
-# update the rStride reference values in the repo (note: local function for LW)
+# update the repository and local rStride reference values (note: local function for LW)
 rrv_repo <- function(){
   stride_repo_dir <- '~/Documents/university/research/stride/repo/stride_2023/main/resources/rstride_test'
   rrv(stride_repo_dir = stride_repo_dir)
+  rrv()
 }
 
