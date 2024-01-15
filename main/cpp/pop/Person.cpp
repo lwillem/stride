@@ -88,11 +88,28 @@ void Person::UpdatePresence(bool isRegularWeekday, bool isK12SchoolOff, bool isC
 			m_in_pools[Id::HouseholdCluster]   = false;
 			m_in_pools[Id::Collectivity]       = false;
 
+        } else if(m_health.IsHospitalised()){
+			m_in_pools[Id::Household]          = false;
+			m_in_pools[Id::K12School]          = false;
+			m_in_pools[Id::College]            = false;
+			m_in_pools[Id::Workplace]          = false;
+			m_in_pools[Id::PrimaryCommunity]   = false;
+			m_in_pools[Id::SecondaryCommunity] = false;
+			m_in_pools[Id::HouseholdCluster]   = false;
+			m_in_pools[Id::Collectivity]       = false;
+        } else if(InIsolation()){
+			m_in_pools[Id::Household]          = !isIsolatedFromHousehold;;
+			m_in_pools[Id::K12School]          = false;
+			m_in_pools[Id::College]            = false;
+			m_in_pools[Id::Workplace]          = false;
+			m_in_pools[Id::PrimaryCommunity]   = false;
+			m_in_pools[Id::SecondaryCommunity] = false;
+			m_in_pools[Id::HouseholdCluster]   = false;
+			m_in_pools[Id::Collectivity]       = false;
         } else {
         	   // by default: a person is at home (or in their collectivity)
         	   m_in_pools[Id::Household]          = true;
         	   m_in_pools[Id::Collectivity]       = true;
-
 
         	   // is household clustering allowed?
         	   m_in_pools[Id::HouseholdCluster]   = isHouseholdClusteringAllowed ? true : false;
@@ -112,41 +129,25 @@ void Person::UpdatePresence(bool isRegularWeekday, bool isK12SchoolOff, bool isC
         	   m_in_pools[Id::K12School] = isK12SchoolOff ? false : true;
         	   m_in_pools[Id::College]   = isCollegeOff   ? false : true;
 
-
         	   // Update presence in contact pools if symptomatic with/without isolation
         	   if (m_health.IsSymptomatic()) {
 
         		   // probability of staying home from school/work given symptoms
-        	       if(InIsolation() || rnHandler.Binomial(m_health.GetSymptomaticCntReductionWorkSchool())){
+        	       if(rnHandler.Binomial(m_health.GetSymptomaticCntReductionWorkSchool())){
 						m_in_pools[Id::K12School]          = false;
 						m_in_pools[Id::College]            = false;
 						m_in_pools[Id::Workplace]          = false;
 					}
 
 					// probability of staying home from community pools given symptoms
-					if(InIsolation() || rnHandler.Binomial(m_health.GetSymptomaticCntReductionCommunity())){
+					if(rnHandler.Binomial(m_health.GetSymptomaticCntReductionCommunity())){
 						m_in_pools[Id::PrimaryCommunity]   = false;
 						m_in_pools[Id::SecondaryCommunity] = false;
 					}
 
 					// stay home from household cluster when symptomatic
 					m_in_pools[Id::HouseholdCluster]   = false;
-
-					if(InIsolation()){
-						m_in_pools[Id::Household]          = !isIsolatedFromHousehold;
-						m_in_pools[Id::Collectivity]       = false;
-					}
-
-        	    } else if(m_health.IsHospitalised()){
-						m_in_pools[Id::Household]          = false;
-						m_in_pools[Id::K12School]          = false;
-						m_in_pools[Id::College]            = false;
-						m_in_pools[Id::Workplace]          = false;
-						m_in_pools[Id::PrimaryCommunity]   = false;
-						m_in_pools[Id::SecondaryCommunity] = false;
-						m_in_pools[Id::HouseholdCluster]   = false;
-						m_in_pools[Id::Collectivity]       = false;
-				}
+        	    }
         }
 
 } // Person::Update()

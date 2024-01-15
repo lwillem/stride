@@ -34,9 +34,10 @@ get_observed_incidence_data <- function()
   }
   
   # download files
-  hosp_ref_file  <- download_ref_file('https://epistat.sciensano.be/Data/COVID19BE_HOSP.csv')
-  cases_ref_file <- download_ref_file('https://epistat.sciensano.be/Data/COVID19BE_CASES_AGESEX.csv')
-  tests_ref_file <- download_ref_file('https://epistat.sciensano.be/Data/COVID19BE_tests.csv')
+  # note: exit server has closed
+  hosp_ref_file  <- NA #download_ref_file('https://epistat.sciensano.be/Data/COVID19BE_HOSP.csv')
+  cases_ref_file <- NA #download_ref_file('https://epistat.sciensano.be/Data/COVID19BE_CASES_AGESEX.csv')
+  tests_ref_file <- NA #download_ref_file('https://epistat.sciensano.be/Data/COVID19BE_tests.csv')
   
   # if any download failed => use defaults
   if(any(is.na(c(hosp_ref_file,cases_ref_file,tests_ref_file)))){

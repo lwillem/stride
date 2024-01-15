@@ -146,7 +146,7 @@ exp_design_hhcl <- exp_design_base
 exp_design_hhcl$population_file       <- 'pop_belgium600k_c500_teachers_censushh_extended3_size2.csv'
 exp_design_hhcl$holidays_file         <- 'calendar_belgium_2020_covid19_exit_schoolcategory_adjusted.csv'
 # exp_design_hhcl$holidays_file         <- 'calendar_belgium_2020_covid19_exit_schoolcategory_adjusted_hhclustering.csv' # hardcoded ratio of 4/7
-exp_design_hhcl$start_date            <- '2020-06-01'
+exp_design_hhcl$start_date            <- '2020-05-31'
 exp_design_hhcl$household_clustering_ratio <- 4/7
 exp_design_hhcl$household_clustering_delay <- 0
 exp_design_hhcl$household_clustering_date <- '2020-06-01'
@@ -157,7 +157,7 @@ exp_design_hhcl$gtester_label         <- 'covid_hhcl'
 exp_design_cts <- exp_design_base
 exp_design_cts$detection_probability        <- 0.5
 exp_design_cts$holidays_file                <- 'calendar_belgium_2020_covid19_exit_schoolcategory_adjusted.csv'
-exp_design_cts$start_date                   <- '2020-06-01'
+exp_design_cts$start_date                   <- '2020-05-31'
 exp_design_cts$tracing_efficiency_household <- 1.0
 exp_design_cts$tracing_efficiency_other     <- 0.7
 exp_design_cts$test_false_negative          <- 0.1
