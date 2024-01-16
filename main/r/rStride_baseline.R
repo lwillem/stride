@@ -57,17 +57,18 @@ exp_param_list$num_seeds<- 2
 exp_param_list$distancing_workplace_ratio    <- c_str(exp_param_list$distancing_workplace_ratio,0.2)
 exp_param_list$distancing_workplace_date     <- c_str(exp_param_list$distancing_workplace_date,'2020-09-01')
 exp_param_list$distancing_workplace_delay    <- c_str(exp_param_list$distancing_workplace_delay,7)
+
+exp_param_list$distancing_school_ratio       <- c_str(exp_param_list$distancing_school_ratio,0) # end school closure
+exp_param_list$distancing_school_date        <- c_str(exp_param_list$distancing_school_date,'2020-05-18')
+exp_param_list$distancing_school_delay       <- c_str(exp_param_list$distancing_school_delay,0)
+
+exp_param_list$distancing_community_ratio    <- c_str(exp_param_list$distancing_community_ratio,0.1)
+exp_param_list$distancing_community_date     <- c_str(exp_param_list$distancing_community_date,'2020-09-01')
+exp_param_list$distancing_community_delay    <- c_str(exp_param_list$distancing_community_delay,7)
  
-# exp_param_list$temporal_distancing_community      <- c_str(0.70,0.4,0.8)
-# exp_param_list$dates_distancing_community         <- c_str('2020-05-01','2020-08-15','2020-10-01','2020-11-01')
-# 
-# exp_param_list$temporal_imported_cases          <- c_str(0,1,1,0)
-# exp_param_list$dates_imported_cases             <- c_str('2020-06-01','2020-07-31','2020-08-01','2020-08-31','2020-09-01')
-# exp_param_list$num_daily_imported_cases         <- 50
-# 
-# exp_param_list$cnt_reduction_school_exit           <- 0.8
-# exp_param_list$cnt_reduction_school_exit_secondary <- 0.1
-# exp_param_list$cnt_reduction_school_exit_tertiary  <- 0.6
+exp_param_list$imported_cases_number         <- 10
+exp_param_list$imported_cases_date           <- '2020-08-25'
+exp_param_list$imported_cases_delay          <- 5
 
 # check period
 range(as.Date(exp_param_list$start_date), as.Date(exp_param_list$start_date)+ exp_param_list$num_days)

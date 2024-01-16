@@ -1,7 +1,7 @@
 ############################################################################ #
 #  This file is part of the Stride software. 
 #
-#  Copyright 2023, Willem L
+#  Copyright 2024
 ############################################################################ #
 #
 # TO CREATE CALENDAR FILE(S) FOR 2019-2021
@@ -9,7 +9,7 @@
 # CONTAINING:
 # 1. Public and school holidays
 # 2. Contact reductions (covid19)
-#       * pre-, primairy and secondary school
+#       * pre-, primary and secondary school
 #       * workplace
 #       * community
 #       * household clusters
@@ -335,8 +335,7 @@ create_calendar_file <- function(file_name_tag='2020_2021',show_plots = FALSE,fi
   return(filename_calendar_full)
 }
 
-# note: variable "b_school_repopening" is not used anymore... but still here for backward compatibility
-plot_calendar <- function(dt_calendar, filename_calendar_full, show_plots = TRUE, b_school_repopening=TRUE){
+plot_calendar <- function(dt_calendar, filename_calendar_full, show_plots = TRUE){
   
   if(show_plots){
     
@@ -380,30 +379,6 @@ plot_calendar <- function(dt_calendar, filename_calendar_full, show_plots = TRUE
       
       i_cat <- "schools_closed"
 
-      # convert value into numeric factors (to use as color)
-      value_levels            <- c(unique(dt_calendar[category == i_cat & value > 0,'value']))
-      dt_calendar$value_level <- factor(dt_calendar$value,levels=unlist(value_levels))
-      dt_calendar$value_col   <- as.numeric(dt_calendar$value_level)
-      
-      plot(x   = dt_calendar[category == i_cat,date],
-           y   = dt_calendar[category == i_cat,value],
-           xlim = x_lim,
-           ylim = range(0,1,dt_calendar$value[dt_calendar$category == i_cat]),
-           col  = dt_calendar[category == i_cat,value_col],
-           #type='l',
-           pch  = 15,
-           #lwd=2,
-           main = i_cat,
-           bty='n',
-           xlab = '',
-           ylab = unique(dt_calendar[category == i_cat,type]),
-           xaxt = 'n'
-      )
-      add_x_axis(x_lim)
-      abline(h=1,lty=3,col='grey')
-      
-     
-      
       # plot by age
       plot(x   = dt_calendar[category == i_cat & value == 1,date],
            y   = dt_calendar[category == i_cat & value == 1,age],
@@ -416,11 +391,6 @@ plot_calendar <- function(dt_calendar, filename_calendar_full, show_plots = TRUE
            xlab = '',
            ylab = 'age',
            xaxt = 'n'
-      )
-      points(x    = dt_calendar[category == i_cat ,date],
-             y    = dt_calendar[category == i_cat ,age],
-             col  = dt_calendar[category == i_cat ,value_col],
-             pch  = 15
       )
       add_x_axis(x_lim)
     }
@@ -438,7 +408,8 @@ plot_calendar <- function(dt_calendar, filename_calendar_full, show_plots = TRUE
 #                         c('2020-05-02',0.85),
 # c('2020-05-03',0.75)); db_cat <- "workplace_distancing";db_age = 'NA'; file_name <- "sim_output/calendar_belgium_wp_fitting_covid19.csv"
 # db_category =  "workplace_distancing";db_update = dcal_wp_distancing; file_name = dcal_file
-adjust_calendar_file <- function(db_category, db_update, file_name, db_age = 'NA', show_plots=FALSE){
+adjust_calendar_file <- function(db_category, db_update, file_name, db_age = 'NA', show_plots=FALSE,
+                                 erase_category = TRUE){
   
   # file_name fix, exclude '../'
   file_name <- gsub('\\.\\.','\\.',file_name)
@@ -469,30 +440,30 @@ adjust_calendar_file <- function(db_category, db_update, file_name, db_age = 'NA
     return(NA)
   }
   
+  # remove existing values of this category?
+  if(erase_category){
+    d_calendar_all <- d_calendar_all[category != db_category,]
+  }
   
   # create data.frame with all information to extrapolate
   df_update  <- data.frame(t(db_update))
   date_out   <- seq(min(as.Date(df_update[,1])),max(as.Date(df_update[,1])),1)
   date_out   <- date_out[date_out<=max(d_calendar_all$date)]
   
-  # # if db_category is not present yet, extend first value
-  # if(!db_category %in% unique(d_calendar_all$category)){
-  #   df_update       <- df_update[c(1,1:nrow(df_update)),]
-  #   df_update$V1[1] <- min(d_calendar_all$date)
-  #   date_out        <- sort(unique(d_calendar_all$date))
-  # }
-
   # extrapolate given dates and values
-  #date_out   <- date_out[date_out<=as.Date("2021-12-31")]
   df_update_full  <- approx(x=as.Date(df_update[,1]),
                             y=df_update[,2],
                             xout = as.Date(date_out),
                             method="linear")
   names(df_update_full) <- c('date','value')
 
+  # exclude '0'
+  df_update_full$date  <- df_update_full$date[df_update_full$value != 0]
+  df_update_full$value <- df_update_full$value[df_update_full$value != 0]
+  
   # integrate (new) values in calendar
   for(i_db_age in as.character(db_age)){
-    # remove old values (if any)
+    # remove existing values for these dates and ages (if any)
     d_calendar_all <- d_calendar_all[!(as.character(date) %in% as.character(df_update_full$date) &
                                        category == db_category &
                                        age_char == i_db_age),]
@@ -511,7 +482,7 @@ adjust_calendar_file <- function(db_category, db_update, file_name, db_age = 'NA
   # check
   d_calendar_all[as.character(date) %in% as.character(df_update_full$date) &
                    category == db_category &
-                   age_char == db_age]
+                   age_char %in% db_age]
   
   # explore
   plot_calendar(dt_calendar            = d_calendar_all,
@@ -564,7 +535,9 @@ exclude_calendar_category <- function(file_name,db_category,show_plots=FALSE){
 }
 
 # create calendar file comparable to the original lockdown/exit parameter structure
-integrate_lockdown_parameters_into_calendar <- function(config_exp){
+# note: erase_category is a boolean to remove existing values of the given categories 
+integrate_lockdown_parameters_into_calendar <- function(config_exp,
+                                                        erase_category = TRUE){
 
   # if there are not distancing parameters, return original config_exp
   param_calendar <- config_exp[grepl('cnt_reduction_workplace',names(config_exp)) |   # OR colname contains reduction_workplace
@@ -598,7 +571,19 @@ integrate_lockdown_parameters_into_calendar <- function(config_exp){
                                         db_delay_char  = config_exp$distancing_workplace_delay,
                                         file_name      = config_exp$holidays_file,
                                         show_plots     = T,
-                                        db_dates_char  = config_exp$distancing_workplace_date)
+                                        db_dates_char  = config_exp$distancing_workplace_date,
+                                        erase_category = erase_category)
+  }
+  
+  if('distancing_school_ratio' %in% names(config_exp)){
+    include_temporal_distancing_factors(db_category    = 'schools_closed',
+                                        db_values_char = config_exp$distancing_school_ratio,
+                                        db_age_char    = c_str(0:25),
+                                        db_delay_char  = config_exp$distancing_school_delay,
+                                        file_name      = config_exp$holidays_file,
+                                        show_plots     = T,
+                                        db_dates_char  = config_exp$distancing_school_date,
+                                        erase_category = FALSE)
   }
   
   if('distancing_community_ratio' %in% names(config_exp)){
@@ -607,7 +592,8 @@ integrate_lockdown_parameters_into_calendar <- function(config_exp){
                                         db_delay_char  = config_exp$distancing_community_delay,
                                         file_name      = config_exp$holidays_file,
                                         show_plots     = T,
-                                        db_dates_char  = config_exp$distancing_community_date)
+                                        db_dates_char  = config_exp$distancing_community_date,
+                                        erase_category = erase_category)
   }
   
   if('distancing_collectivity_ratio' %in% names(config_exp)){
@@ -616,7 +602,8 @@ integrate_lockdown_parameters_into_calendar <- function(config_exp){
                                         db_delay_char  = config_exp$distancing_collectivity_delay,
                                         file_name      = config_exp$holidays_file,
                                         show_plots     = T,
-                                        db_dates_char  = config_exp$distancing_collectivity_date)
+                                        db_dates_char  = config_exp$distancing_collectivity_date,
+                                        erase_category = erase_category)
   }
   
   if('imported_cases_number' %in% names(config_exp)){
@@ -625,7 +612,8 @@ integrate_lockdown_parameters_into_calendar <- function(config_exp){
                                         db_delay_char  = config_exp$imported_cases_delay,
                                         file_name      = config_exp$holidays_file,
                                         show_plots     = T,
-                                        db_dates_char  = config_exp$imported_cases_date)
+                                        db_dates_char  = config_exp$imported_cases_date,
+                                        erase_category = erase_category)
   }
   
   if('household_clustering_ratio' %in% names(config_exp)){
@@ -634,7 +622,8 @@ integrate_lockdown_parameters_into_calendar <- function(config_exp){
                                         db_delay_char  = config_exp$household_clustering_delay,
                                         file_name      = config_exp$holidays_file,
                                         show_plots     = T,
-                                        db_dates_char  = config_exp$household_clustering_date)
+                                        db_dates_char  = config_exp$household_clustering_date,
+                                        erase_category = erase_category)
   }
   
   # # fix for calendar path
@@ -646,7 +635,10 @@ integrate_lockdown_parameters_into_calendar <- function(config_exp){
 
 # db_category <- 'distancing_workplace'
 # db_values <- seq(0.8,0.9,length=12)
-include_temporal_distancing_factors <- function(db_category,db_values_char,db_delay_char,file_name,show_plots=T,db_dates_char=NA){
+include_temporal_distancing_factors <- function(db_category,db_values_char,db_age_char = NA,
+                                                db_delay_char,file_name,show_plots=T,
+                                                db_dates_char=NA,
+                                                erase_category = TRUE){
   
   # check input parameters
   vector_input_param <- c(db_category,db_values_char,db_delay_char,db_dates_char)
@@ -663,6 +655,12 @@ include_temporal_distancing_factors <- function(db_category,db_values_char,db_de
   db_delay  <- as.numeric(unlist(strsplit(db_delay_char,',')))
   db_dates  <- as.Date(unlist(strsplit(db_dates_char,',')))
   
+  if(!all(is.na(db_age_char))){
+    db_age  <- as.numeric(unlist(strsplit(db_age_char,',')))
+  } else {
+    db_age  <- as.numeric(db_age_char)
+  }
+    
   # account for delay == 0 by using "db_date-1" and "delay 1" 
   bool_delay_zero <- db_delay == 0
   if(any(bool_delay_zero)){
@@ -679,13 +677,15 @@ include_temporal_distancing_factors <- function(db_category,db_values_char,db_de
   db_dates  <- db_dates[order(as.Date(db_dates))]
   
   # add right tail
-  db_dates  <- c(db_dates,db_dates[length(db_dates)]+365)
+  db_dates  <- c(db_dates,db_dates[length(db_dates)]+365*2)
   db_values <- c(db_values,db_values[length(db_values)])
   
   adjust_calendar_file(db_category = db_category,
                        db_update   = rbind(as.character(db_dates),db_values),
+                       db_age      = db_age,
                        file_name   = file_name,
-                       show_plots  = T)
+                       show_plots  = TRUE,
+                       erase_category = erase_category)
   
   } # end if-clause on is.na
 }

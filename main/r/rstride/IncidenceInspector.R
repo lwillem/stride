@@ -112,91 +112,30 @@ inspect_incidence_data <- function(project_dir, bool_add_param=TRUE)
   dev.off()
   #--------------------------#
   
-  
-  ## R0     ####
-  # add R0 to input opt design if not present
-  if(any(is.null(input_opt_design$r0))){ 
-    input_opt_design$r0 <- unique(project_summary$r0)
-    
-  }
-  
-  ## PER R0: plot temporal patterns
-  input_opt_design$r0 <- round(input_opt_design$r0,digits=1)
-  opt_r0 <- unique(input_opt_design$r0)
-  if(length(opt_r0)>0){
-    .rstride$create_pdf(project_dir,'incidence_R0',width = 6, height = 7)
-    par(mfrow=c(4,1))
-    
-    
-    i_r0 <- opt_r0[1]
-    for(i_r0 in opt_r0){
-      
-      # select config_id
-      opt_config_id <- unique(input_opt_design$config_id[input_opt_design$r0 ==  i_r0])
-
-      # select subset
-      if(is.null(opt_config_id)){
-        data_incidence_sel <- data_incidence_all
-      } else{
-        data_incidence_sel <- data_incidence_all[data_incidence_all$config_id %in% opt_config_id,]
-      }
-      dim(data_incidence_sel)
-      
-      # check selection
-      if(nrow(data_incidence_sel)>0){
-        # plot
-        plot_incidence_data(data_incidence_sel,project_summary,
-                            hosp_adm_data,input_opt_design,prevalence_ref,
-                            bool_add_param)
-      }
-    }
-    
-    # close pdf
-    dev.off()
-  }
-  
-  ## ALL TOGETHER (PDF) ####
+  # ## ALL SCENARIOS (PDF) ####
   .rstride$create_pdf(project_dir,'incidence_all',width = 6, height = 2.5)
   par(mar=c(3,5,1,3))
+  
   plot_incidence_data(data_incidence_all,project_summary,
                       hosp_adm_data,input_opt_design,prevalence_ref,
-                      bool_add_param,bool_only_hospital_adm = TRUE) 
-  dev.off()
-  
-  # all => polygon
-  .rstride$create_pdf(project_dir,'incidence_reproduction',width = 5, height = 5)
+                      bool_add_param,bool_only_hospital_adm = TRUE)
+  # polygon
   plot_incidence_reproduction(data_incidence = data_incidence_all,
                               hosp_adm_data = hosp_adm_data,
                               scen_color = 1)
   dev.off()
   
-  ## ALL TOGETHER (JPEG) ####
-  .rstride$create_jpg(project_dir,'incidence_all',width = 6, height = 2.5)
-  par(mar=c(3,5,1,5))
-  plot_incidence_data(data_incidence_all,project_summary,
-                      hosp_adm_data,input_opt_design,prevalence_ref,
-                      bool_add_param,bool_only_hospital_adm = TRUE) 
-  dev.off()
-  
-  # all => polygon
-  .rstride$create_jpg(project_dir,'incidence_reproduction',width = 5, height = 4)
-  plot_incidence_reproduction(data_incidence = data_incidence_all,
-                              hosp_adm_data = hosp_adm_data,
-                              scen_color = 1)
-  dev.off()
-  
-  ## ALL TOGETHER: NO PARAM ####
-  .rstride$create_pdf(project_dir,'incidence_no_param',width = 6, height = 2.5)
-  par(mar=c(3,5,1,3))
-
-  # plot
-  plot_incidence_data(data_incidence_all,project_summary,
-                      hosp_adm_data,input_opt_design,prevalence_ref,
-                      bool_add_param = FALSE,
-                      bool_only_hospital_adm = FALSE) 
-  
-  # close pdf
-  dev.off()
+  # ## ALL SCENARIOS (JPEG) ####
+  # .rstride$create_jpg(project_dir,'incidence_all',width = 6, height = 2.5)
+  # par(mar=c(3,5,1,5))
+  # plot_incidence_data(data_incidence_all,project_summary,
+  #                     hosp_adm_data,input_opt_design,prevalence_ref,
+  #                     bool_add_param,bool_only_hospital_adm = TRUE) 
+  # # all => polygon
+  # plot_incidence_reproduction(data_incidence = data_incidence_all,
+  #                             hosp_adm_data = hosp_adm_data,
+  #                             scen_color = 1)
+  # dev.off()
   
   ## PARETO ENSEMBLE
   filename_summary_score <- file.path(project_dir,paste0(basename(project_dir),'_poison_neg_loglikelihood_scores.RData'))
@@ -215,24 +154,19 @@ inspect_incidence_data <- function(project_dir, bool_add_param=TRUE)
     plot_incidence_data(data_incidence_sel,project_summary,
                         hosp_adm_data,input_opt_design,prevalence_ref,
                         bool_add_param,bool_only_hospital_adm = FALSE) 
-    dev.off()
-    
-    # hospital admissions
-    .rstride$create_pdf(project_dir,'incidence_pareto_hosp',width = 6, height = 2.5)
+ 
+     # hospital admissions
     par(mar=c(3,5,1,3))
     plot_incidence_data(data_incidence_sel,project_summary,
                         hosp_adm_data,input_opt_design,prevalence_ref,
                         bool_add_param,bool_only_hospital_adm = TRUE) 
-    dev.off()
-    
+  
     # polygon
-    .rstride$create_pdf(project_dir,'incidence_pareto_reproduction',width = 5, height = 5)
     plot_incidence_reproduction(data_incidence = data_incidence_sel,
                                 hosp_adm_data = hosp_adm_data,
                                 scen_color = 1)
     dev.off()
-    
-    
+
   }
   
   ## AGE-SPECIFIC PLOTS ####
@@ -506,14 +440,14 @@ add_breakpoints <- function(bool_text=TRUE){
   # # add today
   # add_vertical_line(Sys.Date())
   
-  # add scenario date (exit wave 1)
-  add_vertical_line("2020-05-04",bool_text, "B2B")
-  
-  # add scenario date (exit wave 2)
-  add_vertical_line("2020-05-18",bool_text, 'School')
-  
-  # add scenario date (exit wave 3)
-  add_vertical_line("2020-05-25",bool_text, 'Community')
+  # # add scenario date (exit wave 1)
+  # add_vertical_line("2020-05-04",bool_text, "B2B")
+  # 
+  # # add scenario date (exit wave 2)
+  # add_vertical_line("2020-05-18",bool_text, 'School')
+  # 
+  # # add scenario date (exit wave 3)
+  # add_vertical_line("2020-05-25",bool_text, 'Community')
   
   # add scenario date (summer holiday)
   add_vertical_line("2020-07-01",bool_text,'Holiday')
