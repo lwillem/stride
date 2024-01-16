@@ -1,0 +1,5 @@
+<disease>
+	<description>Model parameters of aiborne transmission through COVID-19 - data from PNAS paper</description>
+	<k>1</k>
+	<delta>0.226</delta>
+</disease>

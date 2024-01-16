@@ -300,6 +300,7 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
         const std::string& location = values[2];
         const auto day_week = static_cast<unsigned int>(IntFromString(values[3]));
         const auto duration = static_cast<unsigned int>(IntFromString(values[4]));
+        const auto air_mass = static_cast<double>(DoubleFromString(values[5]));
 
                   
                 ContactType::Id typ = ToId(location);
@@ -325,6 +326,7 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
                 Person* p=id_pointer_persons[person_id];
                                
                 if (subpool_id > 0) {
+                pop->RefPoolSys().RefPools(typ)[subpool_id].SetAirMass(air_mass)
                 pop->RefPoolSys().RefPools(typ)[subpool_id].SetDayWeek(day_week);
                 pop->RefPoolSys().RefPools(typ)[subpool_id].AddMember(p);
                 }

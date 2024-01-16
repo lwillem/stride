@@ -83,6 +83,12 @@ public:
         // change the day of week of the pool
         void SetDayWeek(unsigned int dayWeek) { m_day_week = dayWeek; }
 
+        // Get the air mass of the pool
+        double GetAirMass() const {return m_air_mass;} 
+
+        // change the air mass of the pool
+        void SetAirMass(double airMass) { m_air_mass = airMass; }
+
 public:
         // To iterate over the members.
         using iterator = std::vector<stride::Person*>::iterator;

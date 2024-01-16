@@ -1,15 +1,15 @@
 <ventilation_reduction>
 	<description>Reduction of infection transmission through ventilation - self-made figures</description>
-	<Household>0</Household>
-	<K12School>0</K12School>
-	<College>0</College>
-	<Workplace>0</Workplace>
-	<PrimaryCommunity>0</PrimaryCommunity>
-	<SecondaryCommunity>0</SecondaryCommunity>
-	<HouseholdCluster>0</HouseholdCluster>
-	<Collectivity>0</Collectivity>
-	<OtherHouse>0</OtherHouse>
-	<RestoCafe>0</RestoCafe>
-	<OtherPlace>0</OtherPlace>
-	<Transport>0</Transport>
+	<Household>0.1</Household>
+	<K12School>0.1</K12School>
+	<College>0.1</College>
+	<Workplace>0.1</Workplace>
+	<PrimaryCommunity>0.1</PrimaryCommunity>
+	<SecondaryCommunity>0.1</SecondaryCommunity>
+	<HouseholdCluster>0.1</HouseholdCluster>
+	<Collectivity>0.1</Collectivity>
+	<OtherHouse>0.1</OtherHouse>
+	<RestoCafe>0.1</RestoCafe>
+	<OtherPlace>0.1</OtherPlace>
+	<Transport>0.1</Transport>
 </ventilation_reduction>
