@@ -52,7 +52,7 @@ void ImmunitySeeder::Seed(std::shared_ptr<Population> pop)
 
         const auto vaccinationProfile = m_config.get<std::string>("run.vaccine_profile");
         if(vaccinationProfile == "Teachers"){
-        	Vaccinate("vaccine", "Random", pop->CRefPoolSys().CRefPools<Id::K12School>(),pop);
+        	Vaccinate("vaccine", "Random", pop->CRefPoolSys().CRefPools<Id::School>(),pop);
         } else {
         	Vaccinate("vaccine", vaccinationProfile, pop->CRefPoolSys().CRefPools<Id::Household>(),pop);
         }

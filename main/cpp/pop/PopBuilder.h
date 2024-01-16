@@ -56,8 +56,6 @@ public:
 private:
         /// Generates pop's individuals and return pop.
         std::shared_ptr<Population> MakePersons(std::shared_ptr<Population> pop);
-        /// Optimized implementation of MakePersons
-        std::shared_ptr<Population> MakePersonsOpt(std::shared_ptr<Population> pop);
 
         const boost::property_tree::ptree& m_config;        ///< Configuration property tree.
         std::shared_ptr<spdlog::logger>    m_stride_logger; /// Logger for build process.

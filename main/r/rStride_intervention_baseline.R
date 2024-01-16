@@ -38,9 +38,10 @@ get_covid19_default_param <- function(){
                 population_file               = "pop_belgium11M_c500_teachers_censushh.csv",
                 age_contact_matrix_file       = "contact_matrix_flanders_conditional_teachers.xml",
                
-               # update 2024-01-12: shifted from 17/2 to 16/2 because infected cases are now introduced on day 0 instead of -1 
+                # update 2024-01-12: shifted from 17/2 to 16/2 because infected cases are now introduced on day 0 instead of -1 
                 start_date                    = '2020-02-16', 
-                holidays_file                 = 'calendar_belgium_2020_covid19_exit_school_adjusted.csv',
+                # holidays_file                 = 'calendar_belgium_2020_covid19_exit_school_adjusted.csv',
+                holidays_file                 = 'calendar_belgium_2019_2021.csv',
                 # cnt_reduction_workplace       = 0.86,
                 # cnt_reduction_other           = 0.85,
                 # compliance_delay_workplace    = 7,
@@ -97,6 +98,10 @@ get_covid19_default_param <- function(){
    out$distancing_community_ratio        <- c_str(cnt_reduction_other)
    out$distancing_community_date         <- c_str(paste(date_t0))
    out$distancing_community_delay        <- c_str(7)
+   
+   out$distancing_school_ratio        <- 1
+   out$distancing_school_date         <- paste(date_t0) 
+   out$distancing_school_delay        <- 1 # school closure did not start on Friday 13/3.
    
    # number of parallel workers (on UA cluster)
    out$num_parallel_workers <- 50

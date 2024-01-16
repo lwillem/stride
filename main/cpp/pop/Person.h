@@ -61,10 +61,10 @@ public:
         m_isolated(false), m_events() {}
 
         /// Constructor: set the person data.
-        Person(unsigned int id, float age, unsigned int householdId, unsigned int k12SchoolId, unsigned int collegeId,
+        Person(unsigned int id, float age, unsigned int householdId, unsigned int k12SchoolId,
                unsigned int workId, unsigned int primaryCommunityId, unsigned int secondaryCommunityId, unsigned int householdClusterId,
 			   unsigned int collectivityId)
-            : m_age(age), m_id(id), m_vaccine(), m_pool_ids{householdId, k12SchoolId,        collegeId,
+            : m_age(age), m_id(id), m_vaccine(), m_pool_ids{householdId, k12SchoolId,
                                                workId,      primaryCommunityId, secondaryCommunityId,
 											   householdClusterId, collectivityId},
 			  m_individual_contact_factor(1.0),
@@ -111,7 +111,7 @@ public:
         bool InIsolation() const { return m_isolated; }
 
         /// Daily update of the isolation status and presence in contact pools.
-        void UpdatePresence(bool isRegularWeekday, bool isK12SchoolOff, bool isCollegeOff,
+        void UpdatePresence(bool isRegularWeekday, bool isSchoolOff,
         		bool isHouseholdClusteringAllowed,
         		bool isIsolatedFromHousehold, 
 				util::RnHandler& rnHandler,

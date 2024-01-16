@@ -90,10 +90,10 @@ std::shared_ptr<Population> Population::Create()
 }
 
 Person* Population::CreatePerson(unsigned int id, double age, unsigned int householdId, unsigned int k12SchoolId,
-                                 unsigned int college, unsigned int workId, unsigned int primaryCommunityId,
+                                 unsigned int workId, unsigned int primaryCommunityId,
                                  unsigned int secondaryCommunityId, unsigned int householdClusterId, unsigned int collectivityId)
 {
-        return emplace_back(id, age, householdId, k12SchoolId, college, workId, primaryCommunityId,
+        return emplace_back(id, age, householdId, k12SchoolId, workId, primaryCommunityId,
                             secondaryCommunityId, householdClusterId, collectivityId);
 }
 

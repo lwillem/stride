@@ -65,7 +65,7 @@ void Sim::TimeStep()
 
         // Logic where you compute (on the basis of input/config for initial day or on the basis of
         // number of sick persons, duration of epidemic etc) what kind of DaysOff scheme you apply.
-        const bool isRegularWeekday     = m_calendar->IsRegularWeekday();
+        const bool isRegularWeekday                = m_calendar->IsRegularWeekday();
         const bool isHouseholdClusteringAllowed    = m_calendar->IsHouseholdClusteringAllowed();
 
 		// To be used in update of population & contact pools.
@@ -91,7 +91,6 @@ void Sim::TimeStep()
         // Update Health before introducing new cases (infected on simDay)
 #pragma omp parallel num_threads(m_num_threads)
         {
-        	const auto thread_num = static_cast<unsigned int>(omp_get_thread_num());
 #pragma omp for schedule(static)
         	for (size_t i = 0; i < population.size(); ++i) {
         		population[i].UpdateHealth();
@@ -105,42 +104,32 @@ void Sim::TimeStep()
             logger->info("[IMPORT-CASES] sim_day={} count={}", simDay, m_calendar->GetNumberOfImportedCases());        	
         }
 
-        // For each age, check school and college closing
+        // For each age, check school closing
         unsigned int maxAge = population.GetMaxAge();
-        std::vector<bool> areCollegesOff(maxAge + 1);
+        std::vector<bool> areSchoolsOff(maxAge + 1);
         for (unsigned int age = 0; age <= maxAge; age++) {
-            bool isCollegeOff   = m_calendar->IsSchoolClosed(age);
-            areCollegesOff[age] = isCollegeOff;
+            areSchoolsOff[age] = m_calendar->IsSchoolClosed(age);
         }
 
 #pragma omp parallel num_threads(m_num_threads)
         {
         	const auto thread_num = static_cast<unsigned int>(omp_get_thread_num());
-			// Update health status and presence/absence in contact pools
+			// Update presence/absence in contact pools
 			// depending on health status, work/school day and whether
 			// we want to track index cases without adaptive behavior
 #pragma omp for schedule(static)
 			for (size_t i = 0; i < population.size(); ++i) {
 
-				// adjust K12SchoolOff boolean to school type for individual 'i'
-//				bool isK12SchoolOff = m_public_health_agency.IsK12SchoolOff(population[i].GetAge(),
-//						m_calendar->IsSchoolClosed(0), //isPreSchoolOff,
-//						m_calendar->IsSchoolClosed(6), //isPrimarySchoolOff,
-//						m_calendar->IsSchoolClosed(11), //isSecondarySchoolOff,
-//						m_calendar->IsSchoolClosed(20)); //isCollegeOff);
-
                 unsigned int school_age = population[i].GetAge();
-                bool isCollegeOff = areCollegesOff[school_age];
-                bool isK12SchoolOff;
-                // adjust K12SchoolOff boolean to school type for individual 'i'
-                unsigned int school_id = population[i].GetPoolId(ContactType::Id::K12School);
+                bool isSchoolOff = false;
+                // adjust SchoolOff boolean to school type for individual 'i'
+                unsigned int school_id = population[i].GetPoolId(ContactType::Id::School);
                 if(school_id>0){
-                    school_age = poolSys.RefPools(ContactType::Id::K12School)[school_id].GetMinAge();
-                    isK12SchoolOff = m_calendar->IsSchoolClosed(school_age);
+                    school_age = poolSys.RefPools(ContactType::Id::School)[school_id].GetMinAge();
+                    isSchoolOff = m_calendar->IsSchoolClosed(school_age);
                 }
-                else { isK12SchoolOff = isCollegeOff; }
 				// update health and presence at different contact pools
-				population[i].UpdatePresence(isRegularWeekday, isK12SchoolOff, isCollegeOff,
+				population[i].UpdatePresence(isRegularWeekday, isSchoolOff,
 						isHouseholdClusteringAllowed,
 						m_is_isolated_from_household,
                         m_rn_handlers[thread_num], 
@@ -158,8 +147,7 @@ void Sim::TimeStep()
 			// Skip pools with id = 0, because it means Not Applicable.
 			for (auto typ : ContactType::IdList) {
 					if ((typ == ContactType::Id::Workplace && !isRegularWeekday) ||
-						(typ == ContactType::Id::K12School && !isRegularWeekday) ||
-						(typ == ContactType::Id::College && !isRegularWeekday) ||
+						(typ == ContactType::Id::School && !isRegularWeekday) ||
 						(typ == ContactType::Id::HouseholdCluster && !isHouseholdClusteringAllowed)) {
 							continue;
 					}
@@ -171,7 +159,7 @@ void Sim::TimeStep()
                             // account for physical distancing in the community
                             else if (typ == ContactType::Id::PrimaryCommunity || typ == ContactType::Id::SecondaryCommunity) { typ_distancing_factor = community_distancing_factor; }
                             // account for physical distancing at school
-                            else if (typ == ContactType::Id::K12School || typ == ContactType::Id::College) { typ_distancing_factor = m_calendar->GetSchoolDistancingFactor(poolSys.RefPools(typ)[i].GetMinAge()); }
+                            else if (typ == ContactType::Id::School) { typ_distancing_factor = m_calendar->GetSchoolDistancingFactor(poolSys.RefPools(typ)[i].GetMinAge()); }
                             // account for physical distancing in the collectivity
                             else if (typ == ContactType::Id::Collectivity) { typ_distancing_factor = collectivity_distancing_factor; }
                             // account for contact intensity in household clusters

@@ -10,9 +10,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with the software. If not, see <http://www.gnu.org/licenses/>.
  *
- *  Copyright 2017, Kuylen E, Willem L, Broeckhove J
- *  Copyright 2018, Jan Broeckhove and Bistromatics group.
- *  Copyright 2019, Willem L, Kuylen E, Broeckhove J
+ *  Copyright 2024
  */
 
 /**
@@ -35,8 +33,7 @@ namespace ContactType {
 enum class Id : unsigned int
 {
         Household = static_cast<unsigned int>(0), // Needs to be zero.
-        K12School,
-        College,
+        School,
         Workplace,
         PrimaryCommunity,
         SecondaryCommunity,
@@ -69,7 +66,7 @@ struct IDPack
 
 /// Placed separately to please swig and avoid syntax errors there
 using IdPack_t =
-    IDPack<Id::Household, Id::K12School, Id::College, Id::Workplace, Id::PrimaryCommunity, Id::SecondaryCommunity, Id::HouseholdCluster, Id::Collectivity>;
+    IDPack<Id::Household, Id::School, Id::Workplace, Id::PrimaryCommunity, Id::SecondaryCommunity, Id::HouseholdCluster, Id::Collectivity>;
 
 /// A constexpr global variable that gives access to the available Ids
 constexpr IdPack_t IdPack;

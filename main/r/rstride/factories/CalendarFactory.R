@@ -84,7 +84,7 @@ create_calendar_file <- function(file_name_tag='2020_2021',show_plots = FALSE,fi
   ) -> d_school_holidays
   d_college_holidays <- copy(d_school_holidays)
   
-  # include K12 school holidays
+  # include school holidays
   d_school_holidays[date %in% c(seq(as.Date('2019-01-01'),as.Date('2019-01-06'),1), # 2019
                                 seq(as.Date('2019-03-04'),as.Date('2019-03-10'),1),
                                 seq(as.Date('2019-04-08'),as.Date('2019-04-22'),1),
@@ -144,7 +144,7 @@ create_calendar_file <- function(file_name_tag='2020_2021',show_plots = FALSE,fi
                           seq(as.Date('2022-12-26'),as.Date('2022-12-31'),1)),
              value    := 1.0]
   
-  #K12 school
+  # School
   tmp_school_holidays <- copy(d_school_holidays)
   tmp_school_holidays[,category:='schools_closed']
   for(i_age in 0:17){
@@ -757,7 +757,7 @@ create_new_cnt_calendar_file <- function(file_name, config_exp, end_date="2021-1
   # Add school holidays if requested
   if (school_holidays) {
     smd_print("Including school holidays...")
-    # include K12 school holidays
+    # include school holidays
     d_school_holidays[date %in% c(seq(as.Date('2020-01-01'),as.Date('2020-01-05'),1), # 2020
                                   seq(as.Date('2020-02-24'),as.Date('2020-02-29'),1),
                                   seq(as.Date('2020-04-06'),as.Date('2020-04-19'),1),
@@ -825,7 +825,7 @@ create_new_cnt_calendar_file <- function(file_name, config_exp, end_date="2021-1
                        value    := 1.0]
   }
 
-  # K12 school
+  # School
   tmp_school_holidays <- copy(d_school_holidays)
   tmp_school_holidays[,category:='schools_closed']
   for (i_age in 0:11) {

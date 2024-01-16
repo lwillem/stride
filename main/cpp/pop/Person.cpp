@@ -69,7 +69,7 @@ void Person::Isolate(unsigned int simDay, unsigned int from, unsigned int to)
 }
 
 //TODO: boolean args can be obtained from the calendar
-void Person::UpdatePresence(bool isRegularWeekday, bool isK12SchoolOff, bool isCollegeOff,
+void Person::UpdatePresence(bool isRegularWeekday, bool isSchoolOff,
 		bool isHouseholdClusteringAllowed,
         bool isIsolatedFromHousehold,
 		util::RnHandler& rnHandler,
@@ -80,8 +80,7 @@ void Person::UpdatePresence(bool isRegularWeekday, bool isK12SchoolOff, bool isC
 
         if (run_simplified) {
         	m_in_pools[Id::Household]          = true;
-        	m_in_pools[Id::K12School]          = true;
-			m_in_pools[Id::College]            = true;
+        	m_in_pools[Id::School]             = true;
 			m_in_pools[Id::Workplace]          = true;
 			m_in_pools[Id::PrimaryCommunity]   = true;
 			m_in_pools[Id::SecondaryCommunity] = true;
@@ -90,8 +89,7 @@ void Person::UpdatePresence(bool isRegularWeekday, bool isK12SchoolOff, bool isC
 
         } else if(m_health.IsHospitalised()){
 			m_in_pools[Id::Household]          = false;
-			m_in_pools[Id::K12School]          = false;
-			m_in_pools[Id::College]            = false;
+			m_in_pools[Id::School]             = false;
 			m_in_pools[Id::Workplace]          = false;
 			m_in_pools[Id::PrimaryCommunity]   = false;
 			m_in_pools[Id::SecondaryCommunity] = false;
@@ -99,8 +97,7 @@ void Person::UpdatePresence(bool isRegularWeekday, bool isK12SchoolOff, bool isC
 			m_in_pools[Id::Collectivity]       = false;
         } else if(InIsolation()){
 			m_in_pools[Id::Household]          = !isIsolatedFromHousehold;;
-			m_in_pools[Id::K12School]          = false;
-			m_in_pools[Id::College]            = false;
+			m_in_pools[Id::School]             = false;
 			m_in_pools[Id::Workplace]          = false;
 			m_in_pools[Id::PrimaryCommunity]   = false;
 			m_in_pools[Id::SecondaryCommunity] = false;
@@ -125,17 +122,15 @@ void Person::UpdatePresence(bool isRegularWeekday, bool isK12SchoolOff, bool isC
         	       m_in_pools[Id::SecondaryCommunity] = false;
         	   }
 
-        	   // Update presence at school and college
-        	   m_in_pools[Id::K12School] = isK12SchoolOff ? false : true;
-        	   m_in_pools[Id::College]   = isCollegeOff   ? false : true;
+        	   // Update presence at school
+        	   m_in_pools[Id::School] = isSchoolOff ? false : true;
 
         	   // Update presence in contact pools if symptomatic with/without isolation
         	   if (m_health.IsSymptomatic()) {
 
         		   // probability of staying home from school/work given symptoms
         	       if(rnHandler.Binomial(m_health.GetSymptomaticCntReductionWorkSchool())){
-						m_in_pools[Id::K12School]          = false;
-						m_in_pools[Id::College]            = false;
+						m_in_pools[Id::School]             = false;
 						m_in_pools[Id::Workplace]          = false;
 					}
 

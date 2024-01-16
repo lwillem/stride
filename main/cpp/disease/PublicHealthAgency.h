@@ -50,8 +50,6 @@ public:
         /// Public Health Strategy: look for contacts of infected cases and quarantine infected cases
 		void PerformContactTracing(std::shared_ptr<Population> pop, std::vector<util::RnHandler>& rnHandlers, const std::shared_ptr<Calendar> calendar);
 
-		bool IsK12SchoolOff(unsigned int age, bool isPreSchoolOff, bool isPrimarySchoolOff, bool isSecondarySchoolOff, bool isCollegeOff);
-
 		/// Is Contact tracing active today?
 		bool IsContactTracingActive(const std::shared_ptr<Calendar> calendar) const;
 

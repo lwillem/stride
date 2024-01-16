@@ -88,7 +88,6 @@ inspect_contact_data <- function(project_dir){
   data_cnt$cnt_sympt     <- as.numeric(data_cnt$cnt_sympt)
   
   summary(data_part)
-  data_part$college_id          <- as.numeric(data_part$college_id)
   data_part$is_susceptible      <- as.numeric(data_part$is_susceptible)
   data_part$is_infected         <- as.numeric(data_part$is_infected)
   data_part$is_infectious       <- as.numeric(data_part$is_infectious)
@@ -106,13 +105,10 @@ inspect_contact_data <- function(project_dir){
     
   ## people without contacts
   dim(data_part)[1] - length(unique(data_cnt$local_id))
-
-  ## merge school and college contacts
-  data_cnt$cnt_school <- as.numeric(data_cnt$cnt_school + data_cnt$cnt_college > 0)
-      
+     
   ## employed and student population
   data_part$employed <- data_part$workplace_id != 0
-  data_part$student  <- data_part$school_id != 0 | data_part$college_id !=0
+  data_part$student  <- data_part$school_id != 0
   
   ## SETTINGS 
   L <- max(c(80,data_part$part_age))
@@ -440,7 +436,6 @@ inspect_contact_data <- function(project_dir){
   data_cnt$cnt_sympt     <- as.numeric(data_cnt$cnt_sympt)
   
   summary(data_part)
-  data_part$college_id          <- as.numeric(data_part$college_id)
   data_part$is_susceptible      <- as.numeric(data_part$is_susceptible)
   data_part$is_infected         <- as.numeric(data_part$is_infected)
   data_part$is_infectious       <- as.numeric(data_part$is_infectious)
@@ -448,7 +443,6 @@ inspect_contact_data <- function(project_dir){
   data_part$is_immune           <- as.numeric(data_part$is_immune)
   data_part$start_symptomatic   <- as.numeric(data_part$start_symptomatic)
   data_part$end_infectiousness  <- as.numeric(data_part$end_infectiousness)
-  
   
   
   

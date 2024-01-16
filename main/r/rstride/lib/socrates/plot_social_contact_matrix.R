@@ -103,7 +103,7 @@ plot_contact_matrix_socrates <- function(data_cnt,data_part,figure_title,age_cat
                                     cnt_age_est_min = as.integer(round(data_cnt$cnt_age)),
                                     cnt_age_est_max = as.integer(round(data_cnt$cnt_age)),
                                     data_cnt[,c("cnt_home","cnt_work","cnt_school",
-                                                "cnt_college","cnt_prim_comm","cnt_sec_comm","part_sympt","cnt_sympt" )])
+                                                "cnt_prim_comm","cnt_sec_comm","part_sympt","cnt_sympt" )])
     
     # get socialmixr 'survey' object
     survey_rstride <- survey(participants = db_participants,

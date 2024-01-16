@@ -35,8 +35,8 @@ bool IsId(const string& s)
 {
         static map<string, Id> ids{
             make_pair("HOUSEHOLD", Id::Household),
-            make_pair("SCHOOL", Id::K12School),
-            make_pair("SCHOOL", Id::College),
+            make_pair("SCHOOL", Id::School),
+//            make_pair("SCHOOL", Id::College),
             make_pair("WORKPLACE", Id::Workplace),
             make_pair("PRIMARY_COMMUNITY", Id::PrimaryCommunity),
             make_pair("SECONDARY_COMMUNITY", Id::SecondaryCommunity),
@@ -53,8 +53,7 @@ Id ToId(const string& s)
 {
         static map<string, Id> ids{
             make_pair("HOUSEHOLD", Id::Household),
-            make_pair("K12SCHOOL", Id::K12School),
-            make_pair("COLLEGE", Id::College),
+            make_pair("SCHOOL", Id::School),
             make_pair("WORKPLACE", Id::Workplace),
             make_pair("PRIMARY_COMMUNITY", Id::PrimaryCommunity),
             make_pair("SECONDARY_COMMUNITY", Id::SecondaryCommunity),
@@ -71,8 +70,7 @@ string ToString(Id c)
 {
         static map<Id, string> names{
             make_pair(Id::Household, "Household"),
-            make_pair(Id::K12School, "K12School"),
-            make_pair(Id::College, "College"),
+            make_pair(Id::School, "School"),
             make_pair(Id::Workplace, "Workplace"),
             make_pair(Id::PrimaryCommunity, "PrimaryCommunity"),
             make_pair(Id::SecondaryCommunity, "SecondaryCommunity"),

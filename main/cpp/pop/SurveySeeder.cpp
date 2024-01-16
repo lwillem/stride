@@ -91,21 +91,19 @@ void SurveySeeder::RegisterParticipant(std::shared_ptr<Population> pop, Person& 
 		// log person details
 		const auto h    = p.GetHealth();
 		const auto pHH  = p.GetPoolId(Id::Household);
-		const auto pK12 = p.GetPoolId(Id::K12School);
-		const auto pC   = p.GetPoolId(Id::College);
+		const auto pS = p.GetPoolId(Id::School);
 		const auto pW   = p.GetPoolId(Id::Workplace);
 		const auto pPC  = p.GetPoolId(Id::PrimaryCommunity);
 		const auto pSC  = p.GetPoolId(Id::SecondaryCommunity);
 		const auto pHC  = p.GetPoolId(Id::HouseholdCluster);
 		const auto pCol = p.GetPoolId(Id::Collectivity);
 
-		logger->info("[PART] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}", p.GetId(),
-			 p.GetAge(), pHH, pK12, pC, pW, pHC, pCol, h.IsSusceptible(), h.IsInfected(), h.IsInfectious(),
+		logger->info("[PART] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}", p.GetId(),
+			 p.GetAge(), pHH, pS, pW, pHC, pCol, h.IsSusceptible(), h.IsInfected(), h.IsInfectious(),
 			 h.IsRecovered(), p.IsImmune(), h.GetStartInfectiousness(), h.GetStartSymptomatic(),
 			 h.GetEndInfectiousness(), h.GetEndSymptomatic(),
 			 poolSys.CRefPools<Id::Household>()[pHH].GetPool().size(),
-			 poolSys.CRefPools<Id::K12School>()[pK12].GetPool().size(),
-			 poolSys.CRefPools<Id::College>()[pC].GetPool().size(),
+			 poolSys.CRefPools<Id::School>()[pS].GetPool().size(),
 			 poolSys.CRefPools<Id::Workplace>()[pW].GetPool().size(),
 			 poolSys.CRefPools<Id::PrimaryCommunity>()[pPC].GetPool().size(),
 			 poolSys.CRefPools<Id::SecondaryCommunity>()[pSC].GetPool().size()

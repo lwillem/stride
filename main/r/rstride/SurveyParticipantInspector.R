@@ -163,7 +163,7 @@ inspect_participant_data <- function(project_dir, save_pdf = TRUE)
     
    
     ## SCHOOLING ----
-    data_part$enrolled_school <- data_part$school_id != 0 | data_part$college_id != 0
+    data_part$enrolled_school <- data_part$school_id != 0
     school_age <- data.frame(table(school_enrolled = data_part$enrolled_school,part_age = data_part$part_age))
     school_age$part_age <- as.numeric(levels(school_age$part_age)[(school_age$part_age)])
     flag <- school_age$school_enrolled == TRUE
@@ -183,10 +183,9 @@ inspect_participant_data <- function(project_dir, save_pdf = TRUE)
     # 
     
     # tmp_age      <- table(data_part$part_age)
-    # tmp_college  <- table(data_part$part_age,data_part$college_id != 0)
     # tmp_school   <- table(data_part$part_age,data_part$school_id != 0)
     # 
-    # barplot(rbind(tmp_school[,2]/tmp_age,tmp_college[,2]/tmp_age),
+    # barplot(tmp_school[,2]/tmp_age),
     #         xlab='age',
     #         ylab='relative fraction')
     # legend('topright',
