@@ -29,7 +29,7 @@ rm(list=ls())
 
 # Load rStride
 source('./bin/rstride/rStride.R')
-source('./bin/rStride_intervention_baseline.R')
+source('./bin/rStride_covid19_default_param.R')
 
 # set directory postfix (optional)
 dir_postfix <- '_gtester'

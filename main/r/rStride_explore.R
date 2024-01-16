@@ -20,7 +20,7 @@
 # Call this script from the main project folder (containing bin, config, lib, ...)
 # to get all relative data links right. 
 #
-# E.g.: path/to/stride $ ./bin/rStride_baseline.R 
+# E.g.: path/to/stride $ ./bin/rStride_explore.R 
 #
 ############################################################################ #
 
@@ -31,10 +31,10 @@ rm(list=ls())
 source('./bin/rstride/rStride.R')
 
 # Load default parameter configurations
-source('./bin/rStride_intervention_baseline.R')
+source('./bin/rStride_covid19_default_param.R')
 
 # set directory postfix (optional)
-dir_postfix <- '_baseline'
+dir_postfix <- '_explore'
 
 ################################## #
 ## DESIGN OF EXPERIMENTS        ####

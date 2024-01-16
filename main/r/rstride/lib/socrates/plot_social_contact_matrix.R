@@ -1,9 +1,22 @@
-#___________________________________________________________________________
-# This file is part of the SOcial Contact RATES (SOCRATES) modelling project
-# 
-# => PLOT SOCIAL CONTACT SURVEY DATA
+############################################################################ #
+#  This file is part of the Stride software. 
+#  It is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by 
+#  the Free Software Foundation, either version 3 of the License, or any 
+#  later version.
+#  The software is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#  You should have received a copy of the GNU General Public License,
+#  along with the software. If not, see <http://www.gnu.org/licenses/>.
+#  see http://www.gnu.org/licenses/.
 #
-#  Copyright 2020, SIMID, UNIVERSITY OF ANTWERP & HASSELT UNIVERSITY
+#
+#  Copyright 2024
+############################################################################ #
+#
+# PLOT SOCIAL CONTACT DATA
 #___________________________________________________________________________
 
 # Loading packages
@@ -26,24 +39,26 @@ plot_socrates_all <- function(data_cnt,data_part,age_cat_breaks,project_dir,exp_
   
   dev.off()
   
-  .rstride$create_pdf(project_dir,paste0(exp_tag,'_cnt_matrix_symptomatic'))
-  # symptomatic
-  for(i_day in opt_day){
-   
-    # select contacts of 'i_day' and symptomatic participants (of the infected seeds)
-    data_part_sympt <- data_part[data_part$is_infected == 1  & (data_part$start_symptomatic-1) <= i_day & (data_part$end_symptomatic-1) > i_day,]
-    data_cnt_day    <- data_cnt[data_cnt$sim_day == i_day & data_cnt$local_id %in% data_part_sympt$local_id,]
-    
-    if(nrow(data_part_sympt)>0 & nrow(data_cnt_day)>0){
-      print(i_day)  
-      plot_socrates_location(data_cnt_day,data_part_sympt,age_cat_breaks,as.Date(survey_start) + i_day)
+  if(any(data_part$start_symptomatic %in% opt_day))
+  {
+    .rstride$create_pdf(project_dir,paste0(exp_tag,'_cnt_matrix_symptomatic'))
+    # symptomatic
+    for(i_day in opt_day){
+     
+      # select contacts of 'i_day' and symptomatic participants (of the infected seeds)
+      data_part_sympt <- data_part[data_part$is_infected == 1  & (data_part$start_symptomatic-1) <= i_day & (data_part$end_symptomatic-1) > i_day,]
+      data_cnt_day    <- data_cnt[data_cnt$sim_day == i_day & data_cnt$local_id %in% data_part_sympt$local_id,]
+      
+      if(nrow(data_part_sympt)>0 & nrow(data_cnt_day)>0){
+        print(i_day)  
+        plot_socrates_location(data_cnt_day,data_part_sympt,age_cat_breaks,as.Date(survey_start) + i_day)
+      }
     }
-  }
-  
-   dev.off()
-  
-  }
-   # data_cnt <- data_cnt_day; data_part <- data_part_sympt;survey_day <- as.Date(survey_start) + i_day
+     dev.off()
+  } # end if-clause symptomatic infections?
+}
+
+ # data_cnt <- data_cnt_day; data_part <- data_part_sympt;survey_day <- as.Date(survey_start) + i_day
 plot_socrates_location <- function(data_cnt,data_part,age_cat_breaks,survey_day){
   
   par(mfrow=c(2,3))

@@ -14,7 +14,7 @@
 #  see http://www.gnu.org/licenses/.
 #
 #
-#  Copyright 2020, Willem L
+#  Copyright 2024, Willem L
 #############################################################################
 #
 # Call this script from the main project folder (containing bin, config, lib, ...)
@@ -44,14 +44,14 @@ dir_postfix <- '_r0'
 num_seeds  <- 10
 
 # add parameters and values to combine in a full-factorial grid
-exp_design <- expand.grid(r0                            = sort(c(seq(1,6,length=15))),
+exp_design <- expand.grid(r0                            = sort(c(seq(1,5,length=5))),
                           num_days                      = c(20),
                           rng_seed                      = seq(num_seeds),
                           start_date                    = c('2020-02-01','2020-02-02','2020-02-03','2020-02-04','2020-02-05','2020-02-06','2020-02-07'),
                           num_infected_seeds            = 20,
                           seeding_age_min               = 1,
                           seeding_age_max               = 99,
-                          disease_config_file           = "disease_covid19_age.xml",
+                          disease_config_file           = "disease_covid19_lognorm.xml",
                           population_file               = "pop_belgium600k_c500_teachers_censushh.csv",
                           age_contact_matrix_file       = "contact_matrix_flanders_conditional_teachers.xml",
                           holidays_file                 = "holidays_none.csv",
@@ -94,69 +94,6 @@ analyse_transmission_data_for_r0(project_dir)
 
 # covid-19 specific!!
 analyse_transmission_data_for_hospital_admissions(project_dir)
-  
-
-## TO SELECT A MEAN INFECTIOUS PERIOD
-if(0==1){
-  
-  output_names <- dir("/Users/lwillem/Documents/university/research/stride/results_covid19_revision/20200916_r0_timeInfectious",full.names = T)
-  output_names <- output_names[!grepl('_child',output_names)]
-  d <- 6
-  foreach(d = 4:6,
-          .combine = 'rbind') %do% {
-            
-            filename <- output_names[grepl(paste0('r0_d',d),output_names)]
-            
-            return(cbind(d,aggregate_transmission_dynamics(filename)))
-            
-          } -> r0_all
-  
-
-  # create data.frame  
-  r0_all <- data.frame(r0_all)
-  
-  # get directory name and open pdf stream
-  dir_name <- unique(dirname(output_names))
-  pdf(file=smd_file_path(dir_name,'stride_doubling_generation.pdf'),6,4)
-  
-  plot(y = r0_all$doubling_time,
-       x = r0_all$gen_interval,
-        col = r0_all$d-2,
-       pch=20,
-       xlim=c(3,8),
-       ylim = c(1,10),
-       xlab='Generation interval (days)',
-       ylab='Doubling time (days)')
-  
-
-  abline(h=3.1,col=1,lty=2)
-  polygon(x=c(1:10,rev(1:10)),
-          y = c(rep(2.4,10),rep(4.4,10)),
-          col=alpha(1,0.1),border = NA)
-  
-  abline(v=5.2,col=1,lty=2)
-  polygon(y=c(1:10,rev(1:10)),
-          x = c(rep(3.78,10),rep(6.78,10)),
-          col=alpha(1,0.1),border = NA)
-  
-  # p_sel <- r0_all$sec_cases < 4 &  r0_all$sec_cases > 2.5
-  # points(y = r0_all$doubling_time[p_sel],
-  #      x = r0_all$gen_interval[p_sel],
-  #      col = r0_all$V1[p_sel],
-  #      pch=19)
-  # 
-  legend('topright',
-         paste(4:6,'days'),
-         title="Mean infectious period",
-         col=4:6-2,
-         cex=0.8,
-         pch=20,
-         bg='white') 
-  
-  # close pdf stream
-  dev.off()
-  
-  }
 
 
 

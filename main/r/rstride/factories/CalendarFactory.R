@@ -21,15 +21,16 @@
 # debug
 if(0==1){
   source('bin/rstride/rStride.R')
-  cnt_other_exit_delay <- 21
   show_plots = TRUE
-  
   create_calendar_file(show_plots=TRUE)
 }
 
 
 # create calendar files if they do not exist, else re-use them
-create_calendar_file <- function(file_name_tag='2020_2021',show_plots = FALSE,file_name=NA)
+create_calendar_file <- function(file_name_tag = '2020_2021',
+                                 date_end = "2021-12-31",
+                                 show_plots = FALSE,
+                                 file_name = NA)
 {
   
   filename_calendar_full <- ifelse(is.na(file_name),
@@ -41,8 +42,7 @@ create_calendar_file <- function(file_name_tag='2020_2021',show_plots = FALSE,fi
   ########################################### #
   
   date_start <- as.Date("2019-01-01")
-  date_end   <- as.Date("2021-12-31")
-  
+
   # default value in C++ CALENDAR vectors ==>> 0
   
   ########################################### #
@@ -159,64 +159,64 @@ create_calendar_file <- function(file_name_tag='2020_2021',show_plots = FALSE,fi
   }
   
   
-  ########################################################### #
-  ##  2a. Contact reductions: school closures              ####
-  ########################################################### #
-  #       * (pre-, primary and secondary school)
-  
-  # set default school closure
-  # school_dates_non_holiday <- date_all[!date_all %in% dcal_school_closure]
-  # data.table(category = "schools_closed",
-  #            # date     = seq(as.Date('2020-03-14'),as.Date('2020-06-30'),1),
-  #            date     = school_dates_non_holiday,
-  #            value    = 0.0,
-  #            type = 'double',
-  #            age = NA_integer_,
-  #            stringsAsFactors = F
-  # ) -> d_school_closure
+  # ########################################################### #
+  # ##  2a. Contact reductions: school closures              ####
+  # ########################################################### #
+  # #       * (pre-, primary and secondary school)
   # 
-  # d_school_closure[date %in% seq(as.Date('2020-03-14'),as.Date('2020-06-30'),1),value := 1.0]
+  # # set default school closure
+  # # school_dates_non_holiday <- date_all[!date_all %in% dcal_school_closure]
+  # # data.table(category = "schools_closed",
+  # #            # date     = seq(as.Date('2020-03-14'),as.Date('2020-06-30'),1),
+  # #            date     = school_dates_non_holiday,
+  # #            value    = 0.0,
+  # #            type = 'double',
+  # #            age = NA_integer_,
+  # #            stringsAsFactors = F
+  # # ) -> d_school_closure
+  # # 
+  # # d_school_closure[date %in% seq(as.Date('2020-03-14'),as.Date('2020-06-30'),1),value := 1.0]
+  # # 
+  # # tmp_school_closure <- copy(d_school_closure)
+  # # tmp_school_closure[,category:='schools_closed']
   # 
-  # tmp_school_closure <- copy(d_school_closure)
-  # tmp_school_closure[,category:='schools_closed']
-  
-  d_calendar_holiday[date %in% seq(as.Date('2020-03-14'),as.Date('2020-06-30'),1), value := 1.0] 
-
-  # set eligible dates for school reopening in May-June 2020
-  d_school_reopening <- seq(as.Date('2020-05-18'),as.Date('2020-06-30'),1)
-  d_school_reopening_wday <- as.POSIXlt(d_school_reopening)$wday
-  
-  # preschool (reopens 4d/week)
-  d_school_reopening_4d <- d_school_reopening[d_school_reopening_wday %in% 1:4]
-  d_calendar_holiday[date %in% d_school_reopening_4d & age %in% c(0,1,2,6,7),value:=0.5]
-  
-  # primary school (reopens 2d/week)
-  d_school_reopening_2d <- d_school_reopening[d_school_reopening_wday %in% 4:5]
-  d_school_reopening_2d[1:2] <- d_school_reopening_2d[1:2] - 2 # fix for holidays Thu-Fri in May
-  d_calendar_holiday[date %in% d_school_reopening_2d & age %in% c(11),value:=0.5]
-  
-  
-  #secondary school (reopens 1d week)
-  d_school_reopening_1d <- d_school_reopening[d_school_reopening_wday %in% 3]
-  d_calendar_holiday[date %in% d_school_reopening_1d & age %in% c(17),value:=0.5]
-  
-  # school reopening September 2020
-  # up to primary school
-  d_calendar_holiday[date >= as.Date('2020-09-01') &
-                       age <= 12 &
-                     value == 0, value := 0.5]
-  # secondary school
-  d_calendar_holiday[date >= as.Date('2020-05-01') &
-                       age > 12 & age < 18 &
-                       value != 1, value := 0.2]
-  # tertiary eduction
-  d_calendar_holiday[date >= as.Date('2020-09-01') &
-                       age >= 18 &
-                       value == 0, value := 0.3]
-  
-  # tertiary eduction: closed from November 1st
-  d_calendar_holiday[date >= as.Date('2020-11-01') &
-                       age >= 18 , value := 1]
+  # d_calendar_holiday[date %in% seq(as.Date('2020-03-14'),as.Date('2020-06-30'),1), value := 1.0] 
+  # 
+  # # set eligible dates for school reopening in May-June 2020
+  # d_school_reopening <- seq(as.Date('2020-05-18'),as.Date('2020-06-30'),1)
+  # d_school_reopening_wday <- as.POSIXlt(d_school_reopening)$wday
+  # 
+  # # preschool (reopens 4d/week)
+  # d_school_reopening_4d <- d_school_reopening[d_school_reopening_wday %in% 1:4]
+  # d_calendar_holiday[date %in% d_school_reopening_4d & age %in% c(0,1,2,6,7),value:=0.5]
+  # 
+  # # primary school (reopens 2d/week)
+  # d_school_reopening_2d <- d_school_reopening[d_school_reopening_wday %in% 4:5]
+  # d_school_reopening_2d[1:2] <- d_school_reopening_2d[1:2] - 2 # fix for holidays Thu-Fri in May
+  # d_calendar_holiday[date %in% d_school_reopening_2d & age %in% c(11),value:=0.5]
+  # 
+  # 
+  # #secondary school (reopens 1d week)
+  # d_school_reopening_1d <- d_school_reopening[d_school_reopening_wday %in% 3]
+  # d_calendar_holiday[date %in% d_school_reopening_1d & age %in% c(17),value:=0.5]
+  # 
+  # # school reopening September 2020
+  # # up to primary school
+  # d_calendar_holiday[date >= as.Date('2020-09-01') &
+  #                      age <= 12 &
+  #                    value == 0, value := 0.5]
+  # # secondary school
+  # d_calendar_holiday[date >= as.Date('2020-05-01') &
+  #                      age > 12 & age < 18 &
+  #                      value != 1, value := 0.2]
+  # # tertiary eduction
+  # d_calendar_holiday[date >= as.Date('2020-09-01') &
+  #                      age >= 18 &
+  #                      value == 0, value := 0.3]
+  # 
+  # # tertiary eduction: closed from November 1st
+  # d_calendar_holiday[date >= as.Date('2020-11-01') &
+  #                      age >= 18 , value := 1]
 
   ########################################### #
   ##  2b. Contact reductions: other        ####
@@ -248,23 +248,23 @@ create_calendar_file <- function(file_name_tag='2020_2021',show_plots = FALSE,fi
   # ) -> dcal_community_distancing
   # dcal_community_distancing[date %in% seq(as.Date('2020-03-14'),as.Date('2020-05-24'),1),value := 1.0]
   
-  # collectivity distancing
-  data.table(category = "collectivity_distancing",
-             date     = seq(as.Date(date_start),as.Date(date_end),1),
-             value    = 0.0,
-             type = 'double',
-             age = NA_integer_,
-             stringsAsFactors = F
-  ) -> dcal_collectivity_distancing
+  # # collectivity distancing
+  # data.table(category = "collectivity_distancing",
+  #            date     = seq(as.Date(date_start),as.Date(date_end),1),
+  #            value    = 0.0,
+  #            type = 'double',
+  #            age = NA_integer_,
+  #            stringsAsFactors = F
+  # ) -> dcal_collectivity_distancing
   
-  # household clustering
-  data.table(category = "household_clustering",
-             date     = seq(as.Date('2020-05-11'),as.Date('2020-08-31'),1),
-             value    = 1,
-             type = 'boolean',
-             age = NA_integer_,
-             stringsAsFactors = F
-  ) -> dcal_household_clustering
+  # # household clustering
+  # data.table(category = "household_clustering",
+  #            date     = seq(as.Date('2020-05-11'),as.Date('2020-08-31'),1),
+  #            value    = 1,
+  #            type = 'boolean',
+  #            age = NA_integer_,
+  #            stringsAsFactors = F
+  # ) -> dcal_household_clustering
   
   ########################################### #
   ## 3. Imported cases                 ####
@@ -284,13 +284,13 @@ create_calendar_file <- function(file_name_tag='2020_2021',show_plots = FALSE,fi
   ##  4. Contact tracing                 ####
   ########################################### #
   
-  data.table(category = "contact_tracing",
-             date     = seq(as.Date('2020-05-11'),as.Date('2020-08-31'),1),
-             value    = 1,
-             type = 'boolean',
-             age = NA_integer_,
-             stringsAsFactors = F
-  ) -> dcal_contact_tracing
+  # data.table(category = "contact_tracing",
+  #            date     = seq(as.Date('2020-05-11'),as.Date('2020-08-31'),1),
+  #            value    = 1,
+  #            type = 'boolean',
+  #            age = NA_integer_,
+  #            stringsAsFactors = F
+  # ) -> dcal_contact_tracing
   
   ########################################### #
   ## MERGE HOLIDAYS & OTHER CALENDAR ITEMS ####
@@ -444,7 +444,7 @@ adjust_calendar_file <- function(db_category, db_update, file_name, db_age = 'NA
   if(erase_category){
     d_calendar_all <- d_calendar_all[category != db_category,]
   }
-  
+
   # create data.frame with all information to extrapolate
   df_update  <- data.frame(t(db_update))
   date_out   <- seq(min(as.Date(df_update[,1])),max(as.Date(df_update[,1])),1)
@@ -536,10 +536,11 @@ exclude_calendar_category <- function(file_name,db_category,show_plots=FALSE){
 
 # create calendar file comparable to the original lockdown/exit parameter structure
 # note: erase_category is a boolean to remove existing values of the given categories 
-integrate_lockdown_parameters_into_calendar <- function(config_exp,
-                                                        erase_category = TRUE){
+integrate_parameters_in_calendar <- function(config_exp,
+                                             bool_maintain_file_name = FALSE,
+                                             erase_category = TRUE){
 
-  # if there are not distancing parameters, return original config_exp
+  # if there are no distancing parameters, return original config_exp
   param_calendar <- config_exp[grepl('cnt_reduction_workplace',names(config_exp)) |   # OR colname contains reduction_workplace
                                    grepl('clustering',names(config_exp)) |            # OR colname contains clustering
                                    grepl('imported',names(config_exp)) |              # OR colname contains imported
@@ -553,14 +554,17 @@ integrate_lockdown_parameters_into_calendar <- function(config_exp,
   }
   
   # # else, modify calendar
-  file_name_new <- smd_file_path(config_exp$output_prefix,'calendar_belgium_covid19_v1_1_param.csv')
-  file_name_exp <- file.path('data',config_exp$holidays_file)
+  file_name_exp <- ifelse(bool_maintain_file_name,config_exp$holidays_file,file.path('data',config_exp$holidays_file))
   # config_exp$holidays_file <- create_calendar_file(file_name = file_name, show_plots = T)
   
   if(file.exists(file_name_exp)){
-    file.copy(from=file_name_exp,
-              to = file_name_new,overwrite = TRUE)
-    config_exp$holidays_file <- file_name_new
+    if(!bool_maintain_file_name)
+    {
+      file_name_new <- smd_file_path(config_exp$output_prefix,'calendar_belgium_covid19_v1_1_param.csv')
+      file.copy(from=file_name_exp,
+                to = file_name_new,overwrite = TRUE)
+      config_exp$holidays_file <- file_name_new
+    }
   } else{
     config_exp$holidays_file <- create_calendar_file(file_name = file_name_new, show_plots = T)
   }
@@ -635,7 +639,8 @@ integrate_lockdown_parameters_into_calendar <- function(config_exp,
 
 # db_category <- 'distancing_workplace'
 # db_values <- seq(0.8,0.9,length=12)
-include_temporal_distancing_factors <- function(db_category,db_values_char,db_age_char = NA,
+include_temporal_distancing_factors <- function(db_category,db_values_char,
+                                                db_age_char = NA,
                                                 db_delay_char,file_name,show_plots=T,
                                                 db_dates_char=NA,
                                                 erase_category = TRUE){
@@ -677,7 +682,7 @@ include_temporal_distancing_factors <- function(db_category,db_values_char,db_ag
   db_dates  <- db_dates[order(as.Date(db_dates))]
   
   # add right tail
-  db_dates  <- c(db_dates,db_dates[length(db_dates)]+365*2)
+  db_dates  <- c(db_dates,max(db_dates)+356*3)
   db_values <- c(db_values,db_values[length(db_values)])
   
   adjust_calendar_file(db_category = db_category,
@@ -689,389 +694,3 @@ include_temporal_distancing_factors <- function(db_category,db_values_char,db_ag
   
   } # end if-clause on is.na
 }
-
-# Create a calendar file and fill in contact reduction values
-create_new_cnt_calendar_file <- function(file_name, config_exp, end_date="2021-12-31", school_holidays=FALSE) {
-
-  ########################################### #
-  ## INITIATE DATA                       ####
-  ########################################### #
-  date_start <- as.Date(config_exp$start_date)
-  date_end   <- as.Date(end_date)
-
-  ####################################### #
-  ## Public holidays                 ####
-  ####################################### #
-  data.table(category = "general",
-             date     = as.Date(c(
-               '2020-01-01','2020-04-13','2020-05-01','2020-05-21','2020-06-01', # 2020
-               '2020-07-21','2020-08-15','2020-11-01','2020-11-11','2020-12-25',
-
-               '2021-01-01','2021-04-05','2021-05-01','2021-05-13','2021-06-24', # 2021
-               '2021-07-21','2021-08-15','2021-11-01','2021-11-11','2021-12-25')),
-             value    = 1,
-             type = 'boolean',
-             age = NA_integer_,
-             stringsAsFactors = F
-  ) -> d_calendar_holiday
-  # summary(d_calendar_holiday)
-
-  ################################################ #
-  ## Contact reductions: schools              ####
-  ################################################ #
-  cnt_reduction_school <- ifelse('cnt_reduction_school' %in% names(config_exp),
-                                 config_exp$cnt_reduction_school,
-                                 0.0)
-  cnt_reduction_school_secondary <- ifelse('cnt_reduction_school_secondary' %in% names(config_exp),
-                                           config_exp$cnt_reduction_school_secondary,
-                                           cnt_reduction_school)
-  cnt_reduction_school_tertiary <- ifelse('cnt_reduction_school_tertiary' %in% names(config_exp),
-                                          config_exp$cnt_reduction_school_tertiary,
-                                          cnt_reduction_school)
-
-  data.table(category = "schools_closed",
-             date     = seq(as.Date(date_start),as.Date(date_end),1),
-             value    = cnt_reduction_school,
-             type = 'double',
-             age = NA_integer_,
-             stringsAsFactors = F
-  ) -> d_school_holidays
-  data.table(category = "schools_closed",
-             date     = seq(as.Date(date_start),as.Date(date_end),1),
-             value    = cnt_reduction_school_secondary,
-             type = 'double',
-             age = NA_integer_,
-             stringsAsFactors = F
-  ) -> d_school_holidays_secondary
-  data.table(category = "schools_closed",
-             date     = seq(as.Date(date_start),as.Date(date_end),1),
-             value    = cnt_reduction_school_tertiary,
-             type = 'double',
-             age = NA_integer_,
-             stringsAsFactors = F
-  ) -> d_college_holidays
-
-  ####################################### #
-  ## School holidays                 ####
-  ####################################### #
-  # Add school holidays if requested
-  if (school_holidays) {
-    smd_print("Including school holidays...")
-    # include school holidays
-    d_school_holidays[date %in% c(seq(as.Date('2020-01-01'),as.Date('2020-01-05'),1), # 2020
-                                  seq(as.Date('2020-02-24'),as.Date('2020-02-29'),1),
-                                  seq(as.Date('2020-04-06'),as.Date('2020-04-19'),1),
-                                  seq(as.Date('2020-07-01'),as.Date('2020-08-31'),1),
-                                  seq(as.Date('2020-11-02'),as.Date('2020-11-08'),1),
-                                  seq(as.Date('2020-12-21'),as.Date('2020-12-31'),1),
-
-                                  seq(as.Date('2021-01-01'),as.Date('2021-01-03'),1), # 2021
-                                  seq(as.Date('2021-02-15'),as.Date('2021-02-21'),1),
-                                  seq(as.Date('2021-04-05'),as.Date('2021-04-18'),1),
-                                  seq(as.Date('2021-07-01'),as.Date('2021-08-31'),1),
-                                  seq(as.Date('2021-11-01'),as.Date('2021-11-07'),1),
-                                  seq(as.Date('2021-12-27'),as.Date('2021-12-31'),1),
-
-                                  seq(as.Date('2022-01-01'),as.Date('2022-01-09'),1), # 2022
-                                  seq(as.Date('2022-02-28'),as.Date('2022-03-06'),1),
-                                  seq(as.Date('2022-04-04'),as.Date('2022-04-18'),1),
-                                  seq(as.Date('2022-07-01'),as.Date('2022-08-31'),1),
-                                  seq(as.Date('2022-10-31'),as.Date('2022-11-06'),1),
-                                  seq(as.Date('2022-12-26'),as.Date('2022-12-31'),1)),
-                      value    := 1.0]
-    d_school_holidays_secondary[date %in% c(seq(as.Date('2020-01-01'),as.Date('2020-01-05'),1), # 2020
-                                            seq(as.Date('2020-02-24'),as.Date('2020-02-29'),1),
-                                            seq(as.Date('2020-04-06'),as.Date('2020-04-19'),1),
-                                            seq(as.Date('2020-07-01'),as.Date('2020-08-31'),1),
-                                            seq(as.Date('2020-11-02'),as.Date('2020-11-08'),1),
-                                            seq(as.Date('2020-12-21'),as.Date('2020-12-31'),1),
-
-                                            seq(as.Date('2021-01-01'),as.Date('2021-01-03'),1), # 2021
-                                            seq(as.Date('2021-02-15'),as.Date('2021-02-21'),1),
-                                            seq(as.Date('2021-04-05'),as.Date('2021-04-18'),1),
-                                            seq(as.Date('2021-07-01'),as.Date('2021-08-31'),1),
-                                            seq(as.Date('2021-11-01'),as.Date('2021-11-07'),1),
-                                            seq(as.Date('2021-12-27'),as.Date('2021-12-31'),1),
-
-                                            seq(as.Date('2022-01-01'),as.Date('2022-01-09'),1), # 2022
-                                            seq(as.Date('2022-02-28'),as.Date('2022-03-06'),1),
-                                            seq(as.Date('2022-04-04'),as.Date('2022-04-18'),1),
-                                            seq(as.Date('2022-07-01'),as.Date('2022-08-31'),1),
-                                            seq(as.Date('2022-10-31'),as.Date('2022-11-06'),1),
-                                            seq(as.Date('2022-12-26'),as.Date('2022-12-31'),1)),
-                                value    := 1.0]
-
-    # add college holidays
-    d_college_holidays[date %in% c(seq(as.Date('2020-01-01'),as.Date('2020-01-05'),1), # 2020
-                                   seq(as.Date('2020-02-24'),as.Date('2020-02-29'),1),
-                                   seq(as.Date('2020-04-06'),as.Date('2020-04-19'),1),
-                                   seq(as.Date('2020-07-01'),as.Date('2020-09-20'),1),# summer break untill September, 20
-                                   #seq(as.Date('2020-11-02'),as.Date('2020-11-08'),1), # no fall break
-                                   seq(as.Date('2020-12-21'),as.Date('2020-12-31'),1),
-
-                                   seq(as.Date('2021-01-01'),as.Date('2021-01-03'),1), # 2021
-                                   seq(as.Date('2021-02-15'),as.Date('2021-02-21'),1),
-                                   seq(as.Date('2021-04-05'),as.Date('2021-04-18'),1),
-                                   seq(as.Date('2021-07-01'),as.Date('2021-09-19'),1), # summer break untill September, 19
-                                   #seq(as.Date('2021-11-01'),as.Date('2021-11-07'),1), # no fall break
-                                   seq(as.Date('2021-12-27'),as.Date('2021-12-31'),1),
-
-                                   seq(as.Date('2022-01-01'),as.Date('2022-01-09'),1), # 2022
-                                   seq(as.Date('2022-02-28'),as.Date('2022-03-06'),1),
-                                   seq(as.Date('2022-04-04'),as.Date('2022-04-18'),1),
-                                   seq(as.Date('2022-07-01'),as.Date('2022-09-25'),1), ####
-                                   # seq(as.Date('2022-10-31'),as.Date('2022-11-06'),1), # no fall break
-                                   seq(as.Date('2022-12-26'),as.Date('2022-12-31'),1)),
-                       value    := 1.0]
-  }
-
-  # School
-  tmp_school_holidays <- copy(d_school_holidays)
-  tmp_school_holidays[,category:='schools_closed']
-  for (i_age in 0:11) {
-    d_calendar_holiday <- rbind(d_calendar_holiday,copy(tmp_school_holidays[,age:=i_age]))
-  }
-  tmp_school_holidays <- copy(d_school_holidays_secondary)
-  tmp_school_holidays[,category:='schools_closed']
-  for (i_age in 12:17) {
-    d_calendar_holiday <- rbind(d_calendar_holiday,copy(tmp_school_holidays[,age:=i_age]))
-  }
-
-  # College
-  tmp_college_holidays <- copy(d_college_holidays)
-  tmp_college_holidays[,category:='schools_closed']
-  for (i_age in 18:25) {
-    d_calendar_holiday <- rbind(d_calendar_holiday,copy(tmp_college_holidays[,age:=i_age]))
-  }
-
-  ######################################### #
-  ##  Contact reductions: other        ####
-  ######################################### #
-  #       * workplace
-  #       * community
-  #       * household clusters
-
-  # workplace distancing
-  cnt_reduction_workplace <- ifelse('cnt_reduction_workplace' %in% names(config_exp),
-                                    config_exp$cnt_reduction_workplace,
-                                    0.0)
-
-  data.table(category = "workplace_distancing",
-             date     = seq(as.Date(date_start),as.Date(date_end),1),
-             value    = cnt_reduction_workplace,
-             type     = 'double',
-             age = NA_integer_,
-             stringsAsFactors = F
-  ) -> dcal_workplace_distancing
-
-  # community distancing
-  cnt_reduction_other <- ifelse('cnt_reduction_other' %in% names(config_exp),
-                                config_exp$cnt_reduction_other,
-                                0.0)
-
-  data.table(category = "community_distancing",
-             date     = seq(as.Date(date_start),as.Date(date_end),1),
-             value    = cnt_reduction_other,
-             type = 'double',
-             age = NA_integer_,
-             stringsAsFactors = F
-  ) -> dcal_community_distancing
-
-  # collectivity distancing
-  cnt_reduction_collectivity <- ifelse('cnt_reduction_collectivity' %in% names(config_exp),
-                                       config_exp$cnt_reduction_collectivity,
-                                       0.0)
-
-  data.table(category = "collectivity_distancing",
-             date     = seq(as.Date(date_start),as.Date(date_end),1),
-             value    = cnt_reduction_collectivity,
-             type = 'double',
-             age = NA_integer_,
-             stringsAsFactors = F
-  ) -> dcal_collectivity_distancing
-
-  # household clustering
-  data.table(category = "household_clustering",
-             # date     = seq(as.Date('2020-05-11'),as.Date('2020-08-31'),1),  # TODO: fixed days?
-             date     = seq(as.Date(date_start),as.Date(date_end),1),
-             value    = 0,  # TODO: from config
-             type = 'boolean',
-             age = NA_integer_,
-             stringsAsFactors = F
-  ) -> dcal_household_clustering
-
-  ###################################### #
-  ## Imported cases                 ####
-  ###################################### #
-  data.table(category = "imported_cases",
-             date     = seq(as.Date(date_start),as.Date(date_end),1),
-             value    = 0,  # TODO: from config
-             type = 'boolean',
-             age = NA_integer_,
-             stringsAsFactors = F
-  ) -> dcal_imported_cases
-
-  ######################################## #
-  ##  Contact tracing                 ####
-  ######################################## #
-
-  data.table(category = "contact_tracing",
-             # date     = seq(as.Date('2020-05-11'),as.Date('2020-08-31'),1),  # TODO: fixed days?
-             date     = seq(as.Date(date_start),as.Date(date_end),1),
-             value    = 1,  # TODO: from config
-             type = 'boolean',
-             age = NA_integer_,
-             stringsAsFactors = F
-  ) -> dcal_contact_tracing
-
-  ############################################# #
-  ## MERGE HOLIDAYS & OTHER CALENDAR ITEMS ####
-  ############################################# #
-
-  # get 'dcal_*' variables
-  opt_other <- ls(pattern='dcal_')
-
-  # combine all 'dcal_*' variable
-  d_calendar_all <- foreach(i_other  = opt_other,
-                            .init    = d_calendar_holiday,
-                            .combine = 'rbind') %do% {
-    get(i_other)
-  }
-
-  # select range
-  d_calendar_all <- d_calendar_all[date >= date_start & date <= date_end,]
-  range(d_calendar_all$date)
-
-  ########################################### #
-  ## EXPLORE DATA                        ####
-  ########################################### #
-
-  plot_calendar_new(dt_calendar            = d_calendar_all,
-                    filename_calendar_full = file_name)
-
-  ########################################### #
-  ## SAVE AS CSV	 	                 ####
-  ########################################### #
-
-  # # format date
-  # d_calendar_all[,date:=format(date,'%Y-%m-%d')]
-  # format(d_calendar_all$date,'%Y-%m-%d')
-
-  # save as csv (all calendar info)
-  write.table(d_calendar_all,
-              file = file_name,sep=',',row.names=F,quote=F)
-
-  unique(d_calendar_all$category)
-
-  return(file_name)
-}
-
-
-plot_calendar_new <- function(dt_calendar, filename_calendar_full){
-  smd_print("Plotting calendar...")
-
-
-  # open pdf stream
-  pdf(file=gsub('.csv','.pdf',filename_calendar_full),6,6)
-
-  category_opt <- unique(dt_calendar$category)
-  par(mfrow=c(3,2))
-
-  # check if dt_calendar is data.table
-  if(!is.data.table(dt_calendar)){
-    dt_calendar <- data.table(dt_calendar)
-  }
-
-  # make sure that "date" is in date format
-  dt_calendar$date <- as.Date(dt_calendar$date)
-
-  # x_lim      <- range(dt_calendar$date)
-  x_lim      <- as.Date(c('2021-01-01','2021-12-31'))  # TODO: abstract
-  x_lab_year <- paste(unique(year(dt_calendar$date)),sep='-')
-  i_cat <- category_opt[2]
-  smd_print("cat opt. ", category_opt)
-
-  for(i_cat in category_opt){
-    smd_print("cat option ", i_cat)
-    plot(x   = dt_calendar[category == i_cat,date],
-         y   = dt_calendar[category == i_cat,value],
-         xlim = x_lim,
-         ylim = range(0,1,dt_calendar$value[dt_calendar$category == i_cat]),
-         col  = 1,
-         #type='l',
-         pch  = 15,
-         #lwd=2,
-         main = i_cat,
-         bty='n',
-         xlab = x_lab_year,
-         ylab = unique(dt_calendar[,type]),
-         xaxt = 'n'
-    )
-    add_x_axis(x_lim)
-    abline(h=1,lty=3,col='grey')
-  }
-
-  if("schools_closed" %in% dt_calendar$category){
-
-    i_cat <- "schools_closed"
-
-    # convert value into numeric factors (to use as color)
-    value_levels            <- c(unique(dt_calendar[category == i_cat & value > 0,'value']))
-    dt_calendar$value_level <- factor(dt_calendar$value,levels=unlist(value_levels))
-    dt_calendar$value_col   <- as.numeric(dt_calendar$value_level)
-
-    plot(x   = dt_calendar[category == i_cat,date],
-         y   = dt_calendar[category == i_cat,value],
-         xlim = x_lim,
-         ylim = range(0,1,dt_calendar$value[dt_calendar$category == i_cat]),
-         col  = dt_calendar[category == i_cat,value_col],
-         #type='l',
-         pch  = 15,
-         #lwd=2,
-         main = i_cat,
-         bty='n',
-         xlab = x_lab_year,
-         ylab = unique(dt_calendar[,type]),
-         xaxt = 'n'
-    )
-    add_x_axis(x_lim)
-    abline(h=1,lty=3,col='grey')
-
-
-
-    # plot by age
-    plot(x   = dt_calendar[category == i_cat & value == 1,date],
-         y   = dt_calendar[category == i_cat & value == 1,age],
-         xlim = x_lim,
-         ylim = range(0,1,dt_calendar$age,na.rm=T),
-         col  = 1,
-         pch  = 15,
-         main = i_cat,
-         bty='n',
-         xlab = x_lab_year,
-         ylab = 'age',
-         xaxt = 'n'
-    )
-    points(x    = dt_calendar[category == i_cat ,date],
-           y    = dt_calendar[category == i_cat ,age],
-           col  = dt_calendar[category == i_cat ,value_col],
-           pch  = 15
-    )
-    add_x_axis(x_lim)
-  }
-
-  # close pdf stream
-  dev.off()
-}
-
-if(0==1){ # debug----
-  
-  dcal_file <- create_calendar_file(file_name_tag = 'wp_fitting',show_plots = T)
-  dcal_wp_distancing <- data.frame(c('2020-03-13',0),
-                                   c('2020-03-19',0.85),
-                                   c('2020-05-02',0.85),
-                                   c('2020-05-03',0.5))
-  
-  adjust_calendar_file(db_category =  "workplace_distancing",db_update = dcal_wp_distancing, file_name = dcal_file)
-}
-

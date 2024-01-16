@@ -341,8 +341,8 @@ run_rStride <- function(exp_design               = exp_design,
                         
                        #config_exp$holidays_file <- file.path('data',config_exp$holidays_file)
                        
-                       # include the lockdown/exit parameters into the calendar (backward compatibility)
-                       config_exp  <- integrate_lockdown_parameters_into_calendar(config_exp)
+                       # include the distancing and other temporal parameters into the calendar
+                       config_exp  <- integrate_parameters_in_calendar(config_exp)
                        
                        # check collectivity info
                        .rstride$check_population_contact_combination(config_exp)

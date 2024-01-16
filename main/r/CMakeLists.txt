@@ -12,7 +12,7 @@
 #  along with the software. If not, see <http://www.gnu.org/licenses/>.
 #  see http://www.gnu.org/licenses/.
 #
-#  Copyright 2020, Willem L, Kuylen E & Broeckhove J
+#  Copyright 2024
 #############################################################################
 
 #================================================================================================
@@ -29,14 +29,11 @@ INSTALL(DIRECTORY
 # rStride analysis scripts
 INSTALL( FILES 			
             rStride_abc.R
-            rStride_abc_wave.R
             rStride_contacts.R
-            rStride_baseline.R
-            rStride_parse_output.R
+            rStride_covid19_default_param.R	 	
+            rStride_explore.R
             rStride_gtester_covid19.R
             rStride_r0.R 	
-            rStride_intervention_baseline.R	 	 
-            rStride_pop.R
 			rStride_MDP.R
 
 	DESTINATION ${BIN_INSTALL_LOCATION}  

@@ -130,7 +130,7 @@ run_rStride_abc <- function(abc_function_param,
    config_exp$output_prefix <- output_prefix 
    
    # include temporal parameters into the calendar
-   config_exp  <- integrate_lockdown_parameters_into_calendar(config_exp)
+   config_exp  <- integrate_parameters_in_calendar(config_exp)
  
    # save the config as XML file
    config_exp_filename = paste0(output_prefix,".xml")

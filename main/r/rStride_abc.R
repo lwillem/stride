@@ -14,7 +14,7 @@
 #  see http://www.gnu.org/licenses/.
 #
 #
-#  Copyright 2020, Willem L
+#  Copyright 2024, Willem L
 ############################################################################ #
 #
 # Call this script from the main project folder (containing bin, config, lib, ...)
@@ -43,7 +43,7 @@ rm(list=ls()[ls() != 'job_id'])
 source('./bin/rstride/rStride.R')
 
 # Load default parameter configurations
-source('./bin/rStride_intervention_baseline.R')
+source('./bin/rStride_covid19_default_param.R')
 
 # load ABC package
 library(EasyABC)
@@ -73,8 +73,7 @@ project_dir <- smd_file_path('./sim_output',run_tag_data)
 ################################################ #
 
 # add default parameters and values to combine in a full-factorial grid
-model_param_update <- get_exp_param_default(bool_revised_model_param = T,
-                                            bool_min_restrictive = T)
+model_param_update <- get_covid19_default_param()
 
 # TEMP
 model_param_update$population_file <- "pop_belgium600k_c500_teachers_censushh.csv"
@@ -82,15 +81,13 @@ model_param_update$num_days        <- 74
 #model_param_update$logparsing_cases_upperlimit <- 2.5e6
 
 
-ref_period <- seq(as.Date('2020-03-15'),
-                  as.Date(model_param_update$start_date) + model_param_update$num_days-1,
-                  1)
-
 # ################################################ #
 # ## REFERENCE DATA  ----
 # ################################################ #
 
-
+ref_period <- seq(as.Date('2020-03-15'),
+                  as.Date(model_param_update$start_date) + model_param_update$num_days-1,
+                  1)
 sum_stat_obs <- get_abc_reference_data(ref_period,
                                        bool_age = FALSE,
                                        bool_doubling_time = TRUE)
@@ -104,12 +101,10 @@ sum_stat_obs <- get_abc_reference_data(ref_period,
 stride_prior <- list(r0                         = c("unif",1.0,5.0),   
                      num_infected_seeds         = c("unif",200,600),
                      hosp_probability_factor    = c("unif",0.05,0.95),
-                     cnt_reduction_workplace    = c("unif",0.60,0.95),
-                     compliance_delay_workplace = c("unif",4.51,7.49),  # rounded: 5-7
-                     cnt_reduction_other        = c("unif",0.60,0.95),
-                     compliance_delay_other     = c("unif",4.51,7.49))  # rounded: 5-7
-
-
+                     distancing_workplace_rate  = c("unif",0.60,0.95),
+                     distancing_workplace_delay = c("unif",4.51,7.49),  # rounded: 5-7
+                     distancing_community_rate  = c("unif",0.60,0.95),
+                     distancing_community_delay = c("unif",4.51,7.49))  # rounded: 5-7
 
 ## for debugging
 #.rstride$set_wd()                    
@@ -121,12 +116,7 @@ saveRDS(model_param_update,'model_param_update.rds')
 saveRDS(sum_stat_obs,'sum_stat_obs.rds')
 saveRDS(stride_prior,'stride_prior.rds')
 
-# run_param <- c(rng_seed=20,4,400,0.4,0.85,7.4,0.85,4.51)
-# names(run_param)[-1] <- names(stride_prior)
-# stride_out <- run_rStride_abc(run_param)
-# length(stride_out)
-# dim(sum_stat_obs)
-
+# # ABC rejection
 # ABC_stride<-ABC_rejection(model     = run_rStride_abc,
 #                            prior    = stride_prior,
 #                            nb_simul = n_sample,
@@ -137,7 +127,7 @@ saveRDS(stride_prior,'stride_prior.rds')
 #                            use_seed=TRUE,
 #                            progress_bar=T)
 
-
+# # ABC sequential
 ABC_stride<-ABC_sequential(model=run_rStride_abc,
                            prior=stride_prior,
                            nb_simul=n_sample,
@@ -153,8 +143,6 @@ ABC_stride<-ABC_sequential(model=run_rStride_abc,
 setwd('../..')
 
 
-
-# par(mfrow=c(3,2))
 saveRDS(ABC_stride,file=smd_file_path(project_dir,'ABC_stride.rds'))
 save(list=ls(),file=smd_file_path(project_dir,'ABC_stride_all.RData'))
 
@@ -175,7 +163,6 @@ save(list=ls(),file=smd_file_path(project_dir,'ABC_stride_all.RData'))
 print(ABC_stride$computime/3600)
 print(ABC_stride$nsim)
 print(length(ABC_stride$intermediary))
-
 
 # plot (final) results
 plot_abc_results(ABC_stride,project_dir)

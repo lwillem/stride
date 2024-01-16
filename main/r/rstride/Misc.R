@@ -391,16 +391,16 @@ if(!(exists('.rstride'))){
 }
 
 # check file presence
-.rstride$data_files_exist <- function(design_of_experiment = exp_design){
+.rstride$data_files_exist <- function(exp_design){
   
   # #TODO: scan automaticaly for .csv or .json or .xml files and check presence
-  # c(design_of_experiment)[grepl('\\.csv',c(design_of_experiment))]
+  # c(exp_design)[grepl('\\.csv',c(exp_design))]
   
   # get the unique file names
-  file_names <- unique(c(design_of_experiment$age_contact_matrix_file,
-                         design_of_experiment$disease_config_file,
-                         design_of_experiment$holidays_file,
-                         design_of_experiment$population_file))
+  file_names <- unique(c(exp_design$age_contact_matrix_file,
+                         exp_design$disease_config_file,
+                         exp_design$holidays_file,
+                         exp_design$population_file))
   
   # add the path to the data folder
   data_dir <- './data'
@@ -421,14 +421,14 @@ if(!(exists('.rstride'))){
 
 # log level
 # check file presence
-.rstride$log_levels_exist <- function(design_of_experiment = exp_design){
+.rstride$log_levels_exist <- function(exp_design){
   
-  valid_levels <- design_of_experiment$event_log_level %in% 
+  valid_levels <- exp_design$event_log_level %in% 
     c('None','Incidence','Transmissions','All','ContactTracing','Participants')
   
   if(any(!valid_levels)){
     smd_print('INVALID LOG LEVEL(S):', 
-              paste(design_of_experiment$event_log_level[!valid_levels],collapse = ' '),
+              paste(exp_design$event_log_level[!valid_levels],collapse = ' '),
               WARNING=T)
     return(FALSE)
   }  
@@ -439,14 +439,14 @@ if(!(exists('.rstride'))){
 }
 
 # R0
-.rstride$valid_r0_values <- function(design_of_experiment = exp_design){
+.rstride$valid_r0_values <- function(exp_design){
   
-  if(any(!is.null(design_of_experiment$r0)))
+  if(any(!is.null(exp_design$r0)))
   {
     
-    r0_max <- max(design_of_experiment$r0)
+    r0_max <- max(exp_design$r0)
     
-    for(disease_config_file in unique(design_of_experiment$disease_config_file)){
+    for(disease_config_file in unique(exp_design$disease_config_file)){
       
       # load disease config file
       config_disease    <- xmlToList(file.path('data',disease_config_file))
@@ -456,7 +456,7 @@ if(!(exists('.rstride'))){
       
       # check
       if(r0_max > fit_r0_limit){
-        smd_print('INVALID R0 CONFIG VALUE(S):', paste(design_of_experiment$r0,collapse = ' '),paste0('(R0 LIMIT = ',fit_r0_limit,')') ,WARNING=T)
+        smd_print('INVALID R0 CONFIG RANGE(S):', paste(range(exp_design$r0),collapse = '-'),paste0('(R0 LIMIT = ',fit_r0_limit,')') ,WARNING=T)
         return(FALSE)
       } 
     } # end for-loop
@@ -468,9 +468,9 @@ if(!(exists('.rstride'))){
 }
 
 # immunity
-.rstride$valid_immunity_profiles <- function(design_of_experiment = exp_design){
+.rstride$valid_immunity_profiles <- function(exp_design){
   
-  immunity_profiles <- unique(c(design_of_experiment$immunity_profile,design_of_experiment$vaccine_profile))
+  immunity_profiles <- unique(c(exp_design$immunity_profile,exp_design$vaccine_profile))
   
   # get immunity profile names
   disease_immunity_profiles <- c('None','Random','AgeDependent','Teachers','Cocoon')
@@ -487,10 +487,10 @@ if(!(exists('.rstride'))){
 }
 
 # immunity
-.rstride$valid_seed_infected <- function(design_of_experiment = exp_design){
+.rstride$valid_seed_infected <- function(exp_design){
   
   # select unique combinations of population file and seeding rate
-  unique_exp_design <- data.frame(population_file= unique(design_of_experiment[,c('population_file')]))
+  unique_exp_design <- data.frame(population_file= unique(exp_design[,c('population_file')]))
   
   # add the path to the data folder
   data_dir <- './data'
@@ -505,12 +505,12 @@ if(!(exists('.rstride'))){
   }
   
   # merge population size with design of experiment parameters
-  design_of_experiment <- merge(design_of_experiment,unique_exp_design)
+  exp_design <- merge(exp_design,unique_exp_design)
   
   # compare infected seeds with population size... and print warning if needed
-  if(any(design_of_experiment$num_infected_seeds > design_of_experiment$population_size)){
-    flag_issue <- unique_exp_design$num_infected_seeds > design_of_experiment$population_size
-    smd_print('INIALLY INFECTED > POPULATION SIZE:', paste(design_of_experiment[flag_issue,1:2], collapse = ' & initially infected '),WARNING=T)
+  if(any(exp_design$num_infected_seeds > exp_design$population_size)){
+    flag_issue <- unique_exp_design$num_infected_seeds > exp_design$population_size
+    smd_print('INIALLY INFECTED > POPULATION SIZE:', paste(exp_design[flag_issue,1:2], collapse = ' & initially infected '),WARNING=T)
     return(FALSE)
   }
   
@@ -519,7 +519,7 @@ if(!(exists('.rstride'))){
   
 }
 
-.rstride$valid_cnt_param <- function(design_of_experiment = exp_design){
+.rstride$valid_cnt_param <- function(exp_design){
  
   names(exp_design)[grepl('cnt',names(exp_design))]
   
