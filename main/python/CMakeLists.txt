@@ -12,15 +12,14 @@
 #  along with the software. If not, see <http://www.gnu.org/licenses/>.
 #  see http://www.gnu.org/licenses/.
 #
-#  Copyright 2020, Willem L, Kuylen E & Broeckhove J
+#  Copyright 2024
 #############################################################################
 
 #================================================================================================
 # Copy the Python scripts to the bin folder.
 #================================================================================================
 
-# Superspreading project scripts
-add_subdirectory(superspreading_scripts)
+add_subdirectory(pybind)
 
 
 #############################################################################

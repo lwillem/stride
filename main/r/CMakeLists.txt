@@ -29,19 +29,13 @@ INSTALL(DIRECTORY
 # rStride analysis scripts
 INSTALL( FILES 			
             rStride_abc.R
-            rStride_abc_age.R
-            rStride_abc_collectivity.R
+            rStride_abc_wave.R
             rStride_contacts.R
-            rStride_create_config.R
             rStride_baseline.R
-            rStride_ensemble.R
-            rStride_param.R
             rStride_parse_output.R
-            rStride_explore.R
             rStride_gtester_covid19.R
             rStride_r0.R 	
-            rStride_intervention_baseline.R
-            rStride_intervention.R		 	 
+            rStride_intervention_baseline.R	 	 
             rStride_pop.R
 			rStride_MDP.R
 

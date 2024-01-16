@@ -12,7 +12,7 @@
 #  along with the software. If not, see <http://www.gnu.org/licenses/>.
 #  see http://www.gnu.org/licenses/.
 #
-#  Copyright 2019, Willem L, Kuylen E & Broeckhove J
+#  Copyright 2014
 #############################################################################
 
 
@@ -23,7 +23,5 @@ add_subdirectory(cpp)
 add_subdirectory(python)
 add_subdirectory(r)
 add_subdirectory(resources)
-# Added for pybind stride library
-add_subdirectory(python/pybind)
 
 #############################################################################

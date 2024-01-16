@@ -20,7 +20,7 @@
 # Call this script from the main project folder (containing bin, config, lib, ...)
 # to get all relative data links right. 
 #
-# E.g.: path/to/stride $ ./bin/rStride_explore.R 
+# E.g.: path/to/stride $ ./bin/rStride_gtester_covid19.R 
 #
 ############################################################################ #
 
