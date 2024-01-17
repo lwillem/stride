@@ -60,16 +60,34 @@ void SimRunner::Run()
 
 void SimRunner::PrintSummary()
 {
-                const auto dur      = duration_cast<std::chrono::milliseconds>(GetClock().Get());
-                const auto milli    = static_cast<unsigned int>(dur.count());
+	const auto dur      = duration_cast<std::chrono::milliseconds>(GetClock().Get());
+	const auto milli    = static_cast<unsigned int>(dur.count());
 
-                SummaryFile  summary_file(m_config.get<string>("run.output_prefix"));
+	SummaryFile  summary_file(m_config.get<string>("run.output_prefix"));
 
-                summary_file.Print(m_config,
-                		static_cast<unsigned int>(m_sim->GetPopulation()->size()),
-                		m_sim->GetPopulation()->GetTotalInfected(),
-                		m_sim->RefTransmissionProfile().GetHomogeneousProbability(),
-						milli, milli);
+	summary_file.Print(m_config,
+			static_cast<unsigned int>(m_sim->GetPopulation()->size()),
+			m_sim->GetPopulation()->GetTotalInfected(),
+			m_sim->RefTransmissionProfile().GetHomogeneousProbability(),
+			milli, milli);
+}
+
+void SimRunner::Step()
+{
+    // Prelims.
+    m_clock.Start();
+
+    // Execute and signal Stepped
+    m_sim->TimeStep();
+
+    m_clock.Stop();
+}
+
+void SimRunner::End()
+{
+    m_clock.Stop();
+    PrintSummary();
+    m_clock.Reset();
 }
 
 } // namespace stride

@@ -64,6 +64,12 @@ public:
         /// Print summary file
         void PrintSummary();
 
+        /// Run the simulator for a single step
+		void Step();
+
+		/// Notify the simulator should stop
+		void End();
+
 private:
         util::Stopwatch<>           m_clock;  ///< Stopwatch for timing the computation.
         boost::property_tree::ptree m_config; ///< Ptree with configuration.

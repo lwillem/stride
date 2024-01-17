@@ -10,7 +10,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with the software. If not, see <http://www.gnu.org/licenses/>.
  *
- *  Copyright 2021
+ *  Copyright 2024
  */
 
 /**
@@ -33,22 +33,5 @@ MDPRunner::MDPRunner(const ptree& configPt, shared_ptr<Sim> sim)
     m_clock.Start();
 }
 
-void MDPRunner::Step()
-{
-    // Prelims.
-    m_clock.Start();
-
-    // Execute and signal Stepped
-    m_sim->TimeStep();
-
-    m_clock.Stop();
-}
-
-void MDPRunner::End()
-{
-    m_clock.Stop();
-    PrintSummary();
-    m_clock.Reset();
-}
 
 } // namespace stride

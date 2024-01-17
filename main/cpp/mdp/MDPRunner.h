@@ -47,12 +47,6 @@ public:
         /// \param configPt config info for run and for config of simulator
         explicit MDPRunner(const boost::property_tree::ptree& configPt, std::shared_ptr<Sim> sim);
 
-        /// Run the simulator for a single step
-        void Step();
-
-        /// Notify the simulator should stop
-        void End();
-
 private:
     util::Stopwatch<>           m_clock;  ///< Stopwatch for timing the computation.
     boost::property_tree::ptree m_config; ///< Ptree with configuration.
