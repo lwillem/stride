@@ -20,9 +20,9 @@
 
 #pragma once
 
-#include "pop/Vaccine.h"
-#include "pop/ConstantVaccine.h"
-#include "pop/LinearVaccine.h"
+#include "healthcare/Vaccine.h"
+#include "healthcare/ConstantVaccine.h"
+#include "healthcare/LinearVaccine.h"
 
 #include <string>
 #include <vector>

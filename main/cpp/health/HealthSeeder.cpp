@@ -10,7 +10,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with the software. If not, see <http://www.gnu.org/licenses/>.
  *
- *  Copyright 2017, 2018 Kuylen E, Willem L, Broeckhove J
+ *  Copyright 2024
  */
 
 /**
@@ -21,9 +21,11 @@
 #include "HealthSeeder.h"
 
 #include "Health.h"
-#include "disease/TransmissionProfile.h"
+#include "TransmissionProfile.h"
+#include "pop/Age.h"
 #include "pop/Population.h"
 #include "util/Assert.h"
+#include "util/StringUtils.h"
 #include "util/RnHandler.h"
 #include <boost/property_tree/ptree.hpp>
 #include <omp.h>
@@ -35,9 +37,11 @@ using namespace std;
 
 namespace stride {
 
-HealthSeeder::HealthSeeder(const boost::property_tree::ptree& diseasePt)
+HealthSeeder::HealthSeeder(const boost::property_tree::ptree& runPt,
+							const boost::property_tree::ptree& diseasePt)
     : m_start_symptomatic(), m_time_asymptomatic(), m_time_infectious(), m_time_symptomatic(), m_probability_symptomatic(),
-	  m_sympt_cnt_reduction_work_school(), m_sympt_cnt_reduction_community()
+	  m_sympt_cnt_reduction_work_school(), m_sympt_cnt_reduction_community(),
+	  m_hospital_probabilities(), m_hospital_delays(), m_hospital_length_of_stay(0U)
 {
         GetDistribution(m_start_symptomatic, diseasePt, "disease.start_symptomatic");
         GetDistribution(m_time_asymptomatic, diseasePt, "disease.time_asymptomatic");
@@ -57,10 +61,36 @@ HealthSeeder::HealthSeeder(const boost::property_tree::ptree& diseasePt)
 				m_probability_symptomatic.push_back(probabilitySymptomatic);
 		}
 
-
         m_sympt_cnt_reduction_work_school = diseasePt.get<double>("disease.sympt_cnt_reduction_work_school",1.0);
         m_sympt_cnt_reduction_community   = diseasePt.get<double>("disease.sympt_cnt_reduction_community",1.0);
 
+        // retrieve the hospitalisation details
+        auto ageCategories                   = Tokenize<unsigned int>(runPt.get<string>("run.hospital_category_age","0"), ",");
+        auto probabilities                   = Tokenize<double>(runPt.get<string>("run.hospital_probability_age","0"), ",");
+        auto delays                          = Tokenize<double>(runPt.get<string>("run.hospital_mean_delay_age","0"), ",");
+        double probability_factor            = runPt.get<double>("run.hosp_probability_factor",1);
+        unsigned short int length_of_stay    = runPt.get<unsigned short int>("run.hospital_length_of_stay",0);
+
+        // store the hospitalisation details
+        m_hospital_length_of_stay = length_of_stay;
+		if (!ageCategories.empty()) {
+			for (unsigned int i=0; i <= ageCategories.size() - 1; ++i) {
+				unsigned int max = MaximumAge();
+				if (i < ageCategories.size() - 1)
+					max = ageCategories[i+1] - 1;
+				for (unsigned int j=ageCategories[i]; j <= max; ++j) {
+					double new_prob = probabilities[i] * probability_factor;
+					if (new_prob > 1) { new_prob = 1; }
+					m_hospital_probabilities[j] = new_prob;
+					m_hospital_delays[j] = delays[i];
+				}
+			}
+		} else { // No hospitalisations occur
+		    for (unsigned int i=0; i <= MaximumAge(); ++i) {
+		        m_hospital_probabilities[i] = 0.0;
+		        m_hospital_delays[i] = 0.0;
+		    }
+		}
 }
 
 void HealthSeeder::GetDistribution(vector<double>& distribution, const ptree& rootPt, const string& xmlTag)
@@ -83,7 +113,7 @@ unsigned short int HealthSeeder::Sample(const vector<double>& distribution, doub
         return ret;
 }
 
-void HealthSeeder::Seed(const std::shared_ptr<stride::Population>& pop, const HospitalisationConfig &hc, const TransmissionProfile& transProfile, vector<util::RnHandler>& handlers)
+void HealthSeeder::Seed(const std::shared_ptr<stride::Population>& pop, const TransmissionProfile& transProfile, vector<util::RnHandler>& handlers)
 {
         auto& population = *pop;
 
@@ -114,12 +144,12 @@ void HealthSeeder::Seed(const std::shared_ptr<stride::Population>& pop, const Ho
                         boost::optional<unsigned short int> daysToLeaveHospital = {};
                         if(!isSymptomatic){
                         	timeSymptomatic = 0;
-                        } else if(hc.GetProbability(population[i].GetAge()) > 0) {
-                            const bool isHospitalised = gen01() <= hc.GetProbability(population[i].GetAge());
+                        } else if(GetHospitalProbability(population[i].GetAge()) > 0) {
+                            const bool isHospitalised = gen01() <= GetHospitalProbability(population[i].GetAge());
                             if (isHospitalised) {
                                 double variance = Sample(hospitalisationVariance, gen01()) - 1; // -1, 0 or 1
-                                daysToHospitalisation = startSymptomatic + hc.GetDelay(population[i].GetAge()) + variance;
-                                daysToLeaveHospital   = daysToHospitalisation.value() + hc.GetLengthOfStay();
+                                daysToHospitalisation = startSymptomatic + GetHospitalDelay(population[i].GetAge()) + variance;
+                                daysToLeaveHospital   = daysToHospitalisation.value() + GetHospitalLengthOfStay();
 
                                 // Make sure symptoms persist during hospital admission
                                 timeSymptomatic = daysToLeaveHospital.value() - startSymptomatic;

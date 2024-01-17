@@ -21,7 +21,7 @@
 #pragma once
 
 #include "contact/ContactPool.h"
-#include "disease/TransmissionProfile.h"
+#include "TransmissionProfile.h"
 #include "util/RnMan.h"
 #include "util/SegmentedVector.h"
 

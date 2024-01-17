@@ -12,7 +12,7 @@
 #  along with the software. If not, see <http://www.gnu.org/licenses/>.
 #  see http://www.gnu.org/licenses/.
 #
-#  Copyright 2017, 2018 Willem L, Kuylen E & Broeckhove J
+#  Copyright 2024
 #############################################################################
 
 
@@ -30,16 +30,17 @@ set(STRIDE_SRC
     contact/ContactType.cpp
     contact/EventLogMode.cpp
     contact/Infector.cpp
-    #---
-    disease/DiseaseSeeder.cpp
-    disease/Health.cpp
-    disease/HealthSeeder.cpp
-    disease/ImmunitySeeder.cpp
-    disease/PublicHealthAgency.cpp
-    disease/TransmissionProfile.cpp
-    #---
+    #--
     execs/ControlHelper.cpp
     execs/SimController.cpp
+    #---
+    health/DiseaseSeeder.cpp
+    health/Health.cpp
+    health/HealthSeeder.cpp
+    health/ImmunitySeeder.cpp
+    health/TransmissionProfile.cpp
+    #---
+    healthcare/PublicHealthAgency.cpp
     #---
     pop/Person.cpp
     pop/Population.cpp
@@ -49,7 +50,6 @@ set(STRIDE_SRC
     sim/SimRunner.cpp
     sim/Sim.cpp
     sim/SimBuilder.cpp
-    sim/HospitalisationConfig.cpp
     #---
     util/ConfigInfo.cpp
     util/CSV.cpp

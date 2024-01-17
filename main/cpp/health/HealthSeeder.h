@@ -10,8 +10,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with the software. If not, see <http://www.gnu.org/licenses/>.
  *
- *  Copyright 2018, Kuylen E, Willem L, Broeckhove J
- *  Copyright 2021, Willem L, Kuylen E, Libin P
+ *  Copyright 2024
  */
 
 /**
@@ -21,12 +20,12 @@
 
 #pragma once
 
+#include "pop/Age.h"
+
 #include <boost/property_tree/ptree_fwd.hpp>
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "sim/HospitalisationConfig.h"
 
 namespace stride {
 
@@ -43,11 +42,12 @@ class RnHandler;
 class HealthSeeder
 {
 public:
-        /// Constructor requires disease data.
-        explicit HealthSeeder(const boost::property_tree::ptree& diseasePt);
+        /// Constructor requires overall and disease-specifc data.
+        explicit HealthSeeder(const boost::property_tree::ptree& runPt,
+        						const boost::property_tree::ptree& diseasePt);
 
         /// Seeds the population with Health data.
-        void Seed(const std::shared_ptr<Population>& pop, const HospitalisationConfig &hc, const TransmissionProfile& transProfile, std::vector<util::RnHandler>& handlers);
+        void Seed(const std::shared_ptr<Population>& pop, const TransmissionProfile& transProfile, std::vector<util::RnHandler>& handlers);
 
 private:
         /// Utility method to extract distribution from data in ptree.
@@ -56,6 +56,15 @@ private:
 
         /// Sample for each of the health data item individually.
         unsigned short int Sample(const std::vector<double>& distribution, double random01);
+
+        /// Get the hospitalisation probability for an age.
+		double GetHospitalProbability(const int age) const { return m_hospital_probabilities[EffectiveAge(age)]; }
+
+		/// Get the hospitalisation delay for an age.
+		double GetHospitalDelay(const int age) const { return m_hospital_delays[EffectiveAge(age)]; }
+
+		/// Get the hospitalisation length of stay.
+		double GetHospitalLengthOfStay() const { return m_hospital_length_of_stay; }
 
 private:
         std::vector<double> m_start_symptomatic;
@@ -67,6 +76,9 @@ private:
         double             m_sympt_cnt_reduction_work_school;  ///< Proportional reduction of days in work/school pool when symptomatic
         double             m_sympt_cnt_reduction_community;    ///< Proportional reduction of days in the community pools when symptomatic
 
+        std::array<double, MaximumAge() + 1> m_hospital_probabilities;  ///< Hospitalisation probabilities per age.
+        std::array<double, MaximumAge() + 1> m_hospital_delays;        ///< Hospitalisation delays per age.
+        unsigned short int m_hospital_length_of_stay;		            ///< Hospital length of stay.
 };
 
 } // namespace stride

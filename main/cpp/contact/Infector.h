@@ -22,7 +22,7 @@
 
 #include "contact/AgeContactProfile.h"
 #include "contact/EventLogMode.h"
-#include "disease/TransmissionProfile.h"
+#include "health/TransmissionProfile.h"
 #include "pop/Population.h"
 #include "util/RnHandler.h"
 

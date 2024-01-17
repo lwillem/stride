@@ -23,7 +23,7 @@
 #include "calendar/Calendar.h"
 #include "contact/ContactType.h"
 #include "contact/InfectorExec.h"
-#include "disease/DiseaseSeeder.h"
+#include "health/DiseaseSeeder.h"
 #include "pop/Population.h"
 #include "sim/SimBuilder.h"
 #include "util/RunConfigManager.h"
@@ -44,7 +44,7 @@ Sim::Sim()
       m_calendar(nullptr), m_contact_profiles(), m_rn_handlers(), m_infector_default(),m_infector_tracing(),
       m_population(nullptr), m_rn_man(), m_transmission_profile(),
       m_is_isolated_from_household(false),
-	  m_public_health_agency(),m_hospitalisation_config()
+	  m_public_health_agency()
 {
 }
 

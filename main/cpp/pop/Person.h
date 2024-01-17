@@ -23,9 +23,9 @@
 #include "calendar/Calendar.h"
 #include "contact/ContactType.h"
 #include "contact/IdSubscriptArray.h"
-#include "disease/Health.h"
+#include "health/Health.h"
+#include "healthcare/Vaccine.h"
 #include "util/RnHandler.h"
-#include "pop/Vaccine.h"
 
 #include <cstddef>
 #include <queue>

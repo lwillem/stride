@@ -21,7 +21,7 @@
 #include "ImmunitySeeder.h"
 
 #include "pop/Person.h"
-#include "pop/ConstantVaccine.h"
+#include "healthcare/ConstantVaccine.h"
 #include "util/RnMan.h"
 #include "util/FileSys.h"
 #include "util/LogUtils.h"

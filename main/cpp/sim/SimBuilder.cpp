@@ -23,10 +23,10 @@
 #include "contact/ContactType.h"
 #include "contact/InfectorMap.h"
 #include "contact/ContactHeterogeneitySeeder.h"
-#include "disease/DiseaseSeeder.h"
-#include "disease/HealthSeeder.h"
-#include "disease/ImmunitySeeder.h"
-#include "disease/PublicHealthAgency.h"
+#include "health/DiseaseSeeder.h"
+#include "health/HealthSeeder.h"
+#include "health/ImmunitySeeder.h"
+#include "healthcare/PublicHealthAgency.h"
 #include "pop/SurveySeeder.h"
 #include "sim/Sim.h"
 #include "util/StringUtils.h"
@@ -56,16 +56,6 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         sim->m_calendar                      = make_shared<Calendar>(m_config,num_days);
         sim->m_event_log_mode                = EventLogMode::ToMode(m_config.get<string>("run.event_log_level", "None"));
         sim->m_rn_man                        = std::move(rnMan);
-
-        // --------------------------------------------------------------
-		// Read hospitalisation and setup HospitalisationConfig
-		// --------------------------------------------------------------
-        auto ageCategories                   = Tokenize<unsigned int>(m_config.get<string>("run.hospital_category_age","0"), ",");
-        auto probabilities                   = Tokenize<double>(m_config.get<string>("run.hospital_probability_age","0"), ",");
-        auto delays                          = Tokenize<double>(m_config.get<string>("run.hospital_mean_delay_age","0"), ",");
-        double probability_factor            = m_config.get<double>("run.hosp_probability_factor",1);
-        unsigned short int length_of_stay    = m_config.get<unsigned short int>("run.hospital_length_of_stay",0);
-        sim->m_hospitalisation_config        = HospitalisationConfig(ageCategories, probabilities, delays, probability_factor,length_of_stay);
 
         // --------------------------------------------------------------
         // Contact handlers, each with generator bound to different
@@ -101,9 +91,9 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         sim->m_transmission_profile.Initialize(m_config, diseasePt);
 
         // --------------------------------------------------------------
-        // Seed the population with health data.
+        // Seed the population with health data (incl. hospital admission)
         // --------------------------------------------------------------
-        HealthSeeder(diseasePt).Seed(sim->m_population, sim->m_hospitalisation_config, sim->m_transmission_profile, sim->m_rn_handlers);
+        HealthSeeder(m_config, diseasePt).Seed(sim->m_population, sim->m_transmission_profile, sim->m_rn_handlers);
 
         // --------------------------------------------------------------
 		// Seed population with immunity: naturally or vaccine-induced.

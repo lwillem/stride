@@ -23,11 +23,10 @@
 #include "contact/AgeContactProfiles.h"
 #include "contact/EventLogMode.h"
 #include "contact/InfectorExec.h"
-#include "disease/PublicHealthAgency.h"
-#include "disease/TransmissionProfile.h"
+#include "health/TransmissionProfile.h"
+#include "healthcare/PublicHealthAgency.h"
 #include "util/RnMan.h"
 #include "util/RnHandler.h"
-#include "sim/HospitalisationConfig.h"
 
 #include <boost/property_tree/ptree.hpp>
 #include <string>
@@ -106,7 +105,6 @@ private:
 
         PublicHealthAgency          m_public_health_agency;
 
-        HospitalisationConfig       m_hospitalisation_config; ///< Hospitalisation probabilities and delay configuration.
 };
 
 } // namespace stride
