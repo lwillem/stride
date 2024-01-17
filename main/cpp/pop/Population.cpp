@@ -162,7 +162,7 @@ unsigned int Population::CountInfectiousSymptomaticCases() const
         unsigned int total{0U};
         for (const auto& p : *this) {
                 const auto& h = p.GetHealth();
-                total += h.IsInfectious() & h.IsSymptomatic();
+                total += h.IsInfectious() && h.IsSymptomatic();
         }
         return total;
 }

@@ -110,10 +110,8 @@ public:
         //Is the individual being isolated?
         bool InIsolation() const { return m_isolated; }
 
-        /// Daily update of the isolation status and presence in contact pools.
-        void UpdatePresence(bool isRegularWeekday, bool isSchoolOff,
-        		bool isHouseholdClusteringAllowed,
-        		bool isIsolatedFromHousehold, 
+        /// Daily update of the isolation status and health-related presence in contact pools.
+        void UpdatePresence(bool isIsolatedFromHousehold,
 				util::RnHandler& rnHandler,
                 unsigned short int simDay, bool run_simplified);
 

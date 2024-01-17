@@ -42,15 +42,9 @@ get_covid19_default_param <- function(){
                 start_date                    = '2020-02-16', 
                 # holidays_file                 = 'calendar_belgium_2020_covid19_exit_school_adjusted.csv',
                 holidays_file                 = 'calendar_belgium_2019_2021.csv',
-                # cnt_reduction_workplace       = 0.86,
-                # cnt_reduction_other           = 0.85,
-                # compliance_delay_workplace    = 7,
-                # compliance_delay_other        = 7,
-                # num_daily_imported_cases      = 0,
-                # cnt_reduction_workplace_exit  = 0.86,  
-                # cnt_reduction_other_exit      = 0.85,
-                # cnt_reduction_school_exit     = 1,
                 cnt_intensity_householdCluster = 0,
+               
+                # tracing 
                 detection_probability          = 0,
                 tracing_efficiency_household   = 0.9, 
                 tracing_efficiency_other       = 0.7,
@@ -77,7 +71,6 @@ get_covid19_default_param <- function(){
                 
                # threshold for log parsing (default is NA == no threshold)
                logparsing_cases_upperlimit    = NA
-               
           )
    
    

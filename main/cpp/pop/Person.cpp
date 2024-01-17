@@ -68,10 +68,7 @@ void Person::Isolate(unsigned int simDay, unsigned int from, unsigned int to)
     ScheduleEvent(simDay, end);
 }
 
-//TODO: boolean args can be obtained from the calendar
-void Person::UpdatePresence(bool isRegularWeekday, bool isSchoolOff,
-		bool isHouseholdClusteringAllowed,
-        bool isIsolatedFromHousehold,
+void Person::UpdatePresence(bool isIsolatedFromHousehold,
 		util::RnHandler& rnHandler,
         unsigned short int simDay,
 		bool run_simplified)
@@ -95,6 +92,7 @@ void Person::UpdatePresence(bool isRegularWeekday, bool isSchoolOff,
 			m_in_pools[Id::SecondaryCommunity] = false;
 			m_in_pools[Id::HouseholdCluster]   = false;
 			m_in_pools[Id::Collectivity]       = false;
+
         } else if(InIsolation()){
 			m_in_pools[Id::Household]          = !isIsolatedFromHousehold;;
 			m_in_pools[Id::School]             = false;
@@ -103,27 +101,15 @@ void Person::UpdatePresence(bool isRegularWeekday, bool isSchoolOff,
 			m_in_pools[Id::SecondaryCommunity] = false;
 			m_in_pools[Id::HouseholdCluster]   = false;
 			m_in_pools[Id::Collectivity]       = false;
+
         } else {
-        	   // by default: a person is at home (or in their collectivity)
+        	   // by default: a person intents to be present at each location
         	   m_in_pools[Id::Household]          = true;
         	   m_in_pools[Id::Collectivity]       = true;
-
-        	   // is household clustering allowed?
-        	   m_in_pools[Id::HouseholdCluster]   = isHouseholdClusteringAllowed ? true : false;
-
-        	   // Update presence in contact pools by type of day
-        	   if (isRegularWeekday) {
-        		   m_in_pools[Id::Workplace]          = true;
-        		   m_in_pools[Id::PrimaryCommunity]   = false;
-        		   m_in_pools[Id::SecondaryCommunity] = true;
-        	   } else{
-        	       m_in_pools[Id::Workplace]          = false;
-        	       m_in_pools[Id::PrimaryCommunity]   = true;
-        	       m_in_pools[Id::SecondaryCommunity] = false;
-        	   }
-
-        	   // Update presence at school
-        	   m_in_pools[Id::School] = isSchoolOff ? false : true;
+        	   m_in_pools[Id::HouseholdCluster]   = true;
+      		   m_in_pools[Id::Workplace]          = true;
+       		   m_in_pools[Id::PrimaryCommunity]   = true;
+       		   m_in_pools[Id::SecondaryCommunity] = true;
 
         	   // Update presence in contact pools if symptomatic with/without isolation
         	   if (m_health.IsSymptomatic()) {

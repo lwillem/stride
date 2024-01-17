@@ -350,6 +350,7 @@ smd_print('START REGRESSION TEST')
 
 ## Load project summary 
 project_summary <- .rstride$load_project_summary(project_dir)
+project_summary$run_time_id    <- project_summary$run_time
 project_summary$output_prefix  <- NULL
 project_summary$run_tag        <- NULL
 project_summary$run_time       <- NULL
@@ -375,6 +376,7 @@ plot_final_sizes <- function(project_summary){
   text(x = 1:ncol(bplt$stats),
        y = bplt_mean$num_cases*1.1,
        labels = bplt_mean$num_cases,
+       cex=0.8,
        pos = 3,
        col=4)
   legend('bottom',
@@ -387,6 +389,7 @@ plot_final_sizes <- function(project_summary){
 }
 par(mfrow=c(1,1))
 plot_final_sizes(project_summary)
+# plot_final_sizes(ref_project_summary)
 
 # load incidence output
 data_incidence     <- .rstride$load_aggregated_output(project_dir,'data_incidence')
@@ -585,3 +588,9 @@ rrv_repo <- function(){
   rrv()
 }
 
+# print total run-time
+smd_print('total and mean run time (s):', 
+          round(mean(project_summary$run_time_id)/1e3,1),
+          ':',
+          round(sum(project_summary$run_time_id)/1e3,1)
+          )

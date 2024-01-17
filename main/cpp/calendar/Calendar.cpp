@@ -177,6 +177,33 @@ void Calendar::RegisterInfectedSeeds(unsigned int num_infected_seeds) {
 	m_imported_cases[0] = num_infected_seeds;
 }
 
+//double Calendar::GetDistancingFactor(ContactType::Id typ) {
+double Calendar::GetDistancingFactor(const ContactPool& pool) const {
+
+	ContactType::Id cType = pool.GetType();
+
+	double typ_distancing_factor = 0;
+	if (cType == ContactType::Id::Workplace) {
+		// account for physical distancing at work
+		typ_distancing_factor = GetWorkplaceDistancingFactor();
+	} else if (cType == ContactType::Id::PrimaryCommunity ||
+				cType == ContactType::Id::SecondaryCommunity) {
+		// account for physical distancing in the community
+		typ_distancing_factor = GetCommunityDistancingFactor();
+	} else if (cType == ContactType::Id::School) {
+		// account for physical distancing at school
+		typ_distancing_factor = GetSchoolDistancingFactor(pool.GetMinAge());
+	} else if (cType == ContactType::Id::Collectivity) {
+		// account for physical distancing in the collectivity
+		typ_distancing_factor = GetCollectivityDistancingFactor();
+	} else if (cType == ContactType::Id::HouseholdCluster) {
+		// account for contact intensity in household clusters
+		typ_distancing_factor = 1-GetHouseholdClusteringLevel();
+	}
+
+	return(typ_distancing_factor);
+}
+
 void Calendar::UpdateCntReduction(std::vector<double> workplace_distancing, std::vector<double> community_distancing,
                                   std::vector<double> collectivity_distancing)
 {
