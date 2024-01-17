@@ -81,7 +81,7 @@ void RunTest(const string& testTag, tuple<ptree, unsigned int, double> d, unsign
         // -----------------------------------------------------------------------------------------
         // Actual simulator run.
         // -----------------------------------------------------------------------------------------
-        SimController controller(config, "TestController");
+        SimController controller(config);
         controller.Control();
         const auto sim = controller.GetSim();
         const auto pop = sim->GetPopulation();

@@ -76,8 +76,8 @@ void MDP::Create_(const boost::property_tree::ptree& config, int seed,
     // Sort the configuration details
     m_config.sort();
     // Update the control helper since we didn't supply it at instantiation
-    ControlHelper::m_config = m_config;
-    ControlHelper::m_output_prefix = outputDir;
+    SimController::m_config = m_config;
+    SimController::m_output_prefix = outputDir;
 
     // From SimController.Control
     // -----------------------------------------------------------------------------------------
@@ -92,8 +92,8 @@ void MDP::Create_(const boost::property_tree::ptree& config, int seed,
     if (!outputPrefix.empty()) {
         m_config.put("run.output_prefix", outputPrefix);
         // Update the control helper since we didn't supply it at instantiation
-        ControlHelper::m_config = m_config;
-        ControlHelper::m_output_prefix = outputPrefix;
+        SimController::m_config = m_config;
+        SimController::m_output_prefix = outputPrefix;
     }
 
     if (seed != NULL) {

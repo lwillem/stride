@@ -29,7 +29,7 @@
 #include "mdp/Vaccines.h"
 #include "util/RnMan.h"
 #include "util/RnHandler.h"
-#include "execs/ControlHelper.h"
+#include "execs/SimController.h"
 
 #include <boost/property_tree/ptree.hpp>
 #include <string>
@@ -48,7 +48,7 @@ class MDPRunner;
  * Markov Decision Process for the stride simulation.
  * Exposes the simulation to distribute vaccines to age groups of the population.
  */
-class MDP : protected ControlHelper
+class MDP : protected SimController
 {
 public:
         /// Constructor for empty MDP.

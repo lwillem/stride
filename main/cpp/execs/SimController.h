@@ -20,34 +20,40 @@
 
 #pragma once
 
-#include "ControlHelper.h"
+#include "util/RnMan.h"
+#include "util/Stopwatch.h"
 
-#include <boost/property_tree/ptree_fwd.hpp>
+#include <boost/property_tree/ptree.hpp>
 #include <memory>
+#include <spdlog/spdlog.h>
+#include <string>
 
 namespace stride {
 
 class Sim;
+class SimRunner;
 
 /**
  * Controls a simulation run initiated with the command line interface (cli).
  *
- * SimController setup functions include (@see ControlHelper):
+ * SimController setup functions include :
  * \li checks the OpenMP environment
  * \li checks the file system environment
  * \li interprets and executes the output prefix
  * \li installs a stride logger
  *
- * The SimController execution:
  * \li creates a population (@see Population)
  * \li creates a simulation runner (@see SimRunner)
  * \li runs the simulation
  */
-class SimController : protected ControlHelper
+class SimController
 {
 public:
         /// Straight initialization.
-        explicit SimController(const boost::property_tree::ptree& config, const std::string& name = "SimController");
+        explicit SimController(const boost::property_tree::ptree& config);
+
+        /// Simple destructor.
+        ~SimController();
 
         /// Control the execution of the simulation.
         void Control();
@@ -55,8 +61,34 @@ public:
         /// Reference the simulator (method used mostly in tests).
         std::shared_ptr<Sim> GetSim() const { return m_simulator; };
 
-private:
-        std::shared_ptr<Sim> m_simulator;
+protected:
+        /// Empty controller: used as target for delegation.
+        explicit SimController();
+
+        /// Check install environment.
+        void CheckEnv();
+
+        // Output_prefix: if it's a string not containing any / it gets interpreted as a
+        // filename prefix; otherwise we 'll create the corresponding directory.
+        void CheckOutputPrefix();
+
+        /// Make the appropriate logger for cli environment and register as stride_logger.
+        void InstallLogger();
+
+        /// Logs info on setup for cli environment to stride_logger.
+        void LogStartup();
+
+        /// Logs info on setup for cli environment to stride_logger.
+        void Shutdown();
+
+protected:
+        boost::property_tree::ptree     m_config;           ///< Main configuration for run and sim.
+        std::string                     m_output_prefix;    ///< Prefix to output (name prefix or prefix dir)
+        util::Stopwatch<>               m_run_clock;        ///< Stopwatch for timing the computation.
+        std::shared_ptr<spdlog::logger> m_stride_logger;    ///< General logger.
+        bool                            m_use_install_dirs; ///< Working dir or install dir mode.
+
+        std::shared_ptr<Sim>            m_simulator;
 };
 
 } // namespace stride

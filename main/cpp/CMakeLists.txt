@@ -31,7 +31,6 @@ set(STRIDE_SRC
     contact/EventLogMode.cpp
     contact/Infector.cpp
     #--
-    execs/ControlHelper.cpp
     execs/SimController.cpp
     #---
     health/DiseaseSeeder.cpp
