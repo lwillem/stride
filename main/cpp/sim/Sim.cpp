@@ -44,7 +44,7 @@ Sim::Sim()
       m_calendar(nullptr), m_contact_profiles(), m_rn_handlers(), m_infector_default(),m_infector_tracing(),
       m_population(nullptr), m_rn_man(), m_transmission_profile(),
       m_is_isolated_from_household(false),
-	  m_public_health_agency(),m_num_daily_imported_cases(0),m_hospitalisation_config()
+	  m_public_health_agency(),m_hospitalisation_config()
 {
 }
 
@@ -63,12 +63,11 @@ std::shared_ptr<Sim> Sim::Create(const boost::property_tree::ptree& config, shar
 void Sim::TimeStep()
 {
 
-        // Logic where you compute (on the basis of input/config for initial day or on the basis of
-        // number of sick persons, duration of epidemic etc) what kind of DaysOff scheme you apply.
+        // Define the type of day
         const bool isRegularWeekday                = m_calendar->IsRegularWeekday();
         const bool isHouseholdClusteringAllowed    = m_calendar->IsHouseholdClusteringAllowed();
 
-		// To be used in update of population & contact pools.
+		// To be used in population & contact pool update
         Population& population    = *m_population;
         auto&       logger        = population.RefEventLogger();
         auto&       poolSys       = population.RefPoolSys();
@@ -78,15 +77,11 @@ void Sim::TimeStep()
         // Select infector, based on tracing
         const auto& infector      = m_public_health_agency.IsContactTracingActive(m_calendar) ? *m_infector_tracing : *m_infector_default;
 
-        // set HouseholdCluster intensity
-        double cnt_intensity_householdCluster = 0.0;
-		if (isHouseholdClusteringAllowed && poolSys.RefPools(ContactType::Id::HouseholdCluster).size() > 1){
-			cnt_intensity_householdCluster = m_calendar->GetHouseholdClusteringLevel();
-		}
-        // Set other distancing factors except for school (requires pool min age)
-        double workplace_distancing_factor = m_calendar->GetWorkplaceDistancingFactor();
-        double community_distancing_factor = m_calendar->GetCommunityDistancingFactor();
+        // Set distancing and clustering factors, except for school (requires pool min age)
+        double workplace_distancing_factor    = m_calendar->GetWorkplaceDistancingFactor();
+        double community_distancing_factor    = m_calendar->GetCommunityDistancingFactor();
         double collectivity_distancing_factor = m_calendar->GetCollectivityDistancingFactor();
+        double cnt_intensity_householdCluster = m_calendar->GetHouseholdClusteringLevel();
 
         // Update Health before introducing new cases (infected on simDay)
 #pragma omp parallel num_threads(m_num_threads)
@@ -104,28 +99,21 @@ void Sim::TimeStep()
             logger->info("[IMPORT-CASES] sim_day={} count={}", simDay, m_calendar->GetNumberOfImportedCases());        	
         }
 
-        // For each age, check school closing
-        unsigned int maxAge = population.GetMaxAge();
-        std::vector<bool> areSchoolsOff(maxAge + 1);
-        for (unsigned int age = 0; age <= maxAge; age++) {
-            areSchoolsOff[age] = m_calendar->IsSchoolClosed(age);
-        }
-
 #pragma omp parallel num_threads(m_num_threads)
         {
         	const auto thread_num = static_cast<unsigned int>(omp_get_thread_num());
-			// Update presence/absence in contact pools
-			// depending on health status, work/school day and whether
-			// we want to track index cases without adaptive behavior
+			// Update presence/absence in contact pools depending on health status,
+        	// work/school day and whether we want to track index cases without adaptive
+        	// behavior
 #pragma omp for schedule(static)
 			for (size_t i = 0; i < population.size(); ++i) {
 
-                unsigned int school_age = population[i].GetAge();
-                bool isSchoolOff = false;
-                // adjust SchoolOff boolean to school type for individual 'i'
-                unsigned int school_id = population[i].GetPoolId(ContactType::Id::School);
+
+                // adjust SchoolOff boolean for individual 'i' (for teachers, their own age does not count)
+				bool isSchoolOff = false;
+				unsigned int school_id = population[i].GetPoolId(ContactType::Id::School);
                 if(school_id>0){
-                    school_age = poolSys.RefPools(ContactType::Id::School)[school_id].GetMinAge();
+                	unsigned int school_age = poolSys.RefPools(ContactType::Id::School)[school_id].GetMinAge();
                     isSchoolOff = m_calendar->IsSchoolClosed(school_age);
                 }
 				// update health and presence at different contact pools
@@ -144,7 +132,7 @@ void Sim::TimeStep()
         {
 		    const auto thread_num = static_cast<unsigned int>(omp_get_thread_num());
 			// Infector updates individuals for contacts & transmission within each pool.
-			// Skip pools with id = 0, because it means Not Applicable.
+		    // Skip Workplaces, Schools or HouseholdClusters is possible.
 			for (auto typ : ContactType::IdList) {
 					if ((typ == ContactType::Id::Workplace && !isRegularWeekday) ||
 						(typ == ContactType::Id::School && !isRegularWeekday) ||
@@ -152,8 +140,9 @@ void Sim::TimeStep()
 							continue;
 					}
 #pragma omp for schedule(static)
+					// Skip pools with id = 0, because it means Not Applicable.
 					for (size_t i = 1; i < poolSys.RefPools(typ).size(); i++) { // NOLINT
-                            double typ_distancing_factor;
+                            double typ_distancing_factor = 0;
                             // account for physical distancing at work
                             if (typ == ContactType::Id::Workplace) { typ_distancing_factor = workplace_distancing_factor; }
                             // account for physical distancing in the community

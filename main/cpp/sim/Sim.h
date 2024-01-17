@@ -106,10 +106,6 @@ private:
 
         PublicHealthAgency          m_public_health_agency;
 
-        //TODO: this is not used anymore? remove it?
-        // Introduce new infected cases on a daily basis?
-        unsigned int                m_num_daily_imported_cases;
-
         HospitalisationConfig       m_hospitalisation_config; ///< Hospitalisation probabilities and delay configuration.
 };
 

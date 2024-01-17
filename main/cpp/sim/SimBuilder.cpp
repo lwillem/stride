@@ -110,25 +110,16 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
 		// --------------------------------------------------------------
         ImmunitySeeder(m_config, sim->m_rn_man).Seed(sim->m_population);
 
-
         // --------------------------------------------------------------
-        // Seed population with infection.
+        // Register infected seeds.
         // --------------------------------------------------------------
-        // Option to select a person to infect by ID, used for verification purposes.
-		boost::optional<unsigned int> infected_seed_id_as_input = m_config.get_optional<unsigned int>("run.infected_seed_id");
-		if (infected_seed_id_as_input) {
-			DiseaseSeeder(m_config, sim->m_rn_man).Seed(sim->m_population, sim->m_transmission_profile, sim->m_rn_handlers[0]);
-		} else {
-			const auto numInfectedSeeds = m_config.get<unsigned int>("run.num_infected_seeds",0);
-			sim->GetCalendar()->RegisterInfectedSeeds(numInfectedSeeds);
-		}
-		sim->m_num_daily_imported_cases = m_config.get<double>("run.num_daily_imported_cases",0);
+		sim->GetCalendar()->RegisterInfectedSeeds(m_config.get<unsigned int>("run.num_infected_seeds",0));
 
         // --------------------------------------------------------------
 		// Set Public Health Agency
 		// --------------------------------------------------------------
         sim->m_public_health_agency.Initialize(m_config);
-		sim->m_is_isolated_from_household           = m_config.get<bool>("run.is_isolated_from_household",false);
+		sim->m_is_isolated_from_household = m_config.get<bool>("run.is_isolated_from_household",false);
 
         // --------------------------------------------------------------
         // Seed population with survey participants.

@@ -90,7 +90,6 @@ public:
 		}
 
 
-
         /// Check if distancing measures are in place for workplaces
         bool IsWorkplaceDistancingEnforced() const
         {

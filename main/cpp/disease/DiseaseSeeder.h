@@ -42,14 +42,8 @@ public:
         /// Initializing DiseaseSeeder.
         DiseaseSeeder(const boost::property_tree::ptree& config, util::RnMan& rnMan);
 
-        /// Build the simulator.
-        void Seed(std::shared_ptr<Population> pop, const TransmissionProfile& transProfile, util::RnHandler& rnHandler);
-
         /// Import infected cases into the population
         void ImportInfectedCases(std::shared_ptr<Population> pop, unsigned int numInfected, unsigned int simDay, const TransmissionProfile& transProfile, util::RnHandler& rnHandler);
-
-        ///
-        void SeedInfectedById(std::shared_ptr<Population> pop, unsigned int infectedId, const TransmissionProfile& transProfile, util::RnHandler& rnHandler);
 
 private:
         const boost::property_tree::ptree& m_config; ///< Run config.

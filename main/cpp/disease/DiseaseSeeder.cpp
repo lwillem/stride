@@ -39,56 +39,6 @@ using namespace std;
 
 DiseaseSeeder::DiseaseSeeder(const ptree& config, RnMan& rnMan) : m_config(config), m_rn_man(rnMan) {}
 
-void DiseaseSeeder::Seed(std::shared_ptr<Population> pop, const TransmissionProfile& transProfile, util::RnHandler& rnHandler)
-{
-
-	// Option to select a person to infect by ID, used for verification purposes.
-	boost::optional<unsigned int> infected_seed_id_as_input = m_config.get_optional<unsigned int>("run.infected_seed_id");
-
-	if (infected_seed_id_as_input) {
-		auto infected_seed_id = *infected_seed_id_as_input;
-		SeedInfectedById(pop, infected_seed_id, transProfile, rnHandler);
-	} else {
-        // --------------------------------------------------------------
-        // Get number of infected persons to seed
-        // --------------------------------------------------------------
-        const auto   sRate       = m_config.get<double>("run.seeding_rate",0);
-        const auto   popSize     = pop->size();
-        auto numInfected = static_cast<unsigned int>(floor(static_cast<double>(popSize) * sRate));
-
-
-        // option to provide a number of cases, instead of a seeding rate.
-	    const auto numInfectedSeeds = m_config.get<unsigned int>("run.num_infected_seeds",0);
-	    if(numInfectedSeeds > 0){
-	    	numInfected = numInfectedSeeds;
-	    }
-
-	    //------------------------------------------------
-		// Check compatibility options issues
-		//------------------------------------------------
-	    if(sRate > 0){
-			std::cout << "The 'seeding_rate' parameter is deprecated. Please use 'num_infected_seeds'" << std::endl;
-			std::cerr << "The 'seeding_rate' parameter is deprecated. Please use 'num_infected_seeds'" << std::endl;
-		}
-	    if(numInfectedSeeds > 0 && sRate > 0){
-    		std::cout << "The 'seeding_rate' parameter is overruled by 'num_infected_seeds'" << std::endl;
-    		std::cerr << "The 'seeding_rate' parameter is overruled by 'num_infected_seeds' " << std::endl;
-    	}
-
-	    //------------------------------------------------
-		// Check validity of input data.
-		//------------------------------------------------
-	    if (numInfected > popSize) {
-				throw runtime_error(string(__func__) + "> Bad input data for infected seeding an/or initially infected cases.");
-		}
-
-        // --------------------------------------------------------------
-        // Add infected seeds to the population
-        // --------------------------------------------------------------
-        ImportInfectedCases(pop, numInfected, 0, transProfile, rnHandler);
-	}
-}
-
 void DiseaseSeeder::ImportInfectedCases(std::shared_ptr<Population> pop, unsigned int numInfected, unsigned int simDay, const TransmissionProfile& transProfile, util::RnHandler& rnHandler)
 {
 
@@ -151,40 +101,5 @@ void DiseaseSeeder::ImportInfectedCases(std::shared_ptr<Population> pop, unsigne
                 }
         }
 }
-
-void DiseaseSeeder::SeedInfectedById(std::shared_ptr<Population> pop, unsigned int infectedId, const TransmissionProfile& transProfile, util::RnHandler& rnHandler) {
-    const EventLogMode::Id log_level   = EventLogMode::ToMode(m_config.get<string>("run.event_log_level", "None"));
-    auto&        logger      = pop->RefEventLogger();
-
-	Person& p = pop->at(static_cast<size_t>(infectedId));
-	if (p.GetHealth().IsSusceptible()) {
-		double rel_inf = transProfile.GetIndividualInfectiousness(rnHandler);
-		p.GetHealth().StartInfection(p.GetId(), -1, rel_inf);
-
-		// TODO: make use of Infector template functions? Or use template functions for DiseaseSeeder?
-		if (log_level >= EventLogMode::Id::Transmissions) {
-			logger->info("[PRIM] {} {} {} {} {} {} {} {} {} {} {} {} {} {}",
-                	p.GetId(), -1, p.GetAge(), -1, -1, 0, p.GetId(),
-				p.GetHealth().GetStartInfectiousness(),p.GetHealth().GetEndInfectiousness(),
-				p.GetHealth().GetStartSymptomatic(),p.GetHealth().GetEndSymptomatic(), -1,
-				p.GetHealth().GetRelativeInfectiousness(),
-				p.GetHealth().GetRelativeSusceptibility());
-		} else if (log_level == EventLogMode::Id::Incidence) {
-			logger->info("[TRAN_M] {} {} {} {} {}",
-				p.GetAge(),
-				0,
-				p.GetHealth().GetStartInfectiousness(),
-				p.GetHealth().GetStartSymptomatic(),
-				p.GetHealth().GetEndSymptomatic());
-		}
-
-        // register as survey participant
-        //TODO: add link with logLevel
-        SurveySeeder sSeeder(m_config,m_rn_man);
-        sSeeder.RegisterParticipant(pop,p);
-
-	}
-}
-
 
 } // namespace stride
