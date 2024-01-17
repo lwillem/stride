@@ -559,6 +559,25 @@ if(setequal(rstride_out_abc,ref_rstride_out_abc)){
   smd_print(names(stride_diff),WARNING = T)
 }
 
+# COMPARE PERFORMANCE ----
+# current_run_times  <- project_summary$run_time_id /1e3
+# previous_run_times <- ref_project_summary$run_time_id /1e3
+# run_time_diff <- current_run_times - previous_run_times
+current_run_times  <- aggregate(run_time_id ~ gtester_label, data= project_summary,mean)
+previous_run_times <- aggregate(run_time_id ~ gtester_label, data= ref_project_summary,mean)
+run_time_diff     <- current_run_times$run_time_id - previous_run_times$run_time_id
+smd_print('Total run time and abs. difference (s):', 
+          round(sum(current_run_times$run_time_id/1e3),1), '::',
+          round(sum(run_time_diff/1e3),1)
+)
+smd_print('Average run time and abs. difference  (s):', 
+          round(mean(current_run_times$run_time_id/1e3),1), '::',
+          round(mean(run_time_diff/1e3),1)
+)
+smd_print('Test with highest time differenct:', 
+          current_run_times$gtester_label[order(run_time_diff)[1]])
+
+
 # terminal message
 smd_print('REGRESSION TEST COMPLETE')
 
@@ -588,9 +607,4 @@ rrv_repo <- function(){
   rrv()
 }
 
-# print total run-time
-smd_print('total and mean run time (s):', 
-          round(mean(project_summary$run_time_id)/1e3,1),
-          ':',
-          round(sum(project_summary$run_time_id)/1e3,1)
-          )
+
