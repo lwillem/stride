@@ -526,7 +526,7 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                                                                                 h.StartAirboneInfection(rel_inf);
                                                                                 if (TIC)
                                                                                         h.StopInfection();
-                                                                                LP::AirborneTrans(eventLogger, p, , pType, simDay, h2.GetIdIndexCase(), pVentilation);  
+                                                                                LP::AirborneTrans(eventLogger, p, pType, simDay, pVentilation);  
                                                 }
                                         }
 

@@ -300,9 +300,7 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
         const std::string& location = values[2];
         const auto day_week = static_cast<unsigned int>(IntFromString(values[3]));
         const auto duration = static_cast<unsigned int>(IntFromString(values[4]));
-        const auto air_mass = static_cast<double>(DoubleFromString(values[5]));
-
-                  
+                          
                 ContactType::Id typ = ToId(location);
 
                 if (line_number < 5) {
