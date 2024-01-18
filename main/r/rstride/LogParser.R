@@ -72,7 +72,7 @@ parse_event_logfile <- function(event_logfile,exp_id,
                            'is_susceptible','is_infected','is_infectious','is_recovered','is_immune',
                            'start_infectiousness','start_symptomatic','start_hospitalisation','end_infectiousness','end_symptomatic',
                            'end_hospitalisation','household_size','school_size','workplace_size','primarycommunity_size',
-                           'secundarycommunity_size')
+                           'secundarycommunity_size','survey_type')
 
   rstride_out$data_participants  <- reformat_log_data(event_logfile = event_logfile,
                                                       data_log_cat  = data_log_cat,

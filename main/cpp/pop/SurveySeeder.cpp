@@ -10,7 +10,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with the software. If not, see <http://www.gnu.org/licenses/>.
  *
- *  Copyright 2020, Kuylen E, Willem L, Broeckhove J
+ *  Copyright 2024
  */
 
 /**
@@ -24,6 +24,7 @@
 #include "pop/Population.h"
 #include "util/Exception.h"
 #include "util/RnMan.h"
+#include "util/StringUtils.h"
 
 #include <boost/property_tree/ptree.hpp>
 #include <cassert>
@@ -66,7 +67,8 @@ shared_ptr<Population> SurveySeeder::Seed(shared_ptr<Population> pop)
 				}
 
 				// register new participant
-				RegisterParticipant(pop,p);
+				std::string survey_type = "contacts";
+				RegisterParticipant(pop,p,survey_type);
 
 				// update number of remaining samples
 				numSamples++;
@@ -75,7 +77,7 @@ shared_ptr<Population> SurveySeeder::Seed(shared_ptr<Population> pop)
 	return pop;
 }
 
-void SurveySeeder::RegisterParticipant(std::shared_ptr<Population> pop, Person& p)
+void SurveySeeder::RegisterParticipant(std::shared_ptr<Population> pop, Person& p, std::string& survey_type)
 {
 
 	const EventLogMode::Id logLevel   = EventLogMode::ToMode(m_config.get<string>("run.event_log_level", "None"));
@@ -91,15 +93,15 @@ void SurveySeeder::RegisterParticipant(std::shared_ptr<Population> pop, Person& 
 		// log person details
 		const auto h    = p.GetHealth();
 		const auto pHH  = p.GetPoolId(Id::Household);
-		const auto pS = p.GetPoolId(Id::School);
+		const auto pS   = p.GetPoolId(Id::School);
 		const auto pW   = p.GetPoolId(Id::Workplace);
 		const auto pPC  = p.GetPoolId(Id::PrimaryCommunity);
 		const auto pSC  = p.GetPoolId(Id::SecondaryCommunity);
 		const auto pHC  = p.GetPoolId(Id::HouseholdCluster);
 		const auto pCol = p.GetPoolId(Id::Collectivity);
 
-		logger->info("[PART] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}", p.GetId(),
-			 p.GetAge(), pHH, pS, pW, pHC, pCol, h.IsSusceptible(), h.IsInfected(), h.IsInfectious(),
+		logger->info("[PART] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}",
+			 p.GetId(), p.GetAge(), pHH, pS, pW, pHC, pCol, h.IsSusceptible(), h.IsInfected(), h.IsInfectious(),
 			 h.IsRecovered(), p.IsImmune(), h.GetStartInfectiousness(), h.GetStartSymptomatic(),
 			 h.GetStartHospitalisationValue(),
 			 h.GetEndInfectiousness(), h.GetEndSymptomatic(),
@@ -108,7 +110,8 @@ void SurveySeeder::RegisterParticipant(std::shared_ptr<Population> pop, Person& 
 			 poolSys.CRefPools<Id::School>()[pS].GetPool().size(),
 			 poolSys.CRefPools<Id::Workplace>()[pW].GetPool().size(),
 			 poolSys.CRefPools<Id::PrimaryCommunity>()[pPC].GetPool().size(),
-			 poolSys.CRefPools<Id::SecondaryCommunity>()[pSC].GetPool().size()
+			 poolSys.CRefPools<Id::SecondaryCommunity>()[pSC].GetPool().size(),
+			 survey_type
 			 );
 	 }
 }

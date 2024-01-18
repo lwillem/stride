@@ -97,7 +97,8 @@ void DiseaseSeeder::ImportInfectedCases(std::shared_ptr<Population> pop, unsigne
                         // register as survey participant
                         //TODO: add link with logLevel
                         SurveySeeder sSeeder(m_config,m_rn_man);
-                        sSeeder.RegisterParticipant(pop,p);
+                        std::string survey_type = "infection";
+                        sSeeder.RegisterParticipant(pop,p,survey_type);
                 }
         }
 }

@@ -104,6 +104,17 @@ get_covid19_default_param <- function(){
    # out$household_clustering_ratio_date  <- c_str(out$start_date)
    # out$household_clustering_ratio_delay <- c_str(0)
    
+   # # start importing external infections ? (the population remains constant)
+   # out$imported_cases_number   <- 10
+   # out$imported_cases_date     <- '2020-08-25 # until the end of the simulation
+   # out$imported_cases_delay    <- 5
+   
+   # # conduct social contact survey?
+   # out$event_log_level         <- 'Participants'
+   # out$num_participants_survey <- 5000        # number of participants
+   # out$contact_survey_dates    <- c_str('2020-03-16','2020-03-17) # single days
+   # out$contact_survey_ages     <- c_str(0,18,110)
+   
    # return parameters
    return(out)
 }

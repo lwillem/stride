@@ -78,6 +78,10 @@ inspect_contact_data <- function(project_dir){
   data_cnt      <- .rstride$load_aggregated_output(project_dir,'data_contacts',exp_summary$exp_id)
   data_part     <- .rstride$load_aggregated_output(project_dir,'data_participants',exp_summary$exp_id)
 
+  # select participant and contact data from from contact survey (and not infected seeds)
+  data_part <- data_part[data_part$survey_type == "contacts",]
+  data_cnt  <- data_cnt[data_cnt$local_id %in% data_part$local_id,]
+  
   ## reformat
   data_cnt$cnt_school    <- as.numeric(data_cnt$cnt_school)
   data_cnt$cnt_prim_comm <- as.numeric(data_cnt$cnt_prim_comm)

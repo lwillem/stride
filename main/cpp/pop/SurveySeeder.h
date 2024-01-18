@@ -49,7 +49,7 @@ public:
 
         /// Register a selected person as a survey participant
         /// \param p 				Person to register
-        void RegisterParticipant(std::shared_ptr<Population> pop, Person& p);
+        void RegisterParticipant(std::shared_ptr<Population> pop, Person& p, std::string& survey_type);
 
 private:
         const boost::property_tree::ptree& m_config; ///< Run config.
