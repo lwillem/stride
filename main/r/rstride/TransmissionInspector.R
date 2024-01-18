@@ -63,6 +63,10 @@ inspect_transmission_dynamics <- function(project_dir,save_pdf = TRUE)
     num_runs_exp        <- sum(flag_exp)
     num_infected_seeds  <- data_incidence$new_infections[1]
   
+    # retrieve change points
+    change_points_str <- project_summary[i_config,grepl('distancing.*_date',names(project_summary))]
+    change_points <- unique(unlist(strsplit(x=paste(change_points_str,collapse=','),split=',')))
+    
     # if no incidence data available for this configuration, go to next iteration
     if(nrow(data_incidence)==0){
       next
@@ -81,7 +85,7 @@ inspect_transmission_dynamics <- function(project_dir,save_pdf = TRUE)
          type='l',
          col=alpha(1,0.5))
     mtext('[values outside y-lim are excluded]',3,cex=0.8)
-    add_breakpoints()
+    add_changepoints(project_summary)
     abline(h=3.1,col=4)
     text(max(data_incidence$sim_date),3.1,'3.1',pos=3)
     polygon(x=c(data_incidence$sim_date,rev(data_incidence$sim_date)),
@@ -100,7 +104,7 @@ inspect_transmission_dynamics <- function(project_dir,save_pdf = TRUE)
          xaxt='n')
     abline(h=1,lty=3)
     add_x_axis(range(data_incidence$sim_date,na.rm = T))
-    add_breakpoints()
+    add_changepoints(change_points)
     abline(h=3.1,col=4)
     
     text(max(data_incidence$sim_date),3.28,'3.28',pos=3)
@@ -177,18 +181,14 @@ inspect_transmission_dynamics <- function(project_dir,save_pdf = TRUE)
          pos=3)
     
     ## RELATIVE HOSPITAL ADMISSIONS OVER TIME BY AGE
-    # remove dates with values < 4
-    new_hospital_admissions_edit <- data_incidence[,paste0('new_hospital_admissions')]
-    new_hospital_admissions_edit[new_hospital_admissions_edit<4] <- NA
-    # calculate the proportion by age 
-    data_incidence[,paste0('relative_hospital_admissions_age',1:length(age_labels))] <- data_incidence[,paste0('new_hospital_admissions_age',1:length(age_labels))] / new_hospital_admissions_edit
-   if(any(!is.na(data_incidence$relative_hospital_admissions_age1))){
-     plot(aggregate(relative_hospital_admissions_age1 ~ sim_date, data = data_incidence,mean),
-          ylim=0:1,col=1,lwd=2,type='l',
-          xlab='Time',ylab='Proportion hospital admissions')
-     lines(aggregate(relative_hospital_admissions_age2 ~ sim_date, data = data_incidence,mean),col=2,lwd=2)
-     lines(aggregate(relative_hospital_admissions_age3 ~ sim_date, data = data_incidence,mean),col=3,lwd=2)
-     lines(aggregate(relative_hospital_admissions_age4 ~ sim_date, data = data_incidence,mean),col=4,lwd=2)
+   if(any(!is.na(data_incidence$new_hospital_admissions_age1))){
+     data_new_hosp <- data_incidence[,paste0('new_hospital_admissions_age',1:length(age_labels))]
+     plot(aggregate(new_hospital_admissions_age1 ~ sim_date, data = data_incidence,mean),
+          ylim=range(data_new_hosp),col=1,lwd=2,type='l',
+          xlab='Time',ylab='Average number of hospital admissions')
+     lines(aggregate(new_hospital_admissions_age2 ~ sim_date, data = data_incidence,mean),col=2,lwd=2)
+     lines(aggregate(new_hospital_admissions_age3 ~ sim_date, data = data_incidence,mean),col=3,lwd=2)
+     lines(aggregate(new_hospital_admissions_age4 ~ sim_date, data = data_incidence,mean),col=4,lwd=2)
      legend('top',
             age_labels,
             col = 1:length(age_labels),
@@ -196,15 +196,6 @@ inspect_transmission_dynamics <- function(project_dir,save_pdf = TRUE)
             ncol=length(age_labels),
             title='Age group (years)',
             cex=0.5)
-     
-     new_hospital_admissions_edit_date <- data_incidence[,paste0('sim_date')]
-     new_hospital_admissions_edit_bool <- !is.na(new_hospital_admissions_edit)
-     new_hospital_admissions_edit_bool[new_hospital_admissions_edit_bool] <- NA
-     lines(new_hospital_admissions_edit_date,
-            new_hospital_admissions_edit_bool,
-            lwd=4,
-            col=0)
-     mtext('[dates with n<4 excluded]',3,cex=0.8)
    }
    
     

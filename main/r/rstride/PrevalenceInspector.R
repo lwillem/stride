@@ -45,6 +45,7 @@ inspect_prevalence_data <- function(project_dir)
   pcolor <- data.frame(E = "black",  # exposed (or total infections)
                        I = "darkgoldenrod3",  # infectious
                        S = "red",  # symptomatic
+                       H = "blue",
                        alpha = 0.1,
                        lwd = 3,
                        stringsAsFactors = F)  # data
@@ -58,7 +59,7 @@ inspect_prevalence_data <- function(project_dir)
   .rstride$create_pdf(project_dir,'prevalence',width = 6, height = 2.5)
   par(mar=c(3,5,1,3))
   
-  i_config <- 2
+  i_config <- 1
   for(i_config in 1:nrow(input_opt_design)){
   
     # subset transmission output corresponding the 'input_opt_design' row
@@ -69,11 +70,12 @@ inspect_prevalence_data <- function(project_dir)
     if(nrow(data_prevalence) > 0)
     {
       # get specific prevalence output
-      data_prevalence_infected    <- get_prevalence_matrix(data_prevalence,'prevalence_infected')
-      data_prevalence_exposed     <- get_prevalence_matrix(data_prevalence,'prevalence_exposed')
-      data_prevalence_infectious  <- get_prevalence_matrix(data_prevalence,'prevalence_infectious')
-      data_prevalence_symptomatic <- get_prevalence_matrix(data_prevalence,'prevalence_symptomatic')
-      data_prevalence_date        <- get_prevalence_dates(data_prevalence)
+      data_prevalence_infected     <- get_prevalence_matrix(data_prevalence,'prevalence_infected')
+      data_prevalence_exposed      <- get_prevalence_matrix(data_prevalence,'prevalence_exposed')
+      data_prevalence_infectious   <- get_prevalence_matrix(data_prevalence,'prevalence_infectious')
+      data_prevalence_symptomatic  <- get_prevalence_matrix(data_prevalence,'prevalence_symptomatic')
+      data_prevalence_hospitalized <- get_prevalence_matrix(data_prevalence,'prevalence_hospitalised')
+      data_prevalence_date         <- get_prevalence_dates(data_prevalence)
       
       sim_dates <- range(data_prevalence_date)
       y_lim     <- range(0,data_prevalence_exposed,data_prevalence_infectious,na.rm = T)
@@ -101,6 +103,9 @@ inspect_prevalence_data <- function(project_dir)
           lines(x = data_prevalence_date,
                 y = data_prevalence_symptomatic[i_exp,],
                 col = pcolor$S)
+          lines(x = data_prevalence_date,
+                y = data_prevalence_hospitalized[i_exp,],
+                col = pcolor$H)
       } # end if-clause, nrow(data_prevalence)>0 
     } # end for-loop i_exp
   } # end for-loop config_id
@@ -128,9 +133,10 @@ add_legend_prevalence <- function(pcolor,legend_pos = 'topleft'){
   legend(legend_pos,
          c('Exposed (latent)',
            'Infectious',
-           'Symptomatic'),
+           'Symptomatic',
+           'Hospitalized'),
          col=unlist(pcolor),
-         lwd=c(2,2,2),
+         lwd=2,
          cex=0.5,
          bg='white')
 }

@@ -453,6 +453,14 @@ add_breakpoints <- function(bool_text=TRUE){
   add_vertical_line("2020-07-01",bool_text,'Holiday')
 }
 
+# define the vertical breaks on the plots
+add_changepoints <- function(dates_str,bool_text=TRUE){
+  if(length(dates_str)>1)
+  for(i in 1:length(dates_str)){
+    add_vertical_line(dates_str[i],bool_text,'Changepoint')
+  }
+}
+
 # add vertical line on given date + label on x-axis
 add_vertical_line <- function(date_string,bool_text,date_tag = ''){
   
