@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "sim/SimRunner.h"
+#include "execs/SimController.h"
 #include "util/Stopwatch.h"
 
 #include <boost/property_tree/ptree.hpp>
@@ -33,24 +33,19 @@ class Sim;
 class Population;
 
 /**
- * Based on SimRunner class.
+ * Based on SimController class.
  * The simulation runner drive simulator through time steps.
  * It's functions are:
  * \li invokes the simulator builder (@see SimulatorBuilder)
  * \li manages elapsed time clock
  * \li manages time steps
  */
-class MDPRunner : public SimRunner
+class MDPRunner : public SimController
 {
 public:
         /// Initialization with property tree.
         /// \param configPt config info for run and for config of simulator
         explicit MDPRunner(const boost::property_tree::ptree& configPt, std::shared_ptr<Sim> sim);
-
-private:
-    util::Stopwatch<>           m_clock;  ///< Stopwatch for timing the computation.
-    boost::property_tree::ptree m_config; ///< Ptree with configuration.
-    std::shared_ptr<Sim>        m_sim;    ///< Simulator object.
 
 };
 

@@ -28,9 +28,9 @@ using namespace std;
 namespace stride {
 
 MDPRunner::MDPRunner(const ptree& configPt, shared_ptr<Sim> sim)
-        : SimRunner(configPt, sim), m_clock("total_clock"), m_config(configPt), m_sim(std::move(sim))
+        : SimController(configPt)
 {
-    m_clock.Start();
+    m_simulator = std::move(sim);
 }
 
 

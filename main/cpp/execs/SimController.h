@@ -15,7 +15,7 @@
 
 /**
  * @file
- * Header for the command line controller.
+ * Header for the Simulation controller.
  */
 
 #pragma once
@@ -31,7 +31,6 @@
 namespace stride {
 
 class Sim;
-class SimRunner;
 
 /**
  * Controls a simulation run initiated with the command line interface (cli).
@@ -43,7 +42,7 @@ class SimRunner;
  * \li installs a stride logger
  *
  * \li creates a population (@see Population)
- * \li creates a simulation runner (@see SimRunner)
+ * \li creates a simulator (@see Sim)
  * \li runs the simulation
  */
 class SimController
@@ -60,6 +59,12 @@ public:
 
         /// Reference the simulator (method used mostly in tests).
         std::shared_ptr<Sim> GetSim() const { return m_simulator; };
+
+        /// Run the simulator for a single step
+		void Step();
+
+		/// Notify the simulator should stop
+		void End();
 
 protected:
         /// Empty controller: used as target for delegation.
@@ -81,10 +86,22 @@ protected:
         /// Logs info on setup for cli environment to stride_logger.
         void Shutdown();
 
+        /// Return the run & sim configuration.
+        const util::Stopwatch<std::chrono::steady_clock>& GetClock() const { return m_run_clock; }
+
+        /// Run simulator for as many steps/days as indicated in config.
+		void Run();
+
+		/// Run simulator for numSteps steps/days.
+		void Run(unsigned int numSteps);
+
+		/// Print summary file
+		void PrintSummary();
+
 protected:
         boost::property_tree::ptree     m_config;           ///< Main configuration for run and sim.
         std::string                     m_output_prefix;    ///< Prefix to output (name prefix or prefix dir)
-        util::Stopwatch<>               m_run_clock;        ///< Stopwatch for timing the computation.
+        util::Stopwatch<std::chrono::steady_clock>     m_run_clock;        ///< Stopwatch for timing the computation.
         std::shared_ptr<spdlog::logger> m_stride_logger;    ///< General logger.
         bool                            m_use_install_dirs; ///< Working dir or install dir mode.
 

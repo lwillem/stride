@@ -10,26 +10,18 @@
  *  You should have received a copy of the GNU General Public License
  *  along with the software. If not, see <http://www.gnu.org/licenses/>.
  *
- *  Copyright 2017, Willem L, Kuylen E, Stijven S & Broeckhove J
+ *  Copyright 2024
  */
 /*!
  \file
  \brief Documentation on namespace.
 
-  \namespace geopop
-  		\brief Namespace for the geographic and demograhic classes.
  \namespace stride
  		\brief Namespace for the simulator and related classes.
  \namespace stride::ContactType
          \brief Namespace to manage types of ContactPool.
  \namespace stride::output
  		\brief Utilities for the output files.
-  \namespace stride::RNEngineType
-   		\brief Namespace to manage types of random engines.
- \namespace stride::sim_event
-  		\brief Namespace to manage events signalled by the SimRunner.
  \namespace stride::util
  		\brief Utilities for the project.	
-  \namespace stride::viewers
-  		\brief Namespace for MVC-viewers that may be registered with SimRunner.
  */

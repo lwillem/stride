@@ -22,7 +22,6 @@
 #include "execs/SimController.h"
 #include "pop/Population.h"
 #include "sim/Sim.h"
-#include "sim/SimRunner.h"
 #include "util/ConfigInfo.h"
 #include "util/FileSys.h"
 

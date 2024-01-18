@@ -46,7 +46,6 @@ set(STRIDE_SRC
     pop/PopBuilder.cpp
     pop/SurveySeeder.cpp
     #---
-    sim/SimRunner.cpp
     sim/Sim.cpp
     sim/SimBuilder.cpp
     #---

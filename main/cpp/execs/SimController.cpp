@@ -15,17 +15,18 @@
 
 /**
  * @file
- * Header for the command line controller.
+ * Header for the Simulation controller.
  */
 
 #include "SimController.h"
 
 #include "pop/Population.h"
 #include "sim/Sim.h"
-#include "sim/SimRunner.h"
 #include "util/ConfigInfo.h"
 #include "util/FileSys.h"
 #include "util/LogUtils.h"
+#include "util/Stopwatch.h"
+#include "util/SummaryFile.h"
 #include "util/TimeStamp.h"
 
 #include <boost/property_tree/xml_parser.hpp>
@@ -158,11 +159,64 @@ void SimController::Control()
         m_simulator = Sim::Create(m_config, pop, rnMan);
 
         // -----------------------------------------------------------------------------------------
-        // Sim scenario: step , build a runner, register viewers and run.
+        // Sim scenario: step 4, run and print results
         // -----------------------------------------------------------------------------------------
-        auto runner = make_shared<SimRunner>(m_config, m_simulator);
-        runner->Run();
-        runner->PrintSummary();
+        Run();
+        PrintSummary();
+
 }
 
+void SimController::Run(unsigned int numSteps)
+{
+        if (numSteps != 0U) {
+
+        	m_run_clock.Start();
+			const auto numDays = m_config.get<unsigned int>("run.num_days");
+
+			// Take numSteps but do not go beyond numDays.
+			for (unsigned int i = 0; i < numSteps && m_simulator->GetCalendar()->GetSimulationDay() < numDays; i++) {
+				m_simulator->TimeStep();
+			}
+
+			m_run_clock.Stop();
+        }
+}
+
+void SimController::Run()
+{
+	Run(m_config.get<unsigned int>("run.num_days"));
+}
+
+
+void SimController::PrintSummary()
+{
+	const auto dur      = duration_cast<std::chrono::milliseconds>(GetClock().Get());
+	const auto milli    = static_cast<unsigned int>(dur.count());
+
+	SummaryFile  summary_file(m_config.get<string>("run.output_prefix"));
+
+	summary_file.Print(m_config,
+			static_cast<unsigned int>(m_simulator->GetPopulation()->size()),
+			m_simulator->GetPopulation()->GetTotalInfected(),
+			m_simulator->RefTransmissionProfile().GetHomogeneousProbability(),
+			milli, milli);
+}
+
+void SimController::Step()
+{
+    // Prelims.
+	m_run_clock.Start();
+
+    // Execute and signal Stepped
+    m_simulator->TimeStep();
+
+    m_run_clock.Stop();
+}
+
+void SimController::End()
+{
+	m_run_clock.Stop();
+    PrintSummary();
+    m_run_clock.Reset();
+}
 } // namespace stride
