@@ -133,7 +133,7 @@ inspect_summary <- function(project_dir)
   
 }
 
-## HELP FUNCTION ####
+## VARIABLE MODEL PARAMETERS ####
 .rstride$get_variable_model_param <- function(project_summary){
   
   if(ncol(project_summary) == 1){
@@ -164,7 +164,7 @@ inspect_summary <- function(project_dir)
   return(input_opt_design)
 }
 
-## HELP FUNCTION ####
+## UNIQUE PARAMETERS ####
 .rstride$get_unique_param_list <- function(project_summary){
 
   col_output <- c('run_time', 'total_time', 'num_cases', 'AR')
@@ -179,7 +179,7 @@ inspect_summary <- function(project_dir)
   return(input_opt)
 }
 
-## HELP FUNCTION ####
+## IDs ####
 .rstride$get_config_id <- function(project_matrix){
     
   # retrieve all variable model parameters
@@ -216,3 +216,19 @@ inspect_summary <- function(project_dir)
   return(contact_id)
 }
 
+## DATES ####
+.rstride$get_intervention_dates <- function(project_summary){
+
+  if(is.null(nrow(project_summary))) {
+    return(NULL)  
+  }
+  
+  # retrieve intervention dates
+  intervention_dates_str <- unlist(project_summary[,grepl('distancing.*_date',names(project_summary))])
+  intervention_dates     <- unique(unlist(strsplit(x=paste(intervention_dates_str,collapse=','),split=',')))
+  
+  # remove NA
+  intervention_dates <- intervention_dates[!(is.na(intervention_dates) | intervention_dates == "NA")]
+  
+  return(intervention_dates)
+}

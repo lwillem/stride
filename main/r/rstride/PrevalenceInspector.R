@@ -56,7 +56,7 @@ inspect_prevalence_data <- function(project_dir)
   }
   
   # open pdf stream
-  .rstride$create_pdf(project_dir,'prevalence',width = 6, height = 2.5)
+  .rstride$create_pdf(project_dir,'prevalence',width = 14, height = 8)
   par(mar=c(3,5,1,3))
   
   i_config <- 1
@@ -88,7 +88,7 @@ inspect_prevalence_data <- function(project_dir)
            yaxt='n')
       add_x_axis(sim_dates)
       add_y_axis(y_lim)
-      add_breakpoints()
+      add_intervention_dates(project_summary[flag_exp,])
       add_legend_prevalence(pcolor,'topright')
       
       i_exp <- 1

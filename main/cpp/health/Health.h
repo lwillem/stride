@@ -66,6 +66,24 @@ public:
         boost::optional<unsigned short int> GetEndHospitalisation() const { return m_end_hospitalisation; }
 
         ///
+		unsigned short int GetStartHospitalisationValue() const {
+			if(m_start_hospitalisation) {
+				return(m_start_hospitalisation.value());
+			} else {
+				return(0);
+			}
+		}
+
+		///
+		unsigned short int GetEndHospitalisationValue() const {
+			if(m_end_hospitalisation) {
+				return(m_end_hospitalisation.value());
+			} else {
+				return(0);
+			}
+		}
+
+        ///
         unsigned int GetIdIndexCase() const { return m_id_index_case; }
 
         ///

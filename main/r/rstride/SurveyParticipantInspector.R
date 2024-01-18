@@ -47,7 +47,7 @@ inspect_participant_data <- function(project_dir, save_pdf = TRUE)
   input_opt_design        <- .rstride$get_variable_model_param(project_summary)
   
   # open pdf stream
-  if(save_pdf) .rstride$create_pdf(project_dir,'survey_participant_inspection',10,7)
+  if(save_pdf) .rstride$create_pdf(project_dir,'survey_participant_inspection',14,8)
 
   # set maximum number of days symtomatic/infectious 
   max_days_infection <- max(c(30,unlist(data_participants_all[,c("end_infectiousness","end_symptomatic")])),na.rm=T)
@@ -76,6 +76,13 @@ inspect_participant_data <- function(project_dir, save_pdf = TRUE)
     flag_asymptomatic <- data_part$start_symptomatic == data_part$end_symptomatic
     data_part$start_symptomatic[flag_asymptomatic] <- NA
     data_part$end_symptomatic[flag_asymptomatic] <- NA
+   
+    # account for hospital admission
+    data_part$start_hospitalisation <- as.numeric(data_part$start_hospitalisation)
+    data_part$end_hospitalisation   <- as.numeric(data_part$end_hospitalisation)
+    flag_outpatient <- data_part$start_hospitalisation == data_part$end_hospitalisation
+    data_part$start_hospitalisation[flag_outpatient] <- NA
+    data_part$end_hospitalisation[flag_outpatient] <- NA
     
     num_part <- nrow(data_part)
     freq_start_inf  <- table(data_part$start_infectiousness) / num_part
@@ -83,11 +90,14 @@ inspect_participant_data <- function(project_dir, save_pdf = TRUE)
     data_part[1,]
     all_inf  <- matrix(0,num_part,max_days_infection)
     all_symp <- matrix(0,num_part,max_days_infection)
+    all_hosp <- matrix(0,num_part,max_days_infection)
     #note: if start == end, no infectious/symptomatic stage has been present
     for(i in 1:num_part){
       all_inf[i,data_part$start_infectiousness[i]:data_part$end_infectiousness[i]] <- 1
       if(!is.na(data_part$start_symptomatic[i]))
       all_symp[i,data_part$start_symptomatic[i]:data_part$end_symptomatic[i]] <- 1
+      if(!is.na(data_part$start_hospitalisation[i]))
+      all_hosp[i,data_part$start_hospitalisation[i]:data_part$end_hospitalisation[i]] <- 1
     }
 
     plot(1:max_days_infection,colMeans(all_inf),
@@ -96,7 +106,8 @@ inspect_participant_data <- function(project_dir, save_pdf = TRUE)
          type='b',lwd=3,col=2,
          ylim=c(0,1))
     points(1:max_days_infection,colMeans(all_symp),lwd=3,col=4,type='b')
-    legend('topright',c('infectious','symptomatic'),col=c(2,4),lwd=4,cex=0.8)
+    points(1:max_days_infection,colMeans(all_hosp),lwd=3,col=6,type='b')
+    legend('topright',c('infectious','symptomatic','hospitalised'),col=c(2,4,6),lwd=4,cex=0.8)
     abline(v=6:9,lty=3)
     
     f_data <- data_part$start_symptomatic; f_main <- 'debug'
@@ -125,6 +136,7 @@ inspect_participant_data <- function(project_dir, save_pdf = TRUE)
     plot_cum_distr(days_asymptomatic_infectious,f_main='days infectious \n& not symptomatic')
     plot_cum_distr(data_part$end_infectiousness-data_part$start_infectiousness,f_main='days infectious')
     plot_cum_distr(data_part$end_symptomatic-data_part$start_symptomatic,f_main='days symptomatic')
+    plot_cum_distr(data_part$end_hospitalisation-data_part$start_hospitalisation,f_main='days hospitalised')
     
     # fraction symptomatic by age ####
     tbl_sympt_age <- table(!is.na(data_part$start_symptomatic),data_part$part_age)
@@ -162,25 +174,25 @@ inspect_participant_data <- function(project_dir, save_pdf = TRUE)
     # names(data_part)
     
    
-    ## SCHOOLING ----
-    data_part$enrolled_school <- data_part$school_id != 0
-    school_age <- data.frame(table(school_enrolled = data_part$enrolled_school,part_age = data_part$part_age))
-    school_age$part_age <- as.numeric(levels(school_age$part_age)[(school_age$part_age)])
-    flag <- school_age$school_enrolled == TRUE
-    plot(school_age$part_age[flag],
-         school_age$Freq[flag]/population_age$Freq,
-         xlab='age',
-         ylab='population fraction',
-         main='population enrolled in school',
-         pch=1, lwd=3, xlim=c(0,30)
-    )
-    abline(v=c(0,3,6,12,18,25)-0.5)
-    text(x=0,y=0.02,'kindergarten',srt=90,pos=4)
-    text(x=3,y=0.02,'pre-school',srt=90,pos=4)
-    text(x=7,y=0.02,'primary school',srt=90,pos=4)
-    text(x=13,y=0.02,'secundary school',srt=90,pos=4)
-    text(x=20,y=0.02,'tertiary school',srt=90,pos=4)
-    # 
+    # ## SCHOOLING ----
+    # data_part$enrolled_school <- data_part$school_id != 0
+    # school_age <- data.frame(table(school_enrolled = data_part$enrolled_school,part_age = data_part$part_age))
+    # school_age$part_age <- as.numeric(levels(school_age$part_age)[(school_age$part_age)])
+    # flag <- school_age$school_enrolled == TRUE
+    # plot(school_age$part_age[flag],
+    #      school_age$Freq[flag]/population_age$Freq,
+    #      xlab='age',
+    #      ylab='population fraction',
+    #      main='population enrolled in school',
+    #      pch=1, lwd=3, xlim=c(0,30)
+    # )
+    # abline(v=c(0,3,6,12,18,25)-0.5)
+    # text(x=0,y=0.02,'kindergarten',srt=90,pos=4)
+    # text(x=3,y=0.02,'pre-school',srt=90,pos=4)
+    # text(x=7,y=0.02,'primary school',srt=90,pos=4)
+    # text(x=13,y=0.02,'secundary school',srt=90,pos=4)
+    # text(x=20,y=0.02,'tertiary school',srt=90,pos=4)
+    # # 
     
     # tmp_age      <- table(data_part$part_age)
     # tmp_school   <- table(data_part$part_age,data_part$school_id != 0)

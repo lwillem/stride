@@ -92,7 +92,7 @@ inspect_incidence_data <- function(project_dir, bool_add_param=TRUE)
   prevalence_ref <- prevalence_ref[sel_ref_dates,]
   
   ## ALL PLOTS  ----
-  .rstride$create_pdf(project_dir,'incidence_inspection',width = 6, height = 7)
+  .rstride$create_pdf(project_dir,'incidence_inspection',width = 8, height = 10)
   par(mfrow=c(4,1))
   
   opt_config_id <- unique(data_incidence_all$config_id)
@@ -113,7 +113,7 @@ inspect_incidence_data <- function(project_dir, bool_add_param=TRUE)
   #--------------------------#
   
   # ## ALL SCENARIOS (PDF) ####
-  .rstride$create_pdf(project_dir,'incidence_all',width = 6, height = 2.5)
+  .rstride$create_pdf(project_dir,'incidence_all',width = 14, height = 8)
   par(mar=c(3,5,1,3))
   
   plot_incidence_data(data_incidence_all,project_summary,
@@ -122,6 +122,7 @@ inspect_incidence_data <- function(project_dir, bool_add_param=TRUE)
   # polygon
   plot_incidence_reproduction(data_incidence = data_incidence_all,
                               hosp_adm_data = hosp_adm_data,
+                              project_summary = project_summary,
                               scen_color = 1)
   dev.off()
   
@@ -134,6 +135,7 @@ inspect_incidence_data <- function(project_dir, bool_add_param=TRUE)
   # # all => polygon
   # plot_incidence_reproduction(data_incidence = data_incidence_all,
   #                             hosp_adm_data = hosp_adm_data,
+  #                             project_summary = project_summary,
   #                             scen_color = 1)
   # dev.off()
   
@@ -149,7 +151,7 @@ inspect_incidence_data <- function(project_dir, bool_add_param=TRUE)
     ## PARETO (PDF) ####
     
     # all
-    .rstride$create_pdf(project_dir,'incidence_pareto_all',width = 6, height = 7)
+    .rstride$create_pdf(project_dir,'incidence_pareto_all',width = 14, height = 8)
     par(mfrow=c(4,1))
     plot_incidence_data(data_incidence_sel,project_summary,
                         hosp_adm_data,input_opt_design,prevalence_ref,
@@ -164,13 +166,14 @@ inspect_incidence_data <- function(project_dir, bool_add_param=TRUE)
     # polygon
     plot_incidence_reproduction(data_incidence = data_incidence_sel,
                                 hosp_adm_data = hosp_adm_data,
+                                project_summary = project_summary,
                                 scen_color = 1)
     dev.off()
 
   }
   
   ## AGE-SPECIFIC PLOTS ####
-  .rstride$create_pdf(project_dir,'incidence_hospital_age',width = 12, height = 12)
+  .rstride$create_pdf(project_dir,'incidence_hospital_age',width = 14, height = 14)
   par(mfrow=c(3,3))
   i_age <- 4
   names(data_incidence_sel)
@@ -257,7 +260,7 @@ plot_incidence_data <- function(data_incidence_sel,project_summary,
   add_x_axis(data_incidence_sel$sim_date)
   add_y_axis(y_lim)
   points(hosp_adm_data$date,hosp_adm_data$num_adm,col=pcolor$D,pch=pcolor$pch)
-  add_breakpoints()
+  add_intervention_dates(project_summary)
   add_legend_hosp(pcolor)
   
   # add config tag
@@ -363,7 +366,7 @@ plot_incidence_data <- function(data_incidence_sel,project_summary,
         data_incidence_sel$new_hospital_admissions,
         col=alpha(pcolor$H,pcolor$alpha))
   # points(hosp_adm_data$date,hosp_adm_data$num_adm,col=pcolor$D,pch=pcolor$pch)
-  add_breakpoints()
+  add_intervention_dates(project_summary)
   add_legend_incidence(pcolor)
   
   if(bool_add_doubling_time){
@@ -410,7 +413,7 @@ plot_incidence_data <- function(data_incidence_sel,project_summary,
         col=alpha(pcolor$H,pcolor$alpha))
   #points(hosp_adm_data$date,hosp_adm_data$cum_adm,col=pcolor$D,pch=pcolor$pch)
   
-  add_breakpoints()
+  add_intervention_dates(project_summary)
   if(bool_add_param) {
     add_legend_runinfo(project_summary,input_opt_design,
                        unique(data_incidence_sel$config_id))
@@ -454,10 +457,13 @@ add_breakpoints <- function(bool_text=TRUE){
 }
 
 # define the vertical breaks on the plots
-add_changepoints <- function(dates_str,bool_text=TRUE){
+add_intervention_dates <- function(project_summary_selection, bool_text=TRUE, date_tag=''){
+  
+  dates_str <- .rstride$get_intervention_dates(project_summary_selection)
+  
   if(length(dates_str)>1)
   for(i in 1:length(dates_str)){
-    add_vertical_line(dates_str[i],bool_text,'Changepoint')
+    add_vertical_line(dates_str[i],bool_text=bool_text,date_tag)
   }
 }
 
@@ -475,7 +481,7 @@ add_vertical_line <- function(date_string,bool_text,date_tag = ''){
   {
     v_text <- ifelse(nchar(date_tag)>0,date_tag,format(v_date,'%d/%m'))
     text(x = v_date-1,
-         y = mean(plot_limits[3:4]),
+         y = mean(plot_limits[3:4])*1.5,
          #paste(format(v_date,'%d/%m'),date_tag),
          v_text,
          srt=90, pos=3, offset = +1.5,cex=0.6)
@@ -671,7 +677,7 @@ reformat_prevalence_stochastic_model <- function(){
        ylab='prevalence stochastic model')
   lines(date_steps[-1],apply(ref_prevalence[,2:num_steps],2,min),col=3)
   lines(date_steps[-1],apply(ref_prevalence[,2:num_steps],2,max),col=3)
-  add_breakpoints()
+  add_intervention_dates(project_summary)
   add_x_axis(date_steps)
   grid(nx=NA,ny=NULL)
   
@@ -709,7 +715,11 @@ add_polygon_incidence <- function(data_incidence,colname_burden, scen_color){
   #lines(hosp_mean$sim_date,hosp_mean$new_hospital_admissions,type='l',lwd=2,col=scen_color,lty=3)
 }
 
-plot_incidence_reproduction <- function(data_incidence,hosp_adm_data,scen_color,plot_main='')
+plot_incidence_reproduction <- function(data_incidence,
+                                        hosp_adm_data,
+                                        project_summary,
+                                        scen_color,
+                                        plot_main='')
 {
   y_lim  <- c(0,700)
   x_lim  <- range(data_incidence$sim_date,na.rm = T)
@@ -725,7 +735,7 @@ plot_incidence_reproduction <- function(data_incidence,hosp_adm_data,scen_color,
        main = plot_main)
   sum_scen1 <- add_polygon_incidence(data_incidence,'new_hospital_admissions',scen_color)
   add_y_axis(y_lim)
-  add_breakpoints()
+  add_intervention_dates(project_summary)
   
   par(fig=c(0,1,0,0.34),mar=c(3,5,0,1), new=TRUE)
   plot(0,0,pch=20,

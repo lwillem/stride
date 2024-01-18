@@ -49,7 +49,7 @@ inspect_transmission_dynamics <- function(project_dir,save_pdf = TRUE)
   }
   
   # open pdf stream
-  if(save_pdf) .rstride$create_pdf(project_dir,'transmission_inspection',10,7)
+  if(save_pdf) .rstride$create_pdf(project_dir,'transmission_inspection',14,8)
 
   i_config <- 1
   for(i_config in 1:nrow(input_opt_design)){
@@ -63,10 +63,6 @@ inspect_transmission_dynamics <- function(project_dir,save_pdf = TRUE)
     num_runs_exp        <- sum(flag_exp)
     num_infected_seeds  <- data_incidence$new_infections[1]
   
-    # retrieve change points
-    change_points_str <- project_summary[i_config,grepl('distancing.*_date',names(project_summary))]
-    change_points <- unique(unlist(strsplit(x=paste(change_points_str,collapse=','),split=',')))
-    
     # if no incidence data available for this configuration, go to next iteration
     if(nrow(data_incidence)==0){
       next
@@ -85,7 +81,7 @@ inspect_transmission_dynamics <- function(project_dir,save_pdf = TRUE)
          type='l',
          col=alpha(1,0.5))
     mtext('[values outside y-lim are excluded]',3,cex=0.8)
-    add_changepoints(project_summary)
+    add_intervention_dates(project_summary[flag_exp,])
     abline(h=3.1,col=4)
     text(max(data_incidence$sim_date),3.1,'3.1',pos=3)
     polygon(x=c(data_incidence$sim_date,rev(data_incidence$sim_date)),
@@ -104,7 +100,7 @@ inspect_transmission_dynamics <- function(project_dir,save_pdf = TRUE)
          xaxt='n')
     abline(h=1,lty=3)
     add_x_axis(range(data_incidence$sim_date,na.rm = T))
-    add_changepoints(change_points)
+    add_intervention_dates(project_summary[flag_exp,])
     abline(h=3.1,col=4)
     
     text(max(data_incidence$sim_date),3.28,'3.28',pos=3)
