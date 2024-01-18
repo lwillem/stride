@@ -25,7 +25,7 @@ include(CMakeLocal.cmake OPTIONAL)
 #============================================================================
 # Configuration for CMake, for build & install.
 #============================================================================
-project(STRIDE VERSION 1.0 LANGUAGES CXX)
+project(STRIDE VERSION 3.0 LANGUAGES CXX)
 include(CMakeLocalProject.cmake OPTIONAL)
 
 #============================================================================

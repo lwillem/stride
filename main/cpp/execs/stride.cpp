@@ -46,7 +46,7 @@ int main(int argc, char** argv)
                 // -----------------------------------------------------------------------------------------
                 // Parse command line (parameters displayed in --help in reverse order to order below).
                 // -----------------------------------------------------------------------------------------
-                CmdLine cmd("stride", ' ', "2.0");
+                CmdLine cmd("stride", ' ', "3.0");
 
                 string sc = "Specifies the run configuration parameters. The format may be  is -c <file> ."
                             "\nDefaults to -c file=run_default.xml";
