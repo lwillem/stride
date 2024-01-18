@@ -471,12 +471,12 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                 if (!p1->IsInPool(pType)) {
                         continue;
                 }
-                auto& h = p1->GetHealth();
+                auto& h1 = p1->GetHealth();
                 
-	        if (h.IsInfectious()) {
+	        if (h1.IsInfectious()) {
 
                 // Adjustment for asymptomatic cases
-                if (h.IsSymptomatic()){
+                if (h1.IsSymptomatic()){
                         num_infectious_symptomatic_cases++;
                 } else {
                         num_infectious_asymptomatic_cases++;
