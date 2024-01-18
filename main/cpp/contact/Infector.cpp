@@ -458,7 +458,8 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
         const auto& pMembers = pool.m_members;
         const auto  pVentilation = pool.m_ventilation;
         const auto  pSize    = pMembers.size();
-        size_t      num_present_cases = num_cases; // needed for airborne transmission
+        size_t      num_infectious_symptomatic_cases = 0; // needed for airborne transmission
+        size_t      num_infectious_asymptomatic_cases = 0;
 
         // get minimum age of the members (relevant for school settings)
         const unsigned int min_age_members = pool.GetMinAge();
@@ -468,11 +469,18 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                 // check if member is present today
                 const auto p1 = pMembers[i_infected];
                 if (!p1->IsInPool(pType)) {
-                        num_present_cases--;
                         continue;
                 }
-                auto& h1 = p1->GetHealth();
-                if (h1.IsInfectious()) {
+                auto& h = p1->GetHealth();
+                
+	        if (h.IsInfectious()) {
+
+                // Adjustment for asymptomatic cases
+                if (h.IsSymptomatic()){
+                        num_infectious_symptomatic_cases++;
+                } else {
+                        num_infectious_asymptomatic_cases++;
+                }
                         // loop over possible susceptible contacts
                         for (size_t i_contact = num_cases; i_contact < pImmune; i_contact++) {
                                 // check if member is present today
@@ -511,6 +519,7 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                         const auto pAirMass = pool.m_air_mass;
                         const auto perPersonViralShedding = airborneTransProfile.GetPerPersonViralShedding();
                         const auto linkingHazardVirus = airborneTransProfile.GetLinkingHazardVirus();
+                        const auto transmissionReductionAsymptomatic = transProfile.GetTransmissionReductionAsymptomatic();
                         for (size_t i_contact = num_cases; i_contact < pImmune; i_contact++)
                                 { // check if member is present today
                                         const auto p = pMembers[i_contact];
@@ -520,7 +529,7 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                                         auto& h = p->GetHealth();
                                         if (h.IsSusceptible()){
                                                 const auto personDuration = p.PoolDurations(pType)[dayWeek];
-                                                const double aProb = 1.0 - std::exp(-(linkingHazardVirus * perPersonViralShedding * num_present_cases / (pVentilation * pAirMass)) * (personDuration - (1.0 - std::exp(-pVentilation * personDuration)) / pVentilation));              
+                                                const double aProb = 1.0 - std::exp(-(linkingHazardVirus * perPersonViralShedding * (num_infectious_symptomatic_cases + num_infectious_asymptomatic_cases * transmissionReductionAsymptomatic) / (pVentilation * pAirMass)) * (personDuration - (1.0 - std::exp(-pVentilation * personDuration)) / pVentilation));              
                                                 if (rnHandler.Binomial(aProb)) {
                                                                                 double rel_inf = transProfile.GetIndividualInfectiousness(rnHandler);
                                                                                 h.StartAirboneInfection(rel_inf);

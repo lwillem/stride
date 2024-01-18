@@ -138,6 +138,10 @@ double TransmissionProfile::GetIndividualSusceptibility(unsigned int age) const 
 	}
 }
 
+double TransmissionProfile::GetTransmissionReductionAsymptomatic() const {
+	return m_rel_transmission_asymptomatic;
+}
+
 double TransmissionProfile::GetProbability(Person* p_infected, Person* p_susceptible) const {
 	// Get individual transmission probability of infector
 	double transmission_probability_infector = p_infected->GetHealth().GetRelativeInfectiousness();

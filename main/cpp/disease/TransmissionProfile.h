@@ -52,6 +52,9 @@ public:
 	/// Return mean age-specfici susceptibility adjustment factor.
 	double GetSusceptibilityFactor() const;
 
+	/// Return relative reduction of transmission for asymptomatic cases
+	double GetTransmissionReductionAsymptomatic() const;
+
 	/// Return age-specific susceptibility adjustment factor.
 	double GetIndividualSusceptibility(unsigned int age) const;
 
