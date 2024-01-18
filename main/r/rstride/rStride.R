@@ -226,7 +226,8 @@ run_rStride <- function(exp_design               = exp_design,
                 use_date_prefix          = TRUE,
                 get_tracing_rdata        = FALSE,
                 num_parallel_workers     = NA,
-                erase_category           = TRUE))
+                erase_category           = TRUE),
+                bool_maintain_file_name  = FALSE)
     #run_tag <- basename(project_dir)
   }
   

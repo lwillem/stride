@@ -409,7 +409,7 @@ plot_calendar <- function(dt_calendar, filename_calendar_full, show_plots = TRUE
 # c('2020-05-03',0.75)); db_cat <- "workplace_distancing";db_age = 'NA'; file_name <- "sim_output/calendar_belgium_wp_fitting_covid19.csv"
 # db_category =  "workplace_distancing";db_update = dcal_wp_distancing; file_name = dcal_file
 adjust_calendar_file <- function(db_category, db_update, file_name, db_age = 'NA', show_plots=FALSE,
-                                 erase_category = TRUE){
+                                 bool_singletons = FALSE, erase_category = TRUE){
   
   # file_name fix, exclude '../'
   file_name <- gsub('\\.\\.','\\.',file_name)
@@ -429,7 +429,8 @@ adjust_calendar_file <- function(db_category, db_update, file_name, db_age = 'NA
                              'workplace_distancing',
                              'collectivity_distancing', 
                              'community_distancing', 
-                             'contact_tracing', 
+                             'contact_tracing',
+                             'contact_survey',
                              'household_clustering', 
                              'imported_cases')
   
@@ -445,18 +446,25 @@ adjust_calendar_file <- function(db_category, db_update, file_name, db_age = 'NA
     d_calendar_all <- d_calendar_all[category != db_category,]
   }
 
-  # create data.frame with all information to extrapolate
+  # create data.frame with all unique information to extrapolate
   df_update  <- data.frame(t(db_update))
+  df_update  <- unique(df_update)
+  
+  # define start and end date
   date_out   <- seq(min(as.Date(df_update[,1])),max(as.Date(df_update[,1])),1)
   date_out   <- date_out[date_out<=max(d_calendar_all$date)]
   
   # extrapolate given dates and values
+  df_update_full <- list(date = df_update[,1],
+                         value = as.numeric(df_update[,2]))
+  if(!bool_singletons){
   df_update_full  <- approx(x=as.Date(df_update[,1]),
                             y=df_update[,2],
                             xout = as.Date(date_out),
                             method="linear")
   names(df_update_full) <- c('date','value')
-
+  }
+  
   # exclude '0'
   df_update_full$date  <- df_update_full$date[df_update_full$value != 0]
   df_update_full$value <- df_update_full$value[df_update_full$value != 0]
@@ -544,6 +552,7 @@ integrate_parameters_in_calendar <- function(config_exp,
   param_calendar <- config_exp[grepl('cnt_reduction_workplace',names(config_exp)) |   # OR colname contains reduction_workplace
                                    grepl('clustering',names(config_exp)) |            # OR colname contains clustering
                                    grepl('imported',names(config_exp)) |              # OR colname contains imported
+                                   grepl('survey',names(config_exp)) |
                                    grepl('distancing',names(config_exp)) &            # OR colname contains distancing)
                                    !is.na(config_exp)]                                # AND different from NA 
   param_calendar <- unlist(param_calendar)
@@ -629,6 +638,16 @@ integrate_parameters_in_calendar <- function(config_exp,
                                         db_dates_char  = config_exp$household_clustering_date,
                                         erase_category = erase_category)
   }
+  if('contact_survey_dates' %in% names(config_exp)){
+    include_temporal_distancing_factors(db_category    = 'contact_survey',
+                                        db_values_char = 1,
+                                        db_delay_char  = 0,
+                                        file_name      = config_exp$holidays_file,
+                                        show_plots     = T,
+                                        db_dates_char  = config_exp$contact_survey_dates,
+                                        bool_singletons= TRUE,
+                                        erase_category = erase_category)
+  }
   
   # # fix for calendar path
   config_exp$holidays_file <- paste0('../',config_exp$holidays_file)
@@ -643,7 +662,8 @@ include_temporal_distancing_factors <- function(db_category,db_values_char,
                                                 db_age_char = NA,
                                                 db_delay_char,file_name,show_plots=T,
                                                 db_dates_char=NA,
-                                                erase_category = TRUE){
+                                                bool_singletons = FALSE,
+                                                erase_category  = TRUE){
   
   # check input parameters
   vector_input_param <- c(db_category,db_values_char,db_delay_char,db_dates_char)
@@ -665,32 +685,37 @@ include_temporal_distancing_factors <- function(db_category,db_values_char,
   } else {
     db_age  <- as.numeric(db_age_char)
   }
+  
+  if(!bool_singletons){
+    # account for delay == 0 by using "db_date-1" and "delay 1" 
+    bool_delay_zero <- db_delay == 0
+    if(any(bool_delay_zero)){
+      db_delay[bool_delay_zero] <- 1
+      db_dates[bool_delay_zero] <- db_dates[bool_delay_zero] - 1
+    }
+   
+    # include dates for the delay in compliance
+    db_dates  <- c(db_dates[1],db_dates + db_delay,db_dates[-1])
+    db_values <- c(0,db_values,db_values[-length(db_values)])
     
-  # account for delay == 0 by using "db_date-1" and "delay 1" 
-  bool_delay_zero <- db_delay == 0
-  if(any(bool_delay_zero)){
-    db_delay[bool_delay_zero] <- 1
-    db_dates[bool_delay_zero] <- db_dates[bool_delay_zero] - 1
-  }
- 
-  # account for delay in compliance
-  db_dates  <- c(db_dates[1],db_dates + db_delay,db_dates[-1])
-  db_values <- c(0,db_values,db_values[-length(db_values)])
+    # add right tail
+      db_dates  <- c(db_dates,max(db_dates)+356*3)
+      db_values <- c(db_values,db_values[length(db_values)])
+  } else {
+    if(length(db_values)==1){ db_values <- rep(db_values,length(db_dates))}
+  } 
   
   # sort
   db_values <- db_values[order(as.Date(db_dates))]
   db_dates  <- db_dates[order(as.Date(db_dates))]
-  
-  # add right tail
-  db_dates  <- c(db_dates,max(db_dates)+356*3)
-  db_values <- c(db_values,db_values[length(db_values)])
   
   adjust_calendar_file(db_category = db_category,
                        db_update   = rbind(as.character(db_dates),db_values),
                        db_age      = db_age,
                        file_name   = file_name,
                        show_plots  = TRUE,
-                       erase_category = erase_category)
+                       bool_singletons = bool_singletons,
+                       erase_category  = erase_category)
   
   } # end if-clause on is.na
 }

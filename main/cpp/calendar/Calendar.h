@@ -121,10 +121,16 @@ public:
 			return m_collectivity_distancing[m_day_index];
 		}
 
-		/// Check if contact tracing is place
-		bool IsContactTracingActivated() const
+		/// Check if contact tracing is in place
+		bool IsContactTracingActive() const
 		{
 			 return m_contact_tracing[m_day_index];
+		}
+
+		/// Check if social contact survey is ongoing
+		bool IsContactSurveyActive() const
+		{
+			 return m_contact_survey[m_day_index];
 		}
 
 		/// Check if household clustering is allowed
@@ -192,6 +198,7 @@ private:
         std::vector<double> m_community_distancing;     ///< Vector with daily social distancing level enforcement in the community
         std::vector<double> m_collectivity_distancing;  ///< Vector with daily social distancing level enforcement in collectivities
         std::vector<bool>   m_contact_tracing;          ///< Vector of days with case finding measures
+        std::vector<bool>   m_contact_survey;           ///< Vector of days to conduct a social contact survey
         std::vector<double> m_household_clustering;     ///< Vector with daily social interaction level within household clusters
 
         std::vector<unsigned int>        m_imported_cases;  ///<Vector imported cases per day (for initial and/or daily seeding)

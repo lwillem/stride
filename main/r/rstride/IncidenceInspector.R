@@ -124,8 +124,8 @@ inspect_incidence_data <- function(project_dir, bool_add_param=TRUE)
                               hosp_adm_data = hosp_adm_data,
                               project_summary = project_summary,
                               scen_color = 1)
-  dev.off()
-  
+  # dev.off()
+  # 
   # ## ALL SCENARIOS (JPEG) ####
   # .rstride$create_jpg(project_dir,'incidence_all',width = 6, height = 2.5)
   # par(mar=c(3,5,1,5))
@@ -138,43 +138,43 @@ inspect_incidence_data <- function(project_dir, bool_add_param=TRUE)
   #                             project_summary = project_summary,
   #                             scen_color = 1)
   # dev.off()
-  
-  ## PARETO ENSEMBLE
-  filename_summary_score <- file.path(project_dir,paste0(basename(project_dir),'_poison_neg_loglikelihood_scores.RData'))
-  if(file.exists(filename_summary_score)){
-    
-    
-    summary_score      <- readRDS(filename_summary_score)
-    config_selection   <- summary_score$config_id[summary_score$pareto_front]
-    data_incidence_sel <- data_incidence_all[data_incidence_all$config_id %in% config_selection,]
-    
-    ## PARETO (PDF) ####
-    
-    # all
-    .rstride$create_pdf(project_dir,'incidence_pareto_all',width = 14, height = 8)
-    par(mfrow=c(4,1))
-    plot_incidence_data(data_incidence_sel,project_summary,
-                        hosp_adm_data,input_opt_design,prevalence_ref,
-                        bool_add_param,bool_only_hospital_adm = FALSE) 
- 
-     # hospital admissions
-    par(mar=c(3,5,1,3))
-    plot_incidence_data(data_incidence_sel,project_summary,
-                        hosp_adm_data,input_opt_design,prevalence_ref,
-                        bool_add_param,bool_only_hospital_adm = TRUE) 
-  
-    # polygon
-    plot_incidence_reproduction(data_incidence = data_incidence_sel,
-                                hosp_adm_data = hosp_adm_data,
-                                project_summary = project_summary,
-                                scen_color = 1)
-    dev.off()
-
-  }
+  # 
+  # ## PARETO ENSEMBLE
+  # filename_summary_score <- file.path(project_dir,paste0(basename(project_dir),'_poison_neg_loglikelihood_scores.RData'))
+  # if(file.exists(filename_summary_score)){
+  #   
+  #   
+  #   summary_score      <- readRDS(filename_summary_score)
+  #   config_selection   <- summary_score$config_id[summary_score$pareto_front]
+  #   data_incidence_sel <- data_incidence_all[data_incidence_all$config_id %in% config_selection,]
+  #   
+  #   ## PARETO (PDF) ####
+  #   
+  #   # all
+  #   .rstride$create_pdf(project_dir,'incidence_pareto_all',width = 14, height = 8)
+  #   par(mfrow=c(4,1))
+  #   plot_incidence_data(data_incidence_sel,project_summary,
+  #                       hosp_adm_data,input_opt_design,prevalence_ref,
+  #                       bool_add_param,bool_only_hospital_adm = FALSE) 
+  # 
+  #    # hospital admissions
+  #   par(mar=c(3,5,1,3))
+  #   plot_incidence_data(data_incidence_sel,project_summary,
+  #                       hosp_adm_data,input_opt_design,prevalence_ref,
+  #                       bool_add_param,bool_only_hospital_adm = TRUE) 
+  # 
+  #   # polygon
+  #   plot_incidence_reproduction(data_incidence = data_incidence_sel,
+  #                               hosp_adm_data = hosp_adm_data,
+  #                               project_summary = project_summary,
+  #                               scen_color = 1)
+  #   dev.off()
+  # 
+  # }
   
   ## AGE-SPECIFIC PLOTS ####
-  .rstride$create_pdf(project_dir,'incidence_hospital_age',width = 14, height = 14)
-  par(mfrow=c(3,3))
+  # .rstride$create_pdf(project_dir,'incidence_hospital_age',width = 14, height = 14)
+  par(mar=c(5,4,4,2),mfrow=c(3,3))
   i_age <- 4
   names(data_incidence_sel)
   col_ind_hosp_age <- which(grepl('hospital_admissions',names(hosp_adm_data)))
@@ -197,7 +197,8 @@ inspect_incidence_data <- function(project_dir, bool_add_param=TRUE)
                         input_opt_design,
                         prevalence_ref,
                         bool_add_param,
-                        bool_only_hospital_adm = TRUE) 
+                        bool_only_hospital_adm = TRUE)
+    title(paste('AG',i_age))
   }
   
   dev.off()

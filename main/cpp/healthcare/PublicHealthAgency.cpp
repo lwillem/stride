@@ -62,7 +62,7 @@ void PublicHealthAgency::Initialize(const ptree& config){
 }
 
 bool PublicHealthAgency::IsContactTracingActive(const std::shared_ptr<Calendar> calendar) const {
-	return (m_detection_probability > 0) && calendar->IsContactTracingActivated();
+	return (m_detection_probability > 0) && calendar->IsContactTracingActive();
 }
 
 

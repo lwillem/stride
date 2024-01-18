@@ -98,11 +98,14 @@ exp_design_base <- expand.grid(r0                       = 2.5,
                           household_clustering_delay = NA,
                           household_clustering_date = NA,
                       
+                          contact_survey_dates = NA,
+                          contact_survey_ages = c_str(0,18,110),
                           stringsAsFactors = F)
 
 # Contacts: virtual survey ---- 
 exp_design_all <- exp_design_base
 exp_design_all$event_log_level            <- 'Participants'
+exp_design_all$contact_survey_dates       <- c_str(paste(as.Date(exp_design_base$start_date[1])+(1:exp_design_base$num_days[1])-1))
 exp_design_all$gtester_label              <- 'covid_logParticipants'
 
 # no logging ----

@@ -68,10 +68,14 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         const auto& select = make_tuple(sim->m_event_log_mode, sim->m_track_index_case);
         sim->m_infector_default    = InfectorMap().at(select);
 
-        // additional infector if logmode is Tracing
+        // additional infector if logmode is ContactTracing or Participants
         if(m_config.get<string>("run.event_log_level", "None") == "ContactTracing"){
         	const auto& select_tracing  = make_tuple(EventLogMode::ToMode("ContactTracing"), sim->m_track_index_case);
         	sim->m_infector_tracing    = InfectorMap().at(select_tracing);
+        } else if(m_config.get<string>("run.event_log_level", "None") == "Participants"){
+        	sim->m_infector_tracing    = sim->m_infector_default;
+        	const auto& select_default = make_tuple(EventLogMode::ToMode("Transmissions"), sim->m_track_index_case);
+        	sim->m_infector_default    = InfectorMap().at(select_default);
         } else{
         	sim->m_infector_tracing    = InfectorMap().at(select);
         }
@@ -117,7 +121,7 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         SurveySeeder(m_config, sim->m_rn_man).Seed(sim->m_population);
 
         // --------------------------------------------------------------
-        // Seed population with non-compliant individuals.
+        // Seed heterogeniety in social contact behaviour.
         // --------------------------------------------------------------
         ContactHeterogeneitySeeder(m_config, sim->m_rn_man).Seed(sim->m_population);
 

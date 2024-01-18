@@ -203,10 +203,7 @@ inspect_contact_data <- function(project_dir){
   legend('topright',c('week','weekend','model'),col=c(1,1,2),lty=c(1,2,0),pch=c(-1,-1,1),cex=0.8,title=ref_data_tag)
   par(mfrow=c(1,1))
   
-  dev.off() # close pdf stream
-  
   ## Transmission probability ####
-  .rstride$create_pdf(project_dir,paste0(exp_tag,'_cnt_transm_probability'))
   par(mfrow=c(2,2))
   cnt_location_opt <- c('cnt_home', 'cnt_school', 'cnt_work', 'cnt_prim_comm', 'cnt_sec_comm','cnt_hh_cluster')
   for(i_cnt in cnt_location_opt){
@@ -227,13 +224,19 @@ inspect_contact_data <- function(project_dir){
 
   ## Socrates matrices ####
 
-  # results with 2 age groups (minors and adults)   
+  # get results with default (minors and adults) or specific age groups    
   age_cat_breaks <- c(0,18,110)
-  plot_socrates_all(data_cnt,data_part,age_cat_breaks,project_dir,paste0(exp_tag,'_AG2'),exp_summary$start_date)
+  if('contact_survey_ages' %in% names(exp_summary)){
+    age_cat_breaks <- as.numeric(unlist(strsplit(exp_summary$contact_survey_ages,',')))
+  }
+  plot_socrates_all(data_cnt       = data_cnt,
+                    data_part      = data_part,
+                    age_cat_breaks = age_cat_breaks,
+                    project_dir    = project_dir,
+                    exp_tag        = paste0(exp_tag,'_AG'),
+                    survey_start   = exp_summary$start_date,
+                    bool_rds       = TRUE)
   
-  # results by 5 age groups
-  age_cat_breaks <- c(0,18,36,65,75,110)
-  plot_socrates_all(data_cnt,data_part,age_cat_breaks,project_dir,paste0(exp_tag,'_AG5'),exp_summary$start_date)
   
 } # end function
 

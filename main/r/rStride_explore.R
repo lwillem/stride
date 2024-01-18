@@ -70,6 +70,11 @@ exp_param_list$imported_cases_number         <- 10
 exp_param_list$imported_cases_date           <- '2020-08-25'
 exp_param_list$imported_cases_delay          <- 5
 
+exp_param_list$event_log_level               <- 'Participants'
+exp_param_list$num_participants_survey       <- 4999
+exp_param_list$contact_survey_dates          <- c_str(exp_param_list$start_date,'2020-03-30','2020-05-20','2020-10-15')
+exp_param_list$contact_survey_ages           <- c_str(seq(0,90,10))
+
 # check period
 range(as.Date(exp_param_list$start_date), as.Date(exp_param_list$start_date)+ exp_param_list$num_days)
 
@@ -88,7 +93,7 @@ dim(exp_design)
 project_dir <- run_rStride(exp_design               = exp_design,
                            dir_postfix              = dir_postfix,
                            num_parallel_workers     = exp_param_list$num_parallel_workers,
-                           remove_run_output        = TRUE)
+                           remove_run_output        = FALSE)
 
 
 ############################# #
@@ -132,8 +137,10 @@ inspect_transmission_dynamics(project_dir)
 ############################# #
 #inspect_tracing_data(project_dir)
 
-
-
+############################# #
+## CONTACT SURVEY          ####
+############################# #
+inspect_contact_data(project_dir)
 
 
  
