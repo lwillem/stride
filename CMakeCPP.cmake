@@ -95,12 +95,6 @@ include_directories(SYSTEM ${CMAKE_HOME_DIRECTORY}/main/resources/lib/tclap/incl
 
 
 #----------------------------------------------------------------------------
-# SHA1 hash code.
-#----------------------------------------------------------------------------
-include_directories(SYSTEM ${CMAKE_HOME_DIRECTORY}/main/resources/lib/sha1/include)
-set(LIBS ${LIBS} sha1)
-
-#----------------------------------------------------------------------------
 # Boost
 #----------------------------------------------------------------------------
 set(Boost_USE_MULTITHREADED TRUE)     # prevent issues with threaded and unthreaded boost libraries.

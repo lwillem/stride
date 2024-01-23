@@ -26,7 +26,6 @@
 #include <boost/property_tree/xml_parser.hpp>
 #include <initializer_list>
 #include <map>
-#include <sha1.h>
 #include <sstream>
 #include <string>
 
@@ -36,15 +35,6 @@ using namespace std;
 
 namespace stride {
 namespace util {
-
-void RunConfigManager::CleanConfigFile(ptree pt)
-{
-        pt.sort();
-        const string sha1  = RunConfigManager::ToShortSha1(pt);
-        const string fName = sha1 + ".xml";
-        cout << "Rewriting config to file " << fName << " in current directory." << endl;
-        FileSys::WritePtreeFile(fName, pt);
-}
 
 ptree RunConfigManager::Create(const std::string& configName)
 {
@@ -203,13 +193,6 @@ string RunConfigManager::ToString(const ptree& pt)
         ostringstream ss;
         write_xml(ss, pt, xml_writer_make_settings<ptree::key_type>(' ', 8));
         return ss.str();
-}
-
-std::string RunConfigManager::ToSha1(const boost::property_tree::ptree& pt) { return sha1(ToString(pt)); }
-
-std::string RunConfigManager::ToShortSha1(const boost::property_tree::ptree& pt, unsigned int n)
-{
-        return ToSha1(pt).substr(0, n);
 }
 
 } // namespace util
