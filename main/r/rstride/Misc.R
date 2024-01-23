@@ -332,13 +332,14 @@ if(!(exists('.rstride'))){
   } # end data-type loop
 }
 
+# load aggregated RData file
 .rstride$load_aggregated_output <- function(project_dir,file_type,exp_id_opt = NA){
   
   # load project summary
   project_summary <- .rstride$load_project_summary(project_dir)
   
   # get output filenames
-  dir_files       <- dir(project_dir,full.names = TRUE)
+  dir_files       <- dir(project_dir,full.names = TRUE,pattern = '.RData')
   output_filename <- dir_files[grepl(file_type,dir_files)]
   
   # if the file does not exists, return NA

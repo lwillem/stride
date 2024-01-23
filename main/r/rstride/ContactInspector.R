@@ -404,7 +404,7 @@ inspect_contact_data <- function(project_dir){
     theme_bw() +
     ggtitle(title) +
     geom_line(data = cnt_age_mean, aes(x=part_age, y=cnt_count,group = 1),
-              size=2, colour="red") +
+              linewidth=2, colour="red") +
     theme(legend.justification = c(1, 1),
           legend.position = 'right',
           legend.text = element_text(size=18),
