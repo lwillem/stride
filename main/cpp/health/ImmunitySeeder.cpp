@@ -39,7 +39,7 @@ using namespace stride::util;
 using namespace std;
 
 
-ImmunitySeeder::ImmunitySeeder(const ptree& config, RnMan& rnMan) : m_config(config), m_rn_man(rnMan) {}
+ImmunitySeeder::ImmunitySeeder(const ptree& config, std::shared_ptr<util::RnMan> rnMan) : m_config(config), m_rn_man(rnMan) {}
 
 
 void ImmunitySeeder::Seed(std::shared_ptr<Population> pop)
@@ -125,8 +125,8 @@ void ImmunitySeeder::Random(const SegmentedVector<ContactPool>& pools, vector<do
 
         // Sampler for int in [0, pools.size()) and for double in [0.0, 1.0).
         const auto poolsSize          = static_cast<int>(pools.size());
-        auto       intGenerator       = m_rn_man.GetUniformIntGenerator(0, poolsSize, 0U);
-        auto       uniform01Generator = m_rn_man.GetUniform01Generator(0U);
+        auto       intGenerator       = m_rn_man->GetUniformIntGenerator(0, poolsSize, 0U);
+        auto       uniform01Generator = m_rn_man->GetUniform01Generator(0U);
         auto&      logger             = pop->RefEventLogger();
 
         // Count unvaccinated individuals per age class
@@ -157,7 +157,7 @@ void ImmunitySeeder::Random(const SegmentedVector<ContactPool>& pools, vector<do
                 const auto           size   = static_cast<unsigned int>(p_pool.GetPool().size());
                 vector<unsigned int> indices(size);
                 iota(indices.begin(), indices.end(), 0U);
-                m_rn_man.Shuffle(indices, 0U);
+                m_rn_man->Shuffle(indices, 0U);
 
                 // loop over members, in random order
                 for (unsigned int i_p = 0; i_p < size && numImmune > 0; i_p++) {

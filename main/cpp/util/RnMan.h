@@ -10,64 +10,116 @@
  *  You should have received a copy of the GNU General Public License
  *  along with the software. If not, see <http://www.gnu.org/licenses/>.
  *
- *  Copyright 2018, Kuylen E, Willem L, Broeckhove J
+ *  Copyright 2024
  */
 
 /**
  * @file
- * Interface of RnMan.
+ * Interface of RnMan to manage random number generation (in parallel).
  */
 
 #pragma once
 
+#include <trng/discrete_dist.hpp>
+#include <trng/lcg64.hpp>
+#include <trng/uniform01_dist.hpp>
+#include <trng/uniform_int_dist.hpp>
 #include <functional>
-#include <memory>
+#include <pcg/pcg_extras.hpp>
+#include <random>
+#include <randutils/randutils.hpp>
+#include <string>
 #include <vector>
 
 namespace stride {
 namespace util {
 
-class Rn;
-
-/*
- * RnMan manages random engines and distribution to produce random generators.
- * Can be used with (up to 32) parallel streams out of the engine.
+/**
+ * Manages random number generation in parallel (OpenMP) calculations.
  */
-class RnMan
+class RnMan : protected std::vector<randutils::random_generator<trng::lcg64, randutils::seed_seq_fe128>>
 {
 public:
-        /// Default constructor builds empty (uninitialized) manager.
-        RnMan();
+        using EngineType    = trng::lcg64;
+        using RnType        = randutils::random_generator<EngineType, randutils::seed_seq_fe128>;
+        using ContainerType = std::vector<randutils::random_generator<EngineType, randutils::seed_seq_fe128>>;
 
-        explicit RnMan(const unsigned long seed, unsigned int stream_count);
+        using ContainerType::operator[];
+        using ContainerType::at;
+        using ContainerType::size;
+
+public:
+        /// Default constructor build empty manager.
+        RnMan() : ContainerType(), m_seed_init(0U), m_stream_count(0U) {}
+
+        /// Constructor.
+		RnMan(unsigned long seed, const unsigned long stream_count)
+			: ContainerType(stream_count),
+			  m_seed_init(seed),
+			  m_stream_count(stream_count)
+		{
+            std::vector<unsigned long> seseq_init_vec {m_seed_init};
+            randutils::seed_seq_fe128 seseq(seseq_init_vec.begin(), seseq_init_vec.end());
+            Seed(seseq);
+		}
+
+        /// No copying.
+        RnMan(const RnMan&) = delete;
+
+        /// No copy assignment.
+        RnMan& operator=(const RnMan&) = delete;
 
         /// Equality of states
         bool operator==(const RnMan& other);
 
-        /// Return a generator for uniform doubles in [0, 1[ using i-th random stream.
-        std::function<double()> GetUniform01Generator(unsigned int i = 0U);
+        /// Return a generator for uniform doubles in [0, 1[ using i-th random engine.
+        std::function<double()> GetUniform01Generator(unsigned int i = 0U)
+        {
+                return ContainerType::at(i).variate_generator(trng::uniform01_dist<double>());
+        }
 
-        /// Return a generator for uniform ints in [a, b[ (a < b) using i-th random stream.
-        std::function<int()> GetUniformIntGenerator(int a, int b, unsigned int i = 0U);
+        /// Return a generator for uniform ints in [a, b[ (a < b) using i-th random engine.
+        std::function<int()> GetUniformIntGenerator(int a, int b, unsigned int i = 0U)
+        {
+                return ContainerType::at(i).variate_generator(trng::uniform_int_dist(a, b));
+        }
 
-        /// Return a generator for gamma distribution using i-th random stream
-        std::function<double()> GetGammaGenerator(double shape, double scale, unsigned int i = 0U);
+        /// Return a generator for doubles from a Gamma distribution with a given shape and scale
+        std::function<double()> GetGammaGenerator(double shape, double scale, unsigned int i = 0U)
+		{
+        		return ContainerType::at(i).variate_generator(std::gamma_distribution<double>(shape, scale));
+		}
 
-        /// Return generator for ints [0, n-1[ with non-negative weights p_j (i=0,..,n-1) using i-th random stream.
-        std::function<int()> GetDiscreteGenerator(const std::vector<double>& weights, unsigned int i = 0U);
+        /// Return generator for integers [0, n-1[ with non-negative weights p_j (i=0,..,n-1) using i-th random engine.
+        template<typename It>
+        std::function<int()> GetDiscreteGenerator(It begin, It end, unsigned int i = 0U)
+        {
+                return ContainerType::at(i).variate_generator(trng::discrete_dist(begin, end));
+        }
+
+        /// Is this een empty (i.e. non-initialized Rn)?
+        bool IsEmpty() const { return ContainerType::empty() || (m_stream_count == 0U); }
+
+        /// Random shuffle of vector of unsigned int indices using i-th engine.
+        void Shuffle(std::vector<unsigned int>& indices, unsigned int i)
+        {
+                ContainerType::at(i).shuffle(indices.begin(), indices.end());
+        }
 
         /// Make weighted coin flip: <fraction> of the flips need to come up true.
         bool MakeWeightedCoinFlip(double fraction, unsigned int i = 0U);
 
-        /// Is this een empty (i.e. non-initialized Rn)?
-        bool IsEmpty() const;
-
-        /// Random shuffle of vector of int indices using i-th random stream.
-        void Shuffle(std::vector<unsigned int>& indices, unsigned int i);
+private:
+        /// Actual first-time seeding. Procedure varies according to engine type, see specialisations.
+        void Seed(randutils::seed_seq_fe128& seseq);
+        /// Actual first-time seeding. Procedure varies according to engine type, see specialisations.
+        void Seed(unsigned long seed);
 
 private:
-        std::shared_ptr<Rn> m_rn;
+        unsigned long  m_seed_init;     ///< Seed initializer used with RN engine.
+        unsigned int   m_stream_count;  ///< Number of threads/streams set up with the engine.
 };
+
 
 } // namespace util
 } // namespace stride

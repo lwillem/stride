@@ -37,7 +37,7 @@ class ImmunitySeeder
 {
 public:
 		/// Initializing ImmunitySeeder.
-        explicit ImmunitySeeder(const boost::property_tree::ptree& config, util::RnMan& rnMan);
+        explicit ImmunitySeeder(const boost::property_tree::ptree& config, std::shared_ptr<util::RnMan> rnMan);
 
         /// Build the simulator.
         void Seed(std::shared_ptr<Population> pop);
@@ -54,7 +54,7 @@ private:
 
 private:
 		const boost::property_tree::ptree& m_config; ///< Run config.
-		util::RnMan& m_rn_man; ///< Random number manager.
+		std::shared_ptr<util::RnMan> m_rn_man; ///< Random number manager.
 };
 
 } // namespace stride

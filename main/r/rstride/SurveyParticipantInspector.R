@@ -110,7 +110,7 @@ inspect_participant_data <- function(project_dir, save_pdf = TRUE)
     legend('topright',c('infectious','symptomatic','hospitalised'),col=c(2,4,6),lwd=4,cex=0.8)
     abline(v=6:9,lty=3)
     
-    f_data <- data_part$start_symptomatic; f_main <- 'debug'
+    f_data <- data_part$start_hospitalisation; f_main <- 'debug'
     plot_cum_distr <- function(f_data,f_main,f_x_lab = 'period (days)'){
       tbl_data <- table(f_data)/length(f_data)
       tbl_data_cumm <- cumsum(tbl_data)
@@ -119,7 +119,7 @@ inspect_participant_data <- function(project_dir, save_pdf = TRUE)
       lines(as.numeric(names(tbl_data_cumm)),tbl_data_cumm,col=4,lwd=2,type='b')
       
       legend_position <- 'topleft'
-      if(max(as.numeric(names(tbl_data)))<10) {legend_position <- 'topright'}
+      if(length(tbl_data)>0 && max(as.numeric(names(tbl_data)))<10) {legend_position <- 'topright'}
       legend(legend_position,c('per day','cumulative'),col=c(1,4),lwd=2,cex=0.8)
       grid()
       abline(h=0.5)

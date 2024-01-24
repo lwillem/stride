@@ -37,7 +37,7 @@ using namespace stride::ContactType;
 using namespace stride::util;
 using namespace std;
 
-DiseaseSeeder::DiseaseSeeder(const ptree& config, RnMan& rnMan) : m_config(config), m_rn_man(rnMan) {}
+DiseaseSeeder::DiseaseSeeder(const ptree& config, std::shared_ptr<util::RnMan> rnMan) : m_config(config), m_rn_man(rnMan) {}
 
 void DiseaseSeeder::ImportInfectedCases(std::shared_ptr<Population> pop, unsigned int numInfected, unsigned int simDay, const TransmissionProfile& transProfile, util::RnHandler& rnHandler)
 {
@@ -49,7 +49,7 @@ void DiseaseSeeder::ImportInfectedCases(std::shared_ptr<Population> pop, unsigne
         const auto   sAgeMax     = m_config.get<double>("run.seeding_age_max", 99);
         const auto   popSize     = pop->size();
         const auto   maxPopIndex = static_cast<int>(popSize - 1);
-        auto         generator   = m_rn_man.GetUniformIntGenerator(0, maxPopIndex, 0U);
+        auto         generator   = m_rn_man->GetUniformIntGenerator(0, maxPopIndex, 0U);
         auto&        logger      = pop->RefEventLogger();
         const EventLogMode::Id log_level   = EventLogMode::ToMode(m_config.get<string>("run.event_log_level", "None"));
 

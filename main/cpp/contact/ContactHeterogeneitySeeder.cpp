@@ -35,7 +35,7 @@ using namespace std;
 
 namespace stride {
 
-ContactHeterogeneitySeeder::ContactHeterogeneitySeeder(const ptree& config, RnMan& rnMan) : m_config(config), m_rn_man(rnMan) {}
+ContactHeterogeneitySeeder::ContactHeterogeneitySeeder(const ptree& config, std::shared_ptr<util::RnMan> rnMan) : m_config(config), m_rn_man(rnMan) {}
 
 shared_ptr<Population> ContactHeterogeneitySeeder::Seed(shared_ptr<Population> pop)
 {
@@ -56,7 +56,7 @@ shared_ptr<Population> ContactHeterogeneitySeeder::Seed(shared_ptr<Population> p
 			// Use distribution with mean 1 and overdispersion = contact_distribution_overdispersion
 			double shape = contact_distribution_overdispersion;
 			double scale = 1 / shape;
-			auto gamma_generator = m_rn_man.GetGammaGenerator(shape, scale, 0U);
+			auto gamma_generator = m_rn_man->GetGammaGenerator(shape, scale, 0U);
 
 			// Seed community contact factors
 			for (size_t i = 0; i < population.size(); ++i) {

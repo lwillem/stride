@@ -45,7 +45,7 @@ public:
         explicit SimBuilder(const boost::property_tree::ptree& config);
 
         /// Build the simulator and return it afterwards.
-        std::shared_ptr<Sim> Build(std::shared_ptr<Sim> sim, std::shared_ptr<Population> pop, util::RnMan rnMan);
+        std::shared_ptr<Sim> Build(std::shared_ptr<Sim> sim, std::shared_ptr<Population> pop);
 
 private:
         /// Get the contact configuration data.

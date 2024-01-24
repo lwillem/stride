@@ -52,7 +52,6 @@ set(STRIDE_SRC
     util/ConfigInfo.cpp
     util/FileSys.cpp
     util/LogUtils.cpp
-    util/Rn.cpp
     util/RnMan.cpp
     util/RunConfigManager.cpp
     util/SummaryFile.cpp

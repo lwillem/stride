@@ -40,14 +40,14 @@ class DiseaseSeeder
 {
 public:
         /// Initializing DiseaseSeeder.
-        DiseaseSeeder(const boost::property_tree::ptree& config, util::RnMan& rnMan);
+        DiseaseSeeder(const boost::property_tree::ptree& config, std::shared_ptr<util::RnMan> rnMan);
 
         /// Import infected cases into the population
         void ImportInfectedCases(std::shared_ptr<Population> pop, unsigned int numInfected, unsigned int simDay, const TransmissionProfile& transProfile, util::RnHandler& rnHandler);
 
 private:
         const boost::property_tree::ptree& m_config; ///< Run config.
-        util::RnMan&                       m_rn_man; ///< Random number manager.
+        std::shared_ptr<util::RnMan>          m_rn_man; ///< Random number manager.
 };
 
 } // namespace stride

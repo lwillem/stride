@@ -102,32 +102,25 @@ void MDP::Create_(const boost::property_tree::ptree& config, int seed,
     }
 
     // -----------------------------------------------------------------------------------------
-    // Sim scenario: step 1, build a random number manager.
-    // -----------------------------------------------------------------------------------------
-    RnMan        rnMan{m_config.get<unsigned long>("run.rng_seed", 0U),
-        				m_config.get<unsigned int>("run.num_threads")};
-
-    // -----------------------------------------------------------------------------------------
-    // Sim scenario: step 2, create a population, as described by the parameter in the config.
+    // Sim scenario: step 1, create a population, as described by the parameter in the config.
     // -----------------------------------------------------------------------------------------
     auto pop = Population::Create(m_config, m_stride_logger);
 
     // -----------------------------------------------------------------------------------------
-    // Sim scenario: step 3, create a simulator, as described by the parameter in the config.
+    // Sim scenario: step 2, create a simulator, as described by the parameter in the config.
     // -----------------------------------------------------------------------------------------
-    m_simulator = Sim::Create(m_config, pop, rnMan);
+    m_simulator = Sim::Create(m_config, pop);
 
     // -----------------------------------------------------------------------------------------
-    // Sim scenario: step , build a runner, register viewers.
+    // Sim scenario: step 3, build a runner
     // -----------------------------------------------------------------------------------------
     auto runner = make_shared<MDPRunner>(m_config, m_simulator);
-    //RegisterViewers(runner);
     m_runner = runner;
 
     // -----------------------------------------------------------------------------------------
     // Vaccines: Create the age groups for vaccine sampling later
     // -----------------------------------------------------------------------------------------
-    m_rnMan = rnMan;
+    m_rnMan = m_simulator->RefRnManager();
     if (uptake != 1) { CreateHouseholdMapping(uptake); }
     else if (!childless) { CreateAgeGroups(); }
     else { CreateChildlessAgeGroups(); }
@@ -307,7 +300,7 @@ void MDP::CreateAgeGroups()
     // Remove unused capacity from the vectors and shuffle the values
     for (AgeGroup ageGroup : AllAgeGroups) {
         m_age_groups[ageGroup].shrink_to_fit();
-        m_rnMan.Shuffle(m_age_groups[ageGroup], 0U);
+        m_rnMan->Shuffle(m_age_groups[ageGroup], 0U);
     }
 }
 
@@ -327,7 +320,7 @@ void MDP::CreateChildlessAgeGroups()
     // Remove unused capacity from the vectors and shuffle the values
     for (ChildlessAgeGroup ageGroup : AllChildlessAgeGroups) {
         m_childless_age_groups[ageGroup].shrink_to_fit();
-        m_rnMan.Shuffle(m_childless_age_groups[ageGroup], 0U);
+        m_rnMan->Shuffle(m_childless_age_groups[ageGroup], 0U);
     }
 }
 
@@ -383,7 +376,7 @@ void MDP::CreateHouseholdMapping(double uptake)
     cout << "\tcontact pools: " << numPools << ", population size: " << fullPopSize << ", uptake: " << uptake <<
             " ==> requested sample size " << maxSampleSize << endl;
     std::vector<unsigned int> preSampledHouseholds (householdIds);
-    m_rnMan.Shuffle(preSampledHouseholds, 0U);
+    m_rnMan->Shuffle(preSampledHouseholds, 0U);
 
     std::vector<unsigned int> samplePools;  // TODO remove once test cleared
     std::vector<unsigned int> sampleIds;
@@ -448,7 +441,7 @@ void MDP::CreateHouseholdMapping(double uptake)
     // Remove unused capacity from the vectors and shuffle the values
     for (AgeGroup ageGroup : AllAgeGroups) {
         m_age_groups[ageGroup].shrink_to_fit();
-        m_rnMan.Shuffle(m_age_groups[ageGroup], 0U);
+        m_rnMan->Shuffle(m_age_groups[ageGroup], 0U);
     }
 }
 

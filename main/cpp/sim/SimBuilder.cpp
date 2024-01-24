@@ -42,7 +42,7 @@ using namespace ContactType;
 
 SimBuilder::SimBuilder(const ptree& config) : m_config(config) {}
 
-shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> pop, RnMan rnMan)
+shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> pop)
 {
         // --------------------------------------------------------------
         // Read config info and setup random number manager
@@ -55,14 +55,16 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         unsigned int num_days                = m_config.get<unsigned short>("run.num_days");
         sim->m_calendar                      = make_shared<Calendar>(m_config,num_days);
         sim->m_event_log_mode                = EventLogMode::ToMode(m_config.get<string>("run.event_log_level", "None"));
-        sim->m_rn_man                        = std::move(rnMan);
+        sim->m_rn_man_ptr 				     = std::make_shared<util::RnMan>(m_config.get<unsigned long>("run.rng_seed", 0U),
+													                    	m_config.get<unsigned int>("run.num_threads"));
 
-        // --------------------------------------------------------------
+
+		// --------------------------------------------------------------
         // Contact handlers, each with generator bound to different
         // random engine stream and infector.
         // --------------------------------------------------------------
         for (unsigned int i = 0; i < sim->m_num_threads; i++) {
-                auto gen = sim->m_rn_man.GetUniform01Generator(i);
+                auto gen = sim->m_rn_man_ptr->GetUniform01Generator(i);
                 sim->m_rn_handlers.emplace_back(util::RnHandler(gen));
         }
         const auto& select = make_tuple(sim->m_event_log_mode, sim->m_track_index_case);
@@ -102,7 +104,7 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         // --------------------------------------------------------------
 		// Seed population with immunity: naturally or vaccine-induced.
 		// --------------------------------------------------------------
-        ImmunitySeeder(m_config, sim->m_rn_man).Seed(sim->m_population);
+        ImmunitySeeder(m_config, sim->m_rn_man_ptr).Seed(sim->m_population);
 
         // --------------------------------------------------------------
         // Register infected seeds.
@@ -118,12 +120,12 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         // --------------------------------------------------------------
         // Seed population with survey participants.
         // --------------------------------------------------------------
-        SurveySeeder(m_config, sim->m_rn_man).Seed(sim->m_population);
+        SurveySeeder(m_config, sim->m_rn_man_ptr).Seed(sim->m_population);
 
         // --------------------------------------------------------------
         // Seed heterogeniety in social contact behaviour.
         // --------------------------------------------------------------
-        ContactHeterogeneitySeeder(m_config, sim->m_rn_man).Seed(sim->m_population);
+        ContactHeterogeneitySeeder(m_config, sim->m_rn_man_ptr).Seed(sim->m_population);
 
         // --------------------------------------------------------------
         // Done.

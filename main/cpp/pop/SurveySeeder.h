@@ -41,7 +41,7 @@ public:
         /// Initialize Seeder.
         /// \param config         Configuration parameters.
         /// \param rnMan         Random number manager.
-        SurveySeeder(const boost::property_tree::ptree& config, util::RnMan& rnMan);
+        SurveySeeder(const boost::property_tree::ptree& config, std::shared_ptr<util::RnMan> rnMan);
 
         /// Seeds the population with survey participants.
         /// \param pop               Population.
@@ -53,7 +53,7 @@ public:
 
 private:
         const boost::property_tree::ptree& m_config; ///< Run config.
-        util::RnMan&                       m_rn_man; ///< Random number manager.
+        std::shared_ptr<util::RnMan>          m_rn_man; ///< Random number manager.
 };
 
 } // namespace stride

@@ -142,27 +142,20 @@ void SimController::Control()
         LogStartup();
 
         // -----------------------------------------------------------------------------------------
-        // Sim scenario: step 1, build a random number manager.
-        // -----------------------------------------------------------------------------------------
-        RnMan        rnMan{m_config.get<unsigned long>("run.rng_seed", 0U),
-            				m_config.get<unsigned int>("run.num_threads")};
-
-        // -----------------------------------------------------------------------------------------
-        // Sim scenario: step 2, create a population, as described by the parameter in the config.
+        // Sim scenario: step 1, create a population, as described by the parameter in the config.
         // -----------------------------------------------------------------------------------------
         auto pop = Population::Create(m_config, m_stride_logger);
 
         // -----------------------------------------------------------------------------------------
-        // Sim scenario: step 3, create a simulator, as described by the parameter in the config.
+        // Sim scenario: step 2, create a simulator, as described by the parameter in the config.
         // -----------------------------------------------------------------------------------------
-        m_simulator = Sim::Create(m_config, pop, rnMan);
+        m_simulator = Sim::Create(m_config, pop);
 
         // -----------------------------------------------------------------------------------------
-        // Sim scenario: step 4, run and print results
+        // Sim scenario: step 3, run simulation and print results
         // -----------------------------------------------------------------------------------------
         Run();
         PrintSummary();
-
 }
 
 void SimController::Run(unsigned int numSteps)

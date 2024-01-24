@@ -145,7 +145,7 @@ private:
         boost::property_tree::ptree m_config;                       ///< Configuration property tree
         std::shared_ptr<Sim> m_simulator;                           ///< The simulation
         std::shared_ptr<MDPRunner> m_runner;                        ///< The runner for the simulation
-        util::RnMan m_rnMan;                                        ///< The random number manager
+        std::shared_ptr<util::RnMan> m_rnMan;                          ///< The random number manager
         std::map<AgeGroup, std::vector<unsigned int>> m_age_groups; ///< The IDs of people belonging to different age groups.
         std::map<ChildlessAgeGroup, std::vector<unsigned int>> m_childless_age_groups;
         std::map<AgeGroup, unsigned int> m_vaccinated_age_groups;   ///< The number of vaccinated individuals per age group.

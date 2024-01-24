@@ -42,21 +42,20 @@ Sim::Sim()
     : m_config(), m_event_log_mode(Id::None), m_num_threads(1U), m_track_index_case(false),
 	  m_run_simplified(false),
       m_calendar(nullptr), m_contact_profiles(), m_rn_handlers(), m_infector_default(),m_infector_tracing(),
-      m_population(nullptr), m_rn_man(), m_transmission_profile(),
+      m_population(nullptr), m_rn_man_ptr(), m_transmission_profile(),
       m_is_isolated_from_household(false),
 	  m_public_health_agency()
 {
 }
 
-std::shared_ptr<Sim> Sim::Create(const boost::property_tree::ptree& config, shared_ptr<Population> pop,
-                                 util::RnMan rnMan)
+std::shared_ptr<Sim> Sim::Create(const boost::property_tree::ptree& config, shared_ptr<Population> pop)
 {
         struct make_shared_enabler : public Sim
         {
                 explicit make_shared_enabler() : Sim() {}
         };
         shared_ptr<Sim> sim = make_shared<make_shared_enabler>();
-        SimBuilder(config).Build(sim, std::move(pop), std::move(rnMan));
+        SimBuilder(config).Build(sim, std::move(pop));
         return sim;
 }
 
@@ -91,7 +90,7 @@ void Sim::TimeStep()
 
         // Import infected cases into the population
         if(m_calendar->GetNumberOfImportedCases() > 0){
-        	DiseaseSeeder(m_config, m_rn_man).ImportInfectedCases(m_population, m_calendar->GetNumberOfImportedCases(), simDay, m_transmission_profile, m_rn_handlers[0]);
+        	DiseaseSeeder(m_config, m_rn_man_ptr).ImportInfectedCases(m_population, m_calendar->GetNumberOfImportedCases(), simDay, m_transmission_profile, m_rn_handlers[0]);
             logger->info("[IMPORT-CASES] sim_day={} count={}", simDay, m_calendar->GetNumberOfImportedCases());        	
         }
 
