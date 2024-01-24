@@ -39,27 +39,18 @@ namespace stride {
 namespace util {
 
 // The construction below lets you choose (at compile time)
-// between the pcg64 and trng::lcg64 random engines. It's a hacky
+// between the pcg64 and trng::lcg64 random engines. It's a hack
 // construct but required because the forward class definition
 // of RnEgine in RnMan.h cannot be combined with a using
 // statement here. A macro to generate the class definition
-// would make it more scaleable, but since we have only two ...
+// would make it more scalable, but since we have only two ...
 
-// If you want to use the pcg64 random engine, uncomment the
-// class definition here and keep the one below commented out.
-class RnEngine : public Rn<pcg64>
-{
-        using Rn<pcg64>::Rn;
-};
 
-// If you want to use the trng::lcg64 random engine, uncomment the
-// class definition here and keep the one above commented out.
-/*
-class RnLcg64 : public Rn<trng::lcg64>
+// Always use the trng::lcg64 random engine
+class RnEngine : public Rn<trng::lcg64>
 {
         using Rn<trng::lcg64>::Rn;
 };
-*/
 
 RnMan::RnMan() : m_rn(make_shared<RnEngine>()) {}
 
