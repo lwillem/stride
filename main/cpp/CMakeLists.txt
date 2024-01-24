@@ -50,8 +50,6 @@ set(STRIDE_SRC
     sim/SimBuilder.cpp
     #---
     util/ConfigInfo.cpp
-    util/CSV.cpp
-    util/CSVRow.cpp
     util/FileSys.cpp
     util/LogUtils.cpp
     util/Rn.cpp
