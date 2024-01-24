@@ -29,7 +29,7 @@
 #include <array>
 #include <cctype>
 #include <functional>
-#include <pcg/pcg_random.hpp>
+//#include <pcg/pcg_random.hpp>
 #include <randutils/randutils.hpp>
 
 using namespace std;
@@ -38,27 +38,13 @@ using namespace randutils;
 namespace stride {
 namespace util {
 
-// The construction below lets you choose (at compile time)
-// between the pcg64 and trng::lcg64 random engines. It's a hack
-// construct but required because the forward class definition
-// of RnEgine in RnMan.h cannot be combined with a using
-// statement here. A macro to generate the class definition
-// would make it more scalable, but since we have only two ...
+//// Always use the trng::lcg64 random engine
 
+RnMan::RnMan() : m_rn(make_shared<Rn>()) {}
 
-// Always use the trng::lcg64 random engine
-class RnEngine : public Rn<trng::lcg64>
-{
-        using Rn<trng::lcg64>::Rn;
-};
-
-RnMan::RnMan() : m_rn(make_shared<RnEngine>()) {}
-
-RnMan::RnMan(const RnInfo& info) : m_rn(make_shared<RnEngine>(info)) {}
+RnMan::RnMan(const unsigned long seed, unsigned int stream_count) : m_rn(make_shared<Rn>(seed,stream_count)) {}
 
 bool RnMan::operator==(const RnMan& other) { return *m_rn == *(other.m_rn); }
-
-RnInfo RnMan::GetInfo() const { return m_rn->GetInfo(); }
 
 std::function<double()> RnMan::GetUniform01Generator(unsigned int i) { return m_rn->GetUniform01Generator(i); }
 
@@ -85,8 +71,6 @@ bool RnMan::MakeWeightedCoinFlip(double fraction, unsigned int i)
         auto dist = m_rn->GetDiscreteGenerator(weights.begin(), weights.end(), i);
         return static_cast<bool>(dist());
 }
-
-void RnMan::Initialize(const RnInfo& info) { m_rn->Initialize(info); }
 
 bool RnMan::IsEmpty() const { return m_rn->IsEmpty(); }
 

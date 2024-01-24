@@ -20,8 +20,6 @@
 
 #pragma once
 
-#include "RnInfo.h"
-
 #include <functional>
 #include <memory>
 #include <vector>
@@ -29,7 +27,7 @@
 namespace stride {
 namespace util {
 
-class RnEngine;
+class Rn;
 
 /*
  * RnMan manages random engines and distribution to produce random generators.
@@ -41,14 +39,10 @@ public:
         /// Default constructor builds empty (uninitialized) manager.
         RnMan();
 
-        /// Initializing Constructor.
-        explicit RnMan(const RnInfo& info);
+        explicit RnMan(const unsigned long seed, unsigned int stream_count);
 
         /// Equality of states
         bool operator==(const RnMan& other);
-
-        /// Return the state of the random engines.
-        RnInfo GetInfo() const;
 
         /// Return a generator for uniform doubles in [0, 1[ using i-th random stream.
         std::function<double()> GetUniform01Generator(unsigned int i = 0U);
@@ -65,9 +59,6 @@ public:
         /// Make weighted coin flip: <fraction> of the flips need to come up true.
         bool MakeWeightedCoinFlip(double fraction, unsigned int i = 0U);
 
-        /// Initalize with data in Info.
-        void Initialize(const RnInfo& info);
-
         /// Is this een empty (i.e. non-initialized Rn)?
         bool IsEmpty() const;
 
@@ -75,7 +66,7 @@ public:
         void Shuffle(std::vector<unsigned int>& indices, unsigned int i);
 
 private:
-        std::shared_ptr<RnEngine> m_rn;
+        std::shared_ptr<Rn> m_rn;
 };
 
 } // namespace util

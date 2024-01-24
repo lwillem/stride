@@ -104,9 +104,8 @@ void MDP::Create_(const boost::property_tree::ptree& config, int seed,
     // -----------------------------------------------------------------------------------------
     // Sim scenario: step 1, build a random number manager.
     // -----------------------------------------------------------------------------------------
-    const RnInfo info{m_config.get<string>("run.rng_seed", "1,2,3,4"), "",
-                      m_config.get<unsigned int>("run.num_threads")};
-    RnMan        rnMan{info};
+    RnMan        rnMan{m_config.get<unsigned long>("run.rng_seed", 0U),
+        				m_config.get<unsigned int>("run.num_threads")};
 
     // -----------------------------------------------------------------------------------------
     // Sim scenario: step 2, create a population, as described by the parameter in the config.

@@ -20,14 +20,13 @@
 
 #pragma once
 
-#include "RnInfo.h"
-
 #include <trng/discrete_dist.hpp>
 #include <trng/lcg64.hpp>
 #include <trng/uniform01_dist.hpp>
 #include <trng/uniform_int_dist.hpp>
 #include <functional>
-#include <pcg/pcg_random.hpp>
+//#include <pcg/pcg_random.hpp>
+#include <pcg/pcg_extras.hpp>
 #include <random>
 #include <randutils/randutils.hpp>
 #include <string>
@@ -39,13 +38,12 @@ namespace util {
 /**
  * Manages random number generation in parallel (OpenMP) calculations.
  */
-template <typename E>
-class Rn : protected std::vector<randutils::random_generator<E, randutils::seed_seq_fe128>>
+class Rn : protected std::vector<randutils::random_generator<trng::lcg64, randutils::seed_seq_fe128>>
 {
 public:
-        using EngineType    = E;
-        using RnType        = randutils::random_generator<E, randutils::seed_seq_fe128>;
-        using ContainerType = std::vector<randutils::random_generator<E, randutils::seed_seq_fe128>>;
+        using EngineType    = trng::lcg64;
+        using RnType        = randutils::random_generator<EngineType, randutils::seed_seq_fe128>;
+        using ContainerType = std::vector<randutils::random_generator<EngineType, randutils::seed_seq_fe128>>;
 
         using ContainerType::operator[];
         using ContainerType::at;
@@ -53,15 +51,18 @@ public:
 
 public:
         /// Default constructor build empty manager.
-        Rn() : ContainerType(), m_seed_seq_init(""), m_stream_count(0U) {}
+        Rn() : ContainerType(), m_seed_init(0U), m_stream_count(0U) {}
 
         /// Initializes.
-        explicit Rn(const RnInfo& info)
-            : ContainerType(info.m_stream_count), m_seed_seq_init(info.m_seed_seq_init),
-              m_stream_count(info.m_stream_count)
-        {
-                Initialize(info);
-        }
+		explicit Rn(unsigned long seed, const unsigned long stream_count)
+			: ContainerType(stream_count),
+			  m_seed_init(seed),
+			  m_stream_count(stream_count)
+		{
+            std::vector<unsigned long> seseq_init_vec {m_seed_init};
+            randutils::seed_seq_fe128 seseq(seseq_init_vec.begin(), seseq_init_vec.end());
+            Seed(seseq);
+		}
 
         /// No copying.
         Rn(const Rn&) = delete;
@@ -71,9 +72,6 @@ public:
 
         /// Equality of states
         bool operator==(const Rn& other);
-
-        /// Return the state of the random engines.
-        RnInfo GetInfo() const;
 
         /// Return a generator for uniform doubles in [0, 1[ using i-th random engine.
         std::function<double()> GetUniform01Generator(unsigned int i = 0U)
@@ -94,20 +92,11 @@ public:
 		}
 
         /// Return generator for integers [0, n-1[ with non-negative weights p_j (i=0,..,n-1) using i-th random engine.
-        //std::function<int()> GetDiscreteGenerator(const std::vector<double>& weights, unsigned int i = 0U)
-        //{
-        //        return ContainerType::at(i).variate_generator(trng::discrete_dist(weights.begin(), weights.end()));
-        //}
-
-        /// Return generator for integers [0, n-1[ with non-negative weights p_j (i=0,..,n-1) using i-th random engine.
         template<typename It>
         std::function<int()> GetDiscreteGenerator(It begin, It end, unsigned int i = 0U)
         {
                 return ContainerType::at(i).variate_generator(trng::discrete_dist(begin, end));
         }
-
-        /// Initalize with data in Info.
-        void Initialize(const RnInfo& info);
 
         /// Is this een empty (i.e. non-initialized Rn)?
         bool IsEmpty() const { return ContainerType::empty() || (m_stream_count == 0U); }
@@ -118,20 +107,20 @@ public:
                 ContainerType::at(i).shuffle(indices.begin(), indices.end());
         }
 
+        /// Make weighted coin flip: <fraction> of the flips need to come up true.
+        bool MakeWeightedCoinFlip(double fraction, unsigned int i = 0U);
+
 private:
         /// Actual first-time seeding. Procedure varies according to engine type, see specialisations.
         void Seed(randutils::seed_seq_fe128& seseq);
+        /// Actual first-time seeding. Procedure varies according to engine type, see specialisations.
+        void Seed(unsigned long seed);
 
 private:
-        std::string  m_seed_seq_init; ///< Seed sequence initializer used with engines.
-        unsigned int m_stream_count;  ///< Number of threads/streams set up with the engine.
+        unsigned long  m_seed_init;     ///< Seed initializer used with RN engine.
+        unsigned int   m_stream_count;  ///< Number of threads/streams set up with the engine.
 };
 
-template <>
-void Rn<pcg64>::Seed(randutils::seed_seq_fe128& seseq);
-
-extern template class Rn<pcg64>;
-extern template class Rn<trng::lcg64>;
 
 } // namespace util
 } // namespace stride

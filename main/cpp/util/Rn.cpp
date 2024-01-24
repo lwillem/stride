@@ -10,12 +10,12 @@
  *  You should have received a copy of the GNU General Public License
  *  along with the software. If not, see <http://www.gnu.org/licenses/>.
  *
- *  Copyright 2018, Kuylen E, Willem L, Broeckhove J
+ *  Copyright 2024
  */
 
 /**
  * @file
- * Implementation of RnPcg.
+ * Implementation of Rn.
  */
 
 #include "Rn.h"
@@ -25,6 +25,7 @@
 #include <randutils/randutils.hpp>
 #include <sstream>
 #include <stdexcept>
+#include <iostream>
 
 using namespace std;
 using namespace randutils;
@@ -32,8 +33,7 @@ using namespace randutils;
 namespace stride {
 namespace util {
 
-template <typename E>
-bool Rn<E>::operator==(const Rn& other)
+bool Rn::operator==(const Rn& other)
 {
         bool status = m_stream_count == other.m_stream_count;
         if (status) {
@@ -44,74 +44,32 @@ bool Rn<E>::operator==(const Rn& other)
         return status;
 }
 
-template <typename E>
-RnInfo Rn<E>::GetInfo() const
+bool Rn::MakeWeightedCoinFlip(double fraction, unsigned int i)
 {
-        RnInfo            info;
-        std::stringstream ss;
-        for (auto& e : *this) {
-                ss << e.engine();
-        }
-        info.m_seed_seq_init = m_seed_seq_init;
-        info.m_state         = ss.str();
-        info.m_stream_count  = m_stream_count;
-        return info;
+        array<double, 2> weights{ 1.0 - fraction, fraction};
+        // -> 0, return is false -> not part of the fraction
+        // -> 1, return is true -> part of the fraction
+        auto dist = GetDiscreteGenerator(weights.begin(), weights.end(), i);
+        return static_cast<bool>(dist());
 }
 
-template <typename E>
-void Rn<E>::Initialize(const RnInfo& info)
+void Rn::Seed(randutils::seed_seq_fe128& seseq)
 {
-        if (m_stream_count != info.m_stream_count) {
-                m_stream_count = info.m_stream_count;
-                this->resize(m_stream_count);
-        }
-        m_seed_seq_init = info.m_seed_seq_init;
-
-        auto state = info.m_state;
-        if (state.empty()) {
-                std::vector<unsigned int> seseq_init_vec;
-                const auto string_vec{Split(m_seed_seq_init, ",")};
-                for (const auto& e : Split(m_seed_seq_init, ",")) {
-                        if (!CheckAllDigits(e)) {
-                                throw std::runtime_error("Rn::Seed> Error in seeding definiton: " + e);
-                        }
-                        seseq_init_vec.push_back(FromString<unsigned int>(e));
-                }
-                randutils::seed_seq_fe128 seseq(seseq_init_vec.begin(), seseq_init_vec.end());
-
-                Seed(seseq);
-        } else {
-                std::stringstream ss(state);
-                for (size_t i = 0; i < m_stream_count; ++i) {
-                        ss >> (*this)[i].engine();
-                }
-        }
-}
-
-template <>
-void Rn<pcg64>::Seed(randutils::seed_seq_fe128& seseq)
-{
-        if (2 * m_stream_count > 64) {
-                throw std::runtime_error("RnPcg64 generate seed vector, cannot handle large n.");
-        }
-        auto seeds = pcg_extras::generate_vector<pcg64::state_type, 64>(seseq);
-        for (size_t i = 0; i < m_stream_count; ++i) {
-                (*this)[i].engine().seed(seeds[i + 1], seeds[i]);
-        }
-}
-
-template <typename E>
-void Rn<E>::Seed(randutils::seed_seq_fe128& seseq)
-{
-        auto seeds = pcg_extras::generate_one<unsigned long>(seseq);
+        unsigned long seeds = pcg_extras::generate_one<unsigned long>(seseq);
         for (size_t i = 0; i < m_stream_count; ++i) {
                 (*this)[i].engine().seed(seeds);
                 (*this)[i].engine().split(m_stream_count, i);
         }
 }
 
-template class Rn<pcg64>;
-template class Rn<trng::lcg64>;
+void Rn::Seed(unsigned long seed)
+{
+        for (size_t i = 0; i < m_stream_count; ++i) {
+                (*this)[i].engine().seed(seed);
+                (*this)[i].engine().split(m_stream_count, i);
+        }
+}
+
 
 } // namespace util
 } // namespace stride
