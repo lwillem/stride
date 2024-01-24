@@ -25,7 +25,6 @@
 #include <trng/uniform01_dist.hpp>
 #include <trng/uniform_int_dist.hpp>
 #include <functional>
-#include <pcg/pcg_extras.hpp>
 #include <random>
 #include <randutils/randutils.hpp>
 #include <string>
@@ -37,13 +36,10 @@ namespace util {
 /**
  * Manages random number generation in parallel (OpenMP) calculations.
  */
-class RnMan : protected std::vector<randutils::random_generator<trng::lcg64, randutils::seed_seq_fe128>>
+class RnMan : protected std::vector<randutils::random_generator<trng::lcg64>>
 {
 public:
-        using EngineType    = trng::lcg64;
-        using RnType        = randutils::random_generator<EngineType, randutils::seed_seq_fe128>;
-        using ContainerType = std::vector<randutils::random_generator<EngineType, randutils::seed_seq_fe128>>;
-
+        using ContainerType = std::vector<randutils::random_generator<trng::lcg64>>;
         using ContainerType::operator[];
         using ContainerType::at;
         using ContainerType::size;
@@ -58,9 +54,7 @@ public:
 			  m_seed_init(seed),
 			  m_stream_count(stream_count)
 		{
-            std::vector<unsigned long> seseq_init_vec {m_seed_init};
-            randutils::seed_seq_fe128 seseq(seseq_init_vec.begin(), seseq_init_vec.end());
-            Seed(seseq);
+            Seed(m_seed_init);
 		}
 
         /// No copying.
@@ -97,7 +91,7 @@ public:
                 return ContainerType::at(i).variate_generator(trng::discrete_dist(begin, end));
         }
 
-        /// Is this een empty (i.e. non-initialized Rn)?
+        /// Is this een empty (i.e. non-initialized RnMan)?
         bool IsEmpty() const { return ContainerType::empty() || (m_stream_count == 0U); }
 
         /// Random shuffle of vector of unsigned int indices using i-th engine.
@@ -110,10 +104,9 @@ public:
         bool MakeWeightedCoinFlip(double fraction, unsigned int i = 0U);
 
 private:
+
         /// Actual first-time seeding. Procedure varies according to engine type, see specialisations.
-        void Seed(randutils::seed_seq_fe128& seseq);
-        /// Actual first-time seeding. Procedure varies according to engine type, see specialisations.
-        void Seed(unsigned long seed);
+        void Seed(unsigned long rng_seed);
 
 private:
         unsigned long  m_seed_init;     ///< Seed initializer used with RN engine.

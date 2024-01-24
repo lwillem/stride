@@ -120,7 +120,7 @@ void MDP::Create_(const boost::property_tree::ptree& config, int seed,
     // -----------------------------------------------------------------------------------------
     // Vaccines: Create the age groups for vaccine sampling later
     // -----------------------------------------------------------------------------------------
-    m_rnMan = m_simulator->RefRnManager();
+    m_rnMan = m_simulator->GetRnManager();
     if (uptake != 1) { CreateHouseholdMapping(uptake); }
     else if (!childless) { CreateAgeGroups(); }
     else { CreateChildlessAgeGroups(); }

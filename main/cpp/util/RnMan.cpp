@@ -53,19 +53,10 @@ bool RnMan::MakeWeightedCoinFlip(double fraction, unsigned int i)
         return static_cast<bool>(dist());
 }
 
-void RnMan::Seed(randutils::seed_seq_fe128& seseq)
-{
-        unsigned long seeds = pcg_extras::generate_one<unsigned long>(seseq);
-        for (size_t i = 0; i < m_stream_count; ++i) {
-                (*this)[i].engine().seed(seeds);
-                (*this)[i].engine().split(m_stream_count, i);
-        }
-}
-
-void RnMan::Seed(unsigned long seed)
+void RnMan::Seed(unsigned long rng_seed)
 {
         for (size_t i = 0; i < m_stream_count; ++i) {
-                (*this)[i].engine().seed(seed);
+                (*this)[i].engine().seed(rng_seed);
                 (*this)[i].engine().split(m_stream_count, i);
         }
 }

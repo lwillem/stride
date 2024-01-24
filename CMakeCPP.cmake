@@ -76,9 +76,8 @@ endif()
 set(LIBS   ${LIBS}   m)
 
 #----------------------------------------------------------------------------
-# Random number stuff: pcg, randutils, trng
+# Random number stuff: randutils, trng
 #----------------------------------------------------------------------------
-include_directories(SYSTEM ${CMAKE_HOME_DIRECTORY}/main/resources/lib/pcg/include)
 include_directories(SYSTEM ${CMAKE_HOME_DIRECTORY}/main/resources/lib/randutils/include)
 include_directories(SYSTEM ${CMAKE_HOME_DIRECTORY}/main/resources/lib/trng-4.20/include)
 set(LIBS ${LIBS} trng)
