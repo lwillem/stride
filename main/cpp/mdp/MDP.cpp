@@ -96,7 +96,9 @@ void MDP::Create_(const boost::property_tree::ptree& config, int seed,
         SimController::m_output_prefix = outputPrefix;
     }
 
-    if (seed != NULL) {
+    //TODO: check with Python scrips
+    //if (seed != NULL) {
+    if (seed != 0) {
         m_stride_logger->info("Setting seed {}", seed);
         m_config.put("run.rng_seed", seed);
     }

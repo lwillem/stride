@@ -115,8 +115,8 @@ public:
         }
 
         // p1: infector & p2:infectee
-        static void Trans(const std::shared_ptr<spdlog::logger>& logger, const Person* p1, const Person* p2,
-                          ContactType::Id type, unsigned short int sim_day, unsigned int id_index_case)
+        static void Trans(const std::shared_ptr<spdlog::logger>& logger, const Person* /*p1*/, const Person* p2,
+                          ContactType::Id /*type*/, unsigned short int sim_day, unsigned int /*id_index_case*/)
         {
         	RegisterTransmissionPartial(logger,p2,sim_day);
         }
