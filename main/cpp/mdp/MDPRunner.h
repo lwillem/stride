@@ -21,7 +21,6 @@
 #pragma once
 
 #include "execs/SimController.h"
-#include "util/Stopwatch.h"
 
 #include <boost/property_tree/ptree.hpp>
 #include <memory>

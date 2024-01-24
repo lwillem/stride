@@ -167,7 +167,7 @@ inspect_summary <- function(project_dir)
 ## UNIQUE PARAMETERS ####
 .rstride$get_unique_param_list <- function(project_summary){
 
-  col_output <- c('run_time', 'total_time', 'num_cases', 'AR')
+  col_output <- c('run_time', 'num_cases', 'AR')
   col_extra  <- c('rng_seed','output_prefix','transmission_probability','exp_id','config_id','contact_id')
   col_poison <- names(project_summary)[grepl('_pois',names(project_summary))]
   col_input  <- !(names(project_summary) %in% c(col_output,col_extra,col_poison))

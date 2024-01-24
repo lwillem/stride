@@ -41,22 +41,21 @@ void SummaryFile::Initialize(const string& output_prefix)
         // add header
         m_fstream << "population_file,num_days,population_size,initially_infected,r0,transmission_probability,"
                      "immunity_rate,num_threads,rng_seed,"
-                     "run_time,total_time,num_cases,AR,output_prefix,start_date,age_"
+                     "run_time,num_cases,AR,output_prefix,start_date,age_"
                      "contact_matrix_file,num_"
                      "participants_survey,disease_config_file"
                   << endl;
 }
 
 void SummaryFile::Print(const boost::property_tree::ptree& config_pt, unsigned int population_size,
-                        unsigned int num_cases, double transmission_probability, unsigned int run_time,
-                        unsigned int total_time)
+                        unsigned int num_cases, double transmission_probability, unsigned int run_time)
 {
         m_fstream << config_pt.get<string>("run.population_file") << "," << config_pt.get<unsigned int>("run.num_days")
                   << "," << population_size << "," << config_pt.get<unsigned int>("run.num_infected_seeds",-1) << ","
                   << config_pt.get<double>("run.r0") << "," << transmission_probability << ","
                   << config_pt.get<double>("run.immunity_rate", -1) << "," << config_pt.get<unsigned int>("run.num_threads")
-                  << "," << config_pt.get<unsigned int>("run.rng_seed") << "," << run_time << "," << total_time << ","
-                  << num_cases << "," << static_cast<double>(num_cases) / population_size << ","
+                  << "," << config_pt.get<unsigned int>("run.rng_seed") << "," << run_time << ","
+				  << num_cases << "," << static_cast<double>(num_cases) / population_size << ","
                   << config_pt.get<string>("run.output_prefix") << "," << config_pt.get<string>("run.start_date") << ","
                   << config_pt.get<string>("run.age_contact_matrix_file") << ","
                   << config_pt.get<unsigned int>("run.num_participants_survey") << ","

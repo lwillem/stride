@@ -87,7 +87,7 @@ protected:
         void Shutdown();
 
         /// Return the run & sim configuration.
-        const util::Stopwatch<std::chrono::steady_clock>& GetClock() const { return m_run_clock; }
+        const util::Stopwatch& GetClock() const { return m_run_clock; }
 
         /// Run simulator for as many steps/days as indicated in config.
 		void Run();
@@ -101,7 +101,7 @@ protected:
 protected:
         boost::property_tree::ptree     m_config;           ///< Main configuration for run and sim.
         std::string                     m_output_prefix;    ///< Prefix to output (name prefix or prefix dir)
-        util::Stopwatch<std::chrono::steady_clock>     m_run_clock;        ///< Stopwatch for timing the computation.
+        util::Stopwatch                 m_run_clock;        ///< Stopwatch for timing the computation.
         std::shared_ptr<spdlog::logger> m_stride_logger;    ///< General logger.
         bool                            m_use_install_dirs; ///< Working dir or install dir mode.
 

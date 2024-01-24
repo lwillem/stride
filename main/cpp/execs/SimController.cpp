@@ -190,16 +190,14 @@ void SimController::Run()
 
 void SimController::PrintSummary()
 {
-	const auto dur      = duration_cast<std::chrono::milliseconds>(GetClock().Get());
-	const auto milli    = static_cast<unsigned int>(dur.count());
-
-	SummaryFile  summary_file(m_config.get<string>("run.output_prefix"));
+	const auto  milli  = GetClock().ToUnsignedInteger();
+	SummaryFile summary_file(m_config.get<string>("run.output_prefix"));
 
 	summary_file.Print(m_config,
 			static_cast<unsigned int>(m_simulator->GetPopulation()->size()),
 			m_simulator->GetPopulation()->GetTotalInfected(),
 			m_simulator->RefTransmissionProfile().GetHomogeneousProbability(),
-			milli, milli);
+			milli);
 }
 
 void SimController::Step()

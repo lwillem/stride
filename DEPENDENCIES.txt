@@ -70,7 +70,7 @@ design principles are based on a proposal for an extensible random number
 generator facility, that has become part of the C++11 standard.
 
 -----------------------------------------------------------------------------
-    Googletest: see src/test/resources/lib/gtext
+    Googletest: see src/test/resources/lib/gtest
 -----------------------------------------------------------------------------
 A C++ unit test framwework developed by Gooogle and available at
 https://github.com/google/googletest.
