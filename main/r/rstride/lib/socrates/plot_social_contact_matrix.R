@@ -26,8 +26,8 @@ smd_load_packages(socrates_packages)
 # requires 'simage' and 'splot' functions from npsp package (removed from CRAN)
 
 # plot matrices according the Socrates app
-plot_socrates_all <- function(data_cnt,
-                              data_part,
+plot_socrates_all <- function(data_cnt_all,
+                              data_part_all,
                               age_cat_breaks,
                               project_dir,
                               exp_tag,
@@ -37,47 +37,35 @@ plot_socrates_all <- function(data_cnt,
   # open pdf stream
   .rstride$create_pdf(project_dir,paste0(exp_tag,'_cnt_matrix_all'),12,6)
   
-  opt_day <- unique(data_cnt$sim_day)
+  opt_day <- unique(data_cnt_all$sim_day)
   
   # option to initiate list to store contact data
   if(bool_rds){
     mij_summary <- list()
   }
   
-  i_day <- 0
+  i_day <- 43
   for(i_day in opt_day){
-    data_cnt_day <- data_cnt[data_cnt$sim_day == i_day,]
-    mij_all <- plot_socrates_location(data_cnt_day,data_part,age_cat_breaks,as.Date(survey_start) + i_day)
+    data_cnt_day <- data_cnt_all[data_cnt_all$sim_day == i_day,]
+    mij_all      <- plot_socrates_location(data_cnt_day,data_part_all,age_cat_breaks,as.Date(survey_start) + i_day)
  
-    # symptomatic?
-    if(any(data_cnt_day$part_sympt ==1))
-    {
-      # select symptomatic participants and their contacts on 'i_day' 
-      data_cnt_day    <- data_cnt[data_cnt$sim_day == i_day & data_cnt$part_sympt == 1,]
-      data_part_sympt <- data_part[data_part$local_id %in% data_cnt_day$local_id,]
+    # select symptomatic participants and their contacts on 'i_day' 
+    # note: symptomatic people are only identified if they have contacts on day i_day (potential bias!)
+    data_cnt_day    <- data_cnt_all[data_cnt_all$sim_day == i_day & data_cnt_all$part_sympt == 1,]
+    data_part_sympt <- data_part_all[data_part_all$local_id %in% data_cnt_day$local_id,]
+    mij_sympt       <- plot_socrates_location(data_cnt_day,data_part_sympt,age_cat_breaks,as.Date(survey_start) + i_day,title_add='SYMPT')
   
-      if(nrow(data_part_sympt)>0 & nrow(data_cnt_day)>0){
-        mij_sympt <- plot_socrates_location(data_cnt_day,data_part_sympt,age_cat_breaks,as.Date(survey_start) + i_day,title_add='SYMPT')
-      }
-    
-      # select non-symptomatic participants and their contacts on 'i_day' 
-      data_cnt_day        <- data_cnt[data_cnt$sim_day == i_day & data_cnt$part_sympt == 0,]
-      data_part_non_sympt <- data_part[data_part$local_id %in% data_cnt_day$local_id,]
-      
-      if(nrow(data_part_sympt)>0 & nrow(data_cnt_day)>0){
-        mij_non_sympt <- plot_socrates_location(data_cnt_day,data_part_non_sympt,age_cat_breaks,as.Date(survey_start) + i_day,title_add='NON-SYMPT')
-      }
-    } else {
-      mij_sympt <- NA
-      mij_non_sympt <- NA
-    } # end if-clause symptomatic infections?
-    
+    # select non-symptomatic participants and their contacts on 'i_day' 
+    data_cnt_day        <- data_cnt_all[data_cnt_all$sim_day == i_day & data_cnt_all$part_sympt == 0,]
+    data_part_non_sympt <- data_part_all[!data_part_all$local_id %in% data_part_sympt$local_id,]
+    mij_non_sympt       <- plot_socrates_location(data_cnt_day,data_part_non_sympt,age_cat_breaks,as.Date(survey_start) + i_day,title_add='NON-SYMPT')
+
     if(bool_rds){
-      mij_summary[[paste0('day',i_day)]] <- list(mij_all      = mij_all,
-                                                mij_sympt     = mij_sympt,
-                                                mij_non_sympt = mij_non_sympt,
-                                                date          = as.Date(survey_start) + i_day,
-                                                exp_tag       = exp_tag)
+      mij_summary[[paste0('day',i_day)]] <- list(mij_all       = mij_all,
+                                                 mij_sympt     = mij_sympt,
+                                                 mij_non_sympt = mij_non_sympt,
+                                                 date          = as.Date(survey_start) + i_day,
+                                                 exp_tag       = exp_tag)
     } 
     
   } # end for-loop opt_days
@@ -89,7 +77,7 @@ plot_socrates_all <- function(data_cnt,
   }
 }
 
- # data_cnt <- data_cnt_day; data_part <- data_part_sympt;survey_day <- as.Date(survey_start) + i_day
+ # data_cnt <- data_cnt_day; data_part <- data_part_all;survey_day <- as.Date(survey_start) + i_day;title_add=''
 plot_socrates_location <- function(data_cnt,data_part,age_cat_breaks,survey_day,title_add=''){
   
   par(mfrow=c(2,3))
@@ -101,10 +89,12 @@ plot_socrates_location <- function(data_cnt,data_part,age_cat_breaks,survey_day,
   mij_household <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_home==1,],data_part,paste(title_add,'@household'),age_cat_breaks)
   
   ## SCHOOL
-  mij_school <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_school==1,],data_part[data_part$student==T,],paste(title_add,'@school'),age_cat_breaks)
+  mij_school             <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_school==1,],data_part,paste(title_add,'@school'),age_cat_breaks)
+  mij_school_conditional <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_school==1,],data_part[data_part$student==T,],paste(title_add,'@school (conditional)'),age_cat_breaks,bool_plot = FALSE)
   
   ## WORK
-  mij_workplace <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_work==1,],data_part[data_part$employed==T,],paste(title_add,'@work'),age_cat_breaks)
+  mij_workplace             <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_work==1,],data_part,paste(title_add,'@work'),age_cat_breaks)
+  mij_workplace_conditional <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_work==1,],data_part[data_part$employed==T,],paste(title_add,'@work (conditional)'),age_cat_breaks,bool_plot = FALSE)
   
   ## PRIMARY COMMUNITY
   mij_prim_com <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_prim_comm==1,],data_part,paste(title_add,'@weekend community'),age_cat_breaks)
@@ -123,60 +113,75 @@ plot_socrates_location <- function(data_cnt,data_part,age_cat_breaks,survey_day,
   text(0,0,paste('Contacts when symptomatic:',sum(data_cnt$part_sympt),
                   '\nNumber of participants:',nrow(data_part)),pos=1)
   
-  return(list(mij_total=mij_total,
-              mij_household=mij_household,
-              mij_school=mij_school,
-              mij_workplace=mij_workplace,
-              mij_prim_com=mij_prim_com,
-              mij_sec_com=mij_sec_com,
-              mij_hhcluster=mij_hhcluster))
-  
+  return(list(mij_total                 = mij_total$matrix,
+              mij_household             = mij_household$matrix,
+              mij_school                = mij_school$matrix,
+              mij_school_conditional    = mij_school_conditional$matrix,
+              mij_workplace             = mij_workplace$matrix,
+              mij_workplace_conditional = mij_workplace_conditional$matrix,
+              mij_prim_com              = mij_prim_com$matrix,
+              mij_sec_com               = mij_sec_com$matrix,
+              mij_hhcluster             = mij_hhcluster$matrix,
+              participants              = mij_total$participants))
 }
 
-# data_cnt <- data_cnt[data_cnt$cnt_work==1,]; data_part <- data_part[data_part$employed==T,]
-plot_contact_matrix_socrates <- function(data_cnt,data_part,figure_title,age_cat_breaks){
+# data_cnt <- data_cnt[data_cnt$cnt_work==1,]; data_part <- data_part[data_part$student==T,]
+plot_contact_matrix_socrates <- function(data_cnt,data_part,figure_title,age_cat_breaks,bool_plot = TRUE){
   
+   # select participant id and age
+   data_part_sel <- data_part[,c('local_id','part_age')]
+ 
+   # make sure the participant data is not empty and contains the maximum age
+   # this dummy participant has no contacts, so has no impact on the final results
+   if(nrow(data_part_sel)==0 || max(data_part_sel$part_age < max(age_cat_breaks))){
+     data_part_sel <- rbind(data_part_sel,c(local_id=NA,part_age=max(age_cat_breaks)))
+     colnames(data_part_sel) <- c('local_id','part_age')
+   }
+      
+  # get socialmixr 'participants' object
+  db_participants   <- data.frame(part_id     = data_part_sel$local_id,
+                                  part_age    = data_part_sel$part_age,
+                                  part_gender = NA,
+                                  country     = "Belgium",
+                                  day         = NA,
+                                  month       = NA,
+                                  year        = 2020,
+                                  dayofweek   = NA,
+                                  holiday     = FALSE,
+                                  weekday     = NA,
+                                  stringsAsFactors = F)
   
-  if(nrow(data_cnt)>0 & nrow(data_part)>0){
-    
-    # get socialmixr 'participants' object
-    db_participants   <- data.frame(part_id     = data_part$local_id,
-                                    part_age    = data_part$part_age,
-                                    part_gender = NA,
-                                    country     = "Belgium",
-                                    day         = NA,
-                                    month       = NA,
-                                    year        = 2020,
-                                    dayofweek   = NA,
-                                    holiday     = FALSE,
-                                    weekday     = NA,
-                                    stringsAsFactors = F)
-    
-    # get socialmixr 'contacts' object
-    db_contacts       <- data.frame(part_id         = data_cnt$local_id,
-                                    cnt_age_exact   = as.integer(round(data_cnt$cnt_age)),
-                                    cnt_age_est_min = as.integer(round(data_cnt$cnt_age)),
-                                    cnt_age_est_max = as.integer(round(data_cnt$cnt_age)),
-                                    data_cnt[,c("cnt_home","cnt_work","cnt_school",
-                                                "cnt_prim_comm","cnt_sec_comm","part_sympt","cnt_sympt" )])
-    
-    # get socialmixr 'survey' object
-    survey_rstride <- survey(participants = db_participants,
-                             contacts     = db_contacts)
+  # get socialmixr 'contacts' object
+  db_contacts       <- data.frame(part_id         = data_cnt$local_id,
+                                  cnt_age_exact   = as.integer(round(data_cnt$cnt_age)),
+                                  cnt_age_est_min = as.integer(round(data_cnt$cnt_age)),
+                                  cnt_age_est_max = as.integer(round(data_cnt$cnt_age)),
+                                  data_cnt[,c("cnt_home","cnt_work","cnt_school",
+                                              "cnt_prim_comm","cnt_sec_comm","part_sympt","cnt_sympt" )])
   
-    # get matrix
-    cnt_matrix <- contact_matrix(survey_rstride,age.limits = age_cat_breaks)  
-    
-    # plot matrix
+  # get socialmixr 'survey' object
+  survey_rstride <- survey(participants = db_participants,
+                           contacts     = db_contacts)
+
+  # get matrix
+  suppressWarnings(
+  cnt_matrix <- contact_matrix(survey_rstride,age.limits = age_cat_breaks)  
+  )
+  
+  # account for NA
+  cnt_matrix$matrix[is.na(cnt_matrix$matrix)] <- 0
+  
+  # plot matrix
+  if(bool_plot && any(cnt_matrix$matrix>0)){
     plot_cnt_matrix(cnt_matrix$matrix,figure_title)
-    
-    # return matrix
-    return(cnt_matrix$matrix)
   }
+  
+  # return matrix
+  return(cnt_matrix)
 }
 
 #mij <- contact_matrix(polymod, countries = "United Kingdom", age.limits = c(0, 1, 5, 15))$matrix
-#mij <- matrix_out$matrix
+#mij <- cnt_matrix$matrix
 plot_cnt_matrix <- function(mij,plot_title_extra = ''){
   
   if(all(is.na(mij))){
@@ -208,14 +213,16 @@ plot_cnt_matrix <- function(mij,plot_title_extra = ''){
   axis(1, at=plt_ticks, labels = c(colnames(mij)),cex.axis=0.9,tick = FALSE)
   
   # format results (rounding/scientific)
-  if(any(mij>1,na.rm=T)){
-    mij <- round(mij,digits=format_num_digits)
+  if(any(mij>1e-2,na.rm=T)){
+    mij_labels <- round(mij,digits=format_num_digits)
+    cex_labels  <- 1
   } else{
-    mij <- format(mij,digits = format_num_digits)
+    mij_labels <- format(mij,digits = format_num_digits)
+    cex_labels <- 0.5
   }
-  # get grid centers and add value
+  # get grid centres and add value
   e_grid <- expand.grid(plt_ticks,plt_ticks)
-  text(e_grid, labels = mij)
+  text(e_grid, labels = mij_labels,cex = cex_labels)
 }
 
 
