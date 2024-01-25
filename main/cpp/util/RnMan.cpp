@@ -18,31 +18,18 @@
  * Implementation of RnMan.
  */
 
-#include "RnMan.h"
+#include "util/RnMan.h"
 #include "StringUtils.h"
 
 #include <cctype>
-#include <randutils/randutils.hpp>
 #include <sstream>
 #include <stdexcept>
 #include <iostream>
 
 using namespace std;
-using namespace randutils;
 
 namespace stride {
 namespace util {
-
-bool RnMan::operator==(const RnMan& other)
-{
-        bool status = m_stream_count == other.m_stream_count;
-        if (status) {
-                for (size_t i = 0; i < size(); ++i) {
-                        status = status && ((*this)[i] == other[i]);
-                }
-        }
-        return status;
-}
 
 bool RnMan::MakeWeightedCoinFlip(double fraction, unsigned int i)
 {

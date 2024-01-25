@@ -20,13 +20,14 @@
 
 #pragma once
 
-#include <trng/discrete_dist.hpp>
-#include <trng/lcg64.hpp>
-#include <trng/uniform01_dist.hpp>
-#include <trng/uniform_int_dist.hpp>
+#include <util/Rn.h>
+
+//#include <trng/discrete_dist.hpp>
+//#include <trng/lcg64.hpp>
+//#include <trng/uniform01_dist.hpp>
+//#include <trng/uniform_int_dist.hpp>
 #include <functional>
 #include <random>
-#include <randutils/randutils.hpp>
 #include <string>
 #include <vector>
 
@@ -36,10 +37,10 @@ namespace util {
 /**
  * Manages random number generation in parallel (OpenMP) calculations.
  */
-class RnMan : protected std::vector<randutils::random_generator<trng::lcg64>>
+class RnMan : protected std::vector<util::Rn>
 {
 public:
-        using ContainerType = std::vector<randutils::random_generator<trng::lcg64>>;
+        using ContainerType = std::vector<Rn>;
         using ContainerType::operator[];
         using ContainerType::at;
         using ContainerType::size;
@@ -63,32 +64,29 @@ public:
         /// No copy assignment.
         RnMan& operator=(const RnMan&) = delete;
 
-        /// Equality of states
-        bool operator==(const RnMan& other);
-
         /// Return a generator for uniform doubles in [0, 1[ using i-th random engine.
         std::function<double()> GetUniform01Generator(unsigned int i = 0U)
         {
-                return ContainerType::at(i).variate_generator(trng::uniform01_dist<double>());
+          	return std::bind(trng::uniform01_dist<double>(), std::ref(ContainerType::at(i).engine()));
         }
 
         /// Return a generator for uniform ints in [a, b[ (a < b) using i-th random engine.
         std::function<int()> GetUniformIntGenerator(int a, int b, unsigned int i = 0U)
         {
-                return ContainerType::at(i).variate_generator(trng::uniform_int_dist(a, b));
+           	return std::bind(trng::uniform_int_dist(a, b), std::ref(ContainerType::at(i).engine()));
         }
 
         /// Return a generator for doubles from a Gamma distribution with a given shape and scale
         std::function<double()> GetGammaGenerator(double shape, double scale, unsigned int i = 0U)
 		{
-        		return ContainerType::at(i).variate_generator(std::gamma_distribution<double>(shape, scale));
+        	return std::bind(std::gamma_distribution<double>(shape, scale), std::ref(ContainerType::at(i).engine()));
 		}
 
         /// Return generator for integers [0, n-1[ with non-negative weights p_j (i=0,..,n-1) using i-th random engine.
         template<typename It>
         std::function<int()> GetDiscreteGenerator(It begin, It end, unsigned int i = 0U)
         {
-                return ContainerType::at(i).variate_generator(trng::discrete_dist(begin, end));
+        	return std::bind(trng::discrete_dist(begin, end), std::ref(ContainerType::at(i).engine()));
         }
 
         /// Is this een empty (i.e. non-initialized RnMan)?
