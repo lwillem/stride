@@ -116,7 +116,7 @@ inspect_contact_data <- function(project_dir){
   
   ## SETTINGS 
   L <- max(c(80,data_part$part_age))
-  num_days      <- exp_summary$num_days
+  num_days      <- length(unique(data_cnt$sim_day))
   
   # open pdf stream  
   exp_tag <- .rstride$create_exp_tag(exp_summary$exp_id)
@@ -250,7 +250,7 @@ inspect_contact_data <- function(project_dir){
 
 
 ## RESHAPE DATA AND PLOT ####
-#f_data_cnt = data_cnt;f_data_part=data_part_age_cat;tag='total';L;num_days
+#f_data_cnt = data_cnt;f_data_part=data_part;tag='total';L;num_days
 .rstride$plot_cnt_matrix <- function(f_data_cnt,f_data_part,tag,L,num_days)
 {
   
