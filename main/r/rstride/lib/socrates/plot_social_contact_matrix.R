@@ -97,13 +97,13 @@ plot_socrates_location <- function(data_cnt,data_part,age_cat_breaks,survey_day,
   mij_workplace_conditional <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_work==1,],data_part[data_part$employed==T,],paste(title_add,'@work (conditional)'),age_cat_breaks,bool_plot = FALSE)
   
   ## PRIMARY COMMUNITY
-  mij_prim_com <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_prim_comm==1,],data_part,paste(title_add,'@weekend community'),age_cat_breaks)
+  mij_community_weekend <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_community_weekend==1,],data_part,paste(title_add,'@weekend community'),age_cat_breaks)
   
   ## SECONDARY COMMUNITY
-  mij_sec_com <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_sec_comm==1,],data_part,paste(title_add,'@week community'),age_cat_breaks)
+  mij_community_weekday <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_community_weekday==1,],data_part,paste(title_add,'@week community'),age_cat_breaks)
   
   ## HOUSEHOLD CLUSTER
-  mij_hhcluster <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_hh_cluster==1,],data_part,paste(title_add,'@household cluster'),age_cat_breaks)
+  mij_household_cluster <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_household_cluster==1,],data_part,paste(title_add,'@household cluster'),age_cat_breaks)
   
   plot(0,0,col=0,axes=F,xlab='',ylab='')
   # survey_day <- as.Date(exp_summary$start_date) + unique(data_cnt$sim_day)
@@ -119,9 +119,9 @@ plot_socrates_location <- function(data_cnt,data_part,age_cat_breaks,survey_day,
               mij_school_conditional    = mij_school_conditional$matrix,
               mij_workplace             = mij_workplace$matrix,
               mij_workplace_conditional = mij_workplace_conditional$matrix,
-              mij_prim_com              = mij_prim_com$matrix,
-              mij_sec_com               = mij_sec_com$matrix,
-              mij_hhcluster             = mij_hhcluster$matrix,
+              mij_community_weekend     = mij_community_weekend$matrix,
+              mij_community_weekday     = mij_community_weekday$matrix,
+              mij_household_cluster     = mij_household_cluster$matrix,
               participants              = mij_total$participants))
 }
 
@@ -157,7 +157,7 @@ plot_contact_matrix_socrates <- function(data_cnt,data_part,figure_title,age_cat
                                   cnt_age_est_min = as.integer(round(data_cnt$cnt_age)),
                                   cnt_age_est_max = as.integer(round(data_cnt$cnt_age)),
                                   data_cnt[,c("cnt_home","cnt_work","cnt_school",
-                                              "cnt_prim_comm","cnt_sec_comm","part_sympt","cnt_sympt" )])
+                                              "cnt_community_weekend","cnt_community_weekday","part_sympt","cnt_sympt" )])
   
   # get socialmixr 'survey' object
   survey_rstride <- survey(participants = db_participants,

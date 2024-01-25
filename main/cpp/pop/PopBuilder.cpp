@@ -91,8 +91,8 @@ shared_ptr<Population> PopBuilder::MakePersons(shared_ptr<Population> pop)
         const auto householdId          = static_cast<unsigned int>(IntFromString(values[1]));
         const auto schoolId             = static_cast<unsigned int>(IntFromString(values[2]));
         const auto workId               = static_cast<unsigned int>(IntFromString(values[3]));
-        const auto primaryCommunityId   = static_cast<unsigned int>(IntFromString(values[4]));
-        const auto secondaryCommunityId = static_cast<unsigned int>(IntFromString(values[5]));
+        const auto communityWeekendId   = static_cast<unsigned int>(IntFromString(values[4]));
+        const auto communityWeekdayId   = static_cast<unsigned int>(IntFromString(values[5]));
 
         unsigned int householdClusterId = defaultHouseholdClusterId;
         unsigned int collectivityId = defaultCollectivityId;
@@ -104,8 +104,8 @@ shared_ptr<Population> PopBuilder::MakePersons(shared_ptr<Population> pop)
             }
         }
 
-        pop->CreatePerson(person_id, age, householdId, schoolId, workId, primaryCommunityId,
-                          secondaryCommunityId, householdClusterId, collectivityId);
+        pop->CreatePerson(person_id, age, householdId, schoolId, workId, communityWeekendId,
+                          communityWeekdayId, householdClusterId, collectivityId);
         ++person_id;
     }
 

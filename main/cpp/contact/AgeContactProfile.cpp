@@ -38,10 +38,10 @@ AgeContactProfile::AgeContactProfile(Id poolType, const ptree& contactPt) : std:
                 typeKey = "household";
         } else if (poolType == Id::Workplace) {
                 typeKey = "work";
-        } else if (poolType == Id::PrimaryCommunity) {
-                typeKey = "primary_community";
-        } else if (poolType == Id::SecondaryCommunity) {
-                typeKey = "secondary_community";
+        } else if (poolType == Id::CommunityWeekend) {
+                typeKey = "community_weekend";
+        } else if (poolType == Id::CommunityWeekday) {
+                typeKey = "community_weekday";
         } else if (poolType == Id::HouseholdCluster) {
              	typeKey = "household";
         } else if (poolType == Id::Collectivity) {

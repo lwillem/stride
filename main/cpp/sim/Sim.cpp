@@ -119,8 +119,8 @@ void Sim::TimeStep()
 			// Infector updates individuals for contacts & transmission within each pool.
 		    // Skip Communities, Workplaces, Schools or HouseholdClusters is possible.
 			for (auto typ : ContactType::IdList) {
-					if ((typ == ContactType::Id::PrimaryCommunity && isRegularWeekday) ||
-						(typ == ContactType::Id::SecondaryCommunity && !isRegularWeekday) ||
+					if ((typ == ContactType::Id::CommunityWeekend && isRegularWeekday) ||
+						(typ == ContactType::Id::CommunityWeekday && !isRegularWeekday) ||
 						(typ == ContactType::Id::Workplace && !isRegularWeekday) ||
 						(typ == ContactType::Id::School && !isRegularWeekday) ||
 						(typ == ContactType::Id::HouseholdCluster && cnt_intensity_householdCluster==0)) {

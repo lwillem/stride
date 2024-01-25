@@ -71,8 +71,8 @@ parse_event_logfile <- function(event_logfile,exp_id,
                            'household_cluster_id','collectivity_id',
                            'is_susceptible','is_infected','is_infectious','is_recovered','is_immune',
                            'start_infectiousness','start_symptomatic','start_hospitalisation','end_infectiousness','end_symptomatic',
-                           'end_hospitalisation','household_size','school_size','workplace_size','primarycommunity_size',
-                           'secundarycommunity_size','survey_type')
+                           'end_hospitalisation','household_size','school_size','workplace_size','community_weekend_size',
+                           'community_weekday_size','survey_type')
 
   rstride_out$data_participants  <- reformat_log_data(event_logfile = event_logfile,
                                                       data_log_cat  = data_log_cat,
@@ -131,7 +131,7 @@ parse_event_logfile <- function(event_logfile,exp_id,
   ## CONTACT DATA     ####
   ###################### # 
   header_cnt          <- c('local_id', 'part_age', 'cnt_age', 'cnt_home', 'cnt_school', 
-                           'cnt_work', 'cnt_prim_comm', 'cnt_sec_comm', 'cnt_hh_cluster', 'cnt_collectivity',
+                           'cnt_work', 'cnt_community_weekend', 'cnt_community_weekday', 'cnt_household_cluster', 'cnt_collectivity',
                            'sim_day', 'cnt_prob', 'trm_prob','part_sympt','cnt_sympt')
 
   rstride_out$data_contacts <- reformat_log_data(event_logfile = event_logfile,

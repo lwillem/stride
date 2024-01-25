@@ -95,8 +95,8 @@ void SurveySeeder::RegisterParticipant(std::shared_ptr<Population> pop, Person& 
 		const auto pHH  = p.GetPoolId(Id::Household);
 		const auto pS   = p.GetPoolId(Id::School);
 		const auto pW   = p.GetPoolId(Id::Workplace);
-		const auto pPC  = p.GetPoolId(Id::PrimaryCommunity);
-		const auto pSC  = p.GetPoolId(Id::SecondaryCommunity);
+		const auto pPC  = p.GetPoolId(Id::CommunityWeekend);
+		const auto pSC  = p.GetPoolId(Id::CommunityWeekday);
 		const auto pHC  = p.GetPoolId(Id::HouseholdCluster);
 		const auto pCol = p.GetPoolId(Id::Collectivity);
 
@@ -109,8 +109,8 @@ void SurveySeeder::RegisterParticipant(std::shared_ptr<Population> pop, Person& 
 			 poolSys.CRefPools<Id::Household>()[pHH].GetPool().size(),
 			 poolSys.CRefPools<Id::School>()[pS].GetPool().size(),
 			 poolSys.CRefPools<Id::Workplace>()[pW].GetPool().size(),
-			 poolSys.CRefPools<Id::PrimaryCommunity>()[pPC].GetPool().size(),
-			 poolSys.CRefPools<Id::SecondaryCommunity>()[pSC].GetPool().size(),
+			 poolSys.CRefPools<Id::CommunityWeekend>()[pPC].GetPool().size(),
+			 poolSys.CRefPools<Id::CommunityWeekday>()[pSC].GetPool().size(),
 			 survey_type
 			 );
 	 }

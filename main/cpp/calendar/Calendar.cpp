@@ -188,8 +188,8 @@ double Calendar::GetDistancingFactor(const ContactPool& pool) const {
 	if (cType == ContactType::Id::Workplace) {
 		// account for physical distancing at work
 		typ_distancing_factor = GetWorkplaceDistancingFactor();
-	} else if (cType == ContactType::Id::PrimaryCommunity ||
-				cType == ContactType::Id::SecondaryCommunity) {
+	} else if (cType == ContactType::Id::CommunityWeekend ||
+				cType == ContactType::Id::CommunityWeekday) {
 		// account for physical distancing in the community
 		typ_distancing_factor = GetCommunityDistancingFactor();
 	} else if (cType == ContactType::Id::School) {

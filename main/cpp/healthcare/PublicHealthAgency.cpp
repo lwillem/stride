@@ -158,8 +158,8 @@ void PublicHealthAgency::Trace(Person& p_case,
 				}
 
 				// if contact is part of same community, change poolType
-				if(p_contact->GetPoolId(Id::PrimaryCommunity) == p_case.GetPoolId(Id::PrimaryCommunity)||
-						p_contact->GetPoolId(Id::SecondaryCommunity) == p_case.GetPoolId(Id::SecondaryCommunity)){
+				if(p_contact->GetPoolId(Id::CommunityWeekend) == p_case.GetPoolId(Id::CommunityWeekend)||
+						p_contact->GetPoolId(Id::CommunityWeekday) == p_case.GetPoolId(Id::CommunityWeekday)){
 					poolTypeString    = "Community";
 				}
 

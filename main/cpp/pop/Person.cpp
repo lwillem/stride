@@ -79,8 +79,8 @@ void Person::UpdatePresence(bool isIsolatedFromHousehold,
         	m_in_pools[Id::Household]          = true;
         	m_in_pools[Id::School]             = true;
 			m_in_pools[Id::Workplace]          = true;
-			m_in_pools[Id::PrimaryCommunity]   = true;
-			m_in_pools[Id::SecondaryCommunity] = true;
+			m_in_pools[Id::CommunityWeekend]   = true;
+			m_in_pools[Id::CommunityWeekday] = true;
 			m_in_pools[Id::HouseholdCluster]   = false;
 			m_in_pools[Id::Collectivity]       = false;
 
@@ -88,8 +88,8 @@ void Person::UpdatePresence(bool isIsolatedFromHousehold,
 			m_in_pools[Id::Household]          = false;
 			m_in_pools[Id::School]             = false;
 			m_in_pools[Id::Workplace]          = false;
-			m_in_pools[Id::PrimaryCommunity]   = false;
-			m_in_pools[Id::SecondaryCommunity] = false;
+			m_in_pools[Id::CommunityWeekend]   = false;
+			m_in_pools[Id::CommunityWeekday] = false;
 			m_in_pools[Id::HouseholdCluster]   = false;
 			m_in_pools[Id::Collectivity]       = false;
 
@@ -97,8 +97,8 @@ void Person::UpdatePresence(bool isIsolatedFromHousehold,
 			m_in_pools[Id::Household]          = !isIsolatedFromHousehold;;
 			m_in_pools[Id::School]             = false;
 			m_in_pools[Id::Workplace]          = false;
-			m_in_pools[Id::PrimaryCommunity]   = false;
-			m_in_pools[Id::SecondaryCommunity] = false;
+			m_in_pools[Id::CommunityWeekend]   = false;
+			m_in_pools[Id::CommunityWeekday] = false;
 			m_in_pools[Id::HouseholdCluster]   = false;
 			m_in_pools[Id::Collectivity]       = false;
 
@@ -108,8 +108,8 @@ void Person::UpdatePresence(bool isIsolatedFromHousehold,
         	   m_in_pools[Id::Collectivity]       = true;
         	   m_in_pools[Id::HouseholdCluster]   = true;
       		   m_in_pools[Id::Workplace]          = true;
-       		   m_in_pools[Id::PrimaryCommunity]   = true;
-       		   m_in_pools[Id::SecondaryCommunity] = true;
+       		   m_in_pools[Id::CommunityWeekend]   = true;
+       		   m_in_pools[Id::CommunityWeekday] = true;
 
         	   // Update presence in contact pools if symptomatic with/without isolation
         	   if (m_health.IsSymptomatic()) {
@@ -122,8 +122,8 @@ void Person::UpdatePresence(bool isIsolatedFromHousehold,
 
 					// probability of staying home from community pools given symptoms
 					if(rn.Binomial(m_health.GetSymptomaticCntReductionCommunity())){
-						m_in_pools[Id::PrimaryCommunity]   = false;
-						m_in_pools[Id::SecondaryCommunity] = false;
+						m_in_pools[Id::CommunityWeekend]   = false;
+						m_in_pools[Id::CommunityWeekday] = false;
 					}
 
 					// stay home from household cluster when symptomatic

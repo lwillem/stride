@@ -35,8 +35,8 @@ enum class Id : unsigned int
         Household = static_cast<unsigned int>(0), // Needs to be zero.
         School,
         Workplace,
-        PrimaryCommunity,
-        SecondaryCommunity,
+        CommunityWeekend,
+        CommunityWeekday,
 		HouseholdCluster,
 		Collectivity
 };
@@ -66,7 +66,7 @@ struct IDPack
 
 /// Placed separately to please swig and avoid syntax errors there
 using IdPack_t =
-    IDPack<Id::Household, Id::School, Id::Workplace, Id::PrimaryCommunity, Id::SecondaryCommunity, Id::HouseholdCluster, Id::Collectivity>;
+    IDPack<Id::Household, Id::School, Id::Workplace, Id::CommunityWeekend, Id::CommunityWeekday, Id::HouseholdCluster, Id::Collectivity>;
 
 /// A constexpr global variable that gives access to the available Ids
 constexpr IdPack_t IdPack;

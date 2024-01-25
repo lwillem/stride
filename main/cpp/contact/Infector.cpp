@@ -79,8 +79,8 @@ inline void RegisterContact (const std::shared_ptr<spdlog::logger>& logger, cons
 	                                     p2->GetAge(), static_cast<unsigned int>(type == ContactType::Id::Household),
 	                                     static_cast<unsigned int>(type == ContactType::Id::School),
 	                                     static_cast<unsigned int>(type == ContactType::Id::Workplace),
-	                                     static_cast<unsigned int>(type == ContactType::Id::PrimaryCommunity),
-	                                     static_cast<unsigned int>(type == ContactType::Id::SecondaryCommunity),
+	                                     static_cast<unsigned int>(type == ContactType::Id::CommunityWeekend),
+	                                     static_cast<unsigned int>(type == ContactType::Id::CommunityWeekday),
 										 static_cast<unsigned int>(type == ContactType::Id::HouseholdCluster),
 										 static_cast<unsigned int>(type == ContactType::Id::Collectivity),
 										 sim_day,
@@ -206,7 +206,7 @@ inline double GetContactProbability(const AgeContactProfile& profile, const Pers
 
 
         // special case: reduce the number of community contacts if part of a HouseholdCluster
-        if(cnt_intensity_householdCluster > 0 && (pType == Id::PrimaryCommunity || pType == Id::SecondaryCommunity)){
+        if(cnt_intensity_householdCluster > 0 && (pType == Id::CommunityWeekend || pType == Id::CommunityWeekday)){
 
         	// get the number of non-household members in the HouseholdCluster
         	double householdCluster_non_household_members_p1 = static_cast<double>(population->GetPoolSize(Id::HouseholdCluster,p1)) -
@@ -239,7 +239,7 @@ inline double GetContactProbability(const AgeContactProfile& profile, const Pers
 		}
 
         // adjust contact for individual variation in community and workplace contacts
-        if(pType == Id::PrimaryCommunity || pType == Id::SecondaryCommunity || pType == Id::Workplace){
+        if(pType == Id::CommunityWeekend || pType == Id::CommunityWeekday || pType == Id::Workplace){
 
         		double individual_contact_factor_p1 = p1->GetIndividualContactFactor();
         		double individual_contact_factor_p2 = p2->GetIndividualContactFactor();

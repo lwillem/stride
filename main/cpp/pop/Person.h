@@ -62,10 +62,10 @@ public:
 
         /// Constructor: set the person data.
         Person(unsigned int id, float age, unsigned int householdId, unsigned int k12SchoolId,
-               unsigned int workId, unsigned int primaryCommunityId, unsigned int secondaryCommunityId, unsigned int householdClusterId,
+               unsigned int workId, unsigned int CommunityWeekendId, unsigned int CommunityWeekdayId, unsigned int householdClusterId,
 			   unsigned int collectivityId)
             : m_age(age), m_id(id), m_vaccine(), m_pool_ids{householdId, k12SchoolId,
-                                               workId,      primaryCommunityId, secondaryCommunityId,
+                                               workId,      CommunityWeekendId, CommunityWeekdayId,
 											   householdClusterId, collectivityId},
 			  m_individual_contact_factor(1.0),
               m_health(), m_in_pools(true), m_is_participant(false),

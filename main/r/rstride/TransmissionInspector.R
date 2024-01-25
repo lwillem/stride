@@ -200,8 +200,8 @@ inspect_transmission_dynamics <- function(project_dir,save_pdf = TRUE)
     loc_names <- col_location
     loc_names <- gsub('location_','',loc_names)
     loc_names <- gsub('Household','HH',loc_names)
-    loc_names <- gsub('PrimaryCommunity','Wknd com',loc_names)
-    loc_names <- gsub('SecondaryCommunity','Week com',loc_names)
+    loc_names <- gsub('CommunityWeekend','Wknd com',loc_names)
+    loc_names <- gsub('CommunityWeekday','Week com',loc_names)
 
     # overall
     summary_location <- colSums(data_incidence[,col_location],na.rm=T) / sum(data_incidence[,col_location],na.rm=T)
@@ -379,7 +379,7 @@ get_transmission_statistics <- function(data_transm,
 
   
   ## LOCATION ----
-  pool_type_opt <- c("Household","HouseholdCluster","PrimaryCommunity","SecondaryCommunity","Workplace",'Collectivity') # TODO: make this flexible?
+  pool_type_opt <- c("Household","HouseholdCluster","CommunityWeekend","CommunityWeekday","Workplace",'Collectivity') # TODO: make this flexible?
   summary_location <- get_summary_table(data_transm,'infection_date','pool_type','location',pool_type_opt) 
   summary_location$location    <- NULL # remove
   if('location_NA' %in% names(summary_location)) {

@@ -38,8 +38,8 @@ bool IsId(const string& s)
             make_pair("SCHOOL", Id::School),
 //            make_pair("SCHOOL", Id::College),
             make_pair("WORKPLACE", Id::Workplace),
-            make_pair("PRIMARY_COMMUNITY", Id::PrimaryCommunity),
-            make_pair("SECONDARY_COMMUNITY", Id::SecondaryCommunity),
+            make_pair("COMMUNITY_WEEKEND", Id::CommunityWeekend),
+            make_pair("COMMUNITY_WEEKDAY", Id::CommunityWeekday),
 			make_pair("HOUSEHOLD_CLUSTER", Id::HouseholdCluster),
 			make_pair("COLLECTIVITY", Id::Collectivity)
 
@@ -55,8 +55,8 @@ Id ToId(const string& s)
             make_pair("HOUSEHOLD", Id::Household),
             make_pair("SCHOOL", Id::School),
             make_pair("WORKPLACE", Id::Workplace),
-            make_pair("PRIMARY_COMMUNITY", Id::PrimaryCommunity),
-            make_pair("SECONDARY_COMMUNITY", Id::SecondaryCommunity),
+            make_pair("COMMUNITY_WEEKEND", Id::CommunityWeekend),
+            make_pair("COMMUNITY_WEEKDAY", Id::CommunityWeekday),
 			make_pair("HOUSEHOLD_CLUSTER", Id::HouseholdCluster),
 			make_pair("COLLECTIVITY", Id::Collectivity)
 
@@ -72,8 +72,8 @@ string ToString(Id c)
             make_pair(Id::Household, "Household"),
             make_pair(Id::School, "School"),
             make_pair(Id::Workplace, "Workplace"),
-            make_pair(Id::PrimaryCommunity, "PrimaryCommunity"),
-            make_pair(Id::SecondaryCommunity, "SecondaryCommunity"),
+            make_pair(Id::CommunityWeekend, "CommunityWeekend"),
+            make_pair(Id::CommunityWeekday, "CommunityWeekday"),
 			make_pair(Id::HouseholdCluster, "HouseholdCluster"),
 			make_pair(Id::Collectivity, "Collectivity"),
         };
