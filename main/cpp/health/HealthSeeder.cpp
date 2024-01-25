@@ -26,7 +26,8 @@
 #include "pop/Population.h"
 #include "util/Assert.h"
 #include "util/StringUtils.h"
-#include "util/RnHandler.h"
+#include "util/RnMan.h"
+
 #include <boost/property_tree/ptree.hpp>
 #include <omp.h>
 
@@ -113,7 +114,7 @@ unsigned short int HealthSeeder::Sample(const vector<double>& distribution, doub
         return ret;
 }
 
-void HealthSeeder::Seed(const std::shared_ptr<stride::Population>& pop, const TransmissionProfile& transProfile, vector<util::RnHandler>& handlers)
+void HealthSeeder::Seed(const std::shared_ptr<stride::Population>& pop, const TransmissionProfile& transProfile, std::shared_ptr<util::RnMan> rnMan)
 {
         auto& population = *pop;
 
@@ -121,7 +122,8 @@ void HealthSeeder::Seed(const std::shared_ptr<stride::Population>& pop, const Tr
 
 #pragma omp parallel num_threads(handlers.size())
         {
-                auto& gen01 = handlers[static_cast<size_t>(omp_get_thread_num())];
+                unsigned int thread_num = omp_get_thread_num();
+
 #pragma omp for
                 for (size_t i = 0; i < population.size(); ++i) {
 
@@ -131,23 +133,23 @@ void HealthSeeder::Seed(const std::shared_ptr<stride::Population>& pop, const Tr
 
                         // sample from given distribution, but limit "start infectiousness" to day 1 (= one day after infection)
 						while(startInfectiousness < 1){
-							startSymptomatic          = Sample(m_start_symptomatic, gen01());
-							startInfectiousness       = startSymptomatic - Sample(m_time_asymptomatic, gen01());
+							startSymptomatic          = Sample(m_start_symptomatic, rnMan->SampleUniform01(thread_num));
+							startInfectiousness       = startSymptomatic - Sample(m_time_asymptomatic, rnMan->SampleUniform01(thread_num));
 						}
 
-                        const auto timeInfectious      = Sample(m_time_infectious, gen01());
-                        auto timeSymptomatic           = Sample(m_time_symptomatic, gen01());
+                        const auto timeInfectious      = Sample(m_time_infectious, rnMan->SampleUniform01(thread_num));
+                        auto timeSymptomatic           = Sample(m_time_symptomatic, rnMan->SampleUniform01(thread_num));
 
 
-                        const bool isSymptomatic = gen01() <= m_probability_symptomatic[population[i].GetAge()];
+                        const bool isSymptomatic = rnMan->SampleUniform01(thread_num) <= m_probability_symptomatic[population[i].GetAge()];
                         boost::optional<unsigned short int> daysToHospitalisation = {};
                         boost::optional<unsigned short int> daysToLeaveHospital = {};
                         if(!isSymptomatic){
                         	timeSymptomatic = 0;
                         } else if(GetHospitalProbability(population[i].GetAge()) > 0) {
-                            const bool isHospitalised = gen01() <= GetHospitalProbability(population[i].GetAge());
+                            const bool isHospitalised = rnMan->SampleUniform01(thread_num) <= GetHospitalProbability(population[i].GetAge());
                             if (isHospitalised) {
-                                double variance = Sample(hospitalisationVariance, gen01()) - 1; // -1, 0 or 1
+                                double variance = Sample(hospitalisationVariance, rnMan->SampleUniform01(thread_num)) - 1; // -1, 0 or 1
                                 daysToHospitalisation = startSymptomatic + GetHospitalDelay(population[i].GetAge()) + variance;
                                 daysToLeaveHospital   = daysToHospitalisation.value() + GetHospitalLengthOfStay();
 

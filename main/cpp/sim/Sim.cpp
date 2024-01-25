@@ -41,7 +41,7 @@ using namespace EventLogMode;
 Sim::Sim()
     : m_config(), m_event_log_mode(Id::None), m_num_threads(1U), m_track_index_case(false),
 	  m_run_simplified(false),
-      m_calendar(nullptr), m_contact_profiles(), m_rn_handlers(), m_infector_default(),m_infector_tracing(),
+      m_calendar(nullptr), m_contact_profiles(), m_infector_default(),m_infector_tracing(),
       m_population(nullptr), m_rn_man_ptr(), m_transmission_profile(),
       m_is_isolated_from_household(false),
 	  m_public_health_agency()
@@ -90,7 +90,7 @@ void Sim::TimeStep()
 
         // Import infected cases into the population
         if(m_calendar->GetNumberOfImportedCases() > 0){
-        	DiseaseSeeder(m_config, m_rn_man_ptr).ImportInfectedCases(m_population, m_calendar->GetNumberOfImportedCases(), simDay, m_transmission_profile, m_rn_handlers[0]);
+        	DiseaseSeeder(m_config, m_rn_man_ptr).ImportInfectedCases(m_population, m_calendar->GetNumberOfImportedCases(), simDay, m_transmission_profile, m_rn_man_ptr->at(0));
             logger->info("[IMPORT-CASES] sim_day={} count={}", simDay, m_calendar->GetNumberOfImportedCases());        	
         }
 
@@ -103,13 +103,14 @@ void Sim::TimeStep()
 
 				// update health-related presence at different contact pools
 				population[i].UpdatePresence(m_is_isolated_from_household,
-                        m_rn_handlers[thread_num], 
+//                        m_rn_handlers[thread_num],
+						m_rn_man_ptr->at(thread_num),
                         simDay, m_run_simplified);
 			}
         }// end pragma openMP
 
 		 // Perform contact tracing (if activated)
-		 m_public_health_agency.PerformContactTracing(m_population, m_rn_handlers, m_calendar);
+		 m_public_health_agency.PerformContactTracing(m_population, m_rn_man_ptr, m_calendar);
 
 		 // Process social contact behaviour and transmission dynamics
 #pragma omp parallel num_threads(m_num_threads)
@@ -133,7 +134,7 @@ void Sim::TimeStep()
 						double typ_distancing_factor = m_calendar->GetDistancingFactor(poolSys.RefPools(typ)[i]);
 
 						infector(poolSys.RefPools(typ)[i], m_contact_profiles[typ], m_transmission_profile,
-								 m_rn_handlers[thread_num], simDay, eventLogger,
+								m_rn_man_ptr->at(thread_num), simDay, eventLogger,
 								 m_population, cnt_intensity_householdCluster, typ_distancing_factor);
 					}
 			}

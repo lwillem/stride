@@ -287,7 +287,7 @@ exp_design$rng_seed[grepl('covid_fitting',exp_design$gtester_label)] <- exp_desi
 #exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_collectivity','covid_collectivity_isolation','covid_collectivity_mixing'),]
 #exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_fitting_base','covid_fitting_adapt'),]
 #exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_transm','covid_transm_gamma'),]
-exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_default_param','covid_distancing'),]
+#exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_default_param','covid_distancing'),]
  # exp_design <- exp_design[grepl('_base',exp_design$gtester_label) |
  #                            grepl('_collectivity',exp_design$gtester_label) |
  #                            grepl('_fitting',exp_design$gtester_label),]

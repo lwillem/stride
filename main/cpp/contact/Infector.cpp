@@ -280,7 +280,7 @@ using namespace stride::util;
 //-------------------------------------------------------------------------------------------------
 template <EventLogMode::Id LL, bool TIC, bool TO>
 void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& profile,
-                                 const TransmissionProfile& transProfile, util::RnHandler& rnHandler,
+                                 const TransmissionProfile& transProfile, util::Rn& rn,
                                  unsigned short int simDay, shared_ptr<spdlog::logger> eventLogger,
 								 std::shared_ptr<Population> population, double cnt_intensity_householdCluster,
                                  double pType_distancing_factor)
@@ -313,7 +313,7 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
                         // check for contact
                         const double cProb = GetContactProbability(profile, p1, p2, pSize, pType,
                         		population,cnt_intensity_householdCluster,pType_distancing_factor);
-                        if (rnHandler.Binomial(cProb)) {
+                        if (rn.Binomial(cProb)) {
 								const auto  tProb_p1_p2    = transProfile.GetProbability(p1,p2);
 								const auto  tProb_p2_p1    = transProfile.GetProbability(p2,p1);
 
@@ -335,9 +335,9 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
 
 								// if h1 infectious, account for susceptibility of p2
 								if (h1.IsInfectious() && h2.IsSusceptible() &&
-									rnHandler.Binomial(tProb_p1_p2)) {
+									rn.Binomial(tProb_p1_p2)) {
 
-										double rel_inf = transProfile.GetIndividualInfectiousness(rnHandler);
+										double rel_inf = transProfile.GetIndividualInfectiousness(rn);
 										h2.StartInfection(h1.GetIdIndexCase(),p1->GetId(),rel_inf);
 
 										if (TIC)
@@ -347,9 +347,9 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
 
 								// if h2 infectious, account for susceptibility of p1
 								if (h2.IsInfectious() && h1.IsSusceptible() &&
-									rnHandler.Binomial(tProb_p2_p1)) {
+									rn.Binomial(tProb_p2_p1)) {
 
-									double rel_inf = transProfile.GetIndividualInfectiousness(rnHandler);
+									double rel_inf = transProfile.GetIndividualInfectiousness(rn);
 									h1.StartInfection(h2.GetIdIndexCase(),p2->GetId(), rel_inf);
 
 										if (TIC)
@@ -367,7 +367,7 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
 //-------------------------------------------------------------------------------------------
 template <EventLogMode::Id LL, bool TIC>
 void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& profile,
-                                   const TransmissionProfile& transProfile, util::RnHandler& rnHandler,
+                                   const TransmissionProfile& transProfile, util::Rn& rn,
                                    unsigned short int simDay, shared_ptr<spdlog::logger> eventLogger,
 								   std::shared_ptr<Population> population, double cnt_intensity_householdCluster,
                                    double pType_distancing_factor)
@@ -408,11 +408,11 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                                 const double cProb_p1 = GetContactProbability(profile, p1, p2, pSize, pType,
 															population, cnt_intensity_householdCluster, pType_distancing_factor);
                                 const auto  tProb_p1_p2   = transProfile.GetProbability(p1,p2);
-                                if (rnHandler.Binomial(cProb_p1, tProb_p1_p2)) {
+                                if (rn.Binomial(cProb_p1, tProb_p1_p2)) {
 
                                         auto& h2 = p2->GetHealth();
                                         if (h1.IsInfectious() && h2.IsSusceptible()) {
-                                                double rel_inf = transProfile.GetIndividualInfectiousness(rnHandler);
+                                                double rel_inf = transProfile.GetIndividualInfectiousness(rn);
                                                 h2.StartInfection(h1.GetIdIndexCase(),p1->GetId(), rel_inf);
 
                                                 // if track&trace is in place, option to register (both) contact(s)

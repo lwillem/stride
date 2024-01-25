@@ -163,7 +163,7 @@ double TransmissionProfile::GetProbability(Person* p_infected, Person* p_suscept
     return transmission_probability_infector * adjustment_asymptomatic * adjustment_susceptible_child * adjustment_susceptible_age;
 }
 
-double TransmissionProfile::GetIndividualInfectiousness(RnHandler& generator) const {
+double TransmissionProfile::GetIndividualInfectiousness(Rn& rn) const {
 
 	// If mean transmission probability is 0, return 0.
 	// FIXME Is this ok?
@@ -184,7 +184,7 @@ double TransmissionProfile::GetIndividualInfectiousness(RnHandler& generator) co
 		double cdf1 = cdf(gamma_dist, 0.0);
 		double cdf2 = cdf(gamma_dist, 1.0);
 
-		double individual_probability = quantile(gamma_dist, cdf1 + generator() * (cdf2 - cdf1));
+		double individual_probability = quantile(gamma_dist, cdf1 + rn.SampleUniform01() * (cdf2 - cdf1));
 
 		return individual_probability;
 

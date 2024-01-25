@@ -64,6 +64,10 @@ public:
         /// No copy assignment.
         RnMan& operator=(const RnMan&) = delete;
 
+        Rn& Get(unsigned int i = 0U){
+        	return(ContainerType::at(i));
+        }
+
         /// Return a generator for uniform doubles in [0, 1[ using i-th random engine.
         std::function<double()> GetUniform01Generator(unsigned int i = 0U)
         {
@@ -100,6 +104,25 @@ public:
 
         /// Make weighted coin flip: <fraction> of the flips need to come up true.
         bool MakeWeightedCoinFlip(double fraction, unsigned int i = 0U);
+
+        /// Perform binomial trial with given probability.
+		double SampleUniform01(unsigned int i = 0U)
+		{
+			return ContainerType::at(i).SampleUniform01();
+		}
+
+        /// Perform binomial trial with given probability.
+		bool Binomial(double probability_a, unsigned int i = 0U)
+		{
+			return ContainerType::at(i).Binomial(probability_a);
+		}
+
+		/// Perform binomial trial with the product of the given probabilities.
+		bool Binomial(double probability_a, double probability_b, unsigned int i = 0U)
+		{
+			return ContainerType::at(i).Binomial(probability_a,probability_b);
+		}
+
 
 private:
 

@@ -60,13 +60,8 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
 
 
 		// --------------------------------------------------------------
-        // Contact handlers, each with generator bound to different
-        // random engine stream and infector.
+        // Select infector template(s) based on configuration.
         // --------------------------------------------------------------
-        for (unsigned int i = 0; i < sim->m_num_threads; i++) {
-                auto gen = sim->m_rn_man_ptr->GetUniform01Generator(i);
-                sim->m_rn_handlers.emplace_back(util::RnHandler(gen));
-        }
         const auto& select = make_tuple(sim->m_event_log_mode, sim->m_track_index_case);
         sim->m_infector_default    = InfectorMap().at(select);
 
@@ -99,7 +94,7 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         // --------------------------------------------------------------
         // Seed the population with health data (incl. hospital admission)
         // --------------------------------------------------------------
-        HealthSeeder(m_config, diseasePt).Seed(sim->m_population, sim->m_transmission_profile, sim->m_rn_handlers);
+        HealthSeeder(m_config, diseasePt).Seed(sim->m_population, sim->m_transmission_profile, sim->m_rn_man_ptr);
 
         // --------------------------------------------------------------
 		// Seed population with immunity: naturally or vaccine-induced.

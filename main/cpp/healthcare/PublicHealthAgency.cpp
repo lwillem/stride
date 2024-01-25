@@ -66,7 +66,7 @@ bool PublicHealthAgency::IsContactTracingActive(const std::shared_ptr<Calendar> 
 }
 
 
-void PublicHealthAgency::PerformContactTracing(std::shared_ptr<Population> pop, std::vector<util::RnHandler>& rnHandlers,
+void PublicHealthAgency::PerformContactTracing(std::shared_ptr<Population> pop, std::shared_ptr<util::RnMan> rnMan,
                                                const std::shared_ptr<Calendar> calendar)
 {
 
@@ -80,12 +80,12 @@ void PublicHealthAgency::PerformContactTracing(std::shared_ptr<Population> pop, 
     Population& population    = *pop;
 #pragma omp parallel num_threads(rnHandlers.size())
     {
-        auto &rnHandler = rnHandlers[static_cast<size_t>(omp_get_thread_num())];
+        unsigned int thread_num = omp_get_thread_num();
         /// Mark index cases for track&trace
 #pragma omp for schedule(static)
         for (size_t i = 0; i < population.size(); ++i) {
             auto &p_case = population[i];
-            if(p_case.GetHealth().NumberDaysInfected(1) && rnHandler.Binomial(m_detection_probability)) {
+            if(p_case.GetHealth().NumberDaysInfected(1) && rnMan->at(thread_num).Binomial(m_detection_probability)) {
                     p_case.SetTracingIndexCase();
             }
         }
@@ -99,7 +99,7 @@ void PublicHealthAgency::PerformContactTracing(std::shared_ptr<Population> pop, 
 	for (auto& p_case : *pop) {
 
 		if (p_case.IsTracingIndexCase() && p_case.GetHealth().NumberDaysSymptomatic(m_delay_isolation_index)	) {
-        Trace(p_case, pop, rnHandlers[0], simDay);
+        Trace(p_case, pop, rnMan->at(0U), simDay);
 
         // update index case counter, and terminate if quota is reached
         num_index_cases++;
@@ -113,7 +113,7 @@ void PublicHealthAgency::PerformContactTracing(std::shared_ptr<Population> pop, 
 //TODO: rename IsolateAndTrace()
 void PublicHealthAgency::Trace(Person& p_case, 
         std::shared_ptr<Population> pop, 
-		RnHandler& rnHandler,
+		Rn& rn,
         const unsigned short int simDay)
 {
 	auto& logger       = pop->RefEventLogger();
@@ -169,7 +169,7 @@ void PublicHealthAgency::Trace(Person& p_case,
 					poolTypeString    = "Workplace";
 				}
 
-				if(rnHandler.Binomial(tracing_efficiency)){
+				if(rn.Binomial(tracing_efficiency)){
 
 					if(p_contact->GetHealth().IsInfected()){
 						// start isolation over X days

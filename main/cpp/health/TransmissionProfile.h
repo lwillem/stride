@@ -21,7 +21,7 @@
 #pragma once
 
 #include "pop/Person.h"
-#include "util/RnHandler.h"
+#include "util/Rn.h"
 
 #include <boost/property_tree/ptree.hpp>
 #include <vector>
@@ -59,7 +59,7 @@ public:
 	double GetProbability(Person* p_infected, Person* p_susceptible) const;
 
 	/// Draw individual transmission probability from distribution.
-	double GetIndividualInfectiousness(util::RnHandler& generator) const;
+	double GetIndividualInfectiousness(util::Rn& rn) const;
 
 private:
 	double 						m_transmission_probability;

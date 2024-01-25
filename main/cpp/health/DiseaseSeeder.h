@@ -43,7 +43,7 @@ public:
         DiseaseSeeder(const boost::property_tree::ptree& config, std::shared_ptr<util::RnMan> rnMan);
 
         /// Import infected cases into the population
-        void ImportInfectedCases(std::shared_ptr<Population> pop, unsigned int numInfected, unsigned int simDay, const TransmissionProfile& transProfile, util::RnHandler& rnHandler);
+        void ImportInfectedCases(std::shared_ptr<Population> pop, unsigned int numInfected, unsigned int simDay, const TransmissionProfile& transProfile, util::Rn& rn);
 
 private:
         const boost::property_tree::ptree& m_config; ///< Run config.

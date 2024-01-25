@@ -28,7 +28,6 @@
 #include "mdp/AgeGroup.h"
 #include "mdp/Vaccines.h"
 #include "util/RnMan.h"
-#include "util/RnHandler.h"
 #include "execs/SimController.h"
 
 #include <boost/property_tree/ptree.hpp>

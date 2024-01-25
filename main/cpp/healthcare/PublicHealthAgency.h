@@ -22,7 +22,6 @@
 
 #include "contact/ContactPool.h"
 #include "util/RnMan.h"
-#include "util/RnHandler.h"
 #include "util/FileSys.h"
 #include "util/SegmentedVector.h"
 
@@ -48,7 +47,7 @@ public:
 		void Initialize(const boost::property_tree::ptree& config);
 
         /// Public Health Strategy: look for contacts of infected cases and quarantine infected cases
-		void PerformContactTracing(std::shared_ptr<Population> pop, std::vector<util::RnHandler>& rnHandlers, const std::shared_ptr<Calendar> calendar);
+		void PerformContactTracing(std::shared_ptr<Population> pop, std::shared_ptr<util::RnMan> rnMan, const std::shared_ptr<Calendar> calendar);
 
 		/// Is Contact tracing active today?
 		bool IsContactTracingActive(const std::shared_ptr<Calendar> calendar) const;
@@ -56,7 +55,7 @@ public:
         /// Trace one individual
         void Trace(Person& p_case,
                 std::shared_ptr<Population> pop,
-				util::RnHandler& rnHandler,
+				util::Rn& rn,
                 const unsigned short int simDay);
 
 private:

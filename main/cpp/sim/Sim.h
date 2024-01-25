@@ -26,7 +26,6 @@
 #include "health/TransmissionProfile.h"
 #include "healthcare/PublicHealthAgency.h"
 #include "util/RnMan.h"
-#include "util/RnHandler.h"
 
 #include <boost/property_tree/ptree.hpp>
 #include <string>
@@ -40,7 +39,6 @@ class Population;
 
 namespace util {
 class RnMan;
-class RnHandler;
 }
 
 /**
@@ -91,7 +89,6 @@ private:
 
         std::shared_ptr<Calendar>   m_calendar;         ///< Management of calendar.
         AgeContactProfiles          m_contact_profiles; ///< Contact profiles w.r.t age.
-        std::vector<util::RnHandler> m_rn_handlers;     ///< Random number handlers (random numbers & binomial trials). //TODO confusing to have both rn_handlers and rn_managers?
         InfectorExec*               m_infector_default; ///< Executes optimized transmission loops in contact pools.
         InfectorExec*               m_infector_tracing; ///< Executes all or optimized transmission loops in contact pools.
         std::shared_ptr<Population> m_population;       ///< Pointer to the Population.

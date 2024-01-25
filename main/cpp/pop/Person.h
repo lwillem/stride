@@ -25,7 +25,7 @@
 #include "contact/IdSubscriptArray.h"
 #include "health/Health.h"
 #include "healthcare/Vaccine.h"
-#include "util/RnHandler.h"
+#include "util/Rn.h"
 
 #include <cstddef>
 #include <queue>
@@ -112,7 +112,7 @@ public:
 
         /// Daily update of the isolation status and health-related presence in contact pools.
         void UpdatePresence(bool isIsolatedFromHousehold,
-				util::RnHandler& rnHandler,
+				util::Rn& rn,
                 unsigned short int simDay, bool run_simplified);
 
         /// Daily update of the health status.

@@ -34,14 +34,31 @@ class Rn {
   public:
 	Rn() : engine_() {}
 
+	double SampleUniform01(){
+		return uniform01(engine_);
+	}
+
+
+	/// Perform binomial trial with given probability.
+	bool Binomial(double probability_a)
+	{
+		return SampleUniform01() < probability_a;
+	}
+
+	/// Perform binomial trial with the product of the given probabilities.
+    bool Binomial(double probability_a, double probability_b)
+    {
+    	return SampleUniform01() < probability_a * probability_b;
+    }
+
     trng::lcg64& engine()
      {
-         return engine_;
+        return engine_;
      }
 
  	const trng::lcg64& engine() const
  	{
- 			return engine_;
+ 		return engine_;
  	}
 
      template <typename Iter>
@@ -51,7 +68,15 @@ class Rn {
      }
 
   private:
+
+        /// Convert (exponential) rate into probability
+        double RateToProbability(double rate) { return 1.0 - std::exp(-rate); }
+
        trng::lcg64 engine_;
+
+       // uniform distribution between 0 and 1
+       trng::uniform01_dist<double> uniform01;
+
 
  }; // end class
 

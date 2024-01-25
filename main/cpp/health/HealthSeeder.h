@@ -33,7 +33,7 @@ class Population;
 class TransmissionProfile;
 
 namespace util {
-class RnHandler;
+class RnMan;
 }
 
 /**
@@ -47,7 +47,7 @@ public:
         						const boost::property_tree::ptree& diseasePt);
 
         /// Seeds the population with Health data.
-        void Seed(const std::shared_ptr<Population>& pop, const TransmissionProfile& transProfile, std::vector<util::RnHandler>& handlers);
+       void Seed(const std::shared_ptr<Population>& pop, const TransmissionProfile& transProfile, std::shared_ptr<util::RnMan> rnMan);
 
 private:
         /// Utility method to extract distribution from data in ptree.

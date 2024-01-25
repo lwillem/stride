@@ -69,7 +69,7 @@ void Person::Isolate(unsigned int simDay, unsigned int from, unsigned int to)
 }
 
 void Person::UpdatePresence(bool isIsolatedFromHousehold,
-		util::RnHandler& rnHandler,
+		util::Rn& rn,
         unsigned short int simDay,
 		bool run_simplified)
 {
@@ -115,13 +115,13 @@ void Person::UpdatePresence(bool isIsolatedFromHousehold,
         	   if (m_health.IsSymptomatic()) {
 
         		   // probability of staying home from school/work given symptoms
-        	       if(rnHandler.Binomial(m_health.GetSymptomaticCntReductionWorkSchool())){
+        	       if(rn.Binomial(m_health.GetSymptomaticCntReductionWorkSchool())){
 						m_in_pools[Id::School]             = false;
 						m_in_pools[Id::Workplace]          = false;
 					}
 
 					// probability of staying home from community pools given symptoms
-					if(rnHandler.Binomial(m_health.GetSymptomaticCntReductionCommunity())){
+					if(rn.Binomial(m_health.GetSymptomaticCntReductionCommunity())){
 						m_in_pools[Id::PrimaryCommunity]   = false;
 						m_in_pools[Id::SecondaryCommunity] = false;
 					}
