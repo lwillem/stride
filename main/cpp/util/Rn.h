@@ -25,6 +25,8 @@
 #include <trng/uniform01_dist.hpp>
 #include <trng/uniform_int_dist.hpp>
 
+#include <random>
+
 namespace stride {
 namespace util {
 
@@ -32,12 +34,11 @@ namespace util {
 class Rn {
 
   public:
-	Rn() : engine_() {}
+	Rn() : m_engine() {}
 
 	double SampleUniform01(){
-		return uniform01(engine_);
+		return uniform01(m_engine);
 	}
-
 
 	/// Perform binomial trial with given probability.
 	bool Binomial(double probability_a)
@@ -51,32 +52,44 @@ class Rn {
     	return SampleUniform01() < probability_a * probability_b;
     }
 
-    trng::lcg64& engine()
-     {
-        return engine_;
-     }
+    trng::lcg64& GetEngine()
+    {
+       return m_engine;
+    }
 
- 	const trng::lcg64& engine() const
+ 	const trng::lcg64& GetEngine() const
  	{
- 		return engine_;
+ 		return m_engine;
  	}
 
      template <typename Iter>
      void shuffle(Iter first, Iter last)
      {
-         std::shuffle(first, last, engine_);
+         std::shuffle(first, last, m_engine);
+     }
+
+     /// Return a generator function for uniform integers in [a, b[ (a < b)
+	 std::function<int()> GetUniformIntGenerator(int a, int b)
+	 {
+	 	return std::bind(trng::uniform_int_dist(a, b), std::ref(GetEngine()));
+	 }
+
+	 /// Return a generator function for doubles from a Gamma distribution with a given shape and scale
+	 std::function<double()> GetGammaGenerator(double shape, double scale)
+	 {
+		return std::bind(std::gamma_distribution<double>(shape, scale), std::ref(GetEngine()));
+	 }
+
+     /// Random shuffle of vector of unsigned integers indices
+     void Shuffle(std::vector<unsigned int>& indices)
+     {
+     	shuffle(indices.begin(), indices.end());
      }
 
   private:
 
-        /// Convert (exponential) rate into probability
-        double RateToProbability(double rate) { return 1.0 - std::exp(-rate); }
-
-       trng::lcg64 engine_;
-
-       // uniform distribution between 0 and 1
-       trng::uniform01_dist<double> uniform01;
-
+       trng::lcg64 m_engine;                     /// random number engine
+       trng::uniform01_dist<double> uniform01;   /// uniform distribution between 0 and 1
 
  }; // end class
 

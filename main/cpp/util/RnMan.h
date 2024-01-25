@@ -22,10 +22,6 @@
 
 #include <util/Rn.h>
 
-//#include <trng/discrete_dist.hpp>
-//#include <trng/lcg64.hpp>
-//#include <trng/uniform01_dist.hpp>
-//#include <trng/uniform_int_dist.hpp>
 #include <functional>
 #include <random>
 #include <string>
@@ -40,22 +36,23 @@ namespace util {
 class RnMan : protected std::vector<util::Rn>
 {
 public:
-        using ContainerType = std::vector<Rn>;
-        using ContainerType::operator[];
-        using ContainerType::at;
-        using ContainerType::size;
+        using std::vector<Rn>::operator[];
+        using std::vector<Rn>::at;
+        using std::vector<Rn>::size;
 
 public:
         /// Default constructor build empty manager.
-        RnMan() : ContainerType(), m_seed_init(0U), m_stream_count(0U) {}
+        RnMan() : std::vector<Rn>() {}
 
         /// Constructor.
-		RnMan(unsigned long seed, const unsigned long stream_count)
-			: ContainerType(stream_count),
-			  m_seed_init(seed),
-			  m_stream_count(stream_count)
+		RnMan(unsigned long rng_seed, const unsigned long stream_count)
+			: std::vector<Rn>(stream_count)
 		{
-            Seed(m_seed_init);
+			// seed random number generator(s)
+			for (size_t i = 0; i < size(); ++i) {
+				(*this)[i].GetEngine().seed(rng_seed);
+				(*this)[i].GetEngine().split(size(), i);
+			}
 		}
 
         /// No copying.
@@ -64,74 +61,6 @@ public:
         /// No copy assignment.
         RnMan& operator=(const RnMan&) = delete;
 
-        Rn& Get(unsigned int i = 0U){
-        	return(ContainerType::at(i));
-        }
-
-        /// Return a generator for uniform doubles in [0, 1[ using i-th random engine.
-        std::function<double()> GetUniform01Generator(unsigned int i = 0U)
-        {
-          	return std::bind(trng::uniform01_dist<double>(), std::ref(ContainerType::at(i).engine()));
-        }
-
-        /// Return a generator for uniform ints in [a, b[ (a < b) using i-th random engine.
-        std::function<int()> GetUniformIntGenerator(int a, int b, unsigned int i = 0U)
-        {
-           	return std::bind(trng::uniform_int_dist(a, b), std::ref(ContainerType::at(i).engine()));
-        }
-
-        /// Return a generator for doubles from a Gamma distribution with a given shape and scale
-        std::function<double()> GetGammaGenerator(double shape, double scale, unsigned int i = 0U)
-		{
-        	return std::bind(std::gamma_distribution<double>(shape, scale), std::ref(ContainerType::at(i).engine()));
-		}
-
-        /// Return generator for integers [0, n-1[ with non-negative weights p_j (i=0,..,n-1) using i-th random engine.
-        template<typename It>
-        std::function<int()> GetDiscreteGenerator(It begin, It end, unsigned int i = 0U)
-        {
-        	return std::bind(trng::discrete_dist(begin, end), std::ref(ContainerType::at(i).engine()));
-        }
-
-        /// Is this een empty (i.e. non-initialized RnMan)?
-        bool IsEmpty() const { return ContainerType::empty() || (m_stream_count == 0U); }
-
-        /// Random shuffle of vector of unsigned int indices using i-th engine.
-        void Shuffle(std::vector<unsigned int>& indices, unsigned int i)
-        {
-                ContainerType::at(i).shuffle(indices.begin(), indices.end());
-        }
-
-        /// Make weighted coin flip: <fraction> of the flips need to come up true.
-        bool MakeWeightedCoinFlip(double fraction, unsigned int i = 0U);
-
-        /// Perform binomial trial with given probability.
-		double SampleUniform01(unsigned int i = 0U)
-		{
-			return ContainerType::at(i).SampleUniform01();
-		}
-
-        /// Perform binomial trial with given probability.
-		bool Binomial(double probability_a, unsigned int i = 0U)
-		{
-			return ContainerType::at(i).Binomial(probability_a);
-		}
-
-		/// Perform binomial trial with the product of the given probabilities.
-		bool Binomial(double probability_a, double probability_b, unsigned int i = 0U)
-		{
-			return ContainerType::at(i).Binomial(probability_a,probability_b);
-		}
-
-
-private:
-
-        /// Actual first-time seeding. Procedure varies according to engine type, see specialisations.
-        void Seed(unsigned long rng_seed);
-
-private:
-        unsigned long  m_seed_init;     ///< Seed initializer used with RN engine.
-        unsigned int   m_stream_count;  ///< Number of threads/streams set up with the engine.
 };
 
 

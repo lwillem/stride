@@ -302,7 +302,7 @@ void MDP::CreateAgeGroups()
     // Remove unused capacity from the vectors and shuffle the values
     for (AgeGroup ageGroup : AllAgeGroups) {
         m_age_groups[ageGroup].shrink_to_fit();
-        m_rnMan->Shuffle(m_age_groups[ageGroup], 0U);
+        m_rnMan->at(0U).Shuffle(m_age_groups[ageGroup]);
     }
 }
 
@@ -322,7 +322,7 @@ void MDP::CreateChildlessAgeGroups()
     // Remove unused capacity from the vectors and shuffle the values
     for (ChildlessAgeGroup ageGroup : AllChildlessAgeGroups) {
         m_childless_age_groups[ageGroup].shrink_to_fit();
-        m_rnMan->Shuffle(m_childless_age_groups[ageGroup], 0U);
+        m_rnMan->at(0U).Shuffle(m_childless_age_groups[ageGroup]);
     }
 }
 
@@ -378,7 +378,7 @@ void MDP::CreateHouseholdMapping(double uptake)
     cout << "\tcontact pools: " << numPools << ", population size: " << fullPopSize << ", uptake: " << uptake <<
             " ==> requested sample size " << maxSampleSize << endl;
     std::vector<unsigned int> preSampledHouseholds (householdIds);
-    m_rnMan->Shuffle(preSampledHouseholds, 0U);
+    m_rnMan->at(0U).Shuffle(preSampledHouseholds);
 
     std::vector<unsigned int> samplePools;  // TODO remove once test cleared
     std::vector<unsigned int> sampleIds;
@@ -443,7 +443,7 @@ void MDP::CreateHouseholdMapping(double uptake)
     // Remove unused capacity from the vectors and shuffle the values
     for (AgeGroup ageGroup : AllAgeGroups) {
         m_age_groups[ageGroup].shrink_to_fit();
-        m_rnMan->Shuffle(m_age_groups[ageGroup], 0U);
+        m_rnMan->at(0U).Shuffle(m_age_groups[ageGroup]);
     }
 }
 

@@ -56,7 +56,7 @@ shared_ptr<Population> ContactHeterogeneitySeeder::Seed(shared_ptr<Population> p
 			// Use distribution with mean 1 and overdispersion = contact_distribution_overdispersion
 			double shape = contact_distribution_overdispersion;
 			double scale = 1 / shape;
-			auto gamma_generator = m_rn_man->GetGammaGenerator(shape, scale, 0U);
+			auto gamma_generator = m_rn_man->at(0U).GetGammaGenerator(shape, scale);
 
 			// Seed community contact factors
 			for (size_t i = 0; i < population.size(); ++i) {

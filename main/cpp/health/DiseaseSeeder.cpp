@@ -49,7 +49,7 @@ void DiseaseSeeder::ImportInfectedCases(std::shared_ptr<Population> pop, unsigne
         const auto   sAgeMax     = m_config.get<double>("run.seeding_age_max", 99);
         const auto   popSize     = pop->size();
         const auto   maxPopIndex = static_cast<int>(popSize - 1);
-        auto         generator   = m_rn_man->GetUniformIntGenerator(0, maxPopIndex, 0U);
+        auto         generator   = m_rn_man->at(0U).GetUniformIntGenerator(0, maxPopIndex);
         auto&        logger      = pop->RefEventLogger();
         const EventLogMode::Id log_level   = EventLogMode::ToMode(m_config.get<string>("run.event_log_level", "None"));
 

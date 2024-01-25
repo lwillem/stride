@@ -58,7 +58,7 @@ shared_ptr<Population> SurveySeeder::Seed(shared_ptr<Population> pop)
 		// Use while-loop to get 'participants' unique participants (default sampling is with replacement).
 		// A for loop will not do because we might draw the same person twice.
 		auto numSamples = 0U;
-		auto generator  = m_rn_man->GetUniformIntGenerator(0, static_cast<int>(popCount), 0U);
+		auto generator  = m_rn_man->at(0U).GetUniformIntGenerator(0, static_cast<int>(popCount));
 
 		while (numSamples < numSurveyed) {
 				Person& p = population[generator()];
