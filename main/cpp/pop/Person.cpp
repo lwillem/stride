@@ -114,7 +114,7 @@ void Person::UpdatePresence(bool isIsolatedFromHousehold,
         	   // Update presence in contact pools if symptomatic with/without isolation
         	   if (m_health.IsSymptomatic()) {
 
-        		   // probability of staying home from school/work given symptoms
+        		   // probability of staying home from school/workplace given symptoms
         	       if(rn.Binomial(m_health.GetSymptomaticCntReductionWorkSchool())){
 						m_in_pools[Id::School]             = false;
 						m_in_pools[Id::Workplace]          = false;

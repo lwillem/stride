@@ -42,7 +42,7 @@ public:
         ///
         explicit Health(unsigned short int start_infectiousness = 0U, unsigned int short start_symptomatic = 0U,
                         unsigned short int time_infectious = 0U, unsigned short int time_symptomatic = 0U,
-						double sympt_cnt_reduction_work_school = 0U, double sympt_cnt_reduction_community=0U,
+						double sympt_cnt_reduction_workplace_school = 0U, double sympt_cnt_reduction_community=0U,
 						double relative_susceptibility = 0U,
                         boost::optional<unsigned short int> start_hospitalisation = {},
 						boost::optional<unsigned short int> end_hospitalisation = {});
@@ -155,8 +155,8 @@ public:
         /// Update progress of the disease.
         void Update();
 
-        /// Get contact reduction in school/work pools when symptomatic infected
-        double GetSymptomaticCntReductionWorkSchool() const { return m_sympt_cnt_reduction_work_school; }
+        /// Get contact reduction in school/workplace pools when symptomatic infected
+        double GetSymptomaticCntReductionWorkSchool() const { return m_sympt_cnt_reduction_workplace_school; }
 
         /// Get contact reduction in community pools when symptomatic infected
         double GetSymptomaticCntReductionCommunity() const { return m_sympt_cnt_reduction_community; }
@@ -194,8 +194,8 @@ private:
         unsigned int       m_id_index_case;        ///< ID of the index case, given infection
         unsigned int       m_id_infector;          ///< ID of the infector, given infection
 
-        double             m_sympt_cnt_reduction_work_school;  ///< Proportional reduction of presence in work/school pool when symptomatic
-        double             m_sympt_cnt_reduction_community;    ///< Proportional reduction of presence in the community pools when symptomatic
+        double             m_sympt_cnt_reduction_workplace_school;  ///< Proportional reduction of presence in work/school pool when symptomatic
+        double             m_sympt_cnt_reduction_community;         ///< Proportional reduction of presence in the community pools when symptomatic
 
         double			   m_relative_infectiousness;   ///< Relative probability of transmission when infected [0-1]
         double			   m_relative_susceptibility;   ///< Relative probability of acquiring infection upon exposure [0-1]

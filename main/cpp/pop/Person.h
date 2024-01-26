@@ -62,10 +62,10 @@ public:
 
         /// Constructor: set the person data.
         Person(unsigned int id, float age, unsigned int householdId, unsigned int k12SchoolId,
-               unsigned int workId, unsigned int CommunityWeekendId, unsigned int CommunityWeekdayId, unsigned int householdClusterId,
+               unsigned int workplaceId, unsigned int CommunityWeekendId, unsigned int CommunityWeekdayId, unsigned int householdClusterId,
 			   unsigned int collectivityId)
             : m_age(age), m_id(id), m_vaccine(), m_pool_ids{householdId, k12SchoolId,
-                                               workId,      CommunityWeekendId, CommunityWeekdayId,
+                                               workplaceId, CommunityWeekendId, CommunityWeekdayId,
 											   householdClusterId, collectivityId},
 			  m_individual_contact_factor(1.0),
               m_health(), m_in_pools(true), m_is_participant(false),
@@ -192,8 +192,8 @@ private:
 
         std::unique_ptr<Vaccine> m_vaccine; ///< Vaccination profile, can be empty
 
-        ///< Ids (school, work, etc) of pools you belong to Id value 0 means you do not belong to any
-        ///< pool of that type (e.g. school and work are mutually exclusive).
+        ///< Ids (school, workplace, etc) of pools you belong to Id value 0 means you do not belong to any
+        ///< pool of that type (e.g. schools and workplaces are mutually exclusive).
         ContactType::IdSubscriptArray<unsigned int> m_pool_ids;
 
         ///< Factor with which to scale contact rate in community pools for this individual
@@ -202,7 +202,7 @@ private:
         ///< Health info (immune, infected, etc) for this person.
         Health m_health;
 
-        ///< Is person present/absent in pools of each of the types (school, work, etc)?
+        ///< Is person present/absent in pools of each of the types (school, workplace, etc)?
         ContactType::IdSubscriptArray<bool> m_in_pools;
 
         ///< Is this a participant in the social contact study?

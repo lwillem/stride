@@ -132,7 +132,7 @@ if(0==1){
   # 3 level mixing (conditional)
   cnt_matrices_lib <- data.frame(household            = 'regular_weekday_household_gam_mij_rec.csv',
                                  school               = 'regular_weekday_school_conditional_age23_teachers_gam_mij_rec_median.csv',
-                                 work                 = 'regular_weekday_workplace_conditional_gam_mij_rec_median.csv',
+                                 workplace            = 'regular_weekday_workplace_conditional_gam_mij_rec_median.csv',
                                  community_weekday    = 'regular_weekday_community_gam_mij_rec.csv',
                                  community_weekend    = 'weekend_community_gam_mij_rec.csv')
   generate_social_contact_data_file(ref_data_tag,cnt_matrices_lib,postfix='conditional_3level')
@@ -140,7 +140,7 @@ if(0==1){
   # 2 level mixing (conditional)
   cnt_matrices_lib <- data.frame(household            = 'regular_weekday_household_gam_mij_rec.csv',
                                  school               = NA,
-                                 work                 = NA,
+                                 workplace            = NA,
                                  community_weekday    = 'regular_weekday_community_2level_gam_mij_rec.csv',
                                  community_weekend    = 'weekend_community_gam_mij_rec.csv')
   generate_social_contact_data_file(ref_data_tag,cnt_matrices_lib,postfix='conditional_2level')
@@ -148,7 +148,7 @@ if(0==1){
   # 1 level mixing (conditional)
   cnt_matrices_lib <- data.frame(household            = NA,
                                  school               = NA,
-                                 work                 = NA,
+                                 workplace            = NA,
                                  community_weekday    = 'regular_weekday_gam_mij_rec.csv',
                                  community_weekend    = 'weekend_gam_mij_rec.csv')
   generate_social_contact_data_file(ref_data_tag,cnt_matrices_lib,postfix='conditional_1level')

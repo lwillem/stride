@@ -90,7 +90,7 @@ shared_ptr<Population> PopBuilder::MakePersons(shared_ptr<Population> pop)
         const auto age                  = static_cast<unsigned int>(IntFromString(values[0]));
         const auto householdId          = static_cast<unsigned int>(IntFromString(values[1]));
         const auto schoolId             = static_cast<unsigned int>(IntFromString(values[2]));
-        const auto workId               = static_cast<unsigned int>(IntFromString(values[3]));
+        const auto workplaceId          = static_cast<unsigned int>(IntFromString(values[3]));
         const auto communityWeekendId   = static_cast<unsigned int>(IntFromString(values[4]));
         const auto communityWeekdayId   = static_cast<unsigned int>(IntFromString(values[5]));
 
@@ -104,7 +104,7 @@ shared_ptr<Population> PopBuilder::MakePersons(shared_ptr<Population> pop)
             }
         }
 
-        pop->CreatePerson(person_id, age, householdId, schoolId, workId, communityWeekendId,
+        pop->CreatePerson(person_id, age, householdId, schoolId, workplaceId, communityWeekendId,
                           communityWeekdayId, householdClusterId, collectivityId);
         ++person_id;
     }
@@ -143,7 +143,7 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
 
         // --------------------------------------------------------------
         // Insert persons (pointers) in their contactpools. Having Id 0
-        // means "not belonging pool of that type" (e.g. school/ work -
+        // means "not belonging pool of that type" (e.g. school/ workplace -
         // cannot belong to both, or e.g. out-of-work).
         //
         // Pools are uniquely identified by (type, subscript) and a Person

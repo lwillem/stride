@@ -93,8 +93,8 @@ plot_socrates_location <- function(data_cnt,data_part,age_cat_breaks,survey_day,
   mij_school_conditional <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_school==1,],data_part[data_part$student==T,],paste(title_add,'@school (conditional)'),age_cat_breaks,bool_plot = FALSE)
   
   ## WORK
-  mij_workplace             <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_work==1,],data_part,paste(title_add,'@work'),age_cat_breaks)
-  mij_workplace_conditional <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_work==1,],data_part[data_part$employed==T,],paste(title_add,'@work (conditional)'),age_cat_breaks,bool_plot = FALSE)
+  mij_workplace             <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_workplace==1,],data_part,paste(title_add,'@workplace'),age_cat_breaks)
+  mij_workplace_conditional <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_workplace==1,],data_part[data_part$employed==T,],paste(title_add,'@workplace (conditional)'),age_cat_breaks,bool_plot = FALSE)
   
   ## PRIMARY COMMUNITY
   mij_community_weekend <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_community_weekend==1,],data_part,paste(title_add,'@weekend community'),age_cat_breaks)
@@ -125,7 +125,7 @@ plot_socrates_location <- function(data_cnt,data_part,age_cat_breaks,survey_day,
               participants              = mij_total$participants))
 }
 
-# data_cnt <- data_cnt[data_cnt$cnt_work==1,]; data_part <- data_part[data_part$student==T,]
+# data_cnt <- data_cnt[data_cnt$cnt_workplace==1,]; data_part <- data_part[data_part$student==T,]
 plot_contact_matrix_socrates <- function(data_cnt,data_part,figure_title,age_cat_breaks,bool_plot = TRUE){
   
    # select participant id and age
@@ -156,7 +156,7 @@ plot_contact_matrix_socrates <- function(data_cnt,data_part,figure_title,age_cat
                                   cnt_age_exact   = as.integer(round(data_cnt$cnt_age)),
                                   cnt_age_est_min = as.integer(round(data_cnt$cnt_age)),
                                   cnt_age_est_max = as.integer(round(data_cnt$cnt_age)),
-                                  data_cnt[,c("cnt_home","cnt_work","cnt_school",
+                                  data_cnt[,c("cnt_home","cnt_workplace","cnt_school",
                                               "cnt_community_weekend","cnt_community_weekday","part_sympt","cnt_sympt" )])
   
   # get socialmixr 'survey' object

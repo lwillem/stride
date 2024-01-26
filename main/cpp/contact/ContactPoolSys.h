@@ -15,7 +15,7 @@
 
 /**
  * @file
- * Container for the contact pools of various type (household, work, ...)..
+ * Container for the contact pools of various type (household, workplace, ...)..
  */
 
 #pragma once
@@ -80,7 +80,7 @@ private:
 private:
         /// The contact pool counters (one per type id) for assigning pool UIDs. Counters
         /// generate a non zero UID that's unique per type of pool, so <type, UID> uniquely
-        /// detemines the pool. UID zero means 'NA" e.g. worklace UID for a school student
+        /// detemines the pool. UID zero means 'NA" e.g. workplace UID for a school student
         /// will be zero. As a defensive measure, the ContactPoolSys gets initialized with
         /// (for each type) an empty pool in the vector storing the contact pools. As a
         /// consequence, one has:

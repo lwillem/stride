@@ -131,7 +131,7 @@ parse_event_logfile <- function(event_logfile,exp_id,
   ## CONTACT DATA     ####
   ###################### # 
   header_cnt          <- c('local_id', 'part_age', 'cnt_age', 'cnt_home', 'cnt_school', 
-                           'cnt_work', 'cnt_community_weekend', 'cnt_community_weekday', 'cnt_household_cluster', 'cnt_collectivity',
+                           'cnt_workplace', 'cnt_community_weekend', 'cnt_community_weekday', 'cnt_household_cluster', 'cnt_collectivity',
                            'sim_day', 'cnt_prob', 'trm_prob','part_sympt','cnt_sympt')
 
   rstride_out$data_contacts <- reformat_log_data(event_logfile = event_logfile,

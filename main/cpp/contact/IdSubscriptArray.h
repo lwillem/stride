@@ -15,7 +15,7 @@
 
 /**
  * @file
- * Container for the contact pools of various type (household, work, ...)..
+ * Container for the contact pools of various type (household, workplace, ...)..
  */
 
 #pragma once

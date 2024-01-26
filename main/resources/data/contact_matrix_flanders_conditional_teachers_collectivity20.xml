@@ -4017,7 +4017,7 @@
       </contacts>
     </participant>
   </school>
-  <work>
+  <workplace>
     <participant>
       <age>1</age>
       <contacts>
@@ -5017,7 +5017,7 @@
         </contact>
       </contacts>
     </participant>
-  </work>
+  </workplace>
   <community_weekday>
     <participant>
       <age>1</age>

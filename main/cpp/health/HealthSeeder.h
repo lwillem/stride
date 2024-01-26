@@ -73,8 +73,8 @@ private:
         std::vector<double> m_time_symptomatic;
         std::vector<double> m_probability_symptomatic;
 
-        double             m_sympt_cnt_reduction_work_school;  ///< Proportional reduction of days in work/school pool when symptomatic
-        double             m_sympt_cnt_reduction_community;    ///< Proportional reduction of days in the community pools when symptomatic
+        double             m_sympt_cnt_reduction_workplace_school; ///< Proportional reduction of days in work/school pool when symptomatic
+        double             m_sympt_cnt_reduction_community;        ///< Proportional reduction of days in the community pools when symptomatic
 
         std::array<double, MaximumAge() + 1> m_hospital_probabilities;  ///< Hospitalisation probabilities per age.
         std::array<double, MaximumAge() + 1> m_hospital_delays;        ///< Hospitalisation delays per age.

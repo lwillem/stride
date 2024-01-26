@@ -154,8 +154,8 @@ inspect_contact_data <- function(project_dir){
   ## SCHOOL
   mij_school <- .rstride$plot_cnt_matrix(data_cnt_all[data_cnt_all$cnt_school==1,],data_part_all[data_part_all$student==T,],'school',L,num_days)
   
-  ## WORK
-  mij_work   <- .rstride$plot_cnt_matrix(data_cnt_all[data_cnt_all$cnt_work==1,],data_part_all[data_part_all$employed==T,],'work',L,num_days)
+  ## WORKPLACE
+  mij_workplace   <- .rstride$plot_cnt_matrix(data_cnt_all[data_cnt_all$cnt_workplace==1,],data_part_all[data_part_all$employed==T,],'workplace',L,num_days)
   
   ## WEEKEND COMMUNITY
   mij_community_weekend <- .rstride$plot_cnt_matrix(data_cnt_all[data_cnt_all$cnt_community_weekend==1,],data_part_all,'community_weekend',L,num_days)
@@ -187,12 +187,12 @@ inspect_contact_data <- function(project_dir){
   
   survey_mij_hh         <- get_survey_data('household',survey_data)
   survey_mij_school     <- get_survey_data('school',survey_data)
-  survey_mij_work       <- get_survey_data('work',survey_data)
+  survey_mij_workplace  <- get_survey_data('workplace',survey_data)
   survey_mij_community  <- get_survey_data('community_weekday',survey_data)
   survey_mij_total      <- get_survey_data('regular_weekday',survey_data)
   
   survey_mij_school_weekend     <- survey_mij_school*0
-  survey_mij_work_weekend       <- survey_mij_work*0
+  survey_mij_workplace_weekend  <- survey_mij_workplace*0
   survey_mij_community_weekend  <- get_survey_data('community_weekend',survey_data)
   survey_mij_total_weekend      <- get_survey_data('regular_weekend',survey_data)
   
@@ -213,9 +213,9 @@ inspect_contact_data <- function(project_dir){
   points(rowSums(mij_school,na.rm=T),col=2)
   legend('topright',c('week','weekend','model'),col=c(1,1,2),lty=c(1,2,0),pch=c(-1,-1,1),cex=0.8,title=ref_data_tag)
   
-  plot(rowSums(survey_mij_work),main='work',xlab='age',ylab='contacts',type='l',ylim=c(-0.1,20))
-  lines(rowSums(survey_mij_work_weekend),type='l',lty=2)
-  points(rowSums(mij_work,na.rm=T),col=2)
+  plot(rowSums(survey_mij_workplace),main='workplace',xlab='age',ylab='contacts',type='l',ylim=c(-0.1,20))
+  lines(rowSums(survey_mij_workplace_weekend),type='l',lty=2)
+  points(rowSums(mij_workplace,na.rm=T),col=2)
   legend('topright',c('week','weekend','model'),col=c(1,1,2),lty=c(1,2,0),pch=c(-1,-1,1),cex=0.8,title=ref_data_tag)
   
   plot(rowSums(survey_mij_community),main='weekend community',xlab='age',ylab='contacts',type='l',ylim=c(-0.1,25))
@@ -231,7 +231,7 @@ inspect_contact_data <- function(project_dir){
   
   ## Transmission probability ####
   par(mfrow=c(2,2))
-  cnt_location_opt <- c('cnt_home', 'cnt_school', 'cnt_work', 'cnt_community_weekend', 'cnt_community_weekday','cnt_household_cluster')
+  cnt_location_opt <- c('cnt_home', 'cnt_school', 'cnt_workplace', 'cnt_community_weekend', 'cnt_community_weekday','cnt_household_cluster')
   for(i_cnt in cnt_location_opt){
     flag <- data_cnt_all[,i_cnt] == 1
     if(any(flag))

@@ -10,7 +10,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with the software. If not, see <http://www.gnu.org/licenses/>.
  *
- *  Copyright 2019, Willem L, Kuylen E, Broeckhove J
+ *  Copyright 2024
  */
 
 /**
@@ -37,7 +37,7 @@ AgeContactProfile::AgeContactProfile(Id poolType, const ptree& contactPt) : std:
         } else if (poolType == Id::Household) {
                 typeKey = "household";
         } else if (poolType == Id::Workplace) {
-                typeKey = "work";
+                typeKey = "workplace";
         } else if (poolType == Id::CommunityWeekend) {
                 typeKey = "community_weekend";
         } else if (poolType == Id::CommunityWeekday) {

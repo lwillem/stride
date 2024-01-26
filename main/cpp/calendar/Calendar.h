@@ -194,7 +194,7 @@ private:
         boost::gregorian::date              m_date_start;                 ///< Start simulation.
         boost::gregorian::date              m_date_end;                   ///< End simulation.
         std::vector<bool>   m_public_holidays;          ///< Vector of public holidays
-        std::vector<double> m_workplace_distancing;     ///< Vector with daily social distancing level enforcement at work places
+        std::vector<double> m_workplace_distancing;     ///< Vector with daily social distancing level enforcement at workplaces
         std::vector<double> m_community_distancing;     ///< Vector with daily social distancing level enforcement in the community
         std::vector<double> m_collectivity_distancing;  ///< Vector with daily social distancing level enforcement in collectivities
         std::vector<bool>   m_contact_tracing;          ///< Vector of days with case finding measures

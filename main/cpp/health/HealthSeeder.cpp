@@ -41,7 +41,7 @@ namespace stride {
 HealthSeeder::HealthSeeder(const boost::property_tree::ptree& runPt,
 							const boost::property_tree::ptree& diseasePt)
     : m_start_symptomatic(), m_time_asymptomatic(), m_time_infectious(), m_time_symptomatic(), m_probability_symptomatic(),
-	  m_sympt_cnt_reduction_work_school(), m_sympt_cnt_reduction_community(),
+	  m_sympt_cnt_reduction_workplace_school(), m_sympt_cnt_reduction_community(),
 	  m_hospital_probabilities(), m_hospital_delays(), m_hospital_length_of_stay(0U)
 {
         GetDistribution(m_start_symptomatic, diseasePt, "disease.start_symptomatic");
@@ -62,8 +62,8 @@ HealthSeeder::HealthSeeder(const boost::property_tree::ptree& runPt,
 				m_probability_symptomatic.push_back(probabilitySymptomatic);
 		}
 
-        m_sympt_cnt_reduction_work_school = diseasePt.get<double>("disease.sympt_cnt_reduction_work_school",1.0);
-        m_sympt_cnt_reduction_community   = diseasePt.get<double>("disease.sympt_cnt_reduction_community",1.0);
+        m_sympt_cnt_reduction_workplace_school = diseasePt.get<double>("disease.sympt_cnt_reduction_workplace_school",1.0);
+        m_sympt_cnt_reduction_community        = diseasePt.get<double>("disease.sympt_cnt_reduction_community",1.0);
 
         // retrieve the hospitalisation details
         auto ageCategories                   = Tokenize<unsigned int>(runPt.get<string>("run.hospital_category_age","0"), ",");
@@ -162,7 +162,7 @@ void HealthSeeder::Seed(const std::shared_ptr<stride::Population>& pop, const Tr
 
                         population[i].GetHealth() =
                             Health(startInfectiousness, startSymptomatic, timeInfectious, timeSymptomatic,
-                            		m_sympt_cnt_reduction_work_school,m_sympt_cnt_reduction_community,
+                            		m_sympt_cnt_reduction_workplace_school,m_sympt_cnt_reduction_community,
                             		relative_susceptibility,
                                     daysToHospitalisation,
 									daysToLeaveHospital);
