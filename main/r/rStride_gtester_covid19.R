@@ -402,17 +402,35 @@ dim(data_incidence)
 data_prevalence <- .rstride$load_aggregated_output(project_dir,'data_prevalence')
 dim(data_prevalence)
 
+# get social contact survey output
+data_contacts     <- .rstride$load_aggregated_output(project_dir,'data_contacts')
+data_participants <- .rstride$load_aggregated_output(project_dir,'data_participants')
+
+# aggregate data
+if(!any(is.na(data_contacts))){
+  data_contacts                 <- aggregate(. ~ exp_id,data = data_contacts, mean)
+}
+data_participants$survey_type <- as.factor(data_participants$survey_type)
+data_participants             <- aggregate(. ~ exp_id,data = data_participants, mean)
+
+
 ## Load reference data
 ref_project_summary  <- readRDS(file='tests/regression_rstride_summary.rds')
 ref_data_incidence   <- readRDS(file='tests/regression_rstride_incidence.rds')
 ref_data_prevalence  <- readRDS(file='tests/regression_rstride_prevalence.rds')
+ref_data_contacts    <- readRDS(file='tests/regression_rstride_contacts.rds')
+ref_data_participants<- readRDS(file='tests/regression_rstride_participants.rds')
+
+
 
 # Do we have to select reference scenarios?
 if(nrow(project_summary) != nrow(ref_project_summary)){
   ref_project_summary <- ref_project_summary[ref_project_summary$gtester_label %in% unique(project_summary$gtester_label),]
   ref_data_incidence  <- ref_data_incidence[ref_data_incidence$exp_id %in% unique(ref_project_summary$exp_id),]
   ref_data_prevalence <- ref_data_prevalence[ref_data_prevalence$exp_id %in% unique(ref_project_summary$exp_id),]
-
+  ref_data_contacts   <- ref_data_contacts[ref_data_contacts$exp_id %in% unique(ref_project_summary$exp_id),]
+  ref_data_participants <- ref_data_participants[ref_data_participants$exp_id %in% unique(ref_project_summary$exp_id),]
+  
   # adjust exp_id (i.e. this is based on the number of experiments, but make sure the other parameters are similar)
   ref_project_summary$exp_id <- 1:nrow(ref_project_summary)
 
@@ -423,7 +441,6 @@ if(nrow(project_summary) != nrow(ref_project_summary)){
 # note: this is not needed any more (2024-01-10)
 ref_project_summary$holidays_file <- basename(ref_project_summary$holidays_file)
 project_summary$holidays_file     <- basename(project_summary$holidays_file)
-
 
 
 ## COMPARE SUMMARY ----
@@ -552,6 +569,30 @@ if(length(sel_col)>0 && setequal(data_prevalence[,sel_col],
 }
 
 
+## COMPARE SOCIAL CONTACT SURVEY DATA ----
+if(!any(is.na(data_contacts))){
+  sel_col <- names(data_contacts)[names(data_contacts) != 'exp_id'] # make sure the same columns are compared
+  if(setequal(colSums(data_contacts[,sel_col]),colSums(ref_data_contacts[,sel_col]))){
+    smd_print("CONTACT DATA OK")
+  } else{
+    smd_print("CONTACT DATA CHANGED!",WARNING = T)
+    stride_diff <- setdiff(colSums(data_contacts[,sel_col]),colSums(ref_data_contacts[,sel_col]))
+    smd_print(names(stride_diff),WARNING = T)
+  }  
+}
+
+if(!any(is.na(data_participants))){
+  sel_col <- !grepl('_id',names(data_participants)) # make sure the same columns are compared
+  if(setequal(data_participants[,sel_col],ref_data_participants[,sel_col])){
+    smd_print("PARTICIPANT DATA OK")
+  } else{
+    smd_print("PARTICIPANT DATA CHANGED!",WARNING = T)
+    stride_diff <- setdiff(data_participants[,sel_col],ref_data_participants[,sel_col])
+    smd_print(names(stride_diff),WARNING = T)
+  }
+}
+
+
 ## COMPARE ABC ----
 ref_rstride_out_abc <- readRDS(file='tests/regression_rstride_out_abc.rds')
 if(setequal(rstride_out_abc,ref_rstride_out_abc)){
@@ -596,6 +637,12 @@ rrv <- function(stride_repo_dir = 'tests'){
   saveRDS(rstride_out_abc,
           file=file.path(stride_repo_dir,'regression_rstride_out_abc.rds'))
   
+  # store aggregated social contact survey data
+  saveRDS(data_contacts,
+          file=file.path(stride_repo_dir,'regression_rstride_contacts.rds'))
+  saveRDS(data_participants,
+          file=file.path(stride_repo_dir,'regression_rstride_participants.rds'))
+
   pdf(file=file.path(stride_repo_dir,'regression_rstride_summary.pdf'),14,7)
     plot_final_sizes(project_summary)
   dev.off()
