@@ -10,12 +10,12 @@
  *  You should have received a copy of the GNU General Public License
  *  along with the software. If not, see <http://www.gnu.org/licenses/>.
  *
- *  Copyright 2018, Kuylen E, Willem L, Broeckhove J
+ *  Copyright 2024
  */
 
 /**
  * @file
- * Header file for the SurveySeeder class.
+ * Header file for the SurveyManager class.
  */
 
 #pragma once
@@ -35,25 +35,29 @@ class RnMan;
 /**
  * Seeds the population with survey participants.
  */
-class SurveySeeder
+class SurveyManager
 {
 public:
         /// Initialize Seeder.
         /// \param config         Configuration parameters.
         /// \param rnMan         Random number manager.
-        SurveySeeder(const boost::property_tree::ptree& config, std::shared_ptr<util::RnMan> rnMan);
+		SurveyManager(std::shared_ptr<Population> pop, const boost::property_tree::ptree& config, std::shared_ptr<util::RnMan> rnMan);
 
         /// Seeds the population with survey participants.
         /// \param pop               Population.
-        std::shared_ptr<Population> Seed(std::shared_ptr<Population> pop);
+        void ManagePanel(std::shared_ptr<Population> pop, unsigned int simDay = 0U);
 
         /// Register a selected person as a survey participant
         /// \param p 				Person to register
-        void RegisterParticipant(std::shared_ptr<Population> pop, Person& p, std::string& survey_type);
+        void RegisterParticipant(std::shared_ptr<Population> pop, Person& p, unsigned int simDay, std::string& survey_type);
 
+        /// Register the health state of the survey participants
+        void LogHealthStates();
 private:
-        const boost::property_tree::ptree& m_config; ///< Run config.
+        std::shared_ptr<Population>           m_population;
+		const boost::property_tree::ptree&    m_config; ///< Run config.
         std::shared_ptr<util::RnMan>          m_rn_man; ///< Random number manager.
+        bool m_panel_ready;
 };
 
 } // namespace stride

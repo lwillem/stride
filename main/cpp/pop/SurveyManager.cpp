@@ -15,10 +15,10 @@
 
 /**
  * @file
- * Implementation for the SurveySeeder class.
+ * Implementation for the SurveyManager class.
  */
 
-#include "SurveySeeder.h"
+#include "SurveyManager.h"
 
 #include "contact/EventLogMode.h"
 #include "pop/Population.h"
@@ -36,12 +36,18 @@ using namespace std;
 
 namespace stride {
 
-SurveySeeder::SurveySeeder(const ptree& config, std::shared_ptr<RnMan> rnMan) : m_config(config), m_rn_man(rnMan) {}
+SurveyManager::SurveyManager(std::shared_ptr<Population> pop, const ptree& config, std::shared_ptr<RnMan> rnMan) :
+		m_population(pop), m_config(config), m_rn_man(rnMan), m_panel_ready(false){
 
-shared_ptr<Population> SurveySeeder::Seed(shared_ptr<Population> pop)
+}
+
+void SurveyManager::ManagePanel(shared_ptr<Population> pop, unsigned int simDay)
 {
 	const EventLogMode::Id logLevel   = EventLogMode::ToMode(m_config.get<string>("run.event_log_level", "None"));
-	if (logLevel != EventLogMode::Id::None) {
+	if (!m_panel_ready && logLevel != EventLogMode::Id::None) {
+
+		m_panel_ready = m_config.get<unsigned int>("run.contact_survey_resample",0) == 0;
+
 		Population& population  = *pop;
 		const auto  popCount    = static_cast<unsigned int>(population.size() - 1);
 		auto  numSurveyed = m_config.get<unsigned int>("run.num_participants_survey");
@@ -68,16 +74,15 @@ shared_ptr<Population> SurveySeeder::Seed(shared_ptr<Population> pop)
 
 				// register new participant
 				std::string survey_type = "contacts";
-				RegisterParticipant(pop,p,survey_type);
+				RegisterParticipant(pop,p,simDay,survey_type);
 
 				// update number of remaining samples
 				numSamples++;
 		}
 	}
-	return pop;
 }
 
-void SurveySeeder::RegisterParticipant(std::shared_ptr<Population> pop, Person& p, std::string& survey_type)
+void SurveyManager::RegisterParticipant(std::shared_ptr<Population> pop, Person& p, unsigned int simDay ,std::string& survey_type)
 {
 
 	const EventLogMode::Id logLevel   = EventLogMode::ToMode(m_config.get<string>("run.event_log_level", "None"));
@@ -100,7 +105,7 @@ void SurveySeeder::RegisterParticipant(std::shared_ptr<Population> pop, Person& 
 		const auto pHC  = p.GetPoolId(Id::HouseholdCluster);
 		const auto pCol = p.GetPoolId(Id::Collectivity);
 
-		logger->info("[PART] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}",
+		logger->info("[PART] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}",
 			 p.GetId(), p.GetAge(), pHH, pS, pW, pHC, pCol, h.IsSusceptible(), h.IsInfected(), h.IsInfectious(),
 			 h.IsRecovered(), p.IsImmune(), h.GetStartInfectiousness(), h.GetStartSymptomatic(),
 			 h.GetStartHospitalisationValue(),
@@ -111,7 +116,7 @@ void SurveySeeder::RegisterParticipant(std::shared_ptr<Population> pop, Person& 
 			 poolSys.CRefPools<Id::Workplace>()[pW].GetPool().size(),
 			 poolSys.CRefPools<Id::CommunityWeekend>()[pPC].GetPool().size(),
 			 poolSys.CRefPools<Id::CommunityWeekday>()[pSC].GetPool().size(),
-			 survey_type
+			 simDay, survey_type
 			 );
 	 }
 }

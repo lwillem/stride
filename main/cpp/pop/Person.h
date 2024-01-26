@@ -104,6 +104,9 @@ public:
         /// Participate in social contact study and log person details
         void ParticipateInSurvey() { m_is_participant = true; }
 
+        /// Leave social contact study
+        void LeaveSurvey() { m_is_participant = false; }
+
         //Isolate the individual over an interval of days 
         void Isolate(unsigned int simDay, unsigned int from, unsigned int to); 
 

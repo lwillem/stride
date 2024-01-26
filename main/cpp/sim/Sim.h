@@ -25,6 +25,7 @@
 #include "contact/InfectorExec.h"
 #include "health/TransmissionProfile.h"
 #include "healthcare/PublicHealthAgency.h"
+#include "pop/SurveyManager.h"
 #include "util/RnMan.h"
 
 #include <boost/property_tree/ptree.hpp>
@@ -100,7 +101,6 @@ private:
         bool                        m_is_isolated_from_household;
 
         PublicHealthAgency          m_public_health_agency;
-
 };
 
 } // namespace stride

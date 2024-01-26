@@ -103,7 +103,7 @@ inspect_contact_data <- function(project_dir){
   # if at least one data source is missing... stop
   if(nrow(data_cnt_all)==0 || nrow(data_part_all)==0) 
   {
-    smd_print("PARTICIPANT OR CONTACT DATA MISSING... STOP CONTACT ANALYSIS FOR",exp_summary$output_prefix)
+    #smd_print("PARTICIPANT OR CONTACT DATA MISSING... STOP CONTACT ANALYSIS FOR",exp_summary$output_prefix)
     return(NULL) 
   }
     
@@ -132,8 +132,8 @@ inspect_contact_data <- function(project_dir){
                     survey_start   = exp_summary$start_date,
                     bool_rds       = TRUE)
   
-  # check rds
-  cnt_matrix_all <- readRDS(file.path(project_dir,'exp0001_AG_cnt_matrix.rds'))
+  # # check rds
+  # cnt_matrix_all <- readRDS(file.path(project_dir,'exp0001_AG_cnt_matrix.rds'))
   
   ## Other figures ####
   

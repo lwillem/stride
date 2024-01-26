@@ -44,7 +44,7 @@ set(STRIDE_SRC
     pop/Person.cpp
     pop/Population.cpp
     pop/PopBuilder.cpp
-    pop/SurveySeeder.cpp
+    pop/SurveyManager.cpp
     #---
     sim/Sim.cpp
     sim/SimBuilder.cpp

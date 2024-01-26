@@ -71,9 +71,14 @@ void Sim::TimeStep()
         auto        eventLogger   = population.RefEventLogger();
         const auto  simDay        = m_calendar->GetSimulationDay();
 
-        // Select infector, based on tracing
-        const auto& infector      = (m_public_health_agency.IsContactTracingActive(m_calendar) ||
+        // Select infector, based on tracing and social contact survey activities
+        auto& infector      = (m_public_health_agency.IsContactTracingActive(m_calendar) ||
         								m_calendar->IsContactSurveyActive()) ? *m_infector_tracing : *m_infector_default;
+
+        // Check survey manager if social contact survey is active
+        if(m_calendar->IsContactSurveyActive()){
+
+        }
 
         // Get household clustering intensity
         double cnt_intensity_householdCluster = m_calendar->GetHouseholdClusteringLevel();

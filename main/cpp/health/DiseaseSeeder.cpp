@@ -22,7 +22,7 @@
 
 #include "contact/EventLogMode.h"
 #include "pop/Population.h"
-#include "pop/SurveySeeder.h"
+#include "pop/SurveyManager.h"
 #include "util/FileSys.h"
 #include "util/LogUtils.h"
 #include "util/StringUtils.h"
@@ -96,9 +96,9 @@ void DiseaseSeeder::ImportInfectedCases(std::shared_ptr<Population> pop, unsigne
 
                         // register as survey participant
                         //TODO: add link with logLevel
-                        SurveySeeder sSeeder(m_config,m_rn_man);
+                        SurveyManager sManager(pop,m_config,m_rn_man);
                         std::string survey_type = "infection";
-                        sSeeder.RegisterParticipant(pop,p,survey_type);
+                        sManager.RegisterParticipant(pop,p,simDay,survey_type);
                 }
         }
 }

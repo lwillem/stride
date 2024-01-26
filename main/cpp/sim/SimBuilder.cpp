@@ -27,7 +27,7 @@
 #include "health/HealthSeeder.h"
 #include "health/ImmunitySeeder.h"
 #include "healthcare/PublicHealthAgency.h"
-#include "pop/SurveySeeder.h"
+#include "pop/SurveyManager.h"
 #include "sim/Sim.h"
 #include "util/StringUtils.h"
 #include "util/FileSys.h"
@@ -115,7 +115,8 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         // --------------------------------------------------------------
         // Seed population with survey participants.
         // --------------------------------------------------------------
-        SurveySeeder(m_config, sim->m_rn_man_ptr).Seed(sim->m_population);
+        SurveyManager(sim->m_population, m_config, sim->m_rn_man_ptr).ManagePanel(sim->m_population);
+		//sim->m_survey_manager.Initialize(m_config, sim->m_population, sim->m_rn_man_ptr);
 
         // --------------------------------------------------------------
         // Seed heterogeniety in social contact behaviour.

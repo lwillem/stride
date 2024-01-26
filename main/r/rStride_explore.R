@@ -74,6 +74,8 @@ exp_param_list$event_log_level               <- 'Participants'
 exp_param_list$num_participants_survey       <- 5000
 exp_param_list$contact_survey_dates          <- c_str(exp_param_list$start_date,'2020-03-30','2020-05-20','2020-10-15')
 exp_param_list$contact_survey_ages           <- c_str(seq(0,90,10))
+exp_param_list$contact_survey_resample       <- 1
+
 
 # check period
 range(as.Date(exp_param_list$start_date), as.Date(exp_param_list$start_date)+ exp_param_list$num_days)
