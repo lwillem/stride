@@ -114,6 +114,11 @@ get_covid19_default_param <- function(){
    # out$num_participants_survey <- 5000        # number of participants
    # out$contact_survey_dates    <- c_str('2020-03-16','2020-03-17) # single days
    # out$contact_survey_ages     <- c_str(0,18,110)
+   # exp_param_list$contact_survey_resample       <- 0 # get new participants each survey day? (0 or 1)
+   
+   # # survey quota [0-1] for symptomatic participants
+   # # note: 0 means no quota (= fully at random) and the sample is restricted by the number of symptomatic during the survey
+   # exp_param_list$contact_survey_quota_symptomatic <- 0.1  
    
    # return parameters
    return(out)

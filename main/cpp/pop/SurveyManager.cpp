@@ -42,6 +42,11 @@ SurveyManager::SurveyManager(std::shared_ptr<Population> pop, const ptree& confi
 	m_resample_panel   = config.get<unsigned int>("run.contact_survey_resample",0) == 1;
 	m_is_survey_active = EventLogMode::ToMode(config.get<string>("run.event_log_level", "None")) != EventLogMode::Id::None;
 	m_num_participants = config.get<unsigned int>("run.num_participants_survey");
+
+	m_quota_symptomatic = config.get<double>("run.contact_survey_quota_symptomatic",0);
+	m_quota_symptomatic = m_quota_symptomatic > 1 ? 1 : m_quota_symptomatic;
+	m_quota_symptomatic = m_quota_symptomatic < 0 ? 0 : m_quota_symptomatic;
+
 }
 
 void SurveyManager::ManagePanel(unsigned int simDay)
@@ -49,48 +54,58 @@ void SurveyManager::ManagePanel(unsigned int simDay)
 	if(m_is_survey_active){
 		if(!m_panel_ready) {
 			m_panel_ready = !m_resample_panel;
-			if(m_resample_panel){
-				ClearPanel();
-			}
-			SampleParticipants(simDay);
+			SampleParticipantsWithQuota(simDay);
 		}
 		LogHealthStates(simDay);
 	}
 }
 
-void SurveyManager::SampleParticipants(unsigned int simDay){
+void SurveyManager::SampleParticipantsWithQuota(unsigned int simDay){
+
+	// Clear panel (if existing)
+	ClearPanel();
+
 	Population& population  = *m_population;
 
-		const auto  popCount    = static_cast<unsigned int>(population.size() - 1);
-		auto  numSurveyed       = m_num_participants;
+	const auto  popCount    = static_cast<unsigned int>(population.size() - 1);
+	auto  numSurveyed       = m_num_participants;
 
-		assert((popCount >= 1U) && "SurveySeeder> Population count zero unacceptable.");
-		assert((popCount >= numSurveyed) && "SurveySeeder> Pop count has to exceed the number of survey participants.");
+	assert((popCount >= 1U) && "SurveySeeder> Population count zero unacceptable.");
+	assert((popCount >= numSurveyed) && "SurveySeeder> Pop count has to exceed the number of survey participants.");
 
-		// Make sure the number of survey participants does not outnumber the population size (else no survey)
-		if(popCount < numSurveyed){
-			numSurveyed = 1;
+	// Make sure the number of survey participants does not outnumber the population size (else no survey)
+	if(popCount < numSurveyed){
+		numSurveyed = 1;
+	}
 
+	unsigned int numSymptomatic     = static_cast<unsigned int>(std::round(numSurveyed * m_quota_symptomatic));
+	if(numSymptomatic > population.CountSymptomaticCases()){
+			numSymptomatic = population.CountSymptomaticCases();
+	}
+	unsigned int numNonSymptomatic = numSurveyed - numSymptomatic;
+
+	// loop over population in random order
+	vector<unsigned int> indices(popCount);
+	iota(indices.begin(), indices.end(), 0U);
+	m_rn_man->at(0U).Shuffle(indices);
+
+	for (unsigned int i_p = 0; i_p < popCount && numSurveyed > 0; i_p++) {
+		Person& p = population[indices[i_p]];
+
+		if(m_quota_symptomatic > 0 && p.GetHealth().IsSymptomatic()){
+			if(numSymptomatic > 0) { numSymptomatic--;} else {continue;}
+		} else {
+			if(numNonSymptomatic > 0) { numNonSymptomatic--;} else {continue;}
 		}
 
-		// Use while-loop to get 'participants' unique participants (default sampling is with replacement).
-		// A for loop will not do because we might draw the same person twice.
-		auto numSamples = 0U;
-		auto generator  = m_rn_man->at(0U).GetUniformIntGenerator(0, static_cast<int>(popCount));
+		// register new participant
+		std::string survey_type = "contacts";
+		RegisterParticipant(p,simDay,survey_type);
 
-		while (numSamples < numSurveyed) {
-				Person& p = population[generator()];
-				if (p.IsSurveyParticipant()) {
-						continue;
-				}
+		// update number of remaining samples
+		numSurveyed--;
 
-				// register new participant
-				std::string survey_type = "contacts";
-				RegisterParticipant(p,simDay,survey_type);
-
-				// update number of remaining samples
-				numSamples++;
-		}
+	}
 }
 
 void SurveyManager::RegisterParticipant(Person& p, unsigned int simDay ,std::string& survey_type)

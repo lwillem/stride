@@ -78,22 +78,35 @@ inspect_contact_data <- function(project_dir){
   data_cnt_all      <- .rstride$load_aggregated_output(project_dir,'data_contacts',exp_summary$exp_id)
   data_part_demo    <- .rstride$load_aggregated_output(project_dir,'data_participants',exp_summary$exp_id)
   data_health_all   <- .rstride$load_aggregated_output(project_dir,'data_health',exp_summary$exp_id)
+
+  # get ID based on local_id and sim day
+  get_panel_id <- function(survey_data){
+    return(paste(survey_data$local_id, survey_data$sim_day,sep='d'))
+  } 
+  data_cnt_all$panel_id    <- get_panel_id(data_cnt_all)
+  data_part_demo$panel_id  <- get_panel_id(data_part_demo)
+  data_health_all$panel_id <- get_panel_id(data_health_all)
   
-  # select participant and contact data from from contact survey (and not infected seeds)
+  # select participant and contact data from contact survey (and not infected seeds)
   data_part_demo  <- data_part_demo[data_part_demo$survey_type == "contacts",]
-  data_cnt_all    <- data_cnt_all[data_cnt_all$local_id %in% data_part_demo$local_id,]
-  data_health_all <- data_health_all[data_health_all$local_id %in% data_part_demo$local_id,]
+  data_cnt_all    <- data_cnt_all[data_cnt_all$panel_id %in% data_part_demo$panel_id,]
+  data_health_all <- data_health_all[data_health_all$panel_id %in% data_part_demo$panel_id,]
   
   dim(data_part_demo)
   dim(data_health_all)
   
-  # focus on demographic characteristics
+  # focus on demographic characteristics (and use panel_id)
   data_part_demo <- data_part_demo[,!grepl('is_',names(data_part_demo))]
-  data_part_demo$sim_day <- NULL
-
+  data_part_demo$sim_day  <- NULL
+  data_part_demo$local_id <- NULL
+  
   # join demographic and health data
-  data_part_all <- merge(data_health_all,data_part_demo,by=c('local_id','exp_id'))
+  data_part_all <- merge(data_health_all,data_part_demo,by=c('panel_id','exp_id'))
 
+  dim(data_part_all)
+  dim(data_part_demo)
+  dim(data_health_all)
+  
   ## reformat
   data_cnt_all$cnt_school    <- as.numeric(data_cnt_all$cnt_school)
   data_cnt_all$cnt_community_weekend <- as.numeric(data_cnt_all$cnt_community_weekend)
@@ -121,7 +134,7 @@ inspect_contact_data <- function(project_dir){
   }
     
   ## people without contacts
-  dim(data_part_all)[1] - length(unique(data_cnt_all$local_id))
+  dim(data_part_all)[1] - length(unique(data_cnt_all$panel_id))
      
   ## employed and student population
   data_part_all$employed <- data_part_all$workplace_id != 0
@@ -297,7 +310,7 @@ inspect_contact_data <- function(project_dir){
 {
   
   # select participants
-  data_cnt_flag <- f_data_cnt$local_id %in% f_data_part$local_id 
+  data_cnt_flag <- f_data_cnt$panel_id %in% f_data_part$panel_id 
   
   # temporary max age
   L_temp <- max(f_data_cnt$part_age,L,f_data_cnt$cnt_age)+1
@@ -422,13 +435,13 @@ inspect_contact_data <- function(project_dir){
 .rstride$plot_cnt_count_ggplot <- function(f_data_cnt,f_data_part,L,num_days,title){
   
   if(nrow(f_data_cnt)==0){
-    ggplot_data <-data.frame(local_id = -1,
+    ggplot_data <-data.frame(panel_id = -1,
                              part_age = f_data_part$part_age,
                              cnt_count = 0)
   } else{
     # Covert matrix into data.frame for plotting with ggplot
-    ggplot_data        <- data.frame(table(f_data_cnt$local_id)/ num_days) 
-    names(ggplot_data) <- c('local_id','cnt_count')
+    ggplot_data        <- data.frame(table(f_data_cnt$panel_id)/ num_days) 
+    names(ggplot_data) <- c('panel_id','cnt_count')
     ggplot_data <- merge(ggplot_data,f_data_part)
   }
   

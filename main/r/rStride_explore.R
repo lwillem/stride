@@ -72,9 +72,14 @@ exp_param_list$imported_cases_delay          <- 5
 
 exp_param_list$event_log_level               <- 'Participants'
 exp_param_list$num_participants_survey       <- 5000
-exp_param_list$contact_survey_dates          <- c_str(exp_param_list$start_date,'2020-03-30','2020-05-20','2020-10-15')
+# //exp_param_list$contact_survey_dates          <- c_str(exp_param_list$start_date,'2020-03-30','2020-05-20','2020-10-15')
+exp_param_list$contact_survey_dates          <- c_str(exp_param_list$start_date,'2020-02-20','2020-03-30')
 exp_param_list$contact_survey_ages           <- c_str(seq(0,90,10))
 exp_param_list$contact_survey_resample       <- 1
+
+# survey quota [0-1] for symptomatic participants
+# note: 0 means no quota (= fully at random) and the sample is restricted by the number of symptomatic during the survey
+exp_param_list$contact_survey_quota_symptomatic <- 0.5  
 
 
 # check period

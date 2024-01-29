@@ -79,7 +79,7 @@ plot_socrates_all <- function(data_cnt_all,
   }
 }
 
- # data_cnt <- data_cnt_day; data_part <- data_part_non_sympt;survey_day <- as.Date(survey_start) + i_day;title_add=''
+ # data_cnt <- data_cnt_day; data_part <- data_part_all;survey_day <- as.Date(survey_start) + i_day;title_add=''
 plot_socrates_location <- function(data_cnt,data_part,age_cat_breaks,survey_day,title_add=''){
   
   par(mfrow=c(2,3))
@@ -112,8 +112,10 @@ plot_socrates_location <- function(data_cnt,data_part,age_cat_breaks,survey_day,
   survey_day <- as.Date(survey_day)
   Sys.setlocale("LC_TIME", 'en_GB.UTF-8')
   text(0,0,paste(title_add,format(survey_day,'\n%A'),survey_day),pos=3)
-  text(0,0,paste('Contacts when symptomatic:',sum(data_cnt$part_sympt[data_cnt$local_id %in% data_part$local_id]),
-                  '\nNumber of participants:',nrow(data_part)),pos=1)
+  text(0,0,paste('Number of participants:',nrow(data_part),
+                 '\nNumber symptomatic participants:',sum(data_part$is_symptomatic),
+                 '\nContacts when symptomatic:',sum(data_cnt$part_sympt[data_cnt$local_id %in% data_part$local_id])),pos=1)
+ 
   
   return(list(mij_total                 = mij_total$matrix,
               mij_household             = mij_household$matrix,

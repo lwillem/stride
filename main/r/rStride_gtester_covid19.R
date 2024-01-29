@@ -532,8 +532,8 @@ if(setequal(data_incidence[,names(data_incidence) != 'exp_id'],
     diff_incidence_colnames <- unique(gsub('_age.*','',diff_incidence_colnames))
     smd_print(diff_incidence_colnames,WARNING = T)
     
-    # include "exp_id" column, to make sure there are at least 2 columns for the rowSums
-    diff_incidence$exp_id <- data_incidence$exp_id
+    # # include "exp_id" column, to make sure there are at least 2 columns for the rowSums
+    # diff_incidence$exp_id <- data_incidence$exp_id
     
     if(all(dim(data_incidence) == dim(ref_data_incidence))){
       flag <- rowSums(data_incidence[,names(diff_incidence)] != ref_data_incidence[,names(diff_incidence)],na.rm=T)>0
