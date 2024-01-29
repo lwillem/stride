@@ -159,7 +159,11 @@ inspect_contact_data <- function(project_dir){
                     bool_rds       = TRUE)
   
   # # check rds
-  # cnt_matrix_all <- readRDS(file.path(project_dir,'exp0001_AG_cnt_matrix.rds'))
+  # cnt_matrix_all <- readRDS(file.path(project_dir,'exp0002_AG_cnt_matrix.rds'))
+  # names(cnt_matrix_all)
+  # names(cnt_matrix_all$day0)
+  # names(cnt_matrix_all$day0$survey_all)
+  # cnt_matrix_all$day0$survey_all$cij_total
   
   ## Other figures ####
   opt_day <- unique(data_cnt_all$sim_day)

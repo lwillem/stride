@@ -49,25 +49,25 @@ plot_socrates_all <- function(data_cnt_all,
     data_cnt_day  <- data_cnt_all[data_cnt_all$sim_day == i_day,]
     data_part_day <- data_part_all[data_part_all$sim_day == i_day,]
 
-    mij_all      <- plot_socrates_location(data_cnt_day,data_part_day,age_cat_breaks,as.Date(survey_start) + i_day)
+    survey_all      <- plot_socrates_location(data_cnt_day,data_part_day,age_cat_breaks,as.Date(survey_start) + i_day)
  
     # select symptomatic participants and their contacts on 'i_day' 
     # note: symptomatic people are only identified if they have contacts on day i_day (potential bias!)
     # data_cnt_day    <- data_cnt_all[data_cnt_all$sim_day == i_day & data_cnt_all$part_sympt == 1,]
     data_part_sympt <- data_part_day[data_part_day$is_symptomatic == 1,]
-    mij_sympt       <- plot_socrates_location(data_cnt_day,data_part_sympt,age_cat_breaks,as.Date(survey_start) + i_day,title_add='SYMPT')
+    survey_sympt       <- plot_socrates_location(data_cnt_day,data_part_sympt,age_cat_breaks,as.Date(survey_start) + i_day,title_add='SYMPT')
   
     # select non-symptomatic participants and their contacts on 'i_day' 
     # data_cnt_day        <- data_cnt_all[data_cnt_all$sim_day == i_day & data_cnt_all$part_sympt == 0,]
     data_part_non_sympt <- data_part_day[!data_part_day$local_id %in% data_part_sympt$local_id,]
-    mij_non_sympt       <- plot_socrates_location(data_cnt_day,data_part_non_sympt,age_cat_breaks,as.Date(survey_start) + i_day,title_add='NON-SYMPT')
+    survey_non_sympt       <- plot_socrates_location(data_cnt_day,data_part_non_sympt,age_cat_breaks,as.Date(survey_start) + i_day,title_add='NON-SYMPT')
 
     if(bool_rds){
-      mij_summary[[paste0('day',i_day)]] <- list(mij_all       = mij_all,
-                                                 mij_sympt     = mij_sympt,
-                                                 mij_non_sympt = mij_non_sympt,
-                                                 date          = as.Date(survey_start) + i_day,
-                                                 exp_tag       = exp_tag)
+      mij_summary[[paste0('day',i_day)]] <- list(survey_all       = survey_all,
+                                                 survey_sympt     = survey_sympt,
+                                                 survey_non_sympt = survey_non_sympt,
+                                                 date             = as.Date(survey_start) + i_day,
+                                                 exp_tag          = exp_tag)
     } 
     
   } # end for-loop opt_days
@@ -85,27 +85,27 @@ plot_socrates_location <- function(data_cnt,data_part,age_cat_breaks,survey_day,
   par(mfrow=c(2,3))
   
   ## TOTAL
-  mij_total <- plot_contact_matrix_socrates(data_cnt,data_part,paste(title_add,'total'),age_cat_breaks)
+  mij_cij_total <- plot_contact_matrix_socrates(data_cnt,data_part,paste(title_add,'total'),age_cat_breaks)
   
   ## HOUSEHOLD
-  mij_household <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_home==1,],data_part,paste(title_add,'@household'),age_cat_breaks)
+  mij_cij_household <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_home==1,],data_part,paste(title_add,'@household'),age_cat_breaks)
   
   ## SCHOOL
-  mij_school             <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_school==1,],data_part,paste(title_add,'@school'),age_cat_breaks)
-  mij_school_conditional <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_school==1,],data_part[data_part$student==T,],paste(title_add,'@school (conditional)'),age_cat_breaks,bool_plot = FALSE)
+  mij_cij_school             <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_school==1,],data_part,paste(title_add,'@school'),age_cat_breaks)
+  mij_cij_school_conditional <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_school==1,],data_part[data_part$student==T,],paste(title_add,'@school (conditional)'),age_cat_breaks,bool_plot = FALSE)
   
   ## WORK
-  mij_workplace             <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_workplace==1,],data_part,paste(title_add,'@workplace'),age_cat_breaks)
-  mij_workplace_conditional <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_workplace==1,],data_part[data_part$employed==T,],paste(title_add,'@workplace (conditional)'),age_cat_breaks,bool_plot = FALSE)
+  mij_cij_workplace             <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_workplace==1,],data_part,paste(title_add,'@workplace'),age_cat_breaks)
+  mij_cij_workplace_conditional <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_workplace==1,],data_part[data_part$employed==T,],paste(title_add,'@workplace (conditional)'),age_cat_breaks,bool_plot = FALSE)
   
   ## PRIMARY COMMUNITY
-  mij_community_weekend <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_community_weekend==1,],data_part,paste(title_add,'@weekend community'),age_cat_breaks)
+  mij_cij_community_weekend <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_community_weekend==1,],data_part,paste(title_add,'@weekend community'),age_cat_breaks)
   
   ## SECONDARY COMMUNITY
-  mij_community_weekday <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_community_weekday==1,],data_part,paste(title_add,'@week community'),age_cat_breaks)
+  mij_cij_community_weekday <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_community_weekday==1,],data_part,paste(title_add,'@week community'),age_cat_breaks)
   
   ## HOUSEHOLD CLUSTER
-  mij_household_cluster <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_household_cluster==1,],data_part,paste(title_add,'@household cluster'),age_cat_breaks)
+  mij_cij_household_cluster <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_household_cluster==1,],data_part,paste(title_add,'@household cluster'),age_cat_breaks)
   
   plot(0,0,col=0,axes=F,xlab='',ylab='')
   # survey_day <- as.Date(exp_summary$start_date) + unique(data_cnt$sim_day)
@@ -117,16 +117,27 @@ plot_socrates_location <- function(data_cnt,data_part,age_cat_breaks,survey_day,
                  '\nContacts when symptomatic:',sum(data_cnt$part_sympt[data_cnt$local_id %in% data_part$local_id])),pos=1)
  
   
-  return(list(mij_total                 = mij_total$matrix,
-              mij_household             = mij_household$matrix,
-              mij_school                = mij_school$matrix,
-              mij_school_conditional    = mij_school_conditional$matrix,
-              mij_workplace             = mij_workplace$matrix,
-              mij_workplace_conditional = mij_workplace_conditional$matrix,
-              mij_community_weekend     = mij_community_weekend$matrix,
-              mij_community_weekday     = mij_community_weekday$matrix,
-              mij_household_cluster     = mij_household_cluster$matrix,
-              participants              = mij_total$participants))
+  return(list(mij_total                 = mij_cij_total$matrix,
+              mij_household             = mij_cij_household$matrix,
+              mij_school                = mij_cij_school$matrix,
+              mij_school_conditional    = mij_cij_school_conditional$matrix,
+              mij_workplace             = mij_cij_workplace$matrix,
+              mij_workplace_conditional = mij_cij_workplace_conditional$matrix,
+              mij_community_weekend     = mij_cij_community_weekend$matrix,
+              mij_community_weekday     = mij_cij_community_weekday$matrix,
+              mij_household_cluster     = mij_cij_household_cluster$matrix,
+              
+              cij_total                 = mij_cij_total$matrix.per.capita,
+              cij_household             = mij_cij_household$matrix.per.capita,
+              cij_school                = mij_cij_school$matrix.per.capita,
+              cij_school_conditional    = mij_cij_school_conditional$matrix.per.capita,
+              cij_workplace             = mij_cij_workplace$matrix.per.capita,
+              cij_workplace_conditional = mij_cij_workplace_conditional$matrix.per.capita,
+              cij_community_weekend     = mij_cij_community_weekend$matrix.per.capita,
+              cij_community_weekday     = mij_cij_community_weekday$matrix.per.capita,
+              cij_household_cluster     = mij_cij_household_cluster$matrix.per.capita,
+              
+              participants              = mij_cij_total$participants))
 }
 
 # data_cnt <- data_cnt[data_cnt$cnt_workplace==1,]; data_part <- data_part[data_part$student==T,]
@@ -169,7 +180,7 @@ plot_contact_matrix_socrates <- function(data_cnt,data_part,figure_title,age_cat
 
   # get matrix
   suppressWarnings(
-  cnt_matrix <- contact_matrix(survey_rstride,age.limits = age_cat_breaks)  
+  cnt_matrix <- contact_matrix(survey_rstride,age.limits = age_cat_breaks,per.capita = TRUE)  
   )
   
   # account for NA
