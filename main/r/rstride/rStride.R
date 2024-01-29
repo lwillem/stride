@@ -42,7 +42,8 @@ smd_load_packages(c('XML',           # to parse and write XML files
                     'tidyr',         # to easily replace na's by 0 (replace_na)
                     'lhs',           # to sample from a latin hypercube design (instead of using a full factorial grid)
                     'corrplot',      # to visualise the parameter correlations in the paretor front selection
-                    'wpp2019'        # to derive population data
+                    'wpp2019',       # to derive population data
+                    'dplyr'          # to join data.frames and data.tables
                     ))
 
 # load general help functions
@@ -226,8 +227,8 @@ run_rStride <- function(exp_design               = exp_design,
                 use_date_prefix          = TRUE,
                 get_tracing_rdata        = FALSE,
                 num_parallel_workers     = NA,
-                erase_category           = TRUE),
-                bool_maintain_file_name  = FALSE)
+                erase_category           = TRUE,
+                bool_maintain_file_name  = FALSE))
     #run_tag <- basename(project_dir)
   }
   

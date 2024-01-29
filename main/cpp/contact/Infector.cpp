@@ -75,8 +75,10 @@ inline void RegisterTransmissionPartial (const std::shared_ptr<spdlog::logger>& 
 inline void RegisterContact (const std::shared_ptr<spdlog::logger>& logger, const Person* p1, const Person* p2,
         ContactType::Id type, unsigned short int sim_day, const double cProb, const double tProb)
 	{
-	logger->info("[CONT] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}", p1->GetId(), p1->GetAge(),
-	                                     p2->GetAge(), static_cast<unsigned int>(type == ContactType::Id::Household),
+	logger->info("[CONT] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}",
+										 p1->GetId(), p1->GetAge(),
+										 p2->GetId(), p2->GetAge(),
+										 static_cast<unsigned int>(type == ContactType::Id::Household),
 	                                     static_cast<unsigned int>(type == ContactType::Id::School),
 	                                     static_cast<unsigned int>(type == ContactType::Id::Workplace),
 	                                     static_cast<unsigned int>(type == ContactType::Id::CommunityWeekend),
@@ -84,7 +86,9 @@ inline void RegisterContact (const std::shared_ptr<spdlog::logger>& logger, cons
 										 static_cast<unsigned int>(type == ContactType::Id::HouseholdCluster),
 										 static_cast<unsigned int>(type == ContactType::Id::Collectivity),
 										 sim_day,
-										 cProb, tProb,p2->GetHealth().IsSymptomatic(),p1->GetHealth().IsSymptomatic(), p2->GetId());
+										 cProb, tProb,
+										 p1->GetHealth().IsSymptomatic(),
+										 p2->GetHealth().IsSymptomatic());
 }
 
 /// Primary LOG_POLICY policy, implements EventLogMode::None.

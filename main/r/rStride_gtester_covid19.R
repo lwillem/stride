@@ -505,6 +505,9 @@ if(!setequal(project_summary[,!grepl('_id',names(project_summary))],
 }
 
 ## COMPARE INCIDENCE ----
+data_incidence     <- data_incidence[,names(data_incidence) %in% names(ref_data_incidence)]
+ref_data_incidence <- ref_data_incidence[,names(ref_data_incidence) %in% names(data_incidence)]
+
 if(setequal(data_incidence[,names(data_incidence) != 'exp_id'], 
             ref_data_incidence[,names(ref_data_incidence) != 'exp_id'])){
   smd_print("INCIDENCE OK")
@@ -571,7 +574,7 @@ if(length(sel_col)>0 && setequal(data_prevalence[,sel_col],
 
 ## COMPARE SOCIAL CONTACT SURVEY DATA ----
 if(!any(is.na(data_contacts))){
-  sel_col <- names(data_contacts)[names(data_contacts) != 'exp_id'] # make sure the same columns are compared
+  sel_col <- names(data_contacts)[names(data_contacts) %in% names(ref_data_contacts) & names(data_contacts) != 'exp_id'] # make sure the same columns are compared
   if(setequal(colSums(data_contacts[,sel_col]),colSums(ref_data_contacts[,sel_col]))){
     smd_print("CONTACT DATA OK")
   } else{
@@ -582,8 +585,8 @@ if(!any(is.na(data_contacts))){
 }
 
 if(!any(is.na(data_participants))){
-  sel_col <- !grepl('_id',names(data_participants)) # make sure the same columns are compared
-  if(setequal(data_participants[,sel_col],ref_data_participants[,sel_col])){
+  sel_col <- names(data_participants)[names(data_participants) %in% names(ref_data_participants) & !grepl('_id',names(data_participants))] # make sure the same columns are compared
+  if(setequal(colSums(data_participants[,sel_col]),colSums(ref_data_participants[,sel_col]))){
     smd_print("PARTICIPANT DATA OK")
   } else{
     smd_print("PARTICIPANT DATA CHANGED!",WARNING = T)

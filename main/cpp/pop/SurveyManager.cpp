@@ -37,20 +37,36 @@ using namespace std;
 namespace stride {
 
 SurveyManager::SurveyManager(std::shared_ptr<Population> pop, const ptree& config, std::shared_ptr<RnMan> rnMan) :
-		m_population(pop), m_config(config), m_rn_man(rnMan), m_panel_ready(false){
+		m_population(pop), m_rn_man(rnMan), m_panel_ready(false), m_is_initialised(false){
 
+	m_resample_panel   = config.get<unsigned int>("run.contact_survey_resample",0) == 1;
+	m_log_level        = EventLogMode::ToMode(config.get<string>("run.event_log_level", "None")) != EventLogMode::Id::None;
+	m_num_participants = config.get<unsigned int>("run.num_participants_survey");
 }
 
-void SurveyManager::ManagePanel(shared_ptr<Population> pop, unsigned int simDay)
+void SurveyManager::ManagePanel(unsigned int simDay)
 {
-	const EventLogMode::Id logLevel   = EventLogMode::ToMode(m_config.get<string>("run.event_log_level", "None"));
-	if (!m_panel_ready && logLevel != EventLogMode::Id::None) {
+	if(m_log_level && (simDay > 0U || !m_is_initialised)){
+		if(!m_panel_ready) {
 
-		m_panel_ready = m_config.get<unsigned int>("run.contact_survey_resample",0) == 0;
+			// fix to prevent double initialisation (in SimBuilder and in Sim::TimeStep on day 0)
+			m_is_initialised = true;
 
-		Population& population  = *pop;
+			m_panel_ready = !m_resample_panel;
+			if(m_resample_panel){
+				ClearPanel();
+			}
+			SampleParticipants(simDay);
+		}
+		LogHealthStates(simDay);
+	}
+}
+
+void SurveyManager::SampleParticipants(unsigned int simDay){
+	Population& population  = *m_population;
+
 		const auto  popCount    = static_cast<unsigned int>(population.size() - 1);
-		auto  numSurveyed = m_config.get<unsigned int>("run.num_participants_survey");
+		auto  numSurveyed       = m_num_participants;
 
 		assert((popCount >= 1U) && "SurveySeeder> Population count zero unacceptable.");
 		assert((popCount >= numSurveyed) && "SurveySeeder> Pop count has to exceed the number of survey participants.");
@@ -74,20 +90,19 @@ void SurveyManager::ManagePanel(shared_ptr<Population> pop, unsigned int simDay)
 
 				// register new participant
 				std::string survey_type = "contacts";
-				RegisterParticipant(pop,p,simDay,survey_type);
+				RegisterParticipant(p,simDay,survey_type);
 
 				// update number of remaining samples
 				numSamples++;
 		}
-	}
 }
 
-void SurveyManager::RegisterParticipant(std::shared_ptr<Population> pop, Person& p, unsigned int simDay ,std::string& survey_type)
+void SurveyManager::RegisterParticipant(Person& p, unsigned int simDay ,std::string& survey_type)
 {
 
-	const EventLogMode::Id logLevel   = EventLogMode::ToMode(m_config.get<string>("run.event_log_level", "None"));
-	if (logLevel != EventLogMode::Id::None) {
-		Population& population  = *pop;
+	if (m_log_level) {
+
+		Population& population  = *m_population;
 
 		auto&       poolSys     = population.CRefPoolSys();
 		auto&       logger      = population.RefEventLogger();
@@ -105,8 +120,9 @@ void SurveyManager::RegisterParticipant(std::shared_ptr<Population> pop, Person&
 		const auto pHC  = p.GetPoolId(Id::HouseholdCluster);
 		const auto pCol = p.GetPoolId(Id::Collectivity);
 
-		logger->info("[PART] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}",
+		logger->info("[PART] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}",
 			 p.GetId(), p.GetAge(), pHH, pS, pW, pHC, pCol, h.IsSusceptible(), h.IsInfected(), h.IsInfectious(),
+			 h.IsSymptomatic(),
 			 h.IsRecovered(), p.IsImmune(), h.GetStartInfectiousness(), h.GetStartSymptomatic(),
 			 h.GetStartHospitalisationValue(),
 			 h.GetEndInfectiousness(), h.GetEndSymptomatic(),
@@ -119,6 +135,40 @@ void SurveyManager::RegisterParticipant(std::shared_ptr<Population> pop, Person&
 			 simDay, survey_type
 			 );
 	 }
+}
+
+
+//TODO: check omp options
+void SurveyManager::ClearPanel(){
+
+	Population& population  = *m_population;
+
+	for (size_t i = 0; i < population.size(); ++i) {
+    	population[i].QuitSurvey();
+	}
+
+}
+
+//TODO: check omp options
+void SurveyManager::LogHealthStates(unsigned int simDay){
+
+	if (m_log_level) {
+
+		Population& population  = *m_population;
+		auto&       logger      = population.RefEventLogger();
+
+		for (auto& p : population) {
+			if(p.IsSurveyParticipant()){
+				// log person details
+				const auto h    = p.GetHealth();
+				logger->info("[HEALTH] {} {} {} {} {} {} {} {}",
+								 p.GetId(), simDay, h.IsSusceptible(), h.IsInfected(), h.IsInfectious(),
+								 h.IsSymptomatic(), h.IsRecovered(), p.IsImmune()
+								 );
+					}
+
+			}
+		}
 }
 
 

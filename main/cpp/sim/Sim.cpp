@@ -44,7 +44,8 @@ Sim::Sim()
       m_calendar(nullptr), m_contact_profiles(), m_infector_default(),m_infector_tracing(),
       m_population(nullptr), m_rn_man_ptr(), m_transmission_profile(),
       m_is_isolated_from_household(false),
-	  m_public_health_agency()
+	  m_public_health_agency(),
+	  m_survey_manager(nullptr)
 {
 }
 
@@ -75,11 +76,6 @@ void Sim::TimeStep()
         auto& infector      = (m_public_health_agency.IsContactTracingActive(m_calendar) ||
         								m_calendar->IsContactSurveyActive()) ? *m_infector_tracing : *m_infector_default;
 
-        // Check survey manager if social contact survey is active
-        if(m_calendar->IsContactSurveyActive()){
-
-        }
-
         // Get household clustering intensity
         double cnt_intensity_householdCluster = m_calendar->GetHouseholdClusteringLevel();
 
@@ -98,6 +94,11 @@ void Sim::TimeStep()
         	DiseaseSeeder(m_config, m_rn_man_ptr).ImportInfectedCases(m_population, m_calendar->GetNumberOfImportedCases(), simDay, m_transmission_profile, m_rn_man_ptr->at(0));
             logger->info("[IMPORT-CASES] sim_day={} count={}", simDay, m_calendar->GetNumberOfImportedCases());        	
         }
+
+        // manage survey panel if social contact survey is active
+	    if(m_calendar->IsContactSurveyActive()){
+	    	m_survey_manager->ManagePanel(simDay);
+	    }
 
 #pragma omp parallel num_threads(m_num_threads)
         {

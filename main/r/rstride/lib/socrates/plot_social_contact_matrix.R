@@ -46,18 +46,20 @@ plot_socrates_all <- function(data_cnt_all,
   
   i_day <- 43
   for(i_day in opt_day){
-    data_cnt_day <- data_cnt_all[data_cnt_all$sim_day == i_day,]
-    mij_all      <- plot_socrates_location(data_cnt_day,data_part_all,age_cat_breaks,as.Date(survey_start) + i_day)
+    data_cnt_day  <- data_cnt_all[data_cnt_all$sim_day == i_day,]
+    data_part_day <- data_part_all[data_part_all$sim_day == i_day,]
+
+    mij_all      <- plot_socrates_location(data_cnt_day,data_part_day,age_cat_breaks,as.Date(survey_start) + i_day)
  
     # select symptomatic participants and their contacts on 'i_day' 
     # note: symptomatic people are only identified if they have contacts on day i_day (potential bias!)
-    data_cnt_day    <- data_cnt_all[data_cnt_all$sim_day == i_day & data_cnt_all$part_sympt == 1,]
-    data_part_sympt <- data_part_all[data_part_all$local_id %in% data_cnt_day$local_id,]
+    # data_cnt_day    <- data_cnt_all[data_cnt_all$sim_day == i_day & data_cnt_all$part_sympt == 1,]
+    data_part_sympt <- data_part_day[data_part_day$is_symptomatic == 1,]
     mij_sympt       <- plot_socrates_location(data_cnt_day,data_part_sympt,age_cat_breaks,as.Date(survey_start) + i_day,title_add='SYMPT')
   
     # select non-symptomatic participants and their contacts on 'i_day' 
-    data_cnt_day        <- data_cnt_all[data_cnt_all$sim_day == i_day & data_cnt_all$part_sympt == 0,]
-    data_part_non_sympt <- data_part_all[!data_part_all$local_id %in% data_part_sympt$local_id,]
+    # data_cnt_day        <- data_cnt_all[data_cnt_all$sim_day == i_day & data_cnt_all$part_sympt == 0,]
+    data_part_non_sympt <- data_part_day[!data_part_day$local_id %in% data_part_sympt$local_id,]
     mij_non_sympt       <- plot_socrates_location(data_cnt_day,data_part_non_sympt,age_cat_breaks,as.Date(survey_start) + i_day,title_add='NON-SYMPT')
 
     if(bool_rds){
@@ -77,7 +79,7 @@ plot_socrates_all <- function(data_cnt_all,
   }
 }
 
- # data_cnt <- data_cnt_day; data_part <- data_part_all;survey_day <- as.Date(survey_start) + i_day;title_add=''
+ # data_cnt <- data_cnt_day; data_part <- data_part_non_sympt;survey_day <- as.Date(survey_start) + i_day;title_add=''
 plot_socrates_location <- function(data_cnt,data_part,age_cat_breaks,survey_day,title_add=''){
   
   par(mfrow=c(2,3))
@@ -110,7 +112,7 @@ plot_socrates_location <- function(data_cnt,data_part,age_cat_breaks,survey_day,
   survey_day <- as.Date(survey_day)
   Sys.setlocale("LC_TIME", 'en_GB.UTF-8')
   text(0,0,paste(title_add,format(survey_day,'\n%A'),survey_day),pos=3)
-  text(0,0,paste('Contacts when symptomatic:',sum(data_cnt$part_sympt),
+  text(0,0,paste('Contacts when symptomatic:',sum(data_cnt$part_sympt[data_cnt$local_id %in% data_part$local_id]),
                   '\nNumber of participants:',nrow(data_part)),pos=1)
   
   return(list(mij_total                 = mij_total$matrix,

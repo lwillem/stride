@@ -38,26 +38,37 @@ class RnMan;
 class SurveyManager
 {
 public:
-        /// Initialize Seeder.
+		/// Initialize SurveyManager.
         /// \param config         Configuration parameters.
         /// \param rnMan         Random number manager.
 		SurveyManager(std::shared_ptr<Population> pop, const boost::property_tree::ptree& config, std::shared_ptr<util::RnMan> rnMan);
 
-        /// Seeds the population with survey participants.
+        /// Manage the survey participants in the given population.
         /// \param pop               Population.
-        void ManagePanel(std::shared_ptr<Population> pop, unsigned int simDay = 0U);
+        void ManagePanel(unsigned int simDay = 0U);
+
+        /// Clear survey participant panel
+        /// \param pop 				Population
+        void ClearPanel();
+
+        void SampleParticipants(unsigned int simDay);
 
         /// Register a selected person as a survey participant
-        /// \param p 				Person to register
-        void RegisterParticipant(std::shared_ptr<Population> pop, Person& p, unsigned int simDay, std::string& survey_type);
+		/// \param p 				Person to register
+		void RegisterParticipant(Person& p, unsigned int simDay, std::string& survey_type);
 
-        /// Register the health state of the survey participants
-        void LogHealthStates();
+		/// Register the health state of the survey participants
+        void LogHealthStates(unsigned int simDay);
+
+
 private:
         std::shared_ptr<Population>           m_population;
-		const boost::property_tree::ptree&    m_config; ///< Run config.
         std::shared_ptr<util::RnMan>          m_rn_man; ///< Random number manager.
         bool m_panel_ready;
+        bool m_resample_panel;
+        bool m_log_level;
+        unsigned int m_num_participants;
+        bool m_is_initialised;
 };
 
 } // namespace stride

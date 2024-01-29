@@ -115,8 +115,8 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         // --------------------------------------------------------------
         // Seed population with survey participants.
         // --------------------------------------------------------------
-        SurveyManager(sim->m_population, m_config, sim->m_rn_man_ptr).ManagePanel(sim->m_population);
-		//sim->m_survey_manager.Initialize(m_config, sim->m_population, sim->m_rn_man_ptr);
+		sim->m_survey_manager = make_shared<SurveyManager>(sim->m_population, m_config, sim->m_rn_man_ptr);
+		sim->m_survey_manager->ManagePanel();
 
         // --------------------------------------------------------------
         // Seed heterogeniety in social contact behaviour.

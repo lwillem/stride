@@ -62,6 +62,7 @@ parse_event_logfile <- function(event_logfile,exp_id,
   # - CONT    contact event
   # - VACC    additional immunization
   # - TRACE   contact tracing
+  # - HEALTH  participant health status
 
 
   ###################### #
@@ -69,7 +70,7 @@ parse_event_logfile <- function(event_logfile,exp_id,
   ###################### #
   header_part         <- c('local_id', 'part_age', 'household_id', 'school_id', 'workplace_id', 
                            'household_cluster_id','collectivity_id',
-                           'is_susceptible','is_infected','is_infectious','is_recovered','is_immune',
+                           'is_susceptible','is_infected','is_infectious','is_symptomatic','is_recovered','is_immune',
                            'start_infectiousness','start_symptomatic','start_hospitalisation','end_infectiousness','end_symptomatic',
                            'end_hospitalisation','household_size','school_size','workplace_size','community_weekend_size',
                            'community_weekday_size','sim_day','survey_type')
@@ -79,6 +80,18 @@ parse_event_logfile <- function(event_logfile,exp_id,
                                                       log_cat       = "PART",
                                                       colnames_all  = header_part,
                                                       exp_id        = exp_id)
+  
+  ###################### #
+  ## HEALTH DATA ####
+  ###################### #
+  header_health         <- c('local_id', 'sim_day', 'is_susceptible','is_infected',
+                             'is_infectious','is_symptomatic','is_recovered','is_immune')
+  
+  rstride_out$data_health  <- reformat_log_data(event_logfile = event_logfile,
+                                                data_log_cat  = data_log_cat,
+                                                log_cat       = "HEALTH",
+                                                colnames_all  = header_health,
+                                                exp_id        = exp_id)
 
   
   ####################### #
@@ -130,7 +143,7 @@ parse_event_logfile <- function(event_logfile,exp_id,
   ###################### #
   ## CONTACT DATA     ####
   ###################### # 
-  header_cnt          <- c('local_id', 'part_age', 'cnt_age', 'cnt_home', 'cnt_school', 
+  header_cnt          <- c('local_id', 'part_age', 'cnt_id','cnt_age', 'cnt_home', 'cnt_school', 
                            'cnt_workplace', 'cnt_community_weekend', 'cnt_community_weekday', 'cnt_household_cluster', 'cnt_collectivity',
                            'sim_day', 'cnt_prob', 'trm_prob','part_sympt','cnt_sympt')
 
@@ -216,8 +229,12 @@ reformat_log_data <- function(event_logfile,data_log_cat,log_cat,colnames_all,ex
   colnames_boolean        <- colnames_select[grepl('is_',colnames_select)]
   colnames_numeric        <- colnames_select[!colnames_select %in% c(colnames_char,colnames_boolean)]
   
+  sel_not_logical <- unlist(lapply(data_log_subset[1,..colnames_boolean],typeof)) != "logical"
+  colnames_boolean <- colnames_boolean[sel_not_logical]
+  
   # specify help functions for 'lapply'
   set_NAs <- function(x){x[x==-1] <- NA; x}
+  # is_char_true <- function(x){ifelse(typeof(x) == 'character', x=='true',x)}
   is_char_true <- function(x){x=='true'}
   remove_tag <- function(x){gsub('.*=','',x)}
  
