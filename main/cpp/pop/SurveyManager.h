@@ -62,13 +62,12 @@ public:
 
 
 private:
-        std::shared_ptr<Population>           m_population;
-        std::shared_ptr<util::RnMan>          m_rn_man; ///< Random number manager.
-        bool m_panel_ready;
-        bool m_resample_panel;
-        bool m_log_level;
-        unsigned int m_num_participants;
-        bool m_is_initialised;
+        std::shared_ptr<Population>           m_population;       ///< Link to the population object
+        std::shared_ptr<util::RnMan>          m_rn_man;           ///< Random number manager.
+        bool                                  m_panel_ready;      ///< Is the panel ready?
+        bool                                  m_resample_panel;   ///< Is a new panel for each survey round needed?
+        bool                                  m_is_survey_active; ///< Does the log level allow survey activities
+        unsigned int                          m_num_participants; ///< Number of participants in the survey
 };
 
 } // namespace stride

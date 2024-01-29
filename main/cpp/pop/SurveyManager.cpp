@@ -37,21 +37,17 @@ using namespace std;
 namespace stride {
 
 SurveyManager::SurveyManager(std::shared_ptr<Population> pop, const ptree& config, std::shared_ptr<RnMan> rnMan) :
-		m_population(pop), m_rn_man(rnMan), m_panel_ready(false), m_is_initialised(false){
+		m_population(pop), m_rn_man(rnMan), m_panel_ready(false){
 
 	m_resample_panel   = config.get<unsigned int>("run.contact_survey_resample",0) == 1;
-	m_log_level        = EventLogMode::ToMode(config.get<string>("run.event_log_level", "None")) != EventLogMode::Id::None;
+	m_is_survey_active = EventLogMode::ToMode(config.get<string>("run.event_log_level", "None")) != EventLogMode::Id::None;
 	m_num_participants = config.get<unsigned int>("run.num_participants_survey");
 }
 
 void SurveyManager::ManagePanel(unsigned int simDay)
 {
-	if(m_log_level && (simDay > 0U || !m_is_initialised)){
+	if(m_is_survey_active){
 		if(!m_panel_ready) {
-
-			// fix to prevent double initialisation (in SimBuilder and in Sim::TimeStep on day 0)
-			m_is_initialised = true;
-
 			m_panel_ready = !m_resample_panel;
 			if(m_resample_panel){
 				ClearPanel();
@@ -100,7 +96,7 @@ void SurveyManager::SampleParticipants(unsigned int simDay){
 void SurveyManager::RegisterParticipant(Person& p, unsigned int simDay ,std::string& survey_type)
 {
 
-	if (m_log_level) {
+	if (m_is_survey_active) {
 
 		Population& population  = *m_population;
 
@@ -152,7 +148,7 @@ void SurveyManager::ClearPanel(){
 //TODO: check omp options
 void SurveyManager::LogHealthStates(unsigned int simDay){
 
-	if (m_log_level) {
+	if (m_is_survey_active) {
 
 		Population& population  = *m_population;
 		auto&       logger      = population.RefEventLogger();
