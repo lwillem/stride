@@ -54,9 +54,11 @@ rStride_files <- dir('./bin/rstride',recursive = T,pattern = '\\.R',full.names =
 rStride_files <- rStride_files[rStride_files != "./bin/rstride/rStride.R"]
 rStride_files <- rStride_files[! grepl('\\.Rmd',rStride_files)]
 
-
 # load all (remaining files)
 sapply(rStride_files,source)
+
+# disable scientific notation (prevent interference with cpp)
+options(scipen=999)
 
 # patch for the wpp_age function of socialmixr 
 source('bin/rstride/lib/socrates/wpp_age.r')
