@@ -104,8 +104,8 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         // --------------------------------------------------------------
         // Initialize the airborne transmission profile
         // --------------------------------------------------------------
-        const auto diseasePt = ReadDiseaseAirborneTransmissionPtree();
-        sim->m_airborne_transmission_profile.Initialize(m_config, diseasePt);
+        const auto diseaseAirborneTransmissionPt = ReadDiseaseAirborneTransmissionPtree();
+        sim->m_airborne_transmission_profile.Initialize(m_config, diseaseAirborneTransmissionPt);
 
         std::cout << "Seed the population with health data." << std::endl;
         // --------------------------------------------------------------

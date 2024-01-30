@@ -324,7 +324,7 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
                 Person* p=id_pointer_persons[person_id];
                                
                 if (subpool_id > 0) {
-                pop->RefPoolSys().RefPools(typ)[subpool_id].SetAirMass(air_mass)
+                
                 pop->RefPoolSys().RefPools(typ)[subpool_id].SetDayWeek(day_week);
                 pop->RefPoolSys().RefPools(typ)[subpool_id].AddMember(p);
                 }

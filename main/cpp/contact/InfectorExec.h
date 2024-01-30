@@ -27,6 +27,7 @@ namespace stride {
 class ContactPool;
 class AgeContactProfile;
 class TransmissionProfile;
+class AirborneTransmissionProfile;
 class Population;
 
 namespace util {
@@ -40,6 +41,6 @@ typedef void(InfectorExec)(ContactPool& pool, const AgeContactProfile& profile,
                            const TransmissionProfile& trans_profile, util::RnHandler& rnHandler,
                            unsigned short int sim_day, std::shared_ptr<spdlog::logger> event_logger,
 						   std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster,
-                           double pType_distancing_factor, unsigned short int day_week);
+                           double pType_distancing_factor, unsigned short int day_week, bool m_airborne_tranmission, const AirborneTransmissionProfile& airborneTransProfile);
 
 } // namespace stride

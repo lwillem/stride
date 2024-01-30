@@ -21,9 +21,8 @@ namespace stride {
 class AirborneTransmissionProfile
 {
 public:
-	TransmissionProfile(): m_per_person_viral_shedding(1),
-						   m_linking_hazard_virus(0.226),
-						 {}
+	AirborneTransmissionProfile(): m_per_person_viral_shedding(1),
+						   m_linking_hazard_virus(0.226) {}
 
 	/// Initialize.
 	void Initialize(const boost::property_tree::ptree& configPT, const boost::property_tree::ptree& diseasePt);

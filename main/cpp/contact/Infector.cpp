@@ -76,8 +76,8 @@ public:
 							 );
         }
 
-        static void AirborneTrans(const std::shared_ptr<spdlog::logger>&, const Person* p2, ContactType::Id,
-                          unsigned short int, const double)
+        static void AirborneTrans(const std::shared_ptr<spdlog::logger>& logger, const Person* p2, ContactType::Id type,
+                          unsigned short int sim_day, const double pVentilation)
         {
                 logger->info("[AIR_TRAN_M] {} {} {} {} {} {}",
 							 p2->GetAge(),
@@ -117,8 +117,8 @@ public:
         }
 
 
-        static void AirborneTrans(const std::shared_ptr<spdlog::logger>&, const Person* p2, ContactType::Id,
-                          unsigned short int, const double)
+        static void AirborneTrans(const std::shared_ptr<spdlog::logger>& logger, const Person* p2, ContactType::Id type,
+                          unsigned short int sim_day, const double pVentilation)
         {
                 logger->info("[AIR_TRAN] {} {} {} {} {} {} {} {} {} {} {}", p2->GetId(), p2->GetAge(),
                              ToString(type), sim_day,
@@ -166,8 +166,8 @@ public:
 							 p2->GetHealth().GetRelativeSusceptibility(), pVentilation);
         }
 
-        static void AirborneTrans(const std::shared_ptr<spdlog::logger>&, const Person* p2, ContactType::Id,
-                          unsigned short int, const double)
+        static void AirborneTrans(const std::shared_ptr<spdlog::logger>& logger, const Person* p2, ContactType::Id type,
+                          unsigned short int sim_day, const double pVentilation)
         {
                 logger->info("[AIR_TRAN] {} {} {} {} {} {} {} {} {} {}", p2->GetId(), p2->GetAge(),
                              ToString(type), sim_day,
@@ -213,8 +213,8 @@ public:
         static void AirborneTrans(const std::shared_ptr<spdlog::logger>& logger, const Person* p2,
                           ContactType::Id type, unsigned short int sim_day, const double pVentilation)
         {
-                logger->info("[AIR_TRAN] {} {} {} {} {} {} {} {} {} {} {}", p2->GetId(), p2->GetAge(),
-                             ToString(type), sim_day, id_index_case,
+                logger->info("[AIR_TRAN] {} {} {} {} {} {} {} {} {} {}", p2->GetId(), p2->GetAge(),
+                             ToString(type), sim_day,
 							 p2->GetHealth().GetStartInfectiousness(),p2->GetHealth().GetEndInfectiousness(),
 							 p2->GetHealth().GetStartSymptomatic(),p2->GetHealth().GetEndSymptomatic(),
 							 p2->GetHealth().GetRelativeSusceptibility(), pVentilation);
@@ -348,7 +348,7 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
                                  const TransmissionProfile& transProfile, util::RnHandler& rnHandler,
                                  unsigned short int simDay, shared_ptr<spdlog::logger> eventLogger,
 								 std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster,
-                                 double pType_distancing_factor, unsigned short int dayWeek)
+                                 double pType_distancing_factor, unsigned short int dayWeek, bool m_airborne_tranmission, const AirborneTransmissionProfile& airborneTransProfile)
 {
         using LP = LOG_POLICY<LL>;
 
@@ -357,6 +357,8 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
         const auto& pMembers = pool.m_members;
         const auto  pSize    = pMembers.size();
         const auto pVentilation = pool.m_ventilation;
+        size_t      num_infectious_symptomatic_cases = 0; // needed for airborne transmission
+        size_t      num_infectious_asymptomatic_cases = 0;
 
         // get minimum age of the members (relevant for school settings)
         const unsigned int min_age_members = pool.GetMinAge();
@@ -402,7 +404,16 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
                                 auto& h1 = p1->GetHealth();
                                 auto& h2 = p2->GetHealth();
 
-								// if h1 infectious, account for susceptibility of p2
+                                        // needed for airborne transmission
+                        if (h1.IsInfectious()) {
+
+                if (h1.IsSymptomatic()){
+                        num_infectious_symptomatic_cases++;
+                } else {
+                        num_infectious_asymptomatic_cases++;
+                }
+		}
+                					// if h1 infectious, account for susceptibility of p2
 								if (h1.IsInfectious() && h2.IsSusceptible() &&
 									rnHandler.Binomial(tProb_p1_p2)) {
 
@@ -428,6 +439,39 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
                         }
                 }
         }
+
+        if (pType == Id::RestoCafe || pType == Id::Transport) {
+                if (m_airborne_tranmission){
+                // set up some stuff for the pool & disease in general
+                        const auto pAirMass = pool.m_air_mass;
+                        const auto perPersonViralShedding = airborneTransProfile.GetPerPersonViralShedding();
+                        const auto linkingHazardVirus = airborneTransProfile.GetLinkingHazardVirus();
+                        const auto transmissionReductionAsymptomatic = transProfile.GetTransmissionReductionAsymptomatic();
+                        for (size_t i_person1 = 0; i_person1 < pSize; i_person1++)
+                                { // check if member is present today
+                                        const auto p = pMembers[i_person1];
+                                        if (!p->IsInPool(pType)) {
+                                                continue;
+                                        }
+                                        auto& h = p->GetHealth();
+                                        if (h.IsSusceptible()){
+                                                const auto personDuration = p->PoolDurations(pType)[dayWeek];
+                                                const double aProb = 1.0 - std::exp(-(linkingHazardVirus * perPersonViralShedding * (num_infectious_symptomatic_cases + num_infectious_asymptomatic_cases * transmissionReductionAsymptomatic) / (pVentilation * pAirMass)) * (personDuration - (1.0 - std::exp(-pVentilation * personDuration)) / pVentilation));              
+                                                if (rnHandler.Binomial(aProb)) {
+                                                                                double rel_inf = transProfile.GetIndividualInfectiousness(rnHandler);
+                                                                                h.StartAirborneInfection(rel_inf);
+                                                                                if (TIC)
+                                                                                        h.StopInfection();
+                                                                                LP::AirborneTrans(eventLogger, p, pType, simDay, pVentilation);  
+                                                }
+                                        }
+
+                                }
+ 
+                }
+        }
+
+
 }
 
 //-------------------------------------------------------------------------------------------
@@ -513,7 +557,7 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                         }
                 }
         }
-        if (pType == Id::RestoCafe || ptyp == Id::Transport) {
+        if (pType == Id::RestoCafe || pType == Id::Transport) {
                 if (m_airborne_tranmission){
                 // set up some stuff for the pool & disease in general
                         const auto pAirMass = pool.m_air_mass;
@@ -528,11 +572,11 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                                         }
                                         auto& h = p->GetHealth();
                                         if (h.IsSusceptible()){
-                                                const auto personDuration = p.PoolDurations(pType)[dayWeek];
+                                                const auto personDuration = p->PoolDurations(pType)[dayWeek];
                                                 const double aProb = 1.0 - std::exp(-(linkingHazardVirus * perPersonViralShedding * (num_infectious_symptomatic_cases + num_infectious_asymptomatic_cases * transmissionReductionAsymptomatic) / (pVentilation * pAirMass)) * (personDuration - (1.0 - std::exp(-pVentilation * personDuration)) / pVentilation));              
                                                 if (rnHandler.Binomial(aProb)) {
                                                                                 double rel_inf = transProfile.GetIndividualInfectiousness(rnHandler);
-                                                                                h.StartAirboneInfection(rel_inf);
+                                                                                h.StartAirborneInfection(rel_inf);
                                                                                 if (TIC)
                                                                                         h.StopInfection();
                                                                                 LP::AirborneTrans(eventLogger, p, pType, simDay, pVentilation);  

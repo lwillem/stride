@@ -23,11 +23,11 @@ void AirborneTransmissionProfile::Initialize(const ptree& configPt, const ptree&
 
 }
 
-double TransmissionProfile::GetPerPersonViralShedding() const {
+double AirborneTransmissionProfile::GetPerPersonViralShedding() const {
 	return m_per_person_viral_shedding;
 }
 
-double TransmissionProfile::GetLinkingHazardVirus() const {
+double AirborneTransmissionProfile::GetLinkingHazardVirus() const {
 	return m_linking_hazard_virus;
 }
 
