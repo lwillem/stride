@@ -82,22 +82,23 @@ shared_ptr<Population> PopBuilder::MakePersons(shared_ptr<Population> pop)
         while (getline(popFile, line)) {
                 const auto values               = Split(line, ";");
                 const auto age                  = FromString<unsigned int>(values[0]);
-                const auto person_id            = FromString<unsigned int>(values[1]);
-                const auto householdId          = FromString<unsigned int>(values[2]);
-                auto schoolId                   = FromString<unsigned int>(values[3]);
-                const auto workId               = FromString<unsigned int>(values[4]);
-                const auto primaryCommunityId   = FromString<unsigned int>(values[5]);
-                const auto secondaryCommunityId = FromString<unsigned int>(values[6]);
+                const auto profession           = FromString<unsigned int>(values[1]);
+                const auto person_id            = FromString<unsigned int>(values[2]);
+                const auto householdId          = FromString<unsigned int>(values[3]);
+                auto schoolId                   = FromString<unsigned int>(values[4]);
+                const auto workId               = FromString<unsigned int>(values[5]);
+                const auto primaryCommunityId   = FromString<unsigned int>(values[6]);
+                const auto secondaryCommunityId = FromString<unsigned int>(values[7]);
 
                 unsigned int householdClusterId = 0;
-                if(values.size() == 8 && Trim(ToString(headers[7]),ToString('"')) == "household_cluster_id"){
-                	householdClusterId = FromString<unsigned int>(values[7]);
+                if(values.size() == 9 && Trim(ToString(headers[8]),ToString('"')) == "household_cluster_id"){
+                	householdClusterId = FromString<unsigned int>(values[8]);
                 }
 
                 unsigned int collectivityId = 0;
 
-				if(values.size() == 8 && Trim(ToString(headers[7]),ToString('"')) == "collectivity_id"){
-					collectivityId = FromString<unsigned int>(values[7]);
+				if(values.size() == 9 && Trim(ToString(headers[8]),ToString('"')) == "collectivity_id"){
+					collectivityId = FromString<unsigned int>(values[8]);
 				}
 
                 //TODO: rename school types to current approach
@@ -107,7 +108,7 @@ shared_ptr<Population> PopBuilder::MakePersons(shared_ptr<Population> pop)
                 	schoolId = 0;
                 }
 
-                pop->CreatePerson(person_id, age, householdId, schoolId, collegeId, workId, primaryCommunityId,
+                pop->CreatePerson(person_id, age, profession, householdId, schoolId, collegeId, workId, primaryCommunityId,
                                   secondaryCommunityId, householdClusterId, collectivityId);
                 ;
         }
@@ -159,20 +160,21 @@ shared_ptr<Population> PopBuilder::MakePersonsOpt(shared_ptr<Population> pop)
     while (getline(popFile, line)) {
         const auto values               = Split(line, ";");
         const auto age                  = static_cast<unsigned int>(IntFromString(values[0]));
-        const auto person_id            = static_cast<unsigned int>(IntFromString(values[1]));
-        const auto householdId          = static_cast<unsigned int>(IntFromString(values[2]));
-        auto schoolId                   = static_cast<unsigned int>(IntFromString(values[3]));
-        const auto workId               = static_cast<unsigned int>(IntFromString(values[4]));
-        const auto primaryCommunityId   = static_cast<unsigned int>(IntFromString(values[5]));
-        const auto secondaryCommunityId = static_cast<unsigned int>(IntFromString(values[6]));
+        const auto profession           = static_cast<unsigned int>(IntFromString(values[1]));
+        const auto person_id            = static_cast<unsigned int>(IntFromString(values[2]));
+        const auto householdId          = static_cast<unsigned int>(IntFromString(values[3]));
+        auto schoolId                   = static_cast<unsigned int>(IntFromString(values[4]));
+        const auto workId               = static_cast<unsigned int>(IntFromString(values[5]));
+        const auto primaryCommunityId   = static_cast<unsigned int>(IntFromString(values[6]));
+        const auto secondaryCommunityId = static_cast<unsigned int>(IntFromString(values[7]));
        
         unsigned int householdClusterId = defaultHouseholdClusterId;
         unsigned int collectivityId = defaultCollectivityId;
-        if (values.size() == 8) {
+        if (values.size() == 9) {
             if (household_cluster_id) {
-                householdClusterId = static_cast<unsigned int>(IntFromString(values[7]));
+                householdClusterId = static_cast<unsigned int>(IntFromString(values[8]));
             } else if (collectivity_id) {
-                collectivityId = static_cast<unsigned int>(IntFromString(values[7]));
+                collectivityId = static_cast<unsigned int>(IntFromString(values[8]));
             }
         }
 
@@ -188,7 +190,7 @@ shared_ptr<Population> PopBuilder::MakePersonsOpt(shared_ptr<Population> pop)
                   
                 }
 
-        pop->CreatePerson(person_id, age, householdId, schoolId, collegeId, workId, primaryCommunityId,
+        pop->CreatePerson(person_id, age, profession, householdId, schoolId, collegeId, workId, primaryCommunityId,
                           secondaryCommunityId, householdClusterId, collectivityId);
         ;
     }
@@ -265,7 +267,6 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
                 }}
                 
         }
-
 
         const auto allowed_subpools_communities = m_config.get<bool>("run.subpools_community_used");
         const auto fileName = m_config.get<string>("run.subpools_community_file");

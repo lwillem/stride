@@ -56,15 +56,15 @@ public:
 
 public:
         /// Default construction (for population vector).
-        Person() : m_age(0.0), m_id(0), m_pool_ids(), m_pool_durations(), m_pool_contacts(), m_individual_contact_factor(1.0), m_health(), m_in_pools(), m_is_participant(),
+        Person() : m_age(0.0), m_profession(0), m_id(0), m_pool_ids(), m_pool_durations(), m_pool_contacts(), m_individual_contact_factor(1.0), m_health(), m_in_pools(), m_is_participant(),
 		m_non_complier(), m_is_tracing_index(false), m_contact_tracing_list(),
         m_isolated(false), m_events() {}
 
         /// Constructor: set the person data.
-        Person(unsigned int id, float age, unsigned int householdId, unsigned int k12SchoolId, unsigned int collegeId,
+        Person(unsigned int id, float age, unsigned int profession, unsigned int householdId, unsigned int k12SchoolId, unsigned int collegeId,
                unsigned int workId, unsigned int primaryCommunityId, unsigned int secondaryCommunityId, unsigned int householdClusterId,
 			   unsigned int collectivityId)
-            : m_age(age), m_id(id), m_pool_ids{{householdId},
+            : m_age(age), m_profession(profession), m_id(id), m_pool_ids{{householdId},
           {k12SchoolId},
           {collegeId},
           {workId},
@@ -188,6 +188,7 @@ private:
 private:
         float        m_age; ///< The age.
         unsigned int m_id;  ///< The id.
+        unsigned int m_profession; ///< The profession (worker, other, teacher)
 
         ///< Ids (school, work, etc) of pools you belong to Id value 0 means you do not belong to any
         ///< pool of that type (e.g. school and work are mutually exclusive).

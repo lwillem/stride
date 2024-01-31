@@ -50,7 +50,7 @@ shared_ptr<Population> ContactDivider::Divide(shared_ptr<Population> pop, const 
                                        ageContactProfiles[Id::SecondaryCommunity];
 
 			double reference_num_contacts_p{profile[EffectiveAge(static_cast<unsigned int>(age))]};
-			int rounded_reference_num_contacts_p = static_cast<int>(floor(reference_num_contacts_p));
+			int rounded_reference_num_contacts_p = static_cast<int>(round(reference_num_contacts_p));
 
 			unsigned int idOtherHouse = p.CPoolIds(Id::OtherHouse)[day];
 			unsigned int idRestoCafe = p.CPoolIds(Id::RestoCafe)[day];

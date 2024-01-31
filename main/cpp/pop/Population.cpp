@@ -87,11 +87,11 @@ std::shared_ptr<Population> Population::Create() {
   return r;
 }
 
-Person* Population::CreatePerson(unsigned int id, double age, unsigned int householdId, unsigned int k12SchoolId,
+Person* Population::CreatePerson(unsigned int id, double age, unsigned int profession, unsigned int householdId, unsigned int k12SchoolId,
                                  unsigned int college, unsigned int workId, unsigned int primaryCommunityId,
                                  unsigned int secondaryCommunityId, unsigned int householdClusterId, unsigned int collectivityId)
 {
-        return emplace_back(id, age, householdId, k12SchoolId, college, workId, primaryCommunityId,
+        return emplace_back(id, age, profession, householdId, k12SchoolId, college, workId, primaryCommunityId,
                             secondaryCommunityId, householdClusterId, collectivityId);
 }
 

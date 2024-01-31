@@ -161,6 +161,10 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         };
 
         std::cout << "Fill in the ventilation in the contactPoolSys." << std::endl;
+        //---------------------------------------------------------------
+        // Seeder of characters
+
+
         // --------------------------------------------------------------
         // Fill in the ventilation in the contactPoolSys.
         // --------------------------------------------------------------

@@ -63,7 +63,7 @@ public:
         /// Get the ventilation of the venue
         double GetVentilation() const { return m_ventilation; }
 
-        ///< Set ventialtion of a pool
+        ///< Set ventilation of a pool
         void SetVentilation(double ventilation) { m_ventilation = ventilation; }
 
         /// Get compliance of a pool
@@ -88,6 +88,12 @@ public:
 
         // change the air mass of the pool
         void SetAirMass(double airMass) { m_air_mass = airMass; }
+
+        // Get the type specification
+        unsigned int GetTypeSpecification() const {return m_pool_type_specification;}
+
+        // Set the type specification
+        void SetTypeSpecification(unsigned int typeSpecification) {m_pool_type_specification = typeSpecification; }
 
 public:
         // To iterate over the members.
@@ -123,6 +129,7 @@ private:
         bool                 m_venue_non_complier; ///< There is ventilation on the venue or not
         unsigned int         m_day_week;    ///< day on which the pool is valid, if multiple days, m_day = 7
         double               m_air_mass;    ///< air_mass in the pool
+        unsigned int         m_pool_type_specification; ////< more detail about the Contactpool Work if 2 = school, 1 = worker/factory, 0 = other
 };
 
 } // namespace stride
