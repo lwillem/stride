@@ -100,27 +100,21 @@ help:
 	@ $(CMAKE) -E echo "   STRIDE_FORCE_NO_OPENMP        : " $(STRIDE_FORCE_NO_OPENMP)
 	@ $(CMAKE) -E echo " "
 
-cores:
-	@ echo "\nMake invocation using -j"$(NCORES)
-
 configure:
 	$(CMAKE) -E make_directory $(BUILD_DIR)
 	$(CMAKE) -E chdir $(BUILD_DIR) $(CMAKE) $(CMAKE_ARGS) ..
 
-all: cores configure
+all: configure
 	$(MAKE) $(PARALLEL_MAKE) -C $(BUILD_DIR) --no-print-directory all
 
 install:
 	$(MAKE) $(PARALLEL_MAKE) -C $(BUILD_DIR) --no-print-directory install
 
-clean: cores
+clean: 
 	 if [ -d $(BUILD_DIR) ]; then $(MAKE) $(PARALLEL_MAKE) -C $(BUILD_DIR) clean; fi
 
 distclean:
 	$(CMAKE) -E remove_directory $(BUILD_DIR)
-
-test: install
-	cd $(BUILD_DIR)/test; ctest $(TESTARGS) -V
 
 gtest: install
 	cd $(CMAKE_INSTALL_PREFIX); bin/gtester $(TESTARGS) --gtest_output=xml:tests/gtester_all.xml
