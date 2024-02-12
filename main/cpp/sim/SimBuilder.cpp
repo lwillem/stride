@@ -24,7 +24,7 @@
 #include "contact/InfectorMap.h"
 #include "contact/ContactDivider.h"
 #include "contact/ContactHeterogeneitySeeder.h"
-#include "contact/VentilationHeterogeneitySeeder.h"
+#include "contact/PoolCharacteristicsSeeder.h"
 #include "disease/DiseaseSeeder.h"
 #include "disease/HealthSeeder.h"
 #include "disease/ImmunitySeeder.h"
@@ -166,9 +166,9 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
 
 
         // --------------------------------------------------------------
-        // Fill in the ventilation in the contactPoolSys.
+        // Fill in characteristics in the contactPoolSys for airborne transmission0
         // --------------------------------------------------------------
-        VentilationHeterogeneitySeeder(m_config, sim->m_rn_man).Ventilation(sim->m_population);
+        PoolCharacteristicsSeeder(m_config, sim->m_rn_man).Seed(sim->m_population);
 
         // --------------------------------------------------------------
         // Done.

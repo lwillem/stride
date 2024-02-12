@@ -75,30 +75,39 @@ shared_ptr<Population> ContactDivider::Divide(shared_ptr<Population> pop, const 
     		double probabilityTransport = static_cast<double>(durationTransport) / totalDuration;
 
 			std::vector<double> probabilities = {probabilityOtherHouse,probabilityRestoCafe,probabilityOtherPlace,probabilityTransport};
-    		std::vector<unsigned int> maxContactsPerLocation = {sizeOtherHouse - 1,sizeRestoCafe - 1, sizeOtherPlace - 1, sizeTransport -1};
+    		std::vector<unsigned int> maxContactsPerLocation = {sizeOtherHouse - 1,sizeRestoCafe - 1, sizeOtherPlace - 1, sizeTransport -1}
 
 			// Maak een vector met indices van 0 tot probabilities.size() - 1
     		std::vector<unsigned int> indices(probabilities.size());
     		std::iota(indices.begin(), indices.end(), 0);
-
-    		// Sorteer indices op basis van aflopende kansen
-    		std::sort(indices.begin(), indices.end(), [&probabilities](unsigned int i1, unsigned int i2) {
-        	return probabilities[i1] > probabilities[i2]; });
-
-    		// Initialiseer resultaten
+			
+			// Initialiseer resultaten
     		std::vector<unsigned int> results(probabilities.size(), 0);
 
     		// Bepaal het aantal te verdelen contacten
     		unsigned int totalContacts = rounded_reference_num_contacts_p;  
 
-    		// Verdeel het totale aantal contacten over de categorieën op basis van hun kansen
-    		for (unsigned int index : indices) {
-    			unsigned int maxCount = std::min(maxContactsPerLocation[index], totalContacts);
-    			std::binomial_distribution<unsigned int> distribution(maxCount, probabilities[index]);
-    			results[index] = distribution(rng);  
-    			totalContacts -= results[index];
-			}
-        
+    		for (unsigned int i = 0; i < totalContacts; ++i) {
+        		// Bereken aangepaste kansen op basis van reeds toegewezen contacten
+        		std::vector<double> adjustedProbabilities;
+        		for (unsigned int index : indices) {
+            		if (maxContactsPerLocation[index] > 0) {
+                		adjustedProbabilities.push_back(probabilities[index]);
+            		}
+        		}
+
+        		// Controleer of er nog beschikbare categorieën zijn
+        		if (!adjustedProbabilities.empty()) {
+            	// Selecteer een willekeurige categorie op basis van de aangepaste kansen
+            	std::discrete_distribution<unsigned int> distribution(adjustedProbabilities.begin(), adjustedProbabilities.end());
+            	unsigned int selectedCategory = indices[distribution(rng)];
+
+            	// Wijs een contact toe aan de geselecteerde categorie
+            	results[selectedCategory]++;
+            	maxContactsPerLocation[selectedCategory]--;
+        		}
+    		}
+   		
 			p.PoolContacts(Id::OtherHouse)[day] = results[0];
 			p.PoolContacts(Id::RestoCafe)[day] = results[1];
 			p.PoolContacts(Id::OtherPlace)[day] = results[2];

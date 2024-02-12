@@ -56,7 +56,7 @@ public:
 
 public:
         /// Default construction (for population vector).
-        Person() : m_age(0.0), m_profession(0), m_id(0), m_pool_ids(), m_pool_durations(), m_pool_contacts(), m_individual_contact_factor(1.0), m_health(), m_in_pools(), m_is_participant(),
+        Person() :  m_id(0), m_age(0.0), m_profession(0), m_pool_ids(), m_pool_durations(), m_pool_contacts(), m_individual_contact_factor(1.0), m_health(), m_in_pools(), m_is_participant(),
 		m_non_complier(), m_is_tracing_index(false), m_contact_tracing_list(),
         m_isolated(false), m_events() {}
 
@@ -88,6 +88,9 @@ public:
 
         /// Get the age.
         float GetAge() const { return m_age; }
+
+        /// Get the profession
+        unsigned int GetProfession() const { return m_profession; }
 
         /// Return person's health status.
         Health& GetHealth() { return m_health; }
@@ -186,8 +189,8 @@ private:
         void UpdateEvents(unsigned int simDay);
 
 private:
-        float        m_age; ///< The age.
         unsigned int m_id;  ///< The id.
+        float        m_age; ///< The age.
         unsigned int m_profession; ///< The profession (worker, other, teacher)
 
         ///< Ids (school, work, etc) of pools you belong to Id value 0 means you do not belong to any

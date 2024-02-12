@@ -38,20 +38,20 @@ class RnMan;
  * Seed ventilation heterogeneity in the pools,
  * either non-compliance
  */
-class VentilationHeterogeneitySeeder
+class PoolCharacteristicsSeeder
 {
 public:
 	/// Initialize Seeder.
 	/// \param config 		Configuration parameters.
 	/// \param rnMan			Random number manager.
-	VentilationHeterogeneitySeeder(const boost::property_tree::ptree& config, util::RnMan& rnMan);
+	PoolCharacteristicsSeeder(const boost::property_tree::ptree& config, util::RnMan& rnMan);
 
-    /// Fill in the ventilation the contactPoolSys.
-    /// \param pop               Population.
-    std::shared_ptr<Population> Ventilation(std::shared_ptr<Population> pop);
-
+    /// Fill extra characteristics in the contactPoolSys for airborne transmission.
     /// \param pop               Population.
     std::shared_ptr<Population> Seed(std::shared_ptr<Population> pop);
+
+    /// \param pop               Population.
+    std::shared_ptr<Population> NonCompliance(std::shared_ptr<Population> pop);
 
 
 private:

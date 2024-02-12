@@ -31,7 +31,7 @@ set(STRIDE_SRC
     contact/ContactType.cpp
     contact/EventLogMode.cpp
     contact/Infector.cpp
-    contact/VentilationHeterogeneitySeeder.cpp
+    contact/PoolCharacteristicsSeeder.cpp
     #---
     disease/AirborneTransmissionProfile.cpp
 	disease/DiseaseSeeder.cpp

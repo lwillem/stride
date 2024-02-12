@@ -557,7 +557,7 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                         }
                 }
         }
-        if (pType == Id::RestoCafe || pType == Id::Transport) {
+        if (pType != Id::Household || pType != Id::HouseholdCluster) {
                 if (m_airborne_tranmission){
                 // set up some stuff for the pool & disease in general
                         const auto pAirMass = pool.m_air_mass;
@@ -573,7 +573,7 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                                         auto& h = p->GetHealth();
                                         if (h.IsSusceptible()){
                                                 const auto personDuration = p->PoolDurations(pType)[dayWeek];
-                                                const double aProb = 1.0 - std::exp(-(linkingHazardVirus * perPersonViralShedding * (num_infectious_symptomatic_cases + num_infectious_asymptomatic_cases * transmissionReductionAsymptomatic) / (pVentilation * pAirMass)) * (personDuration - (1.0 - std::exp(-pVentilation * personDuration)) / pVentilation));              
+                                                const double aProb = 1.0 - std::exp(-(linkingHazardVirus * perPersonViralShedding * (num_infectious_symptomatic_cases + num_infectious_asymptomatic_cases * transmissionReductionAsymptomatic) / (pVentilation * pAirMass *35.3147)) * (personDuration - (1.0 - std::exp(-pVentilation * personDuration)) / pVentilation));              
                                                 if (rnHandler.Binomial(aProb)) {
                                                                                 double rel_inf = transProfile.GetIndividualInfectiousness(rnHandler);
                                                                                 h.StartAirborneInfection(rel_inf);
