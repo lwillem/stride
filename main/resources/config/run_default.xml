@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <run>
     <age_contact_matrix_file>contact_matrix_flanders_conditional_teachers.xml</age_contact_matrix_file>
-	<airborne_transmission>false</airborne_transmission>
+	<airborne_transmission>true</airborne_transmission>
     <event_log_level>Transmissions</event_log_level>
     <event_output_file>true</event_output_file>
 	<disease_airborne_transmission_file>disease_covid19_airborne_transmission.xml</disease_airborne_transmission_file>

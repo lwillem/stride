@@ -75,7 +75,7 @@ shared_ptr<Population> ContactDivider::Divide(shared_ptr<Population> pop, const 
     		double probabilityTransport = static_cast<double>(durationTransport) / totalDuration;
 
 			std::vector<double> probabilities = {probabilityOtherHouse,probabilityRestoCafe,probabilityOtherPlace,probabilityTransport};
-    		std::vector<unsigned int> maxContactsPerLocation = {sizeOtherHouse - 1,sizeRestoCafe - 1, sizeOtherPlace - 1, sizeTransport -1}
+    		std::vector<unsigned int> maxContactsPerLocation = {sizeOtherHouse - 1,sizeRestoCafe - 1, sizeOtherPlace - 1, sizeTransport -1};
 
 			// Maak een vector met indices van 0 tot probabilities.size() - 1
     		std::vector<unsigned int> indices(probabilities.size());

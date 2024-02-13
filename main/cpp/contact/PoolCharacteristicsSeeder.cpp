@@ -40,15 +40,6 @@ using namespace ContactType;
 
 PoolCharacteristicsSeeder::PoolCharacteristicsSeeder(const ptree& config, RnMan& rnMan) : m_config(config), m_rn_man(rnMan) {}
 
-shared_ptr<Population> PoolCharacteristicsSeeder::Seed(shared_ptr<Population> pop)
-{
-	auto& population = *pop;
-
-	auto& poolSys = population.RefPoolSys();
-
-	auto& logger = population.RefEventLogger();
-
-	// Functie om de grootte van de ruimte te berekenen op basis van het aantal personen
 double berekenGrootte(int aantalPersonen, double gemiddeldeGrootte, double variabiliteit, double minimumGrootte) {
     // Bereken een willekeurige variatie rond het gemiddelde
     double variatie = ((rand() % 100) / 100.0) * variabiliteit;
@@ -65,124 +56,154 @@ double berekenGrootte(int aantalPersonen, double gemiddeldeGrootte, double varia
     return grootte;
 }
 
+shared_ptr<Population> PoolCharacteristicsSeeder::Seed(shared_ptr<Population> pop)
+{
+	
+
+
+	auto& population = *pop;
+
+	auto& poolSys = population.RefPoolSys();
+
+	auto& logger = population.RefEventLogger();
+
+	// Functie om de grootte van de ruimte te berekenen op basis van het aantal personen
+
+	std::cout << "Start PoolCharacteristicsSeeder." << std::endl;
+
 
 	for (ContactType::Id typ: ContactType::IdList) {
-		if (typ == Id::K12School){
-			for (auto& pool: poolSys.RefPools(typ)) {
-				const auto& pMembers = pool.m_members;
-        		const auto  pSize    = pMembers.size();
-				float age = pMembers[0]->GetAge();
+		if (typ != Id::Household && typ != Id::PrimaryCommunity && typ != Id::SecondaryCommunity && typ != Id::HouseholdCluster) {
+		
+		for (size_t i = 1; i < poolSys.RefPools(typ).size(); i++) {
+			auto& pool = poolSys.RefPools(typ)[i];
+			const auto& pMembers = pool.m_members;
+        	const auto  pSize    = pMembers.size();
+			
+
+			if (typ == Id::K12School){
+				
+    float age = pMembers[0]->GetAge();
+
+			//	std::cout << "pool" << std::endl;
 				if (age < 3) {
 					double grootte = berekenGrootte(pool.m_members.size(), 5.0, 1.5, 20);
-					pool.SetAirMass = grootte*3;
+				//	std::cout << "grootte " << grootte << std::endl;
+					pool.SetAirMass(grootte*3);
+					 
 						for (size_t i_person1 = 0; i_person1 < pSize; i_person1++) {
                 			const auto p = pMembers[i_person1];
-							for (int dayWeek = 1; dayWeek <= 5; ++DayWeek) {
-       				 				p->PoolDurations(type)[dayWeek] = 280;
+							for (int dayWeek = 1; dayWeek <= 5; ++dayWeek) {
+       				 				p->PoolDurations(typ)[dayWeek] = 280;
 							}
 						}
 				}
+				
 				 else if (age < 6) {
 					double grootte = berekenGrootte(pool.m_members.size(), 3.75, 0.75, 45);
-					pool.SetAirMass = grootte*3;
+				//	std::cout << "grootte " << grootte << std::endl;
+					pool.SetAirMass(grootte*3);
+					
 						for (size_t i_person1 = 0; i_person1 < pSize; i_person1++) {
                 			const auto p = pMembers[i_person1];
-							for (int dayWeek = 1; dayWeek <= 5; ++DayWeek) {
-       				 				p->PoolDurations(type)[dayWeek] = 280;
+							for (int dayWeek = 1; dayWeek <= 5; ++dayWeek) {
+       				 				p->PoolDurations(typ)[dayWeek] = 280;
 							}
 						}
 				}
 				else if (age < 12) {
 					double grootte = berekenGrootte(pool.m_members.size(), 2.5, 0.5, 45);
-					pool.SetAirMass = grootte*3;
+				//	std::cout << "grootte " << grootte << std::endl;
+					pool.SetAirMass(grootte*3);
+					
 						for (size_t i_person1 = 0; i_person1 < pSize; i_person1++) {
                 			const auto p = pMembers[i_person1];
-							for (int dayWeek = 1; dayWeek <= 5; ++DayWeek) {
-       				 				p->PoolDurations(type)[dayWeek] = 280;
+							for (int dayWeek = 1; dayWeek <= 5; ++dayWeek) {
+       				 				p->PoolDurations(typ)[dayWeek] = 280;
 							}
 						}
 				}
 
-			else {
-				double grootte = berekenGrootte(pool.m_members.size(), 2, 2, 40);
-					pool.SetAirMass = grootte*3;
+				else {
+					double grootte = berekenGrootte(pool.m_members.size(), 2, 2, 40);
+				//	std::cout << "grootte " << grootte << std::endl;
+					pool.SetAirMass(grootte*3);
+					
 						for (size_t i_person1 = 0; i_person1 < pSize; i_person1++) {
                 			const auto p = pMembers[i_person1];
-							for (int dayWeek = 1; dayWeek <= 5; ++DayWeek) {
-       				 				p->PoolDurations(type)[dayWeek] = 320;
+							for (int dayWeek = 1; dayWeek <= 5; ++dayWeek) {
+       				 				p->PoolDurations(typ)[dayWeek] = 320;
 							}
 						}
+				}
 			}
-			}
-			} 
 			else if (typ == Id::College) {
-				for (auto& pool: poolSys.RefPools(typ)) {
 					double grootte = berekenGrootte(pool.m_members.size(), 4, 2, 40);
-					pool.SetAirMass = grootte*3;
+				//	std::cout << "grootte " << grootte << std::endl;
+					pool.SetAirMass(grootte*3);
+					
 						for (size_t i_person1 = 0; i_person1 < pSize; i_person1++) {
                 			const auto p = pMembers[i_person1];
-							for (int dayWeek = 1; dayWeek <= 5; ++DayWeek) {
-       				 				p->PoolDurations(type)[dayWeek] = 418;
+							for (int dayWeek = 1; dayWeek <= 5; ++dayWeek) {
+       				 				p->PoolDurations(typ)[dayWeek] = 418;
 							}
 						}
 			}
-			}
-			else if (type == Id::Workplace) {
-				for (auto& pool: poolSys.RefPools(typ)) {
+			
+			else if (typ == Id::Workplace) {
 				unsigned int poolTypeSpecification =  pool[0]->GetProfession();
-				// pool.SetTypeSpecification(poolTypeSpecification);
 				if (poolTypeSpecification == 1){
 				double grootte = berekenGrootte(pool.m_members.size(), 1000, 400, 20);
-					pool.SetAirMass = grootte*10; }
+				// std::cout << "grootte " << grootte << std::endl;
+					pool.SetAirMass(grootte*10);
+					
+					 }
 					else {
 						double grootte = berekenGrootte(pool.m_members.size(), 7, 2, 15);
-						pool.SetAirMass = grootte*3;
-					}
-						for (size_t i_person1 = 0; i_person1 < pSize; i_person1++) {
+					//	std::cout << "grootte " << grootte << std::endl;
+						pool.SetAirMass(grootte*3);
+						
+					}					
+							for (size_t i_person1 = 0; i_person1 < pSize; i_person1++) {
                 			const auto p = pMembers[i_person1];
-							for (int dayWeek = 1; dayWeek <= 5; ++DayWeek) {
-       				 				p->PoolDurations(type)[dayWeek] = 440;
+							for (int dayWeek = 1; dayWeek <= 5; ++dayWeek) {
+       				 				p->PoolDurations(typ)[dayWeek] = 440;
 							}
 						}
 
 				}
 
-			}
+			
 
-			make_pair(Id::RestoCafe, "RestoCafe"),
-            make_pair(Id::OtherPlace, "OtherPlace"),
-            make_pair(Id::Transport, "Transport")
-
-			else if (type == Id::OtherHouse) {
-				for (auto& pool: poolSys.RefPools(type)) {
+			else if (typ == Id::OtherHouse) {	
 						double grootte = berekenGrootte(pool.m_members.size(), 7, 10, 15);
-						pool.SetAirMass = grootte*3;
+					//	std::cout << "grootte " << grootte << std::endl;
+						pool.SetAirMass(grootte*3);
+						
 							}
-						}
-
-			else if (type == Id::RestoCafe) {
-				for (auto& pool: poolSys.RefPools(type)) {
+						
+			else if (typ == Id::RestoCafe) {		
 						double grootte = berekenGrootte(pool.m_members.size(), 2, 2, 70);
-						pool.SetAirMass = grootte*3;
+					//	std::cout << "grootte " << grootte << std::endl;
+						pool.SetAirMass(grootte*3);
+						
 							}
-						}
-
-			else if (type == Id::Transport) {
-				for (auto& pool: poolSys.RefPools(type)) {
+						
+			else if (typ == Id::Transport) {
 						double grootte = berekenGrootte(pool.m_members.size(), 1, 0.5, 70);
-						pool.SetAirMass = grootte*3;
+					//	std::cout << "grootte " << grootte << std::endl;
+						pool.SetAirMass(grootte*3);
+						
 							}
-						}
-
-			else if (type == Id::OtherPlace) {
-				for (auto& pool: poolSys.RefPools(type)) {
+						
+			else if (typ == Id::OtherPlace) {
 						double grootte = berekenGrootte(pool.m_members.size(), 1, 0.5, 70);
-						pool.SetAirMass = grootte*3;
-							}
-						}			
-
-				}
-
+					//	std::cout << "grootte " << grootte << std::endl;
+						pool.SetAirMass(grootte*3);
+						
+							}		
+			}
+		}
 // Ventilation
 
 
@@ -204,6 +225,7 @@ double berekenGrootte(int aantalPersonen, double gemiddeldeGrootte, double varia
 
 
         } 
+	}
         
 	return pop;
 

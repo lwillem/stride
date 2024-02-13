@@ -160,13 +160,9 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
                 ContactDivider(m_config, sim->m_rn_man).Divide(sim->m_population, sim->m_contact_profiles);
         };
 
-        std::cout << "Fill in the ventilation in the contactPoolSys." << std::endl;
-        //---------------------------------------------------------------
-        // Seeder of characters
-
-
+        std::cout << "Fill in characteristics in the contactPoolSys for airborne transmission." << std::endl;
         // --------------------------------------------------------------
-        // Fill in characteristics in the contactPoolSys for airborne transmission0
+        // Fill in characteristics in the contactPoolSys for airborne transmission
         // --------------------------------------------------------------
         PoolCharacteristicsSeeder(m_config, sim->m_rn_man).Seed(sim->m_population);
 

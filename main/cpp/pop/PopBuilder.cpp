@@ -82,8 +82,8 @@ shared_ptr<Population> PopBuilder::MakePersons(shared_ptr<Population> pop)
         while (getline(popFile, line)) {
                 const auto values               = Split(line, ";");
                 const auto age                  = FromString<unsigned int>(values[0]);
-                const auto profession           = FromString<unsigned int>(values[1]);
-                const auto person_id            = FromString<unsigned int>(values[2]);
+                const auto person_id            = FromString<unsigned int>(values[1]);
+                const auto profession           = FromString<unsigned int>(values[2]);
                 const auto householdId          = FromString<unsigned int>(values[3]);
                 auto schoolId                   = FromString<unsigned int>(values[4]);
                 const auto workId               = FromString<unsigned int>(values[5]);
@@ -160,8 +160,8 @@ shared_ptr<Population> PopBuilder::MakePersonsOpt(shared_ptr<Population> pop)
     while (getline(popFile, line)) {
         const auto values               = Split(line, ";");
         const auto age                  = static_cast<unsigned int>(IntFromString(values[0]));
-        const auto profession           = static_cast<unsigned int>(IntFromString(values[1]));
-        const auto person_id            = static_cast<unsigned int>(IntFromString(values[2]));
+        const auto person_id            = static_cast<unsigned int>(IntFromString(values[1]));
+        const auto profession           = static_cast<unsigned int>(IntFromString(values[2]));
         const auto householdId          = static_cast<unsigned int>(IntFromString(values[3]));
         auto schoolId                   = static_cast<unsigned int>(IntFromString(values[4]));
         const auto workId               = static_cast<unsigned int>(IntFromString(values[5]));

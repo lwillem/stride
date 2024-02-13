@@ -89,12 +89,6 @@ public:
         // change the air mass of the pool
         void SetAirMass(double airMass) { m_air_mass = airMass; }
 
-        // Get the type specification
-        unsigned int GetTypeSpecification() const {return m_pool_type_specification;}
-
-        // Set the type specification
-        void SetTypeSpecification(unsigned int typeSpecification) {m_pool_type_specification = typeSpecification; }
-
 public:
         // To iterate over the members.
         using iterator = std::vector<stride::Person*>::iterator;
@@ -118,6 +112,7 @@ private:
         /// Calculates contacts and transmissions; accesses private methods and data.
         template <EventLogMode::Id LL, bool TIC, bool TO>
         friend class Infector;
+        friend class PoolCharacteristicsSeeder;
 
 private:
         unsigned int         m_index_immune; ///< Index of the first immune member in the ContactPool.
@@ -129,7 +124,6 @@ private:
         bool                 m_venue_non_complier; ///< There is ventilation on the venue or not
         unsigned int         m_day_week;    ///< day on which the pool is valid, if multiple days, m_day = 7
         double               m_air_mass;    ///< air_mass in the pool
-        unsigned int         m_pool_type_specification; ////< more detail about the Contactpool Work if 2 = school, 1 = worker/factory, 0 = other
 };
 
 } // namespace stride
