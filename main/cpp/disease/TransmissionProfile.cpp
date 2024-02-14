@@ -117,6 +117,13 @@ void TransmissionProfile::Initialize(const ptree& configPt, const ptree& disease
     		m_transmission_probability_distribution_overdispersion = configPt.get<double>("run.transmission_probability_distribution_overdispersion");
     }
 
+	// Check whether susceptibility probability follows a distribution (otherwise it remains constant / age)
+    boost::optional<string> t_prob_susceptibility_distribution = configPt.get_optional<string>("run.susceptibility_probability_distribution");
+    if (t_prob_distribution) {
+    		m_susceptibility_probability_distribution = *t_prob_susceptibility_distribution;
+    		// Get target overdispersion
+    		m_susceptibility_probability_distribution_overdispersion = configPt.get<double>("run.susceptibility_probability_distribution_overdispersion");
+    }
 
 }
 
@@ -130,12 +137,33 @@ double TransmissionProfile::GetSusceptibilityFactor() const {
 	return susceptibility_mean;
 }
 
-double TransmissionProfile::GetIndividualSusceptibility(unsigned int age) const {
-	if (age < m_susceptibility_age.size()) {
-		return m_susceptibility_age[age];
-	} else {
-		return m_susceptibility_age[m_susceptibility_age.size() - 1];
+double TransmissionProfile::GetIndividualSusceptibility(RnHandler& generator,unsigned int age, std::string distribution, double susceptibility_probability) const {
+	if (distribution == "Age") {
+		if (age < m_susceptibility_age.size()) {
+			return m_susceptibility_age[age];
+		} else {
+			return m_susceptibility_age[m_susceptibility_age.size() - 1];
+		}
 	}
+	else if (distribution == "Gamma") {
+		// Generate truncated (between 0 and 1) gamma distribution
+		// Based on script https://rdrr.io/cran/RGeode/src/R/rgammatr.R
+		double shape = m_susceptibility_probability_distribution_overdispersion;
+		double scale = susceptibility_probability / shape;
+
+		boost::math::gamma_distribution<double> gamma_dist = boost::math::gamma_distribution<double>(shape, scale); // FIXME: Be consistent in which implementation of Gamma distribution to use
+
+		double cdf1 = cdf(gamma_dist, 0.0);
+		double cdf2 = cdf(gamma_dist, 1.0);
+
+		double individual_probability = quantile(gamma_dist, cdf1 + generator() * (cdf2 - cdf1));
+
+		return individual_probability;
+
+	} else {
+		return susceptibility_probability;
+	}
+
 }
 
 double TransmissionProfile::GetTransmissionReductionAsymptomatic() const {

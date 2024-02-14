@@ -39,6 +39,8 @@ public:
 	TransmissionProfile(): m_transmission_probability(0),
 							m_transmission_probability_distribution("Constant"),
 							m_transmission_probability_distribution_overdispersion(0),
+							m_susceptibility_probability_distribution("Age"),
+							m_susceptibility_probability_distribution_overdispersion(0),
 							m_susceptibility_age(100),
 							m_rel_transmission_asymptomatic(1),
 							m_rel_susceptibility_children(1) {}
@@ -56,7 +58,7 @@ public:
 	double GetTransmissionReductionAsymptomatic() const;
 
 	/// Return age-specific susceptibility adjustment factor.
-	double GetIndividualSusceptibility(unsigned int age) const;
+	double GetIndividualSusceptibility(util::RnHandler& generator, unsigned int age, std::string distribution, double subsceptibility_probability) const;
 
 	/// Return age-, health-, and person-specific transmission probability.
 	double GetProbability(Person* p_infected, Person* p_susceptible) const;
@@ -64,11 +66,17 @@ public:
 	/// Draw individual transmission probability from distribution.
 	double GetIndividualInfectiousness(util::RnHandler& generator) const;
 
+	// Return susceptibility probability distribution.
+	std::string GetSusceptibilityProbabilityDistribution() const { return m_susceptibility_probability_distribution; }
+
 private:
 	double 						m_transmission_probability;
 
 	std::string 				m_transmission_probability_distribution;
 	double 						m_transmission_probability_distribution_overdispersion;
+
+	std::string					m_susceptibility_probability_distribution;
+	double 						m_susceptibility_probability_distribution_overdispersion;
 
 	std::vector<double>			m_susceptibility_age;
 
