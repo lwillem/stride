@@ -166,6 +166,8 @@ double TransmissionProfile::GetIndividualSusceptibility(RnHandler& generator,uns
 
 }
 
+
+
 double TransmissionProfile::GetTransmissionReductionAsymptomatic() const {
 	return m_rel_transmission_asymptomatic;
 }

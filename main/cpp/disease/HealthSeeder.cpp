@@ -105,14 +105,7 @@ void HealthSeeder::Seed(const std::shared_ptr<stride::Population>& pop, const Tr
                         double pop_susceptible_mean = 1.0;
                 }
 
-
-
 #pragma omp for
-
-             
-
-                
-
                 for (size_t i = 0; i < population.size(); ++i) {
 
                 		// initiate start for symptomatic and infectious period

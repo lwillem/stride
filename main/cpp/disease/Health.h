@@ -138,8 +138,8 @@ public:
         }
 
         /// Get relative probability to acquire infection
-		double GetRelativeSusceptibility() const {
-				return m_relative_susceptibility;
+	double GetRelativeSusceptibility() const {
+			return m_relative_susceptibility;
 		}
 
 
