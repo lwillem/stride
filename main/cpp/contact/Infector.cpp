@@ -24,6 +24,7 @@
 #include "pop/Person.h"
 #include <iostream>
 #include <cmath>
+#include <list>
 
 using namespace std;
 
@@ -344,7 +345,20 @@ inline double GetContactProbability(const AgeContactProfile& profile, const Pers
         return contact_probability;
 }
 
-} // namespace
+Person* determineInfectorResponsible(util::RnHandler& rnHandler, const std::list<std::pair<double, Person*>>& virusContributors, double virusStock){
+        double   uniform01Generator = rnHandler();
+        double   cumulative_chance = 0;
+        for (const auto& pair : virusContributors) {
+                double chance = pair.first / virusStock;
+                cumulative_chance += chance;
+                if (uniform01Generator <= cumulative_chance) {
+                        return pair.second;
+                }
+        }      
+}
+
+}
+ // namespace
 
 namespace stride {
 
@@ -457,6 +471,7 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
                                                 const auto person_duration = p1->PoolDurations(pType)[dayWeek];
                                                 const auto rel_suscep = h1.GetRelativeSusceptibility();
                                                 double v = 0.0;
+                                                std::list<std::pair<double, Person*>> virusContributors;
 
                                                 // loop over possible contacts (contacts can be initiated by each member)
                                                 for (size_t i_person2 = 0; i_person2 < pSize; i_person2++) {
@@ -485,14 +500,18 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
                                                                 if (contact_duration >= person_duration) {
                                                                         part_contact_time = 1.0; }
                                                                 else {part_contact_time = contact_duration / person_duration; }
-                                                                double contact_contribution = part_contact_time * asymp_correction * contact_rel_inf;
-                                                                v += contact_contribution;
+                                                                double contribution = part_contact_time * asymp_correction * contact_rel_inf;
+                                                                v += contribution;
+                                                                virusContributors.emplace_back(contribution,p2);
                                                         }}
 
                                                 const double aProb = 1.0 - std::exp(-((linkingHazardVirus * v) / (pVentilation * pAirMass *35.3147)) * (person_duration - (1.0 - std::exp(-pVentilation * person_duration)) / pVentilation));              
                                                 if (rnHandler.Binomial(rel_suscep,aProb)) {
                                                                                 double rel_inf = transProfile.GetIndividualInfectiousness(rnHandler);
-                                                                                h1.StartAirborneInfection(rel_inf);
+                                                                                Person* contributor = determineInfectorResponsible(rnHandler,virusContributors, v);
+                                                                                unsigned int id_index_case = contributor->GetHealth().GetIdIndexCase();
+                                                                                unsigned int id_infector = contributor->GetId();                                                                            
+                                                                                h1.StartInfection(id_index_case, id_infector, rel_inf);
                                                                                 if (TIC)
                                                                                         h1.StopInfection();
                                                                                 LP::AirborneTrans(eventLogger, p1, pType, simDay, pVentilation);  
@@ -602,6 +621,7 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                                                 const auto person_duration = p1->PoolDurations(pType)[dayWeek];
                                                 const auto rel_suscep = h1.GetRelativeSusceptibility();
                                                 double v = 0.0;
+                                                std::list<std::pair<double, Person*>> virusContributors;
 
                                                 // for each of susceptible cases, calculating the group's aggregate flow v of virus exhalation per unit of time
                                                 for (size_t i_infected = 0; i_infected < num_cases; i_infected++) {
@@ -611,6 +631,7 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                                                         continue;
                                                         }
                                                         auto& h2 = p2->GetHealth();
+                                                        
                 
 	                                                if (h2.IsInfectious()) {
 
@@ -625,14 +646,19 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                                                                 if (contact_duration >= person_duration) {
                                                                         part_contact_time = 1.0; }
                                                                 else {part_contact_time = contact_duration / person_duration; }
-                                                                double contact_contribution = part_contact_time * asymp_correction * contact_rel_inf;
-                                                                v += contact_contribution;
-                                                        }}
+                                                                double contribution = part_contact_time * asymp_correction * contact_rel_inf;
+                                                                v += contribution;
+                                                                virusContributors.emplace_back(contribution,p2);
+                                                        }
+                                                        }
 
                                                 const double aProb = 1.0 - std::exp(-((linkingHazardVirus * v) / (pVentilation * pAirMass *35.3147)) * (person_duration - (1.0 - std::exp(-pVentilation * person_duration)) / pVentilation));              
                                                 if (rnHandler.Binomial(rel_suscep,aProb)) {
                                                                                 double rel_inf = transProfile.GetIndividualInfectiousness(rnHandler);
-                                                                                h1.StartAirborneInfection(rel_inf);
+                                                                                Person* contributor = determineInfectorResponsible(rnHandler, virusContributors, v);
+                                                                                unsigned int id_index_case = contributor->GetHealth().GetIdIndexCase();
+                                                                                unsigned int id_infector = contributor->GetId();                                                                            
+                                                                                h1.StartInfection(id_index_case,id_infector, rel_inf);
                                                                                 if (TIC)
                                                                                         h1.StopInfection();
                                                                                 LP::AirborneTrans(eventLogger, p1, pType, simDay, pVentilation);  
