@@ -42,14 +42,10 @@ public:
         }
 
         static void Trans(const std::shared_ptr<spdlog::logger>&, const Person*, const Person*, ContactType::Id,
-                          unsigned short int, unsigned int, const double)
+                          unsigned short int, unsigned int, const double, bool)
         {
         }
 
-        static void AirborneTrans(const std::shared_ptr<spdlog::logger>&, const Person*, ContactType::Id,
-                          unsigned short int, const double)
-        {
-        }
 
 };
 
@@ -65,30 +61,20 @@ public:
 
         // p1: infector & p2:infectee
         static void Trans(const std::shared_ptr<spdlog::logger>& logger, const Person* p1, const Person* p2,
-                          ContactType::Id type, unsigned short int sim_day, unsigned int id_index_case, const double pVentilation)
+                          ContactType::Id type, unsigned short int sim_day, unsigned int id_index_case, const double pVentilation, bool airborne)
         {
-                logger->info("[TRAN_M] {} {} {} {} {} {}",
+        logger->info("[TRAN_M] {} {} {} {} {} {} {}",
 							 p2->GetAge(),
 							 sim_day,
 							 p2->GetHealth().GetStartInfectiousness(),
 							 p2->GetHealth().GetStartSymptomatic(),
 							 p2->GetHealth().GetEndSymptomatic(),
-                                                         pVentilation
+                                                         pVentilation,
+                                                         airborne
 							 );
         }
 
-        static void AirborneTrans(const std::shared_ptr<spdlog::logger>& logger, const Person* p2, ContactType::Id type,
-                          unsigned short int sim_day, const double pVentilation)
-        {
-                logger->info("[AIR_TRAN_M] {} {} {} {} {} {}",
-							 p2->GetAge(),
-							 sim_day,
-							 p2->GetHealth().GetStartInfectiousness(),
-							 p2->GetHealth().GetStartSymptomatic(),
-							 p2->GetHealth().GetEndSymptomatic(),
-                                                         pVentilation
-							 );
-        }
+        
 
 
 };
@@ -105,29 +91,17 @@ public:
 
         // p1: infector & p2:infectee
         static void Trans(const std::shared_ptr<spdlog::logger>& logger, const Person* p1, const Person* p2,
-                          ContactType::Id type, unsigned short int sim_day, unsigned int id_index_case, const double pVentilation)
+                          ContactType::Id type, unsigned short int sim_day, unsigned int id_index_case, const double pVentilation, bool airborne)
         {
-                logger->info("[TRAN] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}", p2->GetId(), p1->GetId(), p2->GetAge(), p1->GetAge(),
+                logger->info("[TRAN] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}", p2->GetId(), p1->GetId(), p2->GetAge(), p1->GetAge(),
                              ToString(type), sim_day, id_index_case,
 							 p2->GetHealth().GetStartInfectiousness(),p2->GetHealth().GetEndInfectiousness(),
 							 p2->GetHealth().GetStartSymptomatic(),p2->GetHealth().GetEndSymptomatic(),
 							 p1->GetHealth().IsSymptomatic(),
 							 p2->GetHealth().GetRelativeInfectiousness(),
 							 p2->GetHealth().GetRelativeSusceptibility(),
-                                                         pVentilation);
-        }
-
-
-        static void AirborneTrans(const std::shared_ptr<spdlog::logger>& logger, const Person* p2, ContactType::Id type,
-                          unsigned short int sim_day, const double pVentilation)
-        {
-                logger->info("[AIR_TRAN] {} {} {} {} {} {} {} {} {} {} {}", p2->GetId(), p2->GetAge(),
-                             ToString(type), sim_day,
-							 p2->GetHealth().GetStartInfectiousness(),p2->GetHealth().GetEndInfectiousness(),
-							 p2->GetHealth().GetStartSymptomatic(),p2->GetHealth().GetEndSymptomatic(),
-							 p2->GetHealth().GetRelativeInfectiousness(),
-							 p2->GetHealth().GetRelativeSusceptibility(),
-                                                         pVentilation);
+                                                         pVentilation,
+                                                         airborne);
         }
 
 
@@ -157,25 +131,17 @@ public:
         }
 
         static void Trans(const std::shared_ptr<spdlog::logger>& logger, const Person* p1, const Person* p2,
-                          ContactType::Id type, unsigned short int sim_day, unsigned int id_index_case, const double pVentilation)
+                          ContactType::Id type, unsigned short int sim_day, unsigned int id_index_case, const double pVentilation, bool airborne)
         {
-                logger->info("[TRAN] {} {} {} {} {} {} {} {} {} {} {} {} {} {}", p2->GetId(), p1->GetId(), p2->GetAge(), p1->GetAge(),
+                logger->info("[TRAN] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}", p2->GetId(), p1->GetId(), p2->GetAge(), p1->GetAge(),
                              ToString(type), sim_day, id_index_case,
 							 p2->GetHealth().GetStartInfectiousness(),p2->GetHealth().GetEndInfectiousness(),
 							 p2->GetHealth().GetStartSymptomatic(),p2->GetHealth().GetEndSymptomatic(),
 							 p1->GetHealth().IsSymptomatic(),  p1->GetHealth().GetRelativeInfectiousness(),
-							 p2->GetHealth().GetRelativeSusceptibility(), pVentilation);
+							 p2->GetHealth().GetRelativeSusceptibility(), pVentilation, airborne);
         }
 
-        static void AirborneTrans(const std::shared_ptr<spdlog::logger>& logger, const Person* p2, ContactType::Id type,
-                          unsigned short int sim_day, const double pVentilation)
-        {
-                logger->info("[AIR_TRAN] {} {} {} {} {} {} {} {} {} {}", p2->GetId(), p2->GetAge(),
-                             ToString(type), sim_day,
-							 p2->GetHealth().GetStartInfectiousness(),p2->GetHealth().GetEndInfectiousness(),
-							 p2->GetHealth().GetStartSymptomatic(),p2->GetHealth().GetEndSymptomatic(),
-							 p2->GetHealth().GetRelativeSusceptibility(), pVentilation);
-        }
+       
 };
 
 
@@ -201,25 +167,17 @@ public:
         }
 
         static void Trans(const std::shared_ptr<spdlog::logger>& logger, const Person* p1, const Person* p2,
-                          ContactType::Id type, unsigned short int sim_day, unsigned int id_index_case, const double pVentilation)
+                          ContactType::Id type, unsigned short int sim_day, unsigned int id_index_case, const double pVentilation, bool airborne)
         {
-                logger->info("[TRAN] {} {} {} {} {} {} {} {} {} {} {} {} {} {}", p2->GetId(), p1->GetId(), p2->GetAge(), p1->GetAge(),
+                logger->info("[TRAN] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}", p2->GetId(), p1->GetId(), p2->GetAge(), p1->GetAge(),
                              ToString(type), sim_day, id_index_case,
 							 p2->GetHealth().GetStartInfectiousness(),p2->GetHealth().GetEndInfectiousness(),
 							 p2->GetHealth().GetStartSymptomatic(),p2->GetHealth().GetEndSymptomatic(),
 							 p1->GetHealth().IsSymptomatic(),  p1->GetHealth().GetRelativeInfectiousness(),
-							 p2->GetHealth().GetRelativeSusceptibility(), pVentilation);
+							 p2->GetHealth().GetRelativeSusceptibility(), pVentilation, airborne);
         }
 
-        static void AirborneTrans(const std::shared_ptr<spdlog::logger>& logger, const Person* p2,
-                          ContactType::Id type, unsigned short int sim_day, const double pVentilation)
-        {
-                logger->info("[AIR_TRAN] {} {} {} {} {} {} {} {} {} {}", p2->GetId(), p2->GetAge(),
-                             ToString(type), sim_day,
-							 p2->GetHealth().GetStartInfectiousness(),p2->GetHealth().GetEndInfectiousness(),
-							 p2->GetHealth().GetStartSymptomatic(),p2->GetHealth().GetEndSymptomatic(),
-							 p2->GetHealth().GetRelativeSusceptibility(), pVentilation);
-        }
+
 };
 
 } // namespace
@@ -435,7 +393,7 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
 
 										if (TIC)
 												h2.StopInfection();
-										LP::Trans(eventLogger, p1, p2, pType, simDay, h1.GetIdIndexCase(), pVentilation);
+										LP::Trans(eventLogger, p1, p2, pType, simDay, h1.GetIdIndexCase(), pVentilation, false);
 								}
 
 								// if h2 infectious, account for susceptibility of p1
@@ -447,7 +405,7 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
 
 										if (TIC)
 												h1.StopInfection();
-										LP::Trans(eventLogger, p2, p1, pType, simDay, h2.GetIdIndexCase(), pVentilation);
+										LP::Trans(eventLogger, p2, p1, pType, simDay, h2.GetIdIndexCase(), pVentilation, false);
 								}
                         }
                 }
@@ -514,7 +472,7 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
                                                                                 h1.StartInfection(id_index_case, id_infector, rel_inf);
                                                                                 if (TIC)
                                                                                         h1.StopInfection();
-                                                                                LP::AirborneTrans(eventLogger, p1, pType, simDay, pVentilation);  
+                                                                                LP::Trans(eventLogger, contributor, p1, pType, simDay, id_index_case, pVentilation, true);  
                         
                                                 }
                                         }
@@ -596,7 +554,7 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                                                 // No secondary infections with TIC; just mark p2 'recovered'
                                                 if (TIC)
                                                         h2.StopInfection();
-                                                LP::Trans(eventLogger, p1, p2, pType, simDay, h1.GetIdIndexCase(), pVentilation);
+                                                LP::Trans(eventLogger, p1, p2, pType, simDay, h1.GetIdIndexCase(), pVentilation, false);
                                         }
                                 }
                         }
@@ -661,7 +619,7 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                                                                                 h1.StartInfection(id_index_case,id_infector, rel_inf);
                                                                                 if (TIC)
                                                                                         h1.StopInfection();
-                                                                                LP::AirborneTrans(eventLogger, p1, pType, simDay, pVentilation);  
+                                                                                LP::Trans(eventLogger, contributor, p1, pType, simDay, id_index_case, pVentilation, true);  
                                                 }
                                         }
 
