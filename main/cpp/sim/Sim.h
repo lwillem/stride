@@ -25,7 +25,6 @@
 #include "contact/InfectorExec.h"
 #include "disease/PublicHealthAgency.h"
 #include "disease/TransmissionProfile.h"
-#include "disease/AirborneTransmissionProfile.h"
 #include "disease/UniversalTesting.h"
 #include "util/RnMan.h"
 #include "util/RnHandler.h"
@@ -75,9 +74,6 @@ public:
         /// Get the transmission profile.
         const TransmissionProfile& RefTransmissionProfile() const { return m_transmission_profile; }
 
-        /// Get the airborne transmission profile.
-        const AirborneTransmissionProfile&  RefAirborneTransmissionProfile() const { return m_airborne_transmission_profile; }
-
         /// Run one time step, computing full simulation (default) or only index case.
         void TimeStep();
 
@@ -104,7 +100,6 @@ private:
         util::RnMan                 m_rn_man;           ///< Random number generation management.
 
         TransmissionProfile         m_transmission_profile; ///< Profile of disease.
-        AirborneTransmissionProfile m_airborne_transmission_profile; ///< Profile of the airborne transmission of a disease
 
         // temporary...
         double                      m_cnt_intensity_householdCluster;

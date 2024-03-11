@@ -331,7 +331,7 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
                                  const TransmissionProfile& transProfile, util::RnHandler& rnHandler,
                                  unsigned short int simDay, shared_ptr<spdlog::logger> eventLogger,
 								 std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster,
-                                 double pType_distancing_factor, unsigned short int dayWeek, bool m_airborne_tranmission, const AirborneTransmissionProfile& airborneTransProfile)
+                                 double pType_distancing_factor, unsigned short int dayWeek, bool m_airborne_tranmission)
 {
         using LP = LOG_POLICY<LL>;
 
@@ -415,7 +415,7 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
                 if (m_airborne_tranmission){
                 // set up some stuff for the pool & disease in general
                         const auto pAirMass = pool.m_air_mass;
-                        const auto linkingHazardVirus = airborneTransProfile.GetLinkingHazardVirus();
+                        const auto linkingHazardVirus = transProfile.GetLinkingHazardVirus();
                         const auto transmissionReductionAsymptomatic = transProfile.GetTransmissionReductionAsymptomatic();
                         for (size_t i_person1 = 0; i_person1 < pSize; i_person1++)
                                 { // check if member is present today
@@ -494,7 +494,7 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                                    const TransmissionProfile& transProfile, util::RnHandler& rnHandler,
                                    unsigned short int simDay, shared_ptr<spdlog::logger> eventLogger,
 								   std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster,
-                                   double pType_distancing_factor, unsigned short int dayWeek, bool m_airborne_tranmission, const AirborneTransmissionProfile& airborneTransProfile)
+                                   double pType_distancing_factor, unsigned short int dayWeek, bool m_airborne_tranmission)
 {
         using LP = LOG_POLICY<LL>;
 
@@ -564,7 +564,7 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
         if (m_airborne_tranmission){
                 // set up some stuff for the pool & disease in general
                         const auto pAirMass = pool.m_air_mass;
-                        const auto linkingHazardVirus = airborneTransProfile.GetLinkingHazardVirus();
+                        const auto linkingHazardVirus = transProfile.GetLinkingHazardVirus();
                         const auto transmissionReductionAsymptomatic = transProfile.GetTransmissionReductionAsymptomatic();
 
                         // loop over susceptible cases

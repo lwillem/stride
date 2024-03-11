@@ -36,6 +36,8 @@ void TransmissionProfile::Initialize(const ptree& configPt, const ptree& disease
     // 1. setup general transmission aspects
     m_rel_transmission_asymptomatic   = diseasePt.get<double>("disease.rel_transmission_asymptomatic", 1);
     m_rel_susceptibility_children     = diseasePt.get<double>("disease.rel_susceptibility_children", 1);
+	m_per_person_viral_shedding  = diseasePt.get<double>("disease.k", 1);
+    m_linking_hazard_virus     = diseasePt.get<double>("disease.delta", 0.226);
 
     // 2. setup transmission probability: with a given R0 or a given mean transmission probability
     // Use boost:optional to check which parameters are available in the config file
@@ -175,6 +177,14 @@ double TransmissionProfile::GetIndividualSusceptibility(RnHandler& generator,uns
 
 double TransmissionProfile::GetTransmissionReductionAsymptomatic() const {
 	return m_rel_transmission_asymptomatic;
+}
+
+double TransmissionProfile::GetPerPersonViralShedding() const {
+	return m_per_person_viral_shedding;
+}
+
+double TransmissionProfile::GetLinkingHazardVirus() const {
+	return m_linking_hazard_virus;
 }
 
 double TransmissionProfile::GetProbability(Person* p_infected, Person* p_susceptible) const {

@@ -43,7 +43,10 @@ public:
 							m_susceptibility_probability_distribution_overdispersion(0),
 							m_susceptibility_age(100),
 							m_rel_transmission_asymptomatic(1),
-							m_rel_susceptibility_children(1) {}
+							m_rel_susceptibility_children(1),
+							m_per_person_viral_shedding(1),
+						    m_linking_hazard_virus(0.226)
+							 {}
 
 	/// Initialize.
 	void Initialize(const boost::property_tree::ptree& configPT, const boost::property_tree::ptree& diseasePt);
@@ -56,6 +59,12 @@ public:
 
 	/// Return relative reduction of transmission for asymptomatic cases
 	double GetTransmissionReductionAsymptomatic() const;
+
+	/// Return per-person viral shedding.
+	double GetPerPersonViralShedding() const;
+
+	/// Return coefficient linking hazard rate to virus load.
+	double GetLinkingHazardVirus() const;
 
 	/// Return age-specific susceptibility adjustment factor.
 	double GetIndividualSusceptibility(util::RnHandler& generator, unsigned int age) const;
@@ -79,6 +88,9 @@ private:
 
     double            			m_rel_transmission_asymptomatic; ///< Relative reduction of transmission for asymptomatic cases
     double             			m_rel_susceptibility_children; ///< Relative reduction of susceptibility for children vs. adults
+
+	double            			m_per_person_viral_shedding; ///< Per-person viral shedding
+    double             			m_linking_hazard_virus; ///< Coefficient linking harard rate to virus load
 
 };
 

@@ -54,7 +54,7 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         sim->m_track_index_case              = m_config.get<bool>("run.track_index_case");
         sim->m_run_simplified                = m_config.get<bool>("run.run_simplified", false);
         sim->m_subpools_community            = m_config.get<bool>("run.subpools_community_used", false);
-        sim->m_airborne_transmission          = m_config.get<bool>("run.airborne_transmission", false);
+        sim->m_airborne_transmission         = m_config.get<bool>("run.airborne_transmission", false);
         // TO DO!!! test only airborne transmission if subpools community!!!
         sim->m_num_threads                   = m_config.get<unsigned int>("run.num_threads");
         unsigned int num_days                = m_config.get<unsigned short>("run.num_days");
@@ -100,13 +100,6 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         const auto diseasePt = ReadDiseasePtree();
         sim->m_transmission_profile.Initialize(m_config, diseasePt);
         
-         std::cout << "Initialize the airborne transmission profile." << std::endl;
-        // --------------------------------------------------------------
-        // Initialize the airborne transmission profile
-        // --------------------------------------------------------------
-        const auto diseaseAirborneTransmissionPt = ReadDiseaseAirborneTransmissionPtree();
-        sim->m_airborne_transmission_profile.Initialize(m_config, diseaseAirborneTransmissionPt);
-
         std::cout << "Seed the population with health data." << std::endl;
         // --------------------------------------------------------------
         // Seed the population with health data.
@@ -182,13 +175,6 @@ ptree SimBuilder::ReadAgeContactPtree()
 ptree SimBuilder::ReadDiseasePtree()
 {
         const auto fn = m_config.get<string>("run.disease_config_file");
-        const auto fp = m_config.get<bool>("run.use_install_dirs") ? FileSys::GetDataDir() /= fn : filesys::path(fn);
-        return FileSys::ReadPtreeFile(fp);
-}
-
-ptree SimBuilder::ReadDiseaseAirborneTransmissionPtree()
-{
-        const auto fn = m_config.get<string>("run.disease_airborne_transmission_file");
         const auto fp = m_config.get<bool>("run.use_install_dirs") ? FileSys::GetDataDir() /= fn : filesys::path(fn);
         return FileSys::ReadPtreeFile(fp);
 }

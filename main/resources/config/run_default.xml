@@ -4,7 +4,6 @@
 	<airborne_transmission>true</airborne_transmission>
     <event_log_level>Transmissions</event_log_level>
     <event_output_file>true</event_output_file>
-	<disease_airborne_transmission_file>disease_covid19_airborne_transmission.xml</disease_airborne_transmission_file>
     <disease_config_file>disease_measles_adaptive_behavior.xml</disease_config_file>
 	<global_information_policy>NoGlobalInformation</global_information_policy>
     <holidays_file>holidays_none.csv</holidays_file>

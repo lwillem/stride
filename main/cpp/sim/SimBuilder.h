@@ -54,9 +54,6 @@ private:
         /// Get the disease configuration data.
         boost::property_tree::ptree ReadDiseasePtree();
 
-        /// Get the disease configuration data concerning airborne transmission.
-        boost::property_tree::ptree ReadDiseaseAirborneTransmissionPtree();
-
 private:
         boost::property_tree::ptree m_config; ///< Run config in ptree.
 };

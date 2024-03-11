@@ -33,7 +33,6 @@ set(STRIDE_SRC
     contact/Infector.cpp
     contact/PoolCharacteristicsSeeder.cpp
     #---
-    disease/AirborneTransmissionProfile.cpp
 	disease/DiseaseSeeder.cpp
     disease/Health.cpp
     disease/HealthSeeder.cpp
