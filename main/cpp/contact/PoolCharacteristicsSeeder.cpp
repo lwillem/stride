@@ -85,10 +85,8 @@ shared_ptr<Population> PoolCharacteristicsSeeder::Seed(shared_ptr<Population> po
 				
     float age = pMembers[0]->GetAge();
 
-			//	std::cout << "pool" << std::endl;
 				if (age < 3) {
 					double grootte = berekenGrootte(pool.m_members.size(), 5.0, 1.5, 20);
-				//	std::cout << "grootte " << grootte << std::endl;
 					pool.SetAirMass(grootte*3);
 					 
 						for (size_t i_person1 = 0; i_person1 < pSize; i_person1++) {
@@ -101,7 +99,6 @@ shared_ptr<Population> PoolCharacteristicsSeeder::Seed(shared_ptr<Population> po
 				
 				 else if (age < 6) {
 					double grootte = berekenGrootte(pool.m_members.size(), 3.75, 0.75, 45);
-				//	std::cout << "grootte " << grootte << std::endl;
 					pool.SetAirMass(grootte*3);
 					
 						for (size_t i_person1 = 0; i_person1 < pSize; i_person1++) {
@@ -113,7 +110,6 @@ shared_ptr<Population> PoolCharacteristicsSeeder::Seed(shared_ptr<Population> po
 				}
 				else if (age < 12) {
 					double grootte = berekenGrootte(pool.m_members.size(), 2.5, 0.5, 45);
-				//	std::cout << "grootte " << grootte << std::endl;
 					pool.SetAirMass(grootte*3);
 					
 						for (size_t i_person1 = 0; i_person1 < pSize; i_person1++) {
@@ -126,7 +122,6 @@ shared_ptr<Population> PoolCharacteristicsSeeder::Seed(shared_ptr<Population> po
 
 				else {
 					double grootte = berekenGrootte(pool.m_members.size(), 2, 2, 40);
-				//	std::cout << "grootte " << grootte << std::endl;
 					pool.SetAirMass(grootte*3);
 					
 						for (size_t i_person1 = 0; i_person1 < pSize; i_person1++) {
@@ -139,7 +134,6 @@ shared_ptr<Population> PoolCharacteristicsSeeder::Seed(shared_ptr<Population> po
 			}
 			else if (typ == Id::College) {
 					double grootte = berekenGrootte(pool.m_members.size(), 4, 2, 40);
-				//	std::cout << "grootte " << grootte << std::endl;
 					pool.SetAirMass(grootte*3);
 					
 						for (size_t i_person1 = 0; i_person1 < pSize; i_person1++) {
@@ -154,13 +148,11 @@ shared_ptr<Population> PoolCharacteristicsSeeder::Seed(shared_ptr<Population> po
 				unsigned int poolTypeSpecification =  pool[0]->GetProfession();
 				if (poolTypeSpecification == 1){
 				double grootte = berekenGrootte(pool.m_members.size(), 1000, 400, 20);
-				// std::cout << "grootte " << grootte << std::endl;
 					pool.SetAirMass(grootte*10);
 					
 					 }
 					else {
 						double grootte = berekenGrootte(pool.m_members.size(), 7, 2, 15);
-					//	std::cout << "grootte " << grootte << std::endl;
 						pool.SetAirMass(grootte*3);
 						
 					}					
@@ -177,28 +169,24 @@ shared_ptr<Population> PoolCharacteristicsSeeder::Seed(shared_ptr<Population> po
 
 			else if (typ == Id::OtherHouse) {	
 						double grootte = berekenGrootte(pool.m_members.size(), 7, 10, 15);
-					//	std::cout << "grootte " << grootte << std::endl;
 						pool.SetAirMass(grootte*3);
 						
 							}
 						
 			else if (typ == Id::RestoCafe) {		
 						double grootte = berekenGrootte(pool.m_members.size(), 2, 2, 70);
-					//	std::cout << "grootte " << grootte << std::endl;
 						pool.SetAirMass(grootte*3);
 						
 							}
 						
 			else if (typ == Id::Transport) {
 						double grootte = berekenGrootte(pool.m_members.size(), 1, 0.5, 70);
-					//	std::cout << "grootte " << grootte << std::endl;
 						pool.SetAirMass(grootte*3);
 						
 							}
 						
 			else if (typ == Id::OtherPlace) {
 						double grootte = berekenGrootte(pool.m_members.size(), 1, 0.5, 70);
-					//	std::cout << "grootte " << grootte << std::endl;
 						pool.SetAirMass(grootte*3);
 						
 							}		

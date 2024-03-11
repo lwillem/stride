@@ -185,11 +185,6 @@ shared_ptr<Population> PopBuilder::MakePersonsOpt(shared_ptr<Population> pop)
             schoolId = 0;
         }
 
-        if(person_id == 1 ) {
-                  std::cout << "line " << line << std::endl;
-                  
-                }
-
         pop->CreatePerson(person_id, age, profession, householdId, schoolId, collegeId, workId, primaryCommunityId,
                           secondaryCommunityId, householdClusterId, collectivityId);
         ;
@@ -197,8 +192,6 @@ shared_ptr<Population> PopBuilder::MakePersonsOpt(shared_ptr<Population> pop)
 
 
     popFile.close();
-
-    std::cout << "popFile closed" << std::endl;
 
     return pop;
 }
