@@ -219,7 +219,6 @@ shared_ptr<Population> PoolCharacteristicsSeeder::Seed(shared_ptr<Population> po
 			double ventilationInfo = ventilationPt.get<double>("ventilation_reduction." + typString,0);
 			for (auto& pool: poolSys.RefPools(typ)) {
 				pool.SetVentilation(ventilationInfo);
-				logger->info("[VEN] {} {} {}", typString, ventilationInfo, pool.GetVentilation());
 			};
 		};
 
