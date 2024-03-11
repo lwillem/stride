@@ -87,24 +87,12 @@ void HealthSeeder::Seed(const std::shared_ptr<stride::Population>& pop, const Tr
 {
         auto& population = *pop;
 
-        std::string susceptibilityDistribution = transProfile.GetSusceptibilityProbabilityDistribution();        
+                
 
 #pragma omp parallel num_threads(handlers.size())
         {
                 auto& gen01 = handlers[static_cast<size_t>(omp_get_thread_num())];
-                double pop_susceptible_mean;
-                if (susceptibilityDistribution == "Gamma") {
-                        double total = 0.0;
-                        for (size_t i = 0; i < population.size(); ++i) {
-                                double relative_susceptibility = transProfile.GetIndividualSusceptibility(gen01, population[i].GetAge(), "Age", 1.0);
-                                total += relative_susceptibility;
-                                        }
-                        double pop_susceptible_mean = total / population.size();
-                }
-                else {
-                        double pop_susceptible_mean = 1.0;
-                }
-
+               
 #pragma omp for
                 for (size_t i = 0; i < population.size(); ++i) {
 
@@ -127,7 +115,7 @@ void HealthSeeder::Seed(const std::shared_ptr<stride::Population>& pop, const Tr
                         	timeSymptomatic = 0;
                         }
 
-			double relative_susceptibility = transProfile.GetIndividualSusceptibility(gen01, population[i].GetAge(),susceptibilityDistribution, pop_susceptible_mean);
+			double relative_susceptibility = transProfile.GetIndividualSusceptibility(gen01, population[i].GetAge());
 
                         population[i].GetHealth() =
                             Health(startInfectiousness, startSymptomatic, timeInfectious, timeSymptomatic,

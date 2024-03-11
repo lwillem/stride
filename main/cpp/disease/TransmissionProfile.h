@@ -58,16 +58,13 @@ public:
 	double GetTransmissionReductionAsymptomatic() const;
 
 	/// Return age-specific susceptibility adjustment factor.
-	double GetIndividualSusceptibility(util::RnHandler& generator, unsigned int age, std::string distribution, double subsceptibility_probability) const;
+	double GetIndividualSusceptibility(util::RnHandler& generator, unsigned int age) const;
 
 	/// Return age-, health-, and person-specific transmission probability.
 	double GetProbability(Person* p_infected, Person* p_susceptible) const;
 
 	/// Draw individual transmission probability from distribution.
 	double GetIndividualInfectiousness(util::RnHandler& generator) const;
-
-	// Return susceptibility probability distribution.
-	std::string GetSusceptibilityProbabilityDistribution() const { return m_susceptibility_probability_distribution; }
 
 private:
 	double 						m_transmission_probability;

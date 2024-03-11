@@ -137,15 +137,16 @@ double TransmissionProfile::GetSusceptibilityFactor() const {
 	return susceptibility_mean;
 }
 
-double TransmissionProfile::GetIndividualSusceptibility(RnHandler& generator,unsigned int age, std::string distribution, double susceptibility_probability) const {
-	if (distribution == "Age") {
+double TransmissionProfile::GetIndividualSusceptibility(RnHandler& generator,unsigned int age) const {
+	
+	if (m_susceptibility_probability_distribution == "Gamma") {
+		double susceptibility_probability;
 		if (age < m_susceptibility_age.size()) {
-			return m_susceptibility_age[age];
+			susceptibility_probability = m_susceptibility_age[age];
 		} else {
-			return m_susceptibility_age[m_susceptibility_age.size() - 1];
+			susceptibility_probability = m_susceptibility_age[m_susceptibility_age.size() - 1];
 		}
-	}
-	else if (distribution == "Gamma") {
+
 		// Generate truncated (between 0 and 1) gamma distribution
 		// Based on script https://rdrr.io/cran/RGeode/src/R/rgammatr.R
 		double shape = m_susceptibility_probability_distribution_overdispersion;
@@ -161,7 +162,11 @@ double TransmissionProfile::GetIndividualSusceptibility(RnHandler& generator,uns
 		return individual_probability;
 
 	} else {
-		return susceptibility_probability;
+		if (age < m_susceptibility_age.size()) {
+			return m_susceptibility_age[age];
+		} else {
+			return m_susceptibility_age[m_susceptibility_age.size() - 1];
+		}
 	}
 
 }

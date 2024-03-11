@@ -172,7 +172,7 @@ exp_design_fitting$gtester_label            <- 'covid_fitting'
 # b0 <- 0.124492138353664; b1 <- 39.6458896077442            # from: disease_covid19_lognormal 
 b0 <- 0.14743616688954;  b1 <- 43.9598287259418              # from: disease_covid19_age  
 tmp_transmission <- rep(unique(exp_design_fitting$r0 - b0) / b1,100)
-exp_design_fitting$disease__age <- paste(tmp_transmission,collapse=',')
+exp_design_fitting$disease_susceptibility_age <- paste(tmp_transmission,collapse=',')
 exp_design_fitting$disease_susceptibility_agecat <- paste(0:99,collapse=',')
 # exp_design_fitting$r0 = (1-b0)/b1
 exp_design_fitting$transmission_probability = 1
