@@ -35,10 +35,7 @@ shared_ptr<Population> ContactDivider::Divide(shared_ptr<Population> pop, const 
 
 	auto& logger = population.RefEventLogger();
 
-	// Aantal categorieën (locaties)
-    const size_t numCategories = 4;
-
-	std::mt19937 rng{std::random_device{}()};
+	auto uniform01Generator = m_rn_man.GetUniform01Generator(0U);
     
 	for (size_t i = 0; i < population.size(); ++i) {
 		auto &p = population[i];
@@ -84,24 +81,37 @@ shared_ptr<Population> ContactDivider::Divide(shared_ptr<Population> pop, const 
 			// Initialiseer resultaten
     		std::vector<unsigned int> results(probabilities.size(), 0);
 
-    		// Bepaal het aantal te verdelen contacten
-    		unsigned int totalContacts = rounded_reference_num_contacts_p;  
-
-    		for (unsigned int i = 0; i < totalContacts; ++i) {
+    		for (unsigned int i = 0; i < rounded_reference_num_contacts_p; ++i) {
         		// Bereken aangepaste kansen op basis van reeds toegewezen contacten
-        		std::vector<double> adjustedProbabilities;
+        		std::vector<double> preservedProbabilities;
         		for (unsigned int index : indices) {
             		if (maxContactsPerLocation[index] > 0) {
-                		adjustedProbabilities.push_back(probabilities[index]);
+                		preservedProbabilities.push_back(probabilities[index]);
             		}
         		}
 
-        		// Controleer of er nog beschikbare categorieën zijn
-        		if (!adjustedProbabilities.empty()) {
-            	// Selecteer een willekeurige categorie op basis van de aangepaste kansen
-            	std::discrete_distribution<unsigned int> distribution(adjustedProbabilities.begin(), adjustedProbabilities.end());
-            	unsigned int selectedCategory = indices[distribution(rng)];
+				// Controleer of er nog beschikbare categorieën zijn
+				if (!preservedProbabilities.empty()) {
+				// Normaliseer de kansen
+				double sum = std::accumulate(preservedProbabilities.begin(), preservedProbabilities.end(), 0.0);
+				std::vector<double> normalizedProbabilities;
+				std::vector<double> cumulativeProbabilities;
+				double cumulative = 0.0;
+				for (double prob : preservedProbabilities) {
+    				double normalizedProb = prob / sum;
+    				normalizedProbabilities.push_back(normalizedProb);
+    				cumulative += normalizedProb;
+    				cumulativeProbabilities.push_back(cumulative);
+				}
 
+        		unsigned int selectedCategory = 0;
+				for (size_t i = 0; i < cumulativeProbabilities.size(); ++i) {
+    				if (uniform01Generator() < cumulativeProbabilities[i]) {
+        				selectedCategory = i;
+        				break;
+    				}
+				}
+        		
             	// Wijs een contact toe aan de geselecteerde categorie
             	results[selectedCategory]++;
             	maxContactsPerLocation[selectedCategory]--;
