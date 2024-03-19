@@ -40,26 +40,10 @@ using namespace ContactType;
 
 PoolCharacteristicsSeeder::PoolCharacteristicsSeeder(const ptree& config, RnMan& rnMan) : m_config(config), m_rn_man(rnMan) {}
 
-double berekenGrootte(int aantalPersonen, double gemiddeldeGrootte, double variabiliteit, double minimumGrootte) {
-    // Bereken een willekeurige variatie rond het gemiddelde
-    double variatie = ((rand() % 100) / 100.0) * variabiliteit;
-    
-    // Bereken de uiteindelijke grootte met variatie
-    double grootte = gemiddeldeGrootte + variatie;
-    
-    // Vermenigvuldig de grootte met het aantal personen
-    grootte *= aantalPersonen;
-
-    // Controleer of de berekende grootte het minimum overschrijdt
-    grootte = max(grootte, minimumGrootte);
-    
-    return grootte;
-}
-
 shared_ptr<Population> PoolCharacteristicsSeeder::Seed(shared_ptr<Population> pop, const ptree& poolCharacteristicsPt)
 {
 	
-
+	auto uniform01Generator = m_rn_man.GetUniform01Generator(0U);
 
 	auto& population = *pop;
 
@@ -140,8 +124,12 @@ shared_ptr<Population> PoolCharacteristicsSeeder::Seed(shared_ptr<Population> po
 					double ceiling_height = ceiling_height_vector[poolTypeSpecification];
 				}
 			
-			double grootte = berekenGrootte(pSize, average_area_per_person, variability_area, minimum_area);
-			pool.SetAirMass(grootte*ceiling_height);
+			double random01 = uniform01Generator();
+			double variatie = random01 * variability_area;
+    		double grootte = average_area_per_person + variatie;
+    		grootte *= pSize;
+    		grootte = max(grootte, minimum_area);
+    		pool.SetAirMass(grootte*ceiling_height);
 			if (typ == Id::K12School || typ == Id::College || typ == Id::Workplace) {	 
 				for (size_t i_person1 = 0; i_person1 < pSize; i_person1++) {
 					const auto p = pMembers[i_person1];
