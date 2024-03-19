@@ -16,6 +16,7 @@
     <output_persons>false</output_persons>
     <output_prefix></output_prefix>
     <output_summary>false</output_summary>
+	<pool_characteristics_file>pool_characteristics.xml</pool_characteristics_file>
     <population_file>pop_belgium10k_c500_teachers_censushh.csv</population_file>
     <population_type>default</population_type>
     <subpools_community_file>pop_belgium10k_c500_teachers_censushh_subpools_community.csv</subpools_community_file>
@@ -32,5 +33,4 @@
     <vaccine_link_probability>0</vaccine_link_probability>
     <vaccine_profile>Random</vaccine_profile>
     <vaccine_rate>0.8</vaccine_rate>
-	<ventilation_file>ventilation_reduction.xml</ventilation_file>
 </run>

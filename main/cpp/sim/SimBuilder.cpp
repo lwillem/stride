@@ -157,7 +157,8 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         // --------------------------------------------------------------
         // Fill in characteristics in the contactPoolSys for airborne transmission
         // --------------------------------------------------------------
-        PoolCharacteristicsSeeder(m_config, sim->m_rn_man).Seed(sim->m_population);
+        const auto poolCharacteristicsPt = ReadPoolCharacteristicsPtree();
+        PoolCharacteristicsSeeder(m_config, sim->m_rn_man).Seed(sim->m_population, poolCharacteristicsPt);
 
         // --------------------------------------------------------------
         // Done.
@@ -178,5 +179,13 @@ ptree SimBuilder::ReadDiseasePtree()
         const auto fp = m_config.get<bool>("run.use_install_dirs") ? FileSys::GetDataDir() /= fn : filesys::path(fn);
         return FileSys::ReadPtreeFile(fp);
 }
+
+ptree SimBuilder::ReadPoolCharacteristicsPtree()
+{
+        const auto fn = m_config.get<string>("run.pool_characteristics_file");
+        const auto fp = m_config.get<bool>("run.use_install_dirs") ? FileSys::GetDataDir() /= fn : filesys::path(fn);
+        return FileSys::ReadPtreeFile(fp);
+}
+
 
 } // namespace stride

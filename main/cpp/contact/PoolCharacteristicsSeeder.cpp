@@ -56,7 +56,7 @@ double berekenGrootte(int aantalPersonen, double gemiddeldeGrootte, double varia
     return grootte;
 }
 
-shared_ptr<Population> PoolCharacteristicsSeeder::Seed(shared_ptr<Population> pop)
+shared_ptr<Population> PoolCharacteristicsSeeder::Seed(shared_ptr<Population> pop, const ptree& poolCharacteristicsPt)
 {
 	
 
@@ -67,151 +67,104 @@ shared_ptr<Population> PoolCharacteristicsSeeder::Seed(shared_ptr<Population> po
 
 	auto& logger = population.RefEventLogger();
 
-	// Functie om de grootte van de ruimte te berekenen op basis van het aantal personen
-
 	std::cout << "Start PoolCharacteristicsSeeder." << std::endl;
 
 
+	// Ventilation
+
+	for (ContactType::Id typ : ContactType::IdList) {
+		std::string typString = ToString(typ);
+		double ventilationInfo = poolCharacteristicsPt.get<double>("pool_characteristics.ventilation_reduction." + typString,0.1);
+		for (auto& pool: poolSys.RefPools(typ)) {
+			pool.SetVentilation(ventilationInfo);
+		};
+	};
+
+
+	std::vector<double> average_area_per_person_vector;
+    std::vector<double> variability_area_vector;
+    std::vector<double> minimum_area_vector;
+    std::vector<double> ceiling_height_vector;
+	std::vector<int> pool_duration_vector;
+	double average_area_per_person;
+	double variability_area;
+	double minimum_area;
+	double ceiling_height;
+	int pool_duration;
 	for (ContactType::Id typ: ContactType::IdList) {
 		if (typ != Id::Household && typ != Id::PrimaryCommunity && typ != Id::SecondaryCommunity && typ != Id::HouseholdCluster) {
-		
-		for (size_t i = 1; i < poolSys.RefPools(typ).size(); i++) {
-			auto& pool = poolSys.RefPools(typ)[i];
-			const auto& pMembers = pool.m_members;
-        	const auto  pSize    = pMembers.size();
-			
-
+			std::string typString = ToString(typ);
 			if (typ == Id::K12School){
-				
-    float age = pMembers[0]->GetAge();
-
-				if (age < 3) {
-					double grootte = berekenGrootte(pool.m_members.size(), 5.0, 1.5, 20);
-					pool.SetAirMass(grootte*3);
-					 
-						for (size_t i_person1 = 0; i_person1 < pSize; i_person1++) {
-                			const auto p = pMembers[i_person1];
-							for (int dayWeek = 1; dayWeek <= 5; ++dayWeek) {
-       				 				p->PoolDurations(typ)[dayWeek] = 280;
-							}
-						}
+				unsigned int maxAge = 17; 
+				for (unsigned int index_age = 0; index_age <= maxAge; index_age++) {
+					double input_average_area_per_person = poolCharacteristicsPt.get<double>("pool_characteristics.average_area_per_person." + typString + ".age" + std::to_string(index_age), 1.0);
+					double input_variability_area = poolCharacteristicsPt.get<double>("pool_characteristics.variability_area." + typString + ".age" + std::to_string(index_age), 1.0);
+					double input_minimum_area = poolCharacteristicsPt.get<double>("pool_characteristics.minimum_area." + typString + ".age" + std::to_string(index_age), 70.0);
+					int input_pool_duration = poolCharacteristicsPt.get<int>("pool_characteristics.pool_duration." + typString + ".age" + std::to_string(index_age), 280);
+					average_area_per_person_vector.push_back(input_average_area_per_person);
+					variability_area_vector.push_back(input_variability_area);
+					minimum_area_vector.push_back(input_minimum_area);
+					pool_duration_vector.push_back(input_pool_duration);
 				}
-				
-				 else if (age < 6) {
-					double grootte = berekenGrootte(pool.m_members.size(), 3.75, 0.75, 45);
-					pool.SetAirMass(grootte*3);
-					
-						for (size_t i_person1 = 0; i_person1 < pSize; i_person1++) {
-                			const auto p = pMembers[i_person1];
-							for (int dayWeek = 1; dayWeek <= 5; ++dayWeek) {
-       				 				p->PoolDurations(typ)[dayWeek] = 280;
-							}
-						}
-				}
-				else if (age < 12) {
-					double grootte = berekenGrootte(pool.m_members.size(), 2.5, 0.5, 45);
-					pool.SetAirMass(grootte*3);
-					
-						for (size_t i_person1 = 0; i_person1 < pSize; i_person1++) {
-                			const auto p = pMembers[i_person1];
-							for (int dayWeek = 1; dayWeek <= 5; ++dayWeek) {
-       				 				p->PoolDurations(typ)[dayWeek] = 280;
-							}
-						}
-				}
-
-				else {
-					double grootte = berekenGrootte(pool.m_members.size(), 2, 2, 40);
-					pool.SetAirMass(grootte*3);
-					
-						for (size_t i_person1 = 0; i_person1 < pSize; i_person1++) {
-                			const auto p = pMembers[i_person1];
-							for (int dayWeek = 1; dayWeek <= 5; ++dayWeek) {
-       				 				p->PoolDurations(typ)[dayWeek] = 320;
-							}
-						}
-				}
+			} else {
+				average_area_per_person = poolCharacteristicsPt.get<double>("pool_characteristics.average_area_per_person." + typString,1.0);
+				variability_area = poolCharacteristicsPt.get<double>("pool_characteristics.variability_area." + typString,1.0);
+				minimum_area = poolCharacteristicsPt.get<double>("pool_characteristics.minimum_area." + typString,70.0);
+				pool_duration = poolCharacteristicsPt.get<int>("pool_characteristics.pool_duration." + typString, 350);
 			}
-			else if (typ == Id::College) {
-					double grootte = berekenGrootte(pool.m_members.size(), 4, 2, 40);
-					pool.SetAirMass(grootte*3);
-					
-						for (size_t i_person1 = 0; i_person1 < pSize; i_person1++) {
-                			const auto p = pMembers[i_person1];
-							for (int dayWeek = 1; dayWeek <= 5; ++dayWeek) {
-       				 				p->PoolDurations(typ)[dayWeek] = 418;
-							}
-						}
+
+			if (typ == Id::Workplace){
+				unsigned int maxProfession = 2;
+				for (unsigned int index_profession = 0; index_profession <= maxProfession; index_profession++) {
+					double input_ceiling_height = poolCharacteristicsPt.get<double>("pool_characteristics.ceiling_height." + typString + ".profession" + std::to_string(index_profession),3.0);
+					ceiling_height_vector.push_back(input_ceiling_height);
+				}
+			} else {
+				ceiling_height = poolCharacteristicsPt.get<double>("pool_characteristics.ceiling_height." + typString, 3.0);
 			}
 			
-			else if (typ == Id::Workplace) {
-				unsigned int poolTypeSpecification =  pool[0]->GetProfession();
-				if (poolTypeSpecification == 1){
-				double grootte = berekenGrootte(pool.m_members.size(), 1000, 400, 20);
-					pool.SetAirMass(grootte*10);
-					
-					 }
-					else {
-						double grootte = berekenGrootte(pool.m_members.size(), 7, 2, 15);
-						pool.SetAirMass(grootte*3);
-						
-					}					
-							for (size_t i_person1 = 0; i_person1 < pSize; i_person1++) {
-                			const auto p = pMembers[i_person1];
-							for (int dayWeek = 1; dayWeek <= 5; ++dayWeek) {
-       				 				p->PoolDurations(typ)[dayWeek] = 440;
-							}
-						}
-
-				}
-
+			for (size_t i = 1; i < poolSys.RefPools(typ).size(); i++) {
+				auto& pool = poolSys.RefPools(typ)[i];
+				const auto& pMembers = pool.m_members;
+				const auto  pSize    = pMembers.size();
 			
-
-			else if (typ == Id::OtherHouse) {	
-						double grootte = berekenGrootte(pool.m_members.size(), 7, 10, 15);
-						pool.SetAirMass(grootte*3);
-						
-							}
-						
-			else if (typ == Id::RestoCafe) {		
-						double grootte = berekenGrootte(pool.m_members.size(), 2, 2, 70);
-						pool.SetAirMass(grootte*3);
-						
-							}
-						
-			else if (typ == Id::Transport) {
-						double grootte = berekenGrootte(pool.m_members.size(), 1, 0.5, 70);
-						pool.SetAirMass(grootte*3);
-						
-							}
-						
-			else if (typ == Id::OtherPlace) {
-						double grootte = berekenGrootte(pool.m_members.size(), 1, 0.5, 70);
-						pool.SetAirMass(grootte*3);
-						
-							}		
+				if (typ == Id::K12School){
+					float age = pMembers[0]->GetAge();
+					average_area_per_person = average_area_per_person_vector[age];
+					variability_area = variability_area_vector[age];
+					minimum_area = minimum_area_vector[age];
+					pool_duration = pool_duration_vector[age];			
+				}
+				else if (typ == Id::Workplace){
+					unsigned int poolTypeSpecification =  pool[0]->GetProfession();
+					double ceiling_height = ceiling_height_vector[poolTypeSpecification];
+				}
+			
+			double grootte = berekenGrootte(pSize, average_area_per_person, variability_area, minimum_area);
+			pool.SetAirMass(grootte*ceiling_height);
+			if (typ == Id::K12School || typ == Id::College || typ == Id::Workplace) {	 
+				for (size_t i_person1 = 0; i_person1 < pSize; i_person1++) {
+					const auto p = pMembers[i_person1];
+					for (int dayWeek = 1; dayWeek <= 5; ++dayWeek) {
+							p->PoolDurations(typ)[dayWeek] = pool_duration;
+					}
+				}
+			} else if (typ == Id::Collectivity){
+				for (size_t i_person1 = 0; i_person1 < pSize; i_person1++) {
+					const auto p = pMembers[i_person1];
+					for (int dayWeek = 0; dayWeek <= 6; ++dayWeek) {
+							p->PoolDurations(typ)[dayWeek] = pool_duration;
+					}
+				}
+			}
+				
+	
+		
 			}
 		}
-// Ventilation
 
 
-	boost::optional<string> ventilationFile = m_config.get_optional<string>("run.ventilation_file");    
-    if (ventilationFile) {
-
-        const auto fp = m_config.get<bool>("run.use_install_dirs") ? FileSys::GetDataDir() / (ventilationFile.value_or("")) : filesys::path(ventilationFile.value_or(""));
         
-		ptree ventilationPt = FileSys::ReadPtreeFile(fp);
-		
-		for (ContactType::Id typ : ContactType::IdList) {
-			std::string typString = ToString(typ);
-			double ventilationInfo = ventilationPt.get<double>("ventilation_reduction." + typString,0);
-			for (auto& pool: poolSys.RefPools(typ)) {
-				pool.SetVentilation(ventilationInfo);
-			};
-		};
-
-
-        } 
 	}
         
 	return pop;

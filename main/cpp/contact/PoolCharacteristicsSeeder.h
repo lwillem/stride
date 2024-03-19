@@ -48,7 +48,7 @@ public:
 
     /// Fill extra characteristics in the contactPoolSys for airborne transmission.
     /// \param pop               Population.
-    std::shared_ptr<Population> Seed(std::shared_ptr<Population> pop);
+    std::shared_ptr<Population> Seed(std::shared_ptr<Population> pop, const boost::property_tree::ptree& poolCharacteristicsPt);
 
     /// \param pop               Population.
     std::shared_ptr<Population> NonCompliance(std::shared_ptr<Population> pop);
