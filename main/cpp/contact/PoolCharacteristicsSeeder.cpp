@@ -29,6 +29,8 @@
 
 #include <boost/property_tree/ptree.hpp>
 #include <cassert>
+#include <cmath>
+#include <boost/math/distributions/gamma.hpp>
 
 using namespace boost::property_tree;
 using namespace stride::util;
@@ -55,16 +57,34 @@ shared_ptr<Population> PoolCharacteristicsSeeder::Seed(shared_ptr<Population> po
 
 
 	// Ventilation
+	boost::optional<string> ventilation_distribution = m_config.get_optional<string>("run.ventilation_distribution");
+	double ventilation_distribution_overdispersion;
+	// Get target overdispersion
+	if (ventilation_distribution){
+		double ventilation_distribution_overdispersion = m_config.get<double>("run.ventilation_distribution_overdispersion");
+	}
 
 	for (ContactType::Id typ : ContactType::IdList) {
 		std::string typString = ToString(typ);
-		double ventilationInfo = poolCharacteristicsPt.get<double>("pool_characteristics.ventilation_reduction." + typString,0.1);
+		double ventilationPoolTypeAverage = poolCharacteristicsPt.get<double>("pool_characteristics.ventilation_reduction." + typString,0.1);	
+		if (ventilation_distribution) {
+			if (*ventilation_distribution == "Gamma") {
+				double shape = ventilation_distribution_overdispersion;
+				double scale = ventilationPoolTypeAverage / shape;
+				auto gamma_generator = m_rn_man.GetGammaGenerator(shape, scale, 0U);
+				for (auto& pool: poolSys.RefPools(typ)) {
+					double pool_ventilation_probability = gamma_generator();
+					pool.SetVentilation(pool_ventilation_probability);
+				}
+			}
+		} else {
 		for (auto& pool: poolSys.RefPools(typ)) {
-			pool.SetVentilation(ventilationInfo);
+			pool.SetVentilation(ventilationPoolTypeAverage);
 		};
-	};
+		}
+	}
 
-
+	// air_mass, pool_duration => needed for airborne transmision
 	std::vector<double> average_area_per_person_vector;
     std::vector<double> variability_area_vector;
     std::vector<double> minimum_area_vector;
