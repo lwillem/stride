@@ -339,7 +339,10 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
         const auto  pType    = pool.m_pool_type;
         const auto& pMembers = pool.m_members;
         const auto  pSize    = pMembers.size();
-        const auto pVentilation = pool.m_ventilation;
+        double pVentilation = pool.m_ventilation;
+        if (pVentilation == 0) {
+                pVentilation = 0.001;
+        }
         // get minimum age of the members (relevant for school settings)
         const unsigned int min_age_members = pool.GetMinAge();
 
@@ -519,9 +522,11 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
         const auto  pType    = pool.m_pool_type;
         const auto  pImmune  = pool.m_index_immune;
         const auto& pMembers = pool.m_members;
-        const auto  pVentilation = pool.m_ventilation;
         const auto  pSize    = pMembers.size();
-        
+        double  pVentilation = pool.m_ventilation;
+        if (pVentilation == 0) {
+                pVentilation = 0.001;
+        }
         // get minimum age of the members (relevant for school settings)
         const unsigned int min_age_members = pool.GetMinAge();
 
