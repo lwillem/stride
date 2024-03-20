@@ -89,6 +89,7 @@ void Sim::TimeStep()
         double workplace_distancing_factor = m_calendar->GetWorkplaceDistancingFactor();
         double community_distancing_factor = m_calendar->GetCommunityDistancingFactor();
         double collectivity_distancing_factor = m_calendar->GetCollectivityDistancingFactor();
+        double ventilation_factor = m_calendar -> GetVentilationFactor();
 
         // Import infected cases into the population
         if(m_calendar->GetNumberOfImportedCases() > 0){
@@ -180,7 +181,7 @@ void Sim::TimeStep()
 
                             infector(poolSys.RefPools(typ)[i], m_contact_profiles[typ], m_transmission_profile,
 									 m_rn_handlers[thread_num], simDay, eventLogger,
-									 m_population, cnt_intensity_householdCluster, typ_distancing_factor, dayWeek, m_airborne_transmission, m_subpools_community);
+									 m_population, cnt_intensity_householdCluster, typ_distancing_factor, dayWeek, m_airborne_transmission, m_subpools_community, ventilation_factor);
 
 					}
 			}

@@ -37,7 +37,7 @@ using boost::property_tree::ptree;
 Calendar::Calendar(const ptree& configPt,unsigned int num_days) :
 		m_date(), m_date_start(), m_date_end(), m_public_holidays(num_days),
 		m_workplace_distancing(num_days), m_community_distancing(num_days), m_collectivity_distancing(num_days),
-		m_contact_tracing(num_days),
+		m_contact_tracing(num_days), m_ventilation(num_days),
 		m_universal_testing(num_days), m_household_clustering(num_days), m_imported_cases(num_days,0U),
 		m_school_closures(100, vector<double>(num_days)),
         //
@@ -233,6 +233,17 @@ void Calendar::Initialize(const ptree& configPt)
 					}
 				}
 
+				// read ventilation data (if present)
+				if(holidaysPt.count("ventilation") != 0){
+					for (const auto& date : holidaysPt.get_child("ventilation." + month)) {
+							const auto d_date = string(lead).append(date.second.get_value<string>());
+							if(IsDatePartOfSimulation(d_date)){
+								m_contact_tracing[GetDayIndex(d_date)] = 1.0;
+							}
+
+					}
+				}
+
 				// read imported cases
 				if(holidaysPt.count("import_cases") != 0){
 					for (const auto& date : holidaysPt.get_child("import_cases." + month)) {
@@ -305,6 +316,7 @@ void Calendar::Initialize_csv(const ptree& configPt)
 					if(category == "household_clustering") {  m_household_clustering[date_index] = value_boolean; }
 					if(category == "contact_tracing")      {  m_contact_tracing[date_index] = value_boolean; }
 					if(category == "universal_testing")    {  m_universal_testing[date_index] = value_boolean; }
+					if(category == "ventilation")          {  m_ventilation[date_index] = value; }
 					if(category == "imported_cases")
 					{
 						unsigned int num_cases = configPt.get<unsigned int>("run.num_daily_imported_cases",0);

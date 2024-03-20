@@ -331,7 +331,7 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
                                  const TransmissionProfile& transProfile, util::RnHandler& rnHandler,
                                  unsigned short int simDay, shared_ptr<spdlog::logger> eventLogger,
 								 std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster,
-                                 double pType_distancing_factor, unsigned short int dayWeek, bool m_airborne_transmission, bool m_subpools_community)
+                                 double pType_distancing_factor, unsigned short int dayWeek, bool m_airborne_transmission, bool m_subpools_community, double ventilation_factor)
 {
         using LP = LOG_POLICY<LL>;
 
@@ -339,9 +339,11 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
         const auto  pType    = pool.m_pool_type;
         const auto& pMembers = pool.m_members;
         const auto  pSize    = pMembers.size();
-        double pVentilation = pool.m_ventilation;
-        if (pVentilation == 0) {
+        double pVentilation = pool.m_ventilation + ventilation_factor;
+        if (pVentilation <= 0) {
                 pVentilation = 0.001;
+        } else if (pVentilation >= 1) {
+                pVentilation = 0.999;
         }
         // get minimum age of the members (relevant for school settings)
         const unsigned int min_age_members = pool.GetMinAge();
@@ -505,7 +507,7 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                                    const TransmissionProfile& transProfile, util::RnHandler& rnHandler,
                                    unsigned short int simDay, shared_ptr<spdlog::logger> eventLogger,
 								   std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster,
-                                   double pType_distancing_factor, unsigned short int dayWeek, bool m_airborne_transmission, bool m_subpools_community)
+                                   double pType_distancing_factor, unsigned short int dayWeek, bool m_airborne_transmission, bool m_subpools_community, double ventilation_factor)
 {
         using LP = LOG_POLICY<LL>;
 
@@ -523,9 +525,11 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
         const auto  pImmune  = pool.m_index_immune;
         const auto& pMembers = pool.m_members;
         const auto  pSize    = pMembers.size();
-        double  pVentilation = pool.m_ventilation;
-        if (pVentilation == 0) {
+        double  pVentilation = pool.m_ventilation + ventilation_factor;
+        if (pVentilation <= 0) {
                 pVentilation = 0.001;
+        } else if (pVentilation >= 1) {
+                pVentilation = 0.999;
         }
         // get minimum age of the members (relevant for school settings)
         const unsigned int min_age_members = pool.GetMinAge();

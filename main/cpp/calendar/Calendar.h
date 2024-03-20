@@ -121,6 +121,12 @@ public:
 			return m_collectivity_distancing[m_day_index];
 		}
 
+		/// Get ventilation factor
+		double GetVentilationFactor() const
+		{
+			return m_ventilation[m_day_index];
+		}
+
 		/// Check if contact tracing is place
 		bool IsContactTracingActivated() const
 		{
@@ -189,6 +195,7 @@ private:
         std::vector<bool> m_contact_tracing;            ///< Vector of days with case finding measures
         std::vector<bool> m_universal_testing;          ///< Vector of days with universal testing measures
         std::vector<bool> m_household_clustering;       ///< Vector of days when household clusters are allowed
+		std::vector<double> m_ventilation;              ///< Vector with ventilation increase or decrease
 
         std::vector<unsigned int>m_imported_cases; ///<Vector of days when cases are imported (~daily seeding activated)
 
