@@ -180,7 +180,7 @@ void Sim::TimeStep()
 
                             infector(poolSys.RefPools(typ)[i], m_contact_profiles[typ], m_transmission_profile,
 									 m_rn_handlers[thread_num], simDay, eventLogger,
-									 m_population, cnt_intensity_householdCluster, typ_distancing_factor, dayWeek, m_airborne_transmission);
+									 m_population, cnt_intensity_householdCluster, typ_distancing_factor, dayWeek, m_airborne_transmission, m_subpools_community);
 
 					}
 			}

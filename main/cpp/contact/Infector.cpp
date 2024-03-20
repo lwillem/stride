@@ -331,7 +331,7 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
                                  const TransmissionProfile& transProfile, util::RnHandler& rnHandler,
                                  unsigned short int simDay, shared_ptr<spdlog::logger> eventLogger,
 								 std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster,
-                                 double pType_distancing_factor, unsigned short int dayWeek, bool m_airborne_tranmission)
+                                 double pType_distancing_factor, unsigned short int dayWeek, bool m_airborne_transmission, bool m_subpools_community)
 {
         using LP = LOG_POLICY<LL>;
 
@@ -364,7 +364,15 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
                         // check for contact
                         const double cProb = GetContactProbability(profile, p1, p2, pSize, pType, min_age_members,
 								population,m_cnt_intensity_householdCluster,pType_distancing_factor, dayWeek);
-                        if (rnHandler.Binomial(cProb)) {
+                        
+                        // check for ventilation
+                        double vProb;
+                        if (m_airborne_transmission && m_subpools_community) {
+                                        vProb = 1 - pVentilation; // reduction through ventilation
+                                } else {
+                                        vProb = 1;
+                                }
+                        if (rnHandler.Binomial(cProb,vProb)) {
 								const auto  tProb_p1_p2    = transProfile.GetProbability(p1,p2);
 								const auto  tProb_p2_p1    = transProfile.GetProbability(p2,p1);
 
@@ -411,8 +419,8 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
                 }
         }
 
+        if (m_subpools_community && m_airborne_transmission){
         if (pType != Id::Household || pType != Id::HouseholdCluster) {
-                if (m_airborne_tranmission){
                 // set up some stuff for the pool & disease in general
                         const auto pAirMass = pool.m_air_mass;
                         const auto linkingHazardVirus = transProfile.GetLinkingHazardVirus();
@@ -494,7 +502,7 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                                    const TransmissionProfile& transProfile, util::RnHandler& rnHandler,
                                    unsigned short int simDay, shared_ptr<spdlog::logger> eventLogger,
 								   std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster,
-                                   double pType_distancing_factor, unsigned short int dayWeek, bool m_airborne_tranmission)
+                                   double pType_distancing_factor, unsigned short int dayWeek, bool m_airborne_transmission, bool m_subpools_community)
 {
         using LP = LOG_POLICY<LL>;
 
@@ -539,8 +547,12 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
 															population, m_cnt_intensity_householdCluster, pType_distancing_factor, dayWeek);
                                 const auto  tProb_p1_p2 = transProfile.GetProbability(p1,p2);
 
-                                const double vProb = 1 - pVentilation; // reduction through ventilation
-                                
+                                double vProb;
+                                if (m_airborne_transmission && m_subpools_community) {
+                                        vProb = 1 - pVentilation; // reduction through ventilation
+                                } else {
+                                        vProb = 1;
+                                }
                                 if (rnHandler.Binomial(cProb_p1, tProb_p1_p2, vProb)) {
 
                                         auto& h2 = p2->GetHealth();
@@ -560,8 +572,8 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                         }
                 }
         }
+        if (m_subpools_community && m_airborne_transmission){
         if (pType != Id::Household || pType != Id::HouseholdCluster) {
-        if (m_airborne_tranmission){
                 // set up some stuff for the pool & disease in general
                         const auto pAirMass = pool.m_air_mass;
                         const auto linkingHazardVirus = transProfile.GetLinkingHazardVirus();
