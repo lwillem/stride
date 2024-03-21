@@ -334,7 +334,7 @@ get_transmission_statistics <- function(data_transm,
   data_transm[,sim_date := infection_date]
   
   # AGE CATEGORIES     ----
-  age_breaks               <- c(seq(0,80,10),110)
+  age_breaks               <- c(seq(0,90,10),110)
   data_transm[,age_cat_num := .(cut(part_age,age_breaks,include.lowest = T,right = T)),]
   data_transm[,age_cat := .(paste0('age',as.numeric(age_cat_num))),]
   
@@ -445,7 +445,7 @@ get_main_transmission_statistics <- function(data_transm,
 {
  
   # AGE CATEGORIES     ----
-  age_breaks               <- c(seq(0,80,10),110)
+  age_breaks               <- c(seq(0,90,10),110)
   data_transm[,age_cat_num := .(cut(part_age,age_breaks,include.lowest = T,right = T)),]
   data_transm[,age_cat := .(paste0('age',as.numeric(age_cat_num))),]
   
