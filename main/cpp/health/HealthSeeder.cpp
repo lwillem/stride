@@ -120,7 +120,8 @@ void HealthSeeder::Seed(const std::shared_ptr<stride::Population>& pop, const Tr
 
         vector<double> hospitalisationVariance = {1.0/3, 2.0/3, 3.0/3};  // 0, 1, 2
 
-#pragma omp parallel num_threads(handlers.size())
+#pragma omp parallel num_threads(rnMan->size())
+
         {
                 unsigned int thread_num = omp_get_thread_num();
 

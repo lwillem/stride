@@ -78,7 +78,8 @@ void PublicHealthAgency::PerformContactTracing(std::shared_ptr<Population> pop, 
 	//cout << m_detection_probability << " -- "<< m_tracing_efficiency_household << " -- "<< m_tracing_efficiency_other << " ** " << m_case_finding_capacity << endl;
 
     Population& population    = *pop;
-#pragma omp parallel num_threads(rnHandlers.size())
+#pragma omp parallel num_threads(rnMan->size())
+
     {
         unsigned int thread_num = omp_get_thread_num();
         /// Mark index cases for track&trace
