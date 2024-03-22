@@ -209,16 +209,7 @@ inline double GetContactProbability(const AgeContactProfile& profile, const Pers
         double reference_num_contacts_p2;
         
 	// get the reference number of contacts, given age and age-contact profile     
-       if (pType == Id::Workplace) {
-        if (pool_size < 21){
-                reference_num_contacts_p1 = pool_size-1;
-                reference_num_contacts_p2 = pool_size-1;
-        } else {
-                reference_num_contacts_p1 = 19;
-                reference_num_contacts_p2 = 19;
-        }
-       }
-       else if (pType != Id::OtherHouse && pType != Id::RestoCafe && pType != Id::OtherPlace && pType != Id::Transport) {
+        if (pType != Id::OtherHouse && pType != Id::RestoCafe && pType != Id::OtherPlace && pType != Id::Transport) {
            reference_num_contacts_p1 = profile[EffectiveAge(static_cast<unsigned int>(p1->GetAge()))];
            reference_num_contacts_p2 = profile[EffectiveAge(static_cast<unsigned int>(p2->GetAge()))];
         } 
