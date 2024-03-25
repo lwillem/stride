@@ -38,4 +38,14 @@ ContactPool* ContactPoolSys::CreateContactPool(ContactType::Id typeId)
         return m_sys[typeId].emplace_back(m_currentContactPoolId[typeId]++, typeId);
 }
 
+void ContactPoolSys::ClearContactPools()
+{
+    for (ContactType::Id idType: IdList) {
+        // Get the contact pools for the given id and remove them
+        util::SegmentedVector<ContactPool>& pools = RefPools(idType);
+        cout << "\t\tClearing contact pools of size " << pools.size() << "..." << endl;
+        pools.clear();
+    }
+}
+
 } // namespace stride

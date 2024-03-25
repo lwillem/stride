@@ -25,7 +25,7 @@ include(CMakeLocal.cmake OPTIONAL)
 #============================================================================
 # Configuration for CMake, for build & install.
 #============================================================================
-project(STRIDE VERSION 1.0 LANGUAGES CXX)
+project(STRIDE VERSION 3.0 LANGUAGES CXX)
 include(CMakeLocalProject.cmake OPTIONAL)
 
 
@@ -64,6 +64,18 @@ include(CMakeCPP.cmake)
 if(STRIDE_INCLUDE_DOC)
     find_package( Doxygen)
 endif()
+
+#============================================================================
+# Configuration for pylibstride
+#============================================================================
+
+OPTION(USE_PYLIBSTRIDE "Activate pybind library" ON)
+IF(USE_PYLIBSTRIDE) # set with: cmake . -DUSE_PYTHON:BOOL=ON
+	set(PYTHON_LIBRARY_DIR ${LIB_INSTALL_LOCATION}/pylib)
+ELSE()
+  MESSAGE(STATUS "USE_PYLIBSTRIDE is not activated ----------")
+ENDIF(USE_PYLIBSTRIDE)
+
 
 #============================================================================
 # Add subdirs

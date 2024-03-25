@@ -37,17 +37,18 @@ bool IsId(const string& s)
 {
         static map<string, Id> ids{
             make_pair("Household", Id::Household),
-            make_pair("K12School", Id::K12School),
-            make_pair("College", Id::College),
+            make_pair("School", Id::School),
+            // make_pair("College", Id::College),
             make_pair("Workplace", Id::Workplace),
-            make_pair("PrimaryCommunity", Id::PrimaryCommunity),
-            make_pair("SecondaryCommunity", Id::SecondaryCommunity),
+            make_pair("Community_Weekend", Id::CommunityWeekend),
+            make_pair("Community_Weekday", Id::CommunityWeekday),
 			make_pair("HouseholdCluster", Id::HouseholdCluster),
 			make_pair("Collectivity", Id::Collectivity),
             make_pair("OtherHouse", Id::OtherHouse),
             make_pair("RestoCafe", Id::RestoCafe),
             make_pair("OtherPlace", Id::OtherPlace),
             make_pair("Transport", Id::Transport)
+
         };
         string t{s};
         to_upper(t);
@@ -58,17 +59,17 @@ Id ToId(const string& s)
 {
         static map<string, Id> ids{
             make_pair("Household", Id::Household),
-            make_pair("K12School", Id::K12School),
-            make_pair("College", Id::College),
+            make_pair("School", Id::School),
             make_pair("Workplace", Id::Workplace),
-            make_pair("PrimaryCommunity", Id::PrimaryCommunity),
-            make_pair("SecondaryCommunity", Id::SecondaryCommunity),
+            make_pair("Community_Weekend", Id::CommunityWeekend),
+            make_pair("Community_Weekday", Id::CommunityWeekday),
 			make_pair("HouseholdCluster", Id::HouseholdCluster),
 			make_pair("Collectivity", Id::Collectivity),
             make_pair("OtherHouse", Id::OtherHouse),
             make_pair("RestoCafe", Id::RestoCafe),
             make_pair("OtherPlace", Id::OtherPlace),
             make_pair("Transport", Id::Transport)
+
         };
 
     string t{s};
@@ -94,11 +95,10 @@ string ToString(Id c)
 {
         static map<Id, string> names{
             make_pair(Id::Household, "Household"),
-            make_pair(Id::K12School, "K12School"),
-            make_pair(Id::College, "College"),
+            make_pair(Id::School, "School"),
             make_pair(Id::Workplace, "Workplace"),
-            make_pair(Id::PrimaryCommunity, "PrimaryCommunity"),
-            make_pair(Id::SecondaryCommunity, "SecondaryCommunity"),
+            make_pair(Id::CommunityWeekend, "CommunityWeekend"),
+            make_pair(Id::CommunityWeekday, "CommunityWeekday"),
 			make_pair(Id::HouseholdCluster, "HouseholdCluster"),
 			make_pair(Id::Collectivity, "Collectivity"),
             make_pair(Id::OtherHouse, "OtherHouse"),

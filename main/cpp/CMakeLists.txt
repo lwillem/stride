@@ -12,7 +12,7 @@
 #  along with the software. If not, see <http://www.gnu.org/licenses/>.
 #  see http://www.gnu.org/licenses/.
 #
-#  Copyright 2017, 2018 Willem L, Kuylen E & Broeckhove J
+#  Copyright 2024
 #############################################################################
 
 
@@ -32,45 +32,32 @@ set(STRIDE_SRC
     contact/EventLogMode.cpp
     contact/Infector.cpp
     contact/PoolCharacteristicsSeeder.cpp
-    #---
-	disease/DiseaseSeeder.cpp
-    disease/Health.cpp
-    disease/HealthSeeder.cpp
-    disease/ImmunitySeeder.cpp
-    disease/PublicHealthAgency.cpp
-    disease/TransmissionProfile.cpp
-    disease/UniversalTesting.cpp
-    #---
-    execs/ControlHelper.cpp
+    #--
     execs/SimController.cpp
+    #---
+    health/DiseaseSeeder.cpp
+    health/Health.cpp
+    health/HealthSeeder.cpp
+    health/ImmunitySeeder.cpp
+    health/TransmissionProfile.cpp
+    #---
+    healthcare/PublicHealthAgency.cpp
     #---
     pop/Person.cpp
     pop/Population.cpp
     pop/PopBuilder.cpp
-    pop/SurveySeeder.cpp
+    pop/SurveyManager.cpp
     #---
-    sim/SimRunner.cpp
     sim/Sim.cpp
     sim/SimBuilder.cpp
-    sim/event/Id.cpp
-    sim/event/Subject.cpp
     #---
     util/ConfigInfo.cpp
-    util/CSV.cpp
-    util/CSVRow.cpp
     util/FileSys.cpp
     util/LogUtils.cpp
-    util/Rn.cpp
-    util/RnMan.cpp
     util/RunConfigManager.cpp
+    util/SummaryFile.cpp
     util/TimeStamp.cpp
     util/TimeToString.cpp
-    #---
-    viewers/CliViewer.cpp
-    viewers/InfectedFile.cpp
-    viewers/InfectedFileViewer.cpp
-    viewers/SummaryFile.cpp
-    viewers/SummaryFileViewer.cpp
 )
 
 #============================================================================

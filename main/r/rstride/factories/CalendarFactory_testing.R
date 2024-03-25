@@ -111,7 +111,7 @@ create_calenders_universal_testing <- function(date_policy_switch,
              stringsAsFactors = F
   ) -> d_college_holidays
   
-  #K12 school
+  # School
   tmp_school_holidays <- copy(d_school_holidays)
   tmp_school_holidays[,category:='schools_closed']
   for(i_age in 0:17){

@@ -49,7 +49,7 @@ inspect_transmission_dynamics <- function(project_dir,save_pdf = TRUE)
   }
   
   # open pdf stream
-  if(save_pdf) .rstride$create_pdf(project_dir,'transmission_inspection',10,7)
+  if(save_pdf) .rstride$create_pdf(project_dir,'transmission_inspection',14,8)
 
   i_config <- 1
   for(i_config in 1:nrow(input_opt_design)){
@@ -63,19 +63,25 @@ inspect_transmission_dynamics <- function(project_dir,save_pdf = TRUE)
     num_runs_exp        <- sum(flag_exp)
     num_infected_seeds  <- data_incidence$new_infections[1]
   
-    # if no incidence data avaiable for this configuration, go to next iteration
+    # if no incidence data available for this configuration, go to next iteration
     if(nrow(data_incidence)==0){
       next
     }
     
     ## DOUBLING TIME ----
+    # make sure the different stochastic runs are not connected
+    data_incidence$doubling_time[data_incidence$sim_date == min(data_incidence$sim_date,na.rm=T)] <- NA
+    # make sure the extreme values (outside the plot area), are excluded
+    plot_ylim <- c(0,14)
+    data_incidence$doubling_time[data_incidence$doubling_time < min(plot_ylim) | data_incidence$doubling_time > max(plot_ylim)] <- NA
     plot(data_incidence$sim_date,data_incidence$doubling_time,ylim=c(0,14),
          xlab='Date',
          ylab='Doubling time (infections)',
          main='Doubling time (infections)',
          type='l',
          col=alpha(1,0.5))
-    add_breakpoints()
+    mtext('[values outside y-lim are excluded]',3,cex=0.8)
+    add_intervention_dates(project_summary[flag_exp,])
     abline(h=3.1,col=4)
     text(max(data_incidence$sim_date),3.1,'3.1',pos=3)
     polygon(x=c(data_incidence$sim_date,rev(data_incidence$sim_date)),
@@ -94,7 +100,7 @@ inspect_transmission_dynamics <- function(project_dir,save_pdf = TRUE)
          xaxt='n')
     abline(h=1,lty=3)
     add_x_axis(range(data_incidence$sim_date,na.rm = T))
-    add_breakpoints()
+    add_intervention_dates(project_summary[flag_exp,])
     abline(h=3.1,col=4)
     
     text(max(data_incidence$sim_date),3.28,'3.28',pos=3)
@@ -171,14 +177,14 @@ inspect_transmission_dynamics <- function(project_dir,save_pdf = TRUE)
          pos=3)
     
     ## RELATIVE HOSPITAL ADMISSIONS OVER TIME BY AGE
-    data_incidence[,paste0('relative_hospital_admissions_age',1:length(age_labels))] <- data_incidence[,paste0('new_hospital_admissions_age',1:length(age_labels))] / data_incidence[,paste0('new_hospital_admissions')]
-   if(any(!is.na(data_incidence$relative_hospital_admissions_age1))){
-     plot(aggregate(relative_hospital_admissions_age1 ~ sim_date, data = data_incidence,mean),
-          ylim=0:1,col=1,lwd=2,type='l',
-          xlab='Time',ylab='Proportion hospital admissions')
-     lines(aggregate(relative_hospital_admissions_age2 ~ sim_date, data = data_incidence,mean),col=2,lwd=2)
-     lines(aggregate(relative_hospital_admissions_age3 ~ sim_date, data = data_incidence,mean),col=3,lwd=2)
-     lines(aggregate(relative_hospital_admissions_age4 ~ sim_date, data = data_incidence,mean),col=4,lwd=2)
+   if(any(!is.na(data_incidence$new_hospital_admissions_age1))){
+     data_new_hosp <- data_incidence[,paste0('new_hospital_admissions_age',1:length(age_labels))]
+     plot(aggregate(new_hospital_admissions_age1 ~ sim_date, data = data_incidence,mean),
+          ylim=range(data_new_hosp),col=1,lwd=2,type='l',
+          xlab='Time',ylab='Average number of hospital admissions')
+     lines(aggregate(new_hospital_admissions_age2 ~ sim_date, data = data_incidence,mean),col=2,lwd=2)
+     lines(aggregate(new_hospital_admissions_age3 ~ sim_date, data = data_incidence,mean),col=3,lwd=2)
+     lines(aggregate(new_hospital_admissions_age4 ~ sim_date, data = data_incidence,mean),col=4,lwd=2)
      legend('top',
             age_labels,
             col = 1:length(age_labels),
@@ -194,9 +200,8 @@ inspect_transmission_dynamics <- function(project_dir,save_pdf = TRUE)
     loc_names <- col_location
     loc_names <- gsub('location_','',loc_names)
     loc_names <- gsub('Household','HH',loc_names)
-    loc_names <- gsub('PrimaryCommunity','Wknd com',loc_names)
-    loc_names <- gsub('SecondaryCommunity','Week com',loc_names)
-    loc_names <- gsub('K12School','School',loc_names)
+    loc_names <- gsub('CommunityWeekend','Wknd com',loc_names)
+    loc_names <- gsub('CommunityWeekday','Week com',loc_names)
 
     # overall
     summary_location <- colSums(data_incidence[,col_location],na.rm=T) / sum(data_incidence[,col_location],na.rm=T)
@@ -251,20 +256,42 @@ get_transmission_statistics <- function(data_transm,
                                         sim_date_range)
 {
   
-  # 1. Get main statistics
-  summary_out <- get_main_transmission_statistics(data_transm,sim_date_range)
+  # setup data.table
+  data_transm[,ID := 1:nrow(data_transm),]
   
+  # set sim_date equal to reported infection date
+  data_transm[,sim_date := infection_date] 
+  
+  
+  # 1. Get main statistics
+  # note: summary_out contains at least the "sim_date_rage", but other dates are possible
+  # if disease-related events took place. 
+  summary_out <- get_main_transmission_statistics(data_transm,sim_date_range)
   
   # 2. Get additional statistics (if possible)
   if(!'infector_id' %in% names(data_transm)){
-    return(summary_out)
+    # note: initially infected cases can be infected before the simulation start
+    return(summary_out[sim_date >= min(sim_date_range) &
+                         sim_date <= max(sim_date_range),])
   }
   
-  # setup data.table
-  data_transm[,ID := 1:nrow(data_transm),]
-
-  # add recovery date
-  data_transm[, date_recovered := infection_date + end_infectiousness]
+  # add recovery dates
+  data_transm[, date_end_infectious := infection_date + end_infectiousness ] # account for infectious period
+  data_transm[, date_end_symptomatic := infection_date + end_symptoms ]      # account for symptomatic period
+  data_transm[, date_recovered := pmax(date_end_infectious,date_end_symptomatic,na.rm = TRUE)] # total infected period
+  
+  # infectious and symptomatic
+  data_transm[, date_start_infectious_symptomatic := infection_date + pmax(start_infectiousness,start_symptoms)]
+  data_transm[, date_end_infectious_symptomatic := pmin(date_end_infectious,date_end_symptomatic)]
+  
+  # account for non-overlapping symptomatic and infectious periods
+  data_transm[date_start_infectious_symptomatic > date_end_infectious_symptomatic,
+              date_start_infectious_symptomatic := NA,]
+  data_transm[is.na(date_start_infectious_symptomatic) ,
+              date_end_infectious_symptomatic := NA,]
+  
+  # hospitalisation (note: hospital admissions are part of the main statistics function)
+  data_transm[, date_end_hospitalisation := infection_date + hospital_admission_end]
   
   if(length(unique(data_transm$exp_id))>1){
     smd_print("TRANSMISSION STATISTICS ERROR: MULTIPLE EXPERIMENTS !!", WARNING = T, FORCED = T)
@@ -274,7 +301,7 @@ get_transmission_statistics <- function(data_transm,
   # day of infection: case
   infection_time <- data.table(local_id       = data_transm$local_id,
                                infector_id    = data_transm$infector_id,
-                               infection_date = data_transm$infection_date,
+                               infection_date = data_transm$infection_date,          
                                recoverd_date  = data_transm$date_recovered)
   
   # day of infection: infector
@@ -307,7 +334,7 @@ get_transmission_statistics <- function(data_transm,
   data_transm[,sim_date := infection_date]
   
   # AGE CATEGORIES     ----
-  age_breaks               <- c(seq(0,80,10),110)
+  age_breaks               <- c(seq(0,90,10),110)
   data_transm[,age_cat_num := .(cut(part_age,age_breaks,include.lowest = T,right = T)),]
   data_transm[,age_cat := .(paste0('age',as.numeric(age_cat_num))),]
   
@@ -325,10 +352,16 @@ get_transmission_statistics <- function(data_transm,
   data_transm[, date_symptomatic := infection_date + start_symptoms]
   summary_symptomatic <- get_summary_table(data_transm,'date_symptomatic','age_cat','new_symptomatic_cases',age_cat_all)
   
-  # recovered
-  summary_recovered   <- get_summary_table(data_transm,'date_recovered','age_cat','new_recovered_cases',age_cat_all)
+  # recovered: total, infectious, symptomatic
+  summary_recovered           <- get_summary_table(data_transm,'date_recovered',NA,'new_recovered_cases',NA)
+  summary_end_infectious      <- get_summary_table(data_transm,'date_end_infectious',NA,'new_end_infectious',NA)
+  summary_end_symptomatic     <- get_summary_table(data_transm,'date_end_symptomatic',NA,'new_end_symptomatic',NA)
   
-  # hospital admission: captured in the "main statistics"     
+  summary_new_infectious_symptomatic   <- get_summary_table(data_transm,'date_start_infectious_symptomatic',NA,'new_infectious_symptomatic_cases',NA)
+  summary_end_infectious_symptomatic     <- get_summary_table(data_transm,'date_end_infectious_symptomatic',NA,'new_end_infectious_symptomatic',NA)
+  
+  # hospital admission: captured in the "main statistics"   
+  summary_end_hospitalisation <- get_summary_table(data_transm,'date_end_hospitalisation',NA,'new_end_hospitalisation',NA)
   
   ## DOUBLING TIME      ----
   # calculate cumulative cases and double time
@@ -339,15 +372,14 @@ get_transmission_statistics <- function(data_transm,
   ref_dates <- seq(as.Date('2020-02-24'),as.Date('2020-03-08'),1)
   summary_out[,doubling_time_march:=NA_real_]
   summary_out[sim_date %in% ref_dates, doubling_time_march :=  get_doubling_time(new_infections)]
-  summary_out[,doubling_time_march]
+  #summary_out[,doubling_time_march]
 
   ## (A)SYMPTOMATIC TRANSMISSION    ----
   summary_symptomatic_infectors <- data_transm[,.(num_symptomatic_infectors = sum(infector_is_symptomatic,na.rm=T)), by=c('sim_date')]
 
   
   ## LOCATION ----
-  pool_type_opt <- c("College","Household","HouseholdCluster",
-                     "K12School","PrimaryCommunity","SecondaryCommunity","Workplace",'Collectivity') # TODO: make this flexible?
+  pool_type_opt <- c("Household","HouseholdCluster","CommunityWeekend","CommunityWeekday","Workplace",'Collectivity') # TODO: make this flexible?
   summary_location <- get_summary_table(data_transm,'infection_date','pool_type','location',pool_type_opt) 
   summary_location$location    <- NULL # remove
   if('location_NA' %in% names(summary_location)) {
@@ -375,27 +407,45 @@ get_transmission_statistics <- function(data_transm,
   summary_out    <- merge(summary_out,summary_symptomatic_infectors,all.x = TRUE)
   summary_out    <- merge(summary_out,summary_location,all.x = TRUE)
 
+  # add recoveries, to calculate the prevalence
+  summary_out    <- merge(summary_out,summary_recovered,all.x = TRUE)
+  summary_out    <- merge(summary_out,summary_end_infectious,all.x = TRUE)
+  summary_out    <- merge(summary_out,summary_end_symptomatic,all.x = TRUE)
+  summary_out    <- merge(summary_out,summary_new_infectious_symptomatic,all.x = TRUE)
+  summary_out    <- merge(summary_out,summary_end_infectious_symptomatic,all.x = TRUE)
+  summary_out    <- merge(summary_out,summary_end_hospitalisation,all.x = TRUE)
+  
+  ## PREVALENCE ----
+  summary_out[,prevalence_infected    := cumsum(replace_na(new_infections,0) - replace_na(new_recovered_cases,0))]
+  summary_out[,prevalence_infectious  := cumsum(replace_na(new_infectious_cases,0) - replace_na(new_end_infectious,0))]
+  summary_out[,prevalence_symptomatic := cumsum(replace_na(new_symptomatic_cases,0) - replace_na(new_end_symptomatic,0))]
+  summary_out[,prevalence_infectious_symptomatic := cumsum(replace_na(new_infectious_symptomatic_cases,0) - replace_na(new_end_infectious_symptomatic,0))]
+  summary_out[,prevalence_exposed     := prevalence_infected - prevalence_infectious - prevalence_symptomatic + prevalence_infectious_symptomatic]
+  summary_out[,prevalence_hospitalised:= cumsum(replace_na(new_hospital_admissions,0) - replace_na(new_end_hospitalisation,0))]
+  
   ## CUMULATIVE STATS
   summary_out[,cumulative_infectious_cases := cumsum_na(new_infectious_cases)]
   summary_out[,cumulative_symptomatic_cases := cumsum_na(new_symptomatic_cases)]
   
+  ## CLEAN ----
+  # remove columns required to calculate prevalence estimates
+  summary_out[, grep("new_end", colnames(summary_out)):=NULL]
+  
   # return
-  return(summary_out)
+  return(summary_out[sim_date >= min(sim_date_range) &
+                       sim_date <= max(sim_date_range),])
 }
 
 
 # separate function with main statistics
+# note: the results contains at least the "sim_date_rage", but other dates are possible
+# if disease-related events took place
 get_main_transmission_statistics <- function(data_transm,
                                              sim_date_range)
 {
-  # setup data.table
-  data_transm[,ID := 1:nrow(data_transm),]
-  
-  ## RENAME DATE COLUMN
-  data_transm[,sim_date := infection_date]
-  
+ 
   # AGE CATEGORIES     ----
-  age_breaks               <- c(seq(0,80,10),110)
+  age_breaks               <- c(seq(0,90,10),110)
   data_transm[,age_cat_num := .(cut(part_age,age_breaks,include.lowest = T,right = T)),]
   data_transm[,age_cat := .(paste0('age',as.numeric(age_cat_num))),]
   
@@ -403,14 +453,15 @@ get_main_transmission_statistics <- function(data_transm,
   age_cat_all <- paste0('age',1:(length(age_breaks)-1))
   
   # set all dates
-  summary_date <- data.table(sim_date = seq(min(sim_date_range),max(sim_date_range),1))
+  all_dates <- c(sim_date_range,data_transm$infection_date)
+  summary_date <- data.table(sim_date = seq(min(all_dates),max(all_dates),1))
   setkey(summary_date,'sim_date')
   
   ## INCIDENCE ----
   # infections
-  summary_infections   <- get_summary_table(data_transm,'infection_date','age_cat','new_infections',age_cat_all)
+   summary_infections   <- get_summary_table(data_transm,'infection_date','age_cat','new_infections',age_cat_all)
   
-  # hospital admission     
+  # hospital admission    
   data_transm[, date_hosp_adm := infection_date + hospital_admission_start]
   summary_hospital          <- get_summary_table(data_transm,'date_hosp_adm','age_cat','new_hospital_admissions',age_cat_all)
   
@@ -419,6 +470,9 @@ get_main_transmission_statistics <- function(data_transm,
   
   # average number of secondary cases, upon recovery
   summary_out    <- merge(summary_out,summary_hospital,all.x = TRUE)
+  
+  # set NA's as a result of the merge operation to 0
+  summary_out[is.na(summary_out)] <- 0
   
   # add exp_id
   summary_out$exp_id <- unique(data_transm$exp_id)
@@ -440,38 +494,54 @@ get_main_transmission_statistics <- function(data_transm,
 }
 
 # Function to generate summary tables
-# colname_date <- 'infection_date'; colname_value <- 'cnt_location'; prefix <- 'location';
-#colname_date <- 'date_hosp_adm'; colname_value <- 'age_cat'; prefix <- 'hosp';
-# colname_date <- 'infection_date'; colname_value <-'age_cat';prefix <- 'new_infections'
-# data_transm <- ref_case_data_table; colname_date="DATE";colname_value='AGEGROUP';prefix='d'
+# colname_date <- 'infection_date'; colname_value <-'age_cat';prefix <- 'new_infections';colname_opt=age_cat_all
 get_summary_table <- function(data_transm,colname_date,colname_value,prefix,colname_opt=NA){
 
-  # overal summary
-  summary_table_general         <- data_transm[,.N,by=colname_date]
-  names(summary_table_general)  <- c('sim_date',prefix)
+  # overall summary
+  summary_table         <- data_transm[,.N,by=colname_date]
+  names(summary_table)  <- c('sim_date',prefix)
 
-  # specific summary
-  summary_table                  <- dcast(data_transm, formula(paste(colname_date, '~' ,colname_value)), value.var='ID', length)
+  if(!any(is.na(colname_value))){
+    # specific summary
+    summary_table_specific          <- dcast(data_transm, formula(paste(colname_date, '~' ,colname_value)), value.var='ID', length)
+    
+    # if not all categories were present, add column with 0's
+    if(all(!is.na(colname_opt)) & any(!colname_opt %in% names(summary_table_specific))){
+      summary_table_specific[,c(colname_opt[!colname_opt %in% names(summary_table_specific)]):=0]
+      setcolorder(summary_table_specific,c(colname_date,colname_opt))# reorder
+    }
+    
+    # fix: make sure that column names with NA are removed (cfr. empty matrix)
+    if(any(grepl('NA',names(summary_table_specific)))){
+      summary_table_specific[,eval(names(summary_table_specific)[grepl('NA',names(summary_table_specific))]):=NULL,]
+    }
+    
+    # update names
+    names(summary_table_specific)           <- c('sim_date',paste(prefix,names(summary_table_specific)[-1],sep='_'))
   
-  # if not all categories were persent, add column with 0's
-  if(all(!is.na(colname_opt)) & any(!colname_opt %in% names(summary_table))){
-    summary_table[,c(colname_opt[!colname_opt %in% names(summary_table)]):=0]
-    setcolorder(summary_table,c(colname_date,colname_opt))# reorder
+    # merge
+    summary_table <- merge(summary_table,summary_table_specific)
   }
-  
-  # update names
-  names(summary_table)           <- c('sim_date',paste(prefix,names(summary_table)[-1],sep='_'))
-
-  # merge
-  summary_table <- merge(summary_table,summary_table_general)
   
   # omit NA's (default on LW's MACOS but not on VSC cluster)
   # R versions: 3.5.3 (MACOS) vs. 3.5.1 (VSC)
   summary_table <- na.omit(summary_table,cols='sim_date')
 
+  # fix: if there are no rows left, add row with zeros
+  if(nrow(summary_table)==0){
+    dummy_table <- data.table(t(names(summary_table)))
+    names(dummy_table) <- names(summary_table)
+    dummy_table[] <- 0
+    dummy_table$sim_date <- NA
+    summary_table <- dummy_table
+  }
+  
   #check
   head(summary_table)
   
+  #sort
+  setorder(summary_table,sim_date)
+
   # return
   return(summary_table)
 }

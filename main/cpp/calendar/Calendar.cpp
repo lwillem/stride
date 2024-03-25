@@ -38,7 +38,7 @@ Calendar::Calendar(const ptree& configPt,unsigned int num_days) :
 		m_date(), m_date_start(), m_date_end(), m_public_holidays(num_days),
 		m_workplace_distancing(num_days), m_community_distancing(num_days), m_collectivity_distancing(num_days),
 		m_contact_tracing(num_days), m_ventilation(num_days),
-		m_universal_testing(num_days), m_household_clustering(num_days), m_imported_cases(num_days,0U),
+		m_contact_survey(num_days), m_household_clustering(num_days), m_imported_cases(num_days,0U),
 		m_school_closures(100, vector<double>(num_days)),
         //
         m_weekday(), m_day(), m_day_index()
@@ -53,14 +53,7 @@ Calendar::Calendar(const ptree& configPt,unsigned int num_days) :
         m_day_index = GetDayIndex(m_date);
 
         string holiday_file = configPt.get<string>("run.holidays_file", "holidays_belgium_2019_2021.csv");
-        string csv_extension = "csv";
-
-		// temporary switch
-		if (IsSubstring(holiday_file, csv_extension)){
-			Initialize_csv(configPt);   // csv file
-		} else{
-			Initialize(configPt);       // json file => default
-		}
+        Initialize_csv(configPt);   // csv file
 }
 
 void Calendar::AdvanceDay()
@@ -99,168 +92,6 @@ unsigned short int Calendar::GetDayIndex(std::string date) const{
 size_t Calendar::GetYear() const { return m_date.year(); }
 
 
-
-
-void Calendar::Initialize(const ptree& configPt)
-{
-		// include warning
-		std::cout << "WARNING: JSON CALENDAR FILES WILL NOT BE SUPPORTED IN FUTURE VERSIONS... PLEASE SWITCH TO CSV" << std::endl;
-
-		// Load json file
-        ptree holidaysPt;
-		const string        fName{configPt.get<string>("run.holidays_file", "holidays_flanders_2020.json")};
-		const filesys::path fPath{FileSys::GetDataDir() /= fName};
-		if (!is_regular_file(fPath)) {
-				throw runtime_error(string(__func__) + "Holidays file " + fPath.string() + " not present.");
-		}
-		read_json(fPath.string(), holidaysPt);
-
-        // Read in holidays
-        for (int i = 1; i < 13; i++) {
-                const auto month = to_string(i);
-                const auto year  = holidaysPt.get<string>("year", "2020");
-                const auto lead  = string(year).append("-").append(month).append("-");
-
-                // read general holidays
-                for (const auto& date : holidaysPt.get_child("general." + month)) {
-                        const auto d_date = string(lead).append(date.second.get_value<string>());
-                         if(IsDatePartOfSimulation(d_date)){
-                        	m_public_holidays[GetDayIndex(d_date)] = true;
-                        }
-                }
-
-                // read pre-school holidays
-                for (const auto& date : holidaysPt.get_child("preschool." + month)) {
-                        const auto d_date = string(lead).append(date.second.get_value<string>());
-						if(IsDatePartOfSimulation(d_date)){
-							for(int i = 0; i<= 6;i ++){
-								m_school_closures[i][GetDayIndex(d_date)] = 1.0;
-							}
-						}
-                }
-                // read primary school holidays
-				for (const auto& date : holidaysPt.get_child("primary_school." + month)) {
-						const auto d_date = string(lead).append(date.second.get_value<string>());
-						if(IsDatePartOfSimulation(d_date)){
-							for(int i = 6; i<= 11;i ++){
-								m_school_closures[i][GetDayIndex(d_date)] = 1.0;
-							}						}
-				}
-
-                // read secondary school holidays
-				for (const auto& date : holidaysPt.get_child("secondary_school." + month)) {
-						const auto d_date = string(lead).append(date.second.get_value<string>());
-						if(IsDatePartOfSimulation(d_date)){
-							for(int i = 12; i<= 17;i ++){
-								m_school_closures[i][GetDayIndex(d_date)] = 1.0;
-							}
-						}
-				}
-
-				// read college holidays
-                for (const auto& date : holidaysPt.get_child("college." + month)) {
-						const auto d_date = string(lead).append(date.second.get_value<string>());
-						if(IsDatePartOfSimulation(d_date)){
-							for(int i = 18; i<= 25;i ++){
-								m_school_closures[i][GetDayIndex(d_date)] = 1.0;
-							}
-
-						}
-
-                }
-                // read work place distancing data (if present)
-                if(holidaysPt.count("workplace_distancing") != 0){
-					for (const auto& date : holidaysPt.get_child("workplace_distancing." + month)) {
-							const auto d_date = string(lead).append(date.second.get_value<string>());
-							if(IsDatePartOfSimulation(d_date)){
-								m_workplace_distancing[GetDayIndex(d_date)] = 1.0;
-							}
-					}
-                }
-
-                // read community distancing data (if present)
-				if(holidaysPt.count("community_distancing") != 0){
-					for (const auto& date : holidaysPt.get_child("community_distancing." + month)) {
-							const auto d_date = string(lead).append(date.second.get_value<string>());
-							if(IsDatePartOfSimulation(d_date)){
-								m_community_distancing[GetDayIndex(d_date)] = 1.0;
-							}
-
-					}
-				}
-
-				 // read collectivity distancing data (if present)
-				if(holidaysPt.count("community_distancing") != 0){
-					for (const auto& date : holidaysPt.get_child("collectivity_distancing." + month)) {
-							const auto d_date = string(lead).append(date.second.get_value<string>());
-							if(IsDatePartOfSimulation(d_date)){
-								m_collectivity_distancing[GetDayIndex(d_date)] = 1.0;
-							}
-
-					}
-				}
-
-				// read contact tracing data (if present)
-				if(holidaysPt.count("contact_tracing") != 0){
-					for (const auto& date : holidaysPt.get_child("contact_tracing." + month)) {
-							const auto d_date = string(lead).append(date.second.get_value<string>());
-							if(IsDatePartOfSimulation(d_date)){
-								m_contact_tracing[GetDayIndex(d_date)] = true;
-							}
-
-					}
-				}
-
-				// read universal testing data (if present)
-				if(holidaysPt.count("universal_testing") != 0){
-					for (const auto& date : holidaysPt.get_child("universal_testing." + month)) {
-							const auto d_date = string(lead).append(date.second.get_value<string>());
-							if(IsDatePartOfSimulation(d_date)){
-								m_universal_testing[GetDayIndex(d_date)] = true;
-							}
-
-					}
-				}
-
-				// read household clustering data (if present)
-				if(holidaysPt.count("household_clustering") != 0){
-					for (const auto& date : holidaysPt.get_child("household_clustering." + month)) {
-							const auto d_date = string(lead).append(date.second.get_value<string>());
-							if(IsDatePartOfSimulation(d_date)){
-								m_household_clustering[GetDayIndex(d_date)] = true;
-							}
-
-					}
-				}
-
-				// read ventilation data (if present)
-				if(holidaysPt.count("ventilation") != 0){
-					for (const auto& date : holidaysPt.get_child("ventilation." + month)) {
-							const auto d_date = string(lead).append(date.second.get_value<string>());
-							if(IsDatePartOfSimulation(d_date)){
-								m_contact_tracing[GetDayIndex(d_date)] = 1.0;
-							}
-
-					}
-				}
-
-				// read imported cases
-				if(holidaysPt.count("import_cases") != 0){
-					for (const auto& date : holidaysPt.get_child("import_cases." + month)) {
-						const auto d_date = string(lead).append(date.second.get_value<string>());
-						unsigned int num_cases = configPt.get<unsigned int>("run.num_daily_imported_cases",0);
-						if(IsDatePartOfSimulation(d_date)){
-							m_imported_cases[GetDayIndex(d_date)] = num_cases;
-						}
-					}
-				} else { // if no calendar info present, use the same value throughout the simulation
-					unsigned int num_cases = configPt.get<unsigned int>("run.num_daily_imported_cases",0);
-					for (unsigned int day_index = 0 ; day_index < m_imported_cases.size() ; day_index++){
-						m_imported_cases[day_index] = num_cases;
-					}
-				}
-        }
-}
 
 void Calendar::Initialize_csv(const ptree& configPt)
 {
@@ -315,11 +146,11 @@ void Calendar::Initialize_csv(const ptree& configPt)
 					if(category == "collectivity_distancing"){m_collectivity_distancing[date_index] = value; }
 					if(category == "household_clustering") {  m_household_clustering[date_index] = value_boolean; }
 					if(category == "contact_tracing")      {  m_contact_tracing[date_index] = value_boolean; }
-					if(category == "universal_testing")    {  m_universal_testing[date_index] = value_boolean; }
 					if(category == "ventilation")          {  m_ventilation[date_index] = value; }
+					if(category == "contact_survey")         {  m_contact_survey[date_index] = value_boolean;  }
 					if(category == "imported_cases")
 					{
-						unsigned int num_cases = configPt.get<unsigned int>("run.num_daily_imported_cases",0);
+						unsigned int num_cases = FromString<unsigned int>(calendar_item[2]);
 						m_imported_cases[date_index] = num_cases;
 					}
 
@@ -342,6 +173,45 @@ void Calendar::Initialize_csv(const ptree& configPt)
 
 		// close file stream
 		calendarFile.close();
+}
+
+void Calendar::RegisterInfectedSeeds(unsigned int num_infected_seeds) {
+	m_imported_cases[0] = num_infected_seeds;
+}
+
+//double Calendar::GetDistancingFactor(ContactType::Id typ) {
+double Calendar::GetDistancingFactor(const ContactPool& pool) const {
+
+	ContactType::Id cType = pool.GetType();
+
+	double typ_distancing_factor = 0;
+	if (cType == ContactType::Id::Workplace) {
+		// account for physical distancing at work
+		typ_distancing_factor = GetWorkplaceDistancingFactor();
+	} else if (cType == ContactType::Id::CommunityWeekend ||
+				cType == ContactType::Id::CommunityWeekday) {
+		// account for physical distancing in the community
+		typ_distancing_factor = GetCommunityDistancingFactor();
+	} else if (cType == ContactType::Id::School) {
+		// account for physical distancing at school
+		typ_distancing_factor = GetSchoolDistancingFactor(pool.GetMinAge());
+	} else if (cType == ContactType::Id::Collectivity) {
+		// account for physical distancing in the collectivity
+		typ_distancing_factor = GetCollectivityDistancingFactor();
+	} else if (cType == ContactType::Id::HouseholdCluster) {
+		// account for contact intensity in household clusters
+		typ_distancing_factor = 1-GetHouseholdClusteringLevel();
+	}
+
+	return(typ_distancing_factor);
+}
+
+void Calendar::UpdateCntReduction(std::vector<double> workplace_distancing, std::vector<double> community_distancing,
+                                  std::vector<double> collectivity_distancing)
+{
+        m_workplace_distancing = workplace_distancing;
+        m_community_distancing = community_distancing;
+        m_collectivity_distancing = collectivity_distancing;
 }
 
 

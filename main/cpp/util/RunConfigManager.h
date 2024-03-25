@@ -35,9 +35,6 @@ namespace util {
 class RunConfigManager
 {
 public:
-        /// Clean (i.e. indent, sort and produde the sha1) the ptree config file.
-        static void CleanConfigFile(boost::property_tree::ptree pt);
-
         /// Produce property tree for config with given name.
         static boost::property_tree::ptree Create(const std::string& configName);
 
@@ -49,12 +46,6 @@ public:
 
         /// Produce string representation of property tree.
         static std::string ToString(const boost::property_tree::ptree& pt);
-
-        /// Produce the sha1 hash of property tree (of it's string representation).
-        static std::string ToSha1(const boost::property_tree::ptree& pt);
-
-        /// Produce the short sha1 hash of property tree (of it's string representation).
-        static std::string ToShortSha1(const boost::property_tree::ptree& pt, unsigned int n = 7U);
 
 private:
         /// Produce Influenza config for scenario tests.

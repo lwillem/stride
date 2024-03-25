@@ -39,7 +39,7 @@ namespace util {
  * Container that stores objects "almost contiguously" (in a chain of blocks)
  * and guarantees that pointers/iterators are not invalidated when the container
  * grows. Elements are assigned to the container either sequentially through
- * push_back and emplace_back or through direct adressing with emplace, at or
+ * push_back and emplace_back or through direct addressing with emplace, at or
  * the subscript operator.
  * It supports most familiar operators except reserve (no need for advance
  * reservation of capacity to avoid re-allocation that invalidates pointers as

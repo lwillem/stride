@@ -13,7 +13,7 @@
 #  see http://www.gnu.org/licenses/.
 #
 #
-#  Copyright 2020, Willem L
+#  Copyright 2024
 ############################################################################# #
 #
 # HELP FUNCTIONS FOR rSTRIDE PRE- AND POST-PROCESSING                       
@@ -97,6 +97,10 @@ if(!(exists('.rstride'))){
   # set NA as character
   project_summary[is.na(project_summary)] <- 'NA'
   
+  # use the basename of the (experiment-specific) holidays file
+  # note: this file is based on other parameters, hence differences should be captured elsewhere
+  project_summary$holidays_file <- basename(project_summary$holidays_file)
+  
   # return the data.frame
   return(project_summary)
 }
@@ -155,10 +159,10 @@ if(!(exists('.rstride'))){
 ############################# #
 
 # create experiment tag
-.rstride$create_exp_tag <- function(i_exp){
+.rstride$create_exp_tag <- function(i_exp,prefix='exp'){
   
   # create experiment tag with leading 0's
-  exp_tag <- paste0('exp',sprintf("%04s", i_exp))
+  exp_tag <- paste0(prefix,sprintf("%04s", i_exp))
   
   # solve issue with spaces instead of 0's on linux (leibniz)
   exp_tag <- gsub(' ','0',exp_tag)
@@ -289,20 +293,6 @@ if(!(exists('.rstride'))){
       # select output type
       data_exp        <- data_exp_all[[data_type]]
       
-      # for prevalence data, check the number of days
-      if(grepl('prevalence',data_type)){
-
-        # create full-size data frame to include the maximum number of days
-        data_tmp        <- data.frame(matrix(NA,ncol=max(project_summary$num_days)+2)) # +1 for day 0 and +1 for exp_id
-        names(data_tmp) <-  c(paste0('day',0:max(project_summary$num_days)),
-                                'exp_id')
-
-        # insert the experiment data
-        data_tmp[names(data_exp)] <- data_exp
-
-          # replace the experiment data by the newly constructed data.frame
-          data_exp <- data_tmp
-        }
         
         # return
         data_exp
@@ -311,7 +301,7 @@ if(!(exists('.rstride'))){
     # continue if data_all is not NULL
     if(any(!is.null(data_all))){
 
-      # make data.frame #TODO: contine with data.table 
+      # make data.frame #TODO: continue with data.table 
       data_all <- as.data.frame(data_all)
 
       # make id's unique => by adding a exp_id tag with leading zero's
@@ -321,7 +311,7 @@ if(!(exists('.rstride'))){
       if(length(names_id_columns)>0) {
         for(i_id_column in names_id_columns){
           row_is_id  <- !is.na(data_all[,i_id_column])
-          if(i_id_column %in% c('household_id','school_id','college_id','workplace_id','household_cluster_id','collectivity_id')){
+          if(i_id_column %in% c('household_id','school_id','workplace_id','household_cluster_id','collectivity_id')){
             row_is_id <- row_is_id & data_all[,i_id_column] != 0
           } 
           data_all[row_is_id,i_id_column] <- as.numeric(sprintf(paste0('%d%0',num_exp_id_digits,'d'),
@@ -342,17 +332,25 @@ if(!(exists('.rstride'))){
   } # end data-type loop
 }
 
+# load aggregated RData file
 .rstride$load_aggregated_output <- function(project_dir,file_type,exp_id_opt = NA){
   
   # load project summary
   project_summary <- .rstride$load_project_summary(project_dir)
   
-  # get ouput filenames
-  dir_files       <- dir(project_dir,full.names = TRUE)
+  # get output filenames
+  dir_files       <- dir(project_dir,full.names = TRUE,pattern = '.RData')
   output_filename <- dir_files[grepl(file_type,dir_files)]
   
   # if the file does not exists, return NA
   if(length(output_filename)==0){
+    return(NA)
+  }
+  
+  # if there are multiple file names that match, return NA
+  if(length(output_filename)>1){
+    smd_print("Multiple file names with model output matched with ",file_type, WARNING = TRUE)
+    stop('in .rstride$load_aggregated_output()')
     return(NA)
   }
   
@@ -394,16 +392,16 @@ if(!(exists('.rstride'))){
 }
 
 # check file presence
-.rstride$data_files_exist <- function(design_of_experiment = exp_design){
+.rstride$data_files_exist <- function(exp_design){
   
   # #TODO: scan automaticaly for .csv or .json or .xml files and check presence
-  # c(design_of_experiment)[grepl('\\.csv',c(design_of_experiment))]
+  # c(exp_design)[grepl('\\.csv',c(exp_design))]
   
   # get the unique file names
-  file_names <- unique(c(design_of_experiment$age_contact_matrix_file,
-                         design_of_experiment$disease_config_file,
-                         design_of_experiment$holidays_file,
-                         design_of_experiment$population_file))
+  file_names <- unique(c(exp_design$age_contact_matrix_file,
+                         exp_design$disease_config_file,
+                         exp_design$holidays_file,
+                         exp_design$population_file))
   
   # add the path to the data folder
   data_dir <- './data'
@@ -424,14 +422,14 @@ if(!(exists('.rstride'))){
 
 # log level
 # check file presence
-.rstride$log_levels_exist <- function(design_of_experiment = exp_design){
+.rstride$log_levels_exist <- function(exp_design){
   
-  valid_levels <- design_of_experiment$event_log_level %in% 
-    c('None','Incidence','Transmissions','All','ContactTracing')
+  valid_levels <- exp_design$event_log_level %in% 
+    c('None','Incidence','Transmissions','All','ContactTracing','Participants')
   
   if(any(!valid_levels)){
     smd_print('INVALID LOG LEVEL(S):', 
-              paste(design_of_experiment$event_log_level[!valid_levels],collapse = ' '),
+              paste(exp_design$event_log_level[!valid_levels],collapse = ' '),
               WARNING=T)
     return(FALSE)
   }  
@@ -442,14 +440,14 @@ if(!(exists('.rstride'))){
 }
 
 # R0
-.rstride$valid_r0_values <- function(design_of_experiment = exp_design){
+.rstride$valid_r0_values <- function(exp_design){
   
-  if(any(!is.null(design_of_experiment$r0)))
+  if(any(!is.null(exp_design$r0)))
   {
     
-    r0_max <- max(design_of_experiment$r0)
+    r0_max <- max(exp_design$r0)
     
-    for(disease_config_file in unique(design_of_experiment$disease_config_file)){
+    for(disease_config_file in unique(exp_design$disease_config_file)){
       
       # load disease config file
       config_disease    <- xmlToList(file.path('data',disease_config_file))
@@ -459,7 +457,7 @@ if(!(exists('.rstride'))){
       
       # check
       if(r0_max > fit_r0_limit){
-        smd_print('INVALID R0 CONFIG VALUE(S):', paste(design_of_experiment$r0,collapse = ' '),paste0('(R0 LIMIT = ',fit_r0_limit,')') ,WARNING=T)
+        smd_print('INVALID R0 CONFIG RANGE(S):', paste(range(exp_design$r0),collapse = '-'),paste0('(R0 LIMIT = ',fit_r0_limit,')') ,WARNING=T)
         return(FALSE)
       } 
     } # end for-loop
@@ -471,9 +469,9 @@ if(!(exists('.rstride'))){
 }
 
 # immunity
-.rstride$valid_immunity_profiles <- function(design_of_experiment = exp_design){
+.rstride$valid_immunity_profiles <- function(exp_design){
   
-  immunity_profiles <- unique(c(design_of_experiment$immunity_profile,design_of_experiment$vaccine_profile))
+  immunity_profiles <- unique(c(exp_design$immunity_profile,exp_design$vaccine_profile))
   
   # get immunity profile names
   disease_immunity_profiles <- c('None','Random','AgeDependent','Teachers','Cocoon')
@@ -490,10 +488,10 @@ if(!(exists('.rstride'))){
 }
 
 # immunity
-.rstride$valid_seed_infected <- function(design_of_experiment = exp_design){
+.rstride$valid_seed_infected <- function(exp_design){
   
   # select unique combinations of population file and seeding rate
-  unique_exp_design <- data.frame(population_file= unique(design_of_experiment[,c('population_file')]))
+  unique_exp_design <- data.frame(population_file= unique(exp_design[,c('population_file')]))
   
   # add the path to the data folder
   data_dir <- './data'
@@ -508,12 +506,12 @@ if(!(exists('.rstride'))){
   }
   
   # merge population size with design of experiment parameters
-  design_of_experiment <- merge(design_of_experiment,unique_exp_design)
+  exp_design <- merge(exp_design,unique_exp_design)
   
   # compare infected seeds with population size... and print warning if needed
-  if(any(design_of_experiment$num_infected_seeds > design_of_experiment$population_size)){
-    flag_issue <- unique_exp_design$num_infected_seeds > design_of_experiment$population_size
-    smd_print('INIALLY INFECTED > POPULATION SIZE:', paste(design_of_experiment[flag_issue,1:2], collapse = ' & initially infected '),WARNING=T)
+  if(any(exp_design$num_infected_seeds > exp_design$population_size)){
+    flag_issue <- unique_exp_design$num_infected_seeds > exp_design$population_size
+    smd_print('INIALLY INFECTED > POPULATION SIZE:', paste(exp_design[flag_issue,1:2], collapse = ' & initially infected '),WARNING=T)
     return(FALSE)
   }
   
@@ -522,7 +520,7 @@ if(!(exists('.rstride'))){
   
 }
 
-.rstride$valid_cnt_param <- function(design_of_experiment = exp_design){
+.rstride$valid_cnt_param <- function(exp_design){
  
   names(exp_design)[grepl('cnt',names(exp_design))]
   

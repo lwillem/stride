@@ -22,9 +22,9 @@
 
 #include "contact/AgeContactProfile.h"
 #include "contact/EventLogMode.h"
-#include "disease/TransmissionProfile.h"
+#include "health/TransmissionProfile.h"
 #include "pop/Population.h"
-#include "util/RnHandler.h"
+#include "util/Rn.h"
 
 #include <memory>
 #include <spdlog/spdlog.h>
@@ -80,7 +80,7 @@ class Infector
 public:
         ///
         static void Exec(ContactPool& pool, const AgeContactProfile& profile, const TransmissionProfile& transProfile,
-        				 util::RnHandler& rnHandler, unsigned short int simDay, std::shared_ptr<spdlog::logger> eventLogger,
+        				 util::Rn& rn, unsigned short int simDay, std::shared_ptr<spdlog::logger> eventLogger,
 						 std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster,
                          double pType_distancing_factor, unsigned short int dayWeek, bool m_airborne_transmission, bool m_subpools_community, double ventilation_factor);
 };
@@ -94,7 +94,7 @@ class Infector<LL, TIC, true>
 public:
         ///
         static void Exec(ContactPool& pool, const AgeContactProfile& profile, const TransmissionProfile& transProfile,
-        				 util::RnHandler& rnHandler, unsigned short int simDay, std::shared_ptr<spdlog::logger> eventLogger,
+        				 util::Rn& rn, unsigned short int simDay, std::shared_ptr<spdlog::logger> eventLogger,
 						 std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster,
                          double pType_distancing_factor, unsigned short int dayWeek, bool m_airborne_transmission, bool m_subpools_community, double ventilation_factor);
 };

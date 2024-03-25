@@ -13,7 +13,7 @@
 #  see http://www.gnu.org/licenses/.
 #
 #
-#  Copyright 2020, Willem L
+#  Copyright 2024, Willem L
 ############################################################################ #
 # 
 # R controller for the Stride model
@@ -42,7 +42,8 @@ smd_load_packages(c('XML',           # to parse and write XML files
                     'tidyr',         # to easily replace na's by 0 (replace_na)
                     'lhs',           # to sample from a latin hypercube design (instead of using a full factorial grid)
                     'corrplot',      # to visualise the parameter correlations in the paretor front selection
-                    'wpp2019'        # to derive population data
+                    'wpp2019',       # to derive population data
+                    'dplyr'          # to join data.frames and data.tables
                     ))
 
 # load general help functions
@@ -53,9 +54,11 @@ rStride_files <- dir('./bin/rstride',recursive = T,pattern = '\\.R',full.names =
 rStride_files <- rStride_files[rStride_files != "./bin/rstride/rStride.R"]
 rStride_files <- rStride_files[! grepl('\\.Rmd',rStride_files)]
 
-
 # load all (remaining files)
 sapply(rStride_files,source)
+
+# disable scientific notation (prevent interference with cpp)
+options(scipen=999)
 
 # patch for the wpp_age function of socialmixr 
 source('bin/rstride/lib/socrates/wpp_age.r')
@@ -124,7 +127,7 @@ parse_log_file <- function(config_exp,
   
   # parse event_log (if present)
   event_log_filename <- smd_file_path(output_prefix,'event_log.txt')
-  if(file.exists(event_log_filename)){
+  if(file.exists(event_log_filename) & file.size(event_log_filename)>0){
     
     rstride_out <- parse_event_logfile(event_log_filename,
                                        i_exp,
@@ -135,10 +138,6 @@ parse_log_file <- function(config_exp,
     rstride_out$data_transmission[flag,start_symptoms := NA]
     rstride_out$data_transmission[flag,end_symptoms := NA]
     
-    # add estimated hospital admission
-    set.seed(config_exp$rng_seed + 16022018)
-    rstride_out$data_transmission <- add_hospital_admission_time(rstride_out$data_transmission,config_exp)
-    
     # get start and end of simulation period
     sim_date_range<- as.Date(config_exp$start_date,'%Y-%m-%d') + c(0,config_exp$num_days-1)  #note: start on day 0
     
@@ -147,21 +146,35 @@ parse_log_file <- function(config_exp,
     rstride_out$data_incidence <- get_transmission_statistics(rstride_out$data_transmission,
                                                               sim_date_range)
     
+    # if prevalence data available from stride event log, store with another name
+    # note: this can be used to check other code
+    if(any(grepl('prevalence',names(rstride_out)))){
+      rstride_out$data_log_prevalence <- rstride_out$data_prevalence
+      rstride_out$data_prevalence <- NULL
+    }
+    
+    # if prevalence data available from transmission statistics, store separately
+    if(any(grepl('prevalence',names(rstride_out$data_incidence)))){
+      # select general and prevalence-related columns
+      sel_col_names <- c('sim_date','exp_id',
+                         colnames(rstride_out$data_incidence)[grepl("prevalence",colnames(rstride_out$data_incidence))])
+      rstride_out$data_prevalence <- rstride_out$data_incidence[,..sel_col_names]
+      
+      # remove columns related to prevalence from the incidence table
+      rstride_out$data_incidence[, grep("prevalence", colnames(rstride_out$data_incidence)):=NULL]
+    } else{
+      rstride_out$data_prevalence <- NA
+    }
+    
     # if transmission data should not be stored, replace item by NA
     if(!get_transmission_rdata){
       rstride_out$data_transmission <- NA
     }
     
-  } else { # end if logfile does not existse
-    smd_print("LOGFILE NOT FOUND!!",WARNING = T)
+  } else { # end if logfile does not exist or is empty
+    smd_print("LOGFILE NOT FOUND OR EMPTY!!",WARNING = T)
   }
   
-  # convert 'prevalence' files (if present) 
-  rstride_out$data_prevalence_infected    <- get_prevalence_data(config_exp,'infected.csv')
-  rstride_out$data_prevalence_exposed     <- get_prevalence_data(config_exp,'exposed.csv')
-  rstride_out$data_prevalence_infectious  <- get_prevalence_data(config_exp,'infectious.csv')
-  rstride_out$data_prevalence_symptomatic <- get_prevalence_data(config_exp,'symptomatic.csv')
-  rstride_out$data_prevalence_total       <- get_prevalence_data(config_exp,'cases.csv')
   
   # save list with all results
   exp_tag <- .rstride$create_exp_tag(i_exp)
@@ -215,7 +228,9 @@ run_rStride <- function(exp_design               = exp_design,
                 # get_burden_rdata         = FALSE,
                 use_date_prefix          = TRUE,
                 get_tracing_rdata        = FALSE,
-                num_parallel_workers     = NA))
+                num_parallel_workers     = NA,
+                erase_category           = TRUE,
+                bool_maintain_file_name  = FALSE))
     #run_tag <- basename(project_dir)
   }
   
@@ -324,16 +339,14 @@ run_rStride <- function(exp_design               = exp_design,
                        # create experiment tag
                        exp_tag <- .rstride$create_exp_tag(i_exp)
                       
-                       output_prefix       = smd_file_path(project_dir,exp_tag,.verbose=FALSE)
+                       output_prefix       = smd_file_path(project_dir,exp_tag,.verbose=FALSE,.overwrite = TRUE)
                        config_exp_filename = paste0(output_prefix,".xml")
                        config_exp          = create_config_exp(config_default, output_prefix, exp_design, i_exp)
+                        
+                       #config_exp$holidays_file <- file.path('data',config_exp$holidays_file)
                        
-                       # Temporary fix to include the lockdown/exit parameters into the calendar (backward compatibility)
-                       if(any(config_exp[grepl('cnt_reduction_workplace',names(config_exp)) | 
-                                         grepl('cnt_reduction_other',names(config_exp))] > 0)){
-                         config_exp  <- integrate_lockdown_parameters_into_calendar(config_exp)
-                         #smd_print("Deprecated lockdown and exit parameters merged into the calendar. Please make use of the updated calendar features",WARNING = T)
-                       }
+                       # include the distancing and other temporal parameters into the calendar
+                       config_exp  <- integrate_parameters_in_calendar(config_exp)
                        
                        # check collectivity info
                        .rstride$check_population_contact_combination(config_exp)
@@ -371,9 +384,10 @@ run_rStride <- function(exp_design               = exp_design,
                        }
 
                        # parse log file if there is no log threshold (NULL or NA) OR if simulated cases < threshold 
-                       if(is.null(config_exp$logparsing_cases_upperlimit) ||
+                       if(config_exp$event_log_level != "None" &&
+                          (is.null(config_exp$logparsing_cases_upperlimit) ||
                           is.na(config_exp$logparsing_cases_upperlimit) ||
-                          run_summary$num_cases < config_exp$logparsing_cases_upperlimit){
+                          run_summary$num_cases < config_exp$logparsing_cases_upperlimit)){
                          
                          # parse log output (and save as rds file)
                          parse_log_file(config_exp, 
@@ -397,7 +411,7 @@ run_rStride <- function(exp_design               = exp_design,
   # print final statement
   smd_print('COMPLETE:',nrow(exp_design),'/',nrow(exp_design))
   
-  # save overal summary
+  # save overall summary
   write.table(par_out,file=file.path(project_dir,paste0(run_tag,'_summary.csv')),sep=',',row.names=F)
   
   ################################## #
@@ -443,96 +457,6 @@ get_counts <- function(all_data,sim_day_max,output_col = "counts"){
   
   return(data_out)
 }
-
-#data_transmission <- rstride_out$data_transmission
-add_hospital_admission_time <- function(data_transmission,config_exp){
-  
-  parse_hospital_input <- function(x){
-    
-    # defensive programming: if x is not present
-    if(is.null(x) || !grepl(',',x)){
-      x <- '0,0,0,0'
-    }
-    
-    # 1.split string using ','
-    # 2. unlist result
-    # 3. make numeric
-    # 4. reformat into data.frame with 4 columns
-    out <- data.frame(t(as.numeric(unlist(strsplit(x,',')))))
-    # 5. add column names
-    names(out) <- paste0('age',1:length(out))
-    # 6. return result
-    return(out)
-  }
-  
-  if(is.null(config_exp$hospital_category_age)){
-    config_exp$hospital_category_age  = paste(0,19,60,80,sep=',')
-  }
-  
-  names(data_transmission)
-  age_cat_breaks    <- (parse_hospital_input(config_exp$hospital_category_age))
-  # data_transmission$age_cat_hosp     <- cut(data_transmission$part_age,c(age_cat_breaks,110),right=F)
-  # data_transmission$age_cat_hosp_num <- as.numeric(data_transmission$age_cat_hosp)
-  
-  part_age <- data_transmission$part_age
-  age_cat_hosp <- cut(part_age,c(age_cat_breaks,110),right=F)
-  age_cat_hosp_num <- as.numeric(age_cat_hosp)
-  #data_transmission[,age_cat_hosp_num := age_cat_hosp_num]
-  
-  # # set hospital age groups (age groups for hospital admission)
-  # hosp_age <- list(age1 = 0:18,   # 0:16
-  #                  age2 = 19:59,  # 16:59
-  #                  age3 = 60:79,  # 60:80
-  #                  age4 = 80:110) # 80+
-  
-  # create columns for hospital admission start (by age)
-  data_transmission[, hospital_admission_start      := as.numeric(NA)]
-  
-  for(i_age_cat in names(age_cat_breaks)){
-    data_transmission[, paste0('hospital_admission_start_',i_age_cat) := as.numeric(NA)]
-  }
-  names(data_transmission)
-  
-  hospital_probability        <- parse_hospital_input(config_exp$hospital_probability_age)
-  
-  # adjust probability (for fitting)
-  hospital_probability <- hospital_probability * config_exp$hosp_probability_factor
-  
-  # defensive programming for fitting ==>> probability cannot be > 1
-  hospital_probability[hospital_probability>1] <- 1
-  
-  # # set hospital delay by age group
-  hosp_delay_mean      <- parse_hospital_input(config_exp$hospital_mean_delay_age)
-  
-  # set (uniform) delay  distribution -1, 0, 1
-  hosp_delay_variance <- -1:1
-  
-  # # calculate time between symptom onset and hospital admission (future work)
-  # get_hospital_delay <- function(n){
-  #   round(rtweibull(n, shape=1.112,scale=5.970, max =31))
-  # }
-
-  age_cat_hosp_num[is.na(data_transmission$start_symptoms)] <- 0
-  # sample hospital admission dates
-  i_hosp <- 1
-  for(i_hosp in 1:length(hospital_probability)){
-    #flag_part      <- !is.na(data_transmission$start_symptoms) & data_transmission$age_cat_hosp_num == i_hosp
-    flag_part      <- age_cat_hosp_num == i_hosp
-    flag_admission <- as.logical(rbinom(n = nrow(data_transmission),size = 1,prob = hospital_probability[[i_hosp]]))
-    flag_hosp      <- flag_part & flag_admission
-    if(sum(flag_hosp)>0){
-      hosp_start     <- as.numeric(data_transmission$start_symptoms[flag_hosp]) + hosp_delay_mean[[i_hosp]] + sample(hosp_delay_variance,sum(flag_hosp),replace = T)
-      data_transmission[flag_hosp, hospital_admission_start := hosp_start]
-      
-      # save age-specific results  
-      data_transmission[flag_hosp ,paste0('hospital_admission_start_age',i_hosp) := hosp_start]      
-    }
-  }
- 
-  # return
-  return(data_transmission) 
-}
-
 
 # load prevelence data and add colunm names
 get_prevalence_data <- function(config_exp,file_name){

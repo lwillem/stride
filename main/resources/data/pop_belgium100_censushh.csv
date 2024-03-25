@@ -1,4 +1,4 @@
-age,household_id,school_id,work_id,primary_community,secondary_community
+age,household_id,school_id,work_id,community_weekend,community_weekday
 56,1,0,0,3432,7468
 56,1,0,245390,5898,9195
 37,2,0,0,3815,10348

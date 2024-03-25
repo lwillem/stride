@@ -57,7 +57,7 @@ inspect_tracing_data <- function(project_dir)
   print(table(data_tracing_all$pool_type))
   
   ## ENSEMBLE  ####
-  .rstride$create_pdf(project_dir,'contact_tracing_all',width = 4, height = 4)
+  .rstride$create_pdf(project_dir,'contact_tracing_all',width = 14, height = 8)
   par(mar=c(6,5,4,1))
   
   opt_config <- unique(data_tracing_all$config_id)

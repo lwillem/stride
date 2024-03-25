@@ -120,3 +120,6 @@ rsconnect/
 README.html
 main/r/rstride/rmarkdown/covid19_stride_disease_files/figure-latex
 regression_rstride_summary.pdf
+pop_belgium3000k_c500_teachers_censushh_all.zip
+covid19_hospital_age_2020_full.csv
+*.Rproj

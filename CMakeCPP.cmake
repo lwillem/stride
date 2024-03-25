@@ -76,10 +76,8 @@ endif()
 set(LIBS   ${LIBS}   m)
 
 #----------------------------------------------------------------------------
-# Random number stuff: pcg, randutils, trng
+# Random number stuff: trng
 #----------------------------------------------------------------------------
-include_directories(SYSTEM ${CMAKE_HOME_DIRECTORY}/main/resources/lib/pcg/include)
-include_directories(SYSTEM ${CMAKE_HOME_DIRECTORY}/main/resources/lib/randutils/include)
 include_directories(SYSTEM ${CMAKE_HOME_DIRECTORY}/main/resources/lib/trng-4.20/include)
 set(LIBS ${LIBS} trng)
 
@@ -93,12 +91,6 @@ include_directories(SYSTEM ${CMAKE_HOME_DIRECTORY}/main/resources/lib/spdlog/inc
 #----------------------------------------------------------------------------
 include_directories(SYSTEM ${CMAKE_HOME_DIRECTORY}/main/resources/lib/tclap/include)
 
-
-#----------------------------------------------------------------------------
-# SHA1 hash code.
-#----------------------------------------------------------------------------
-include_directories(SYSTEM ${CMAKE_HOME_DIRECTORY}/main/resources/lib/sha1/include)
-set(LIBS ${LIBS} sha1)
 
 #----------------------------------------------------------------------------
 # Boost

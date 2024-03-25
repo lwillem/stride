@@ -1,7 +1,7 @@
 ############################################################################ #
 #  This file is part of the Stride software. 
 #
-#  Copyright 2020, Willem L
+#  Copyright 2024, Willem L
 ############################################################################ #
 #
 # TO OBTAIN AGE-SPECIFIC HOUSEHOLD CLUSTERS  
@@ -12,7 +12,6 @@
 # 3. Save new population data
 #
 ############################################################################ #
-
 
 # load simid.rtools package 
 #suppressPackageStartupMessages(library(simid.rtools)) # to save a list as XML
@@ -27,6 +26,11 @@ if(0==1){
     
     # max number of households in one cluster?
     household_cluster_size <- 2
+    
+    # call function
+    extend_population_data(pop_file_name          = pop_file_name,
+                           max_age_diff           = max_age_diff,
+                           household_cluster_size = household_cluster_size)
     
 }
 

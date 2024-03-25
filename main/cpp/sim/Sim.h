@@ -23,11 +23,10 @@
 #include "contact/AgeContactProfiles.h"
 #include "contact/EventLogMode.h"
 #include "contact/InfectorExec.h"
-#include "disease/PublicHealthAgency.h"
-#include "disease/TransmissionProfile.h"
-#include "disease/UniversalTesting.h"
+#include "health/TransmissionProfile.h"
+#include "healthcare/PublicHealthAgency.h"
+#include "pop/SurveyManager.h"
 #include "util/RnMan.h"
-#include "util/RnHandler.h"
 
 #include <boost/property_tree/ptree.hpp>
 #include <string>
@@ -41,7 +40,6 @@ class Population;
 
 namespace util {
 class RnMan;
-class RnHandler;
 }
 
 /**
@@ -52,8 +50,7 @@ class Sim
 {
 public:
         /// Create Sim initialized by the configuration in property tree and population.
-        static std::shared_ptr<Sim> Create(const boost::property_tree::ptree& config, std::shared_ptr<Population> pop,
-                                           util::RnMan rnMan);
+        static std::shared_ptr<Sim> Create(const boost::property_tree::ptree& config, std::shared_ptr<Population> pop);
 
         /// Calendar for the simulated world. Initialized with the start date in the simulation
         /// world. Use GetCalendar()->GetSimulationDay() for the number of days simulated.
@@ -69,7 +66,7 @@ public:
         double GetTransmissionProbability() const { return m_transmission_profile.GetHomogeneousProbability(); }
 
         /// Get the random number manager.
-        util::RnMan& RefRnManager() { return m_rn_man; }
+        std::shared_ptr<util::RnMan> GetRnManager() { return m_rn_man_ptr; }
 
         /// Get the transmission profile.
         const TransmissionProfile& RefTransmissionProfile() const { return m_transmission_profile; }
@@ -93,28 +90,20 @@ private:
 
         std::shared_ptr<Calendar>   m_calendar;         ///< Management of calendar.
         AgeContactProfiles          m_contact_profiles; ///< Contact profiles w.r.t age.
-        std::vector<util::RnHandler> m_rn_handlers;     ///< Random number handlers (random numbers & binomial trials). //TODO confusing to have both rn_handlers and rn_managers?
         InfectorExec*               m_infector_default; ///< Executes optimized transmission loops in contact pools.
         InfectorExec*               m_infector_tracing; ///< Executes all or optimized transmission loops in contact pools.
         std::shared_ptr<Population> m_population;       ///< Pointer to the Population.
-        util::RnMan                 m_rn_man;           ///< Random number generation management.
+        std::shared_ptr<util::RnMan>   m_rn_man_ptr; ///< Random number generation management.
 
         TransmissionProfile         m_transmission_profile; ///< Profile of disease.
 
         // temporary...
-        double                      m_cnt_intensity_householdCluster;
         bool                        m_is_isolated_from_household;
         bool                        m_subpools_community;
         bool                        m_airborne_transmission;
 
         PublicHealthAgency          m_public_health_agency;
-        UniversalTesting            m_universal_testing;
-
-        //TODO: this is not used anymore? remove it?
-        // Introduce new infected cases on a daily basis?
-        unsigned int                m_num_daily_imported_cases;
-
-
+        std::shared_ptr<SurveyManager>   m_survey_manager;
 };
 
 } // namespace stride

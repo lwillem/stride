@@ -36,9 +36,8 @@ class RnMan;
 }
 
 /**
- * Seed contact heterogeneity in the population,
- * either through non-compliers to social distancing measures
- * or through adding a distribution to contact rates in the community pools
+ * Seed contact heterogeneity in the population by adding a
+ * distribution to contact rates in the community and workplace pools
  */
 class ContactHeterogeneitySeeder
 {
@@ -46,21 +45,15 @@ public:
 	/// Initialize Seeder.
 	/// \param config 		Configuration parameters.
 	/// \param rnMan			Random number manager.
-	ContactHeterogeneitySeeder(const boost::property_tree::ptree& config, util::RnMan& rnMan);
+	ContactHeterogeneitySeeder(const boost::property_tree::ptree& config, std::shared_ptr<util::RnMan> rnMan);
 
-    /// Seeds the population with non-compliers.
+    /// Seed the population with individual contact factors
     /// \param pop               Population.
     std::shared_ptr<Population> Seed(std::shared_ptr<Population> pop);
 
-    template <ContactType::Id pooltype>
-    void SeedPools(std::shared_ptr<Population> pop, std::string nonComplianceType, std::vector<double> nonComplianceByAge);
-
-    /// Register a selected person as a non-complier
-    /// \param p 				Person to register
-    bool RegisterNonComplier(std::shared_ptr<Population> pop, Person& p, ContactType::Id pooltype);
 private:
     const boost::property_tree::ptree& m_config; ///< Run config.
-    util::RnMan&                       m_rn_man; ///< Random number manager.
+    std::shared_ptr<util::RnMan>          m_rn_man; ///< Random number manager.
 };
 
 } // namespace stride

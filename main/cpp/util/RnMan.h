@@ -10,73 +10,59 @@
  *  You should have received a copy of the GNU General Public License
  *  along with the software. If not, see <http://www.gnu.org/licenses/>.
  *
- *  Copyright 2018, Kuylen E, Willem L, Broeckhove J
+ *  Copyright 2024
  */
 
 /**
  * @file
- * Interface of RnMan.
+ * Interface of RnMan to manage random number generation (in parallel).
  */
 
 #pragma once
 
-#include "RnInfo.h"
+#include <util/Rn.h>
 
 #include <functional>
-#include <memory>
+#include <random>
+#include <string>
 #include <vector>
 
 namespace stride {
 namespace util {
 
-class RnEngine;
-
-/*
- * RnMan manages random engines and distribution to produce random generators.
- * Can be used with (up to 32) parallel streams out of the engine.
+/**
+ * Manages random number generation in parallel (OpenMP) calculations.
  */
-class RnMan
+class RnMan : protected std::vector<util::Rn>
 {
 public:
-        /// Default constructor builds empty (uninitialized) manager.
-        RnMan();
+        using std::vector<Rn>::operator[];
+        using std::vector<Rn>::at;
+        using std::vector<Rn>::size;
 
-        /// Initializing Constructor.
-        explicit RnMan(const RnInfo& info);
+public:
+        /// Default constructor build empty manager.
+        RnMan() : std::vector<Rn>() {}
 
-        /// Equality of states
-        bool operator==(const RnMan& other);
+        /// Constructor.
+		RnMan(unsigned long rng_seed, const unsigned long stream_count)
+			: std::vector<Rn>(stream_count)
+		{
+			// seed random number generator(s)
+			for (size_t i = 0; i < size(); ++i) {
+				(*this)[i].GetEngine().seed(rng_seed);
+				(*this)[i].GetEngine().split(size(), i);
+			}
+		}
 
-        /// Return the state of the random engines.
-        RnInfo GetInfo() const;
+        /// No copying.
+        RnMan(const RnMan&) = delete;
 
-        /// Return a generator for uniform doubles in [0, 1[ using i-th random stream.
-        std::function<double()> GetUniform01Generator(unsigned int i = 0U);
+        /// No copy assignment.
+        RnMan& operator=(const RnMan&) = delete;
 
-        /// Return a generator for uniform ints in [a, b[ (a < b) using i-th random stream.
-        std::function<int()> GetUniformIntGenerator(int a, int b, unsigned int i = 0U);
-
-        /// Return a generator for gamma distribution using i-th random stream
-        std::function<double()> GetGammaGenerator(double shape, double scale, unsigned int i = 0U);
-
-        /// Return generator for ints [0, n-1[ with non-negative weights p_j (i=0,..,n-1) using i-th random stream.
-        std::function<int()> GetDiscreteGenerator(const std::vector<double>& weights, unsigned int i = 0U);
-
-        /// Make weighted coin flip: <fraction> of the flips need to come up true.
-        bool MakeWeightedCoinFlip(double fraction, unsigned int i = 0U);
-
-        /// Initalize with data in Info.
-        void Initialize(const RnInfo& info);
-
-        /// Is this een empty (i.e. non-initialized Rn)?
-        bool IsEmpty() const;
-
-        /// Random shuffle of vector of int indices using i-th random stream.
-        void Shuffle(std::vector<unsigned int>& indices, unsigned int i);
-
-private:
-        std::shared_ptr<RnEngine> m_rn;
 };
+
 
 } // namespace util
 } // namespace stride

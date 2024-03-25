@@ -9,73 +9,22 @@
 The model population consists of households, schools, workplaces and
 communities, which represent a group of people we define as a ``ContactPool''.
 Social contacts can only happen within a ContactPool.
-When school or work is off, people stay at home and in their primary
-community and can have social contacts with the other members.
-During other days, people are present in their household, secondary community
+When school or work is off, people stay at home and in their weekend community and can have social contacts with the other members.
+During other days, people are present in their household, weekday community
 and a possible workplace or school.  
 
-
-
 We use a $Simulator$ class to organize the activities from the people in the population.
-The ContactPools in a population are grouped into ContactCenters (e.g. the different classes of a school are grouped into one K12School ContactCenter).
-These ContactCenters are geographically grouped into a geographical grid (sometimes called GeoGrid)
 
-The $Contact Handler$ performs Bernoulli trials to decide whether a contact
+The $Rn$ performs Bernoulli trials to decide whether a contact
 between an infectious and susceptible person leads to disease transmission. 
 People transit through Susceptible-Exposed-Infected-Recovered states,
 similar to an influenza-like disease.
 Each $ContactPool$ contains a link to its members and the $Population$ stores all personal
-data, with $Person$ objects.
-The implementation is based on the open source model from Grefenstette et al. \cite{grefenstette2013}. 
+data, with $Person$ objects. We distinguish different a number of types of ContactPools associated with the household, the workplace, 
+the school, \ldots. The Household is a key type because it fixed the home address of a person.
 The household, workplace and school clusters are handled separately from the
 community clusters, which are used to model general community contacts. The
 $Population$ is a collection of $Person$ objects.
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Population
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\section{Population }
-\label{section:gengeopop}
-
-\subsection{Background}
-\label{subsection:background}
-
-To explain the algorithms used for generating the geography of the countries and their respective population, we have to introduce some background concepts. 
-
-\begin{description}
-    \item[ContactPool]:
-        A pool of persons that may contact with each other which in turn may lead to disease transmission.
-        We distinguish different a number of types of ContactPools associated with the household, the workplace, 
-        the school, \ldots. The Household is a key type because it fixed the home address of a person.
-    \item[K-12 student]: 
-    	Persons from 3 until 18 years of age that are required (at least in Belgium) to attend school. 
-    	Students that skip or repeat years are not accounted for.
-    \item[College student]:
-        Persons older than 18 and younger than 23 years of age that attend an institution of higher education. 
-        For simplicity we group all forms of higher eduction into the same type of ContactCenter, a College. 
-        A fraction of college students will attend a college ``close to home'' and the others will attend a 
-        college ``far from home''. Most higher educations don't last 6 years, but this way we compensate 
-        for changes in the field of study, doctoral studies, advanced masters and repeating a failed year of study.
-       \item[Household profile]:
-        The composition of households in terms of the number of members and their age is an important 
-        factor in the simulation. In this case the profile is not defined by the age of its members or fractions, 
-        but through a set of reference households. This set contains a sample of households which is 
-        representative of the whole population in their composition.
-\end{description}
-
-
-The population files are created in a separate project and consist of:
-
-\begin{description}
-    \item[Households]
-    \item[K-12 Schools]
-    \item[Colleges]  
-    \item[Workplaces]        
-    \item[Communities]
-        
-\end{description}
 
 
 

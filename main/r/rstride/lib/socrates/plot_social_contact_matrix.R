@@ -1,9 +1,22 @@
-#___________________________________________________________________________
-# This file is part of the SOcial Contact RATES (SOCRATES) modelling project
-# 
-# => PLOT SOCIAL CONTACT SURVEY DATA
+############################################################################ #
+#  This file is part of the Stride software. 
+#  It is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by 
+#  the Free Software Foundation, either version 3 of the License, or any 
+#  later version.
+#  The software is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#  You should have received a copy of the GNU General Public License,
+#  along with the software. If not, see <http://www.gnu.org/licenses/>.
+#  see http://www.gnu.org/licenses/.
 #
-#  Copyright 2020, SIMID, UNIVERSITY OF ANTWERP & HASSELT UNIVERSITY
+#
+#  Copyright 2024
+############################################################################ #
+#
+# PLOT SOCIAL CONTACT DATA
 #___________________________________________________________________________
 
 # Loading packages
@@ -13,112 +26,177 @@ smd_load_packages(socrates_packages)
 # requires 'simage' and 'splot' functions from npsp package (removed from CRAN)
 
 # plot matrices according the Socrates app
-plot_socrates_all <- function(data_cnt,data_part,age_cat_breaks,project_dir,exp_tag,survey_start){
+plot_socrates_all <- function(data_cnt_all,
+                              data_part_all,
+                              age_cat_breaks,
+                              project_dir,
+                              exp_tag,
+                              survey_start,
+                              bool_rds=FALSE){
   
-  .rstride$create_pdf(project_dir,paste0(exp_tag,'_cnt_matrix_all'),9,4)
+  # open pdf stream
+  .rstride$create_pdf(project_dir,paste0(exp_tag,'_cnt_matrix_all'),12,6)
   
-  opt_day <- unique(data_cnt$sim_day)
-  i_day <- 1
-  for(i_day in opt_day){
-    data_cnt_day <- data_cnt[data_cnt$sim_day == i_day,]
-    plot_socrates_location(data_cnt_day,data_part,age_cat_breaks,as.Date(survey_start) + i_day)
+  opt_day <- unique(data_cnt_all$sim_day)
+  
+  # option to initiate list to store contact data
+  if(bool_rds){
+    mij_summary <- list()
   }
   
+  i_day <- 43
+  for(i_day in opt_day){
+    data_cnt_day  <- data_cnt_all[data_cnt_all$sim_day == i_day,]
+    data_part_day <- data_part_all[data_part_all$sim_day == i_day,]
+
+    survey_all      <- plot_socrates_location(data_cnt_day,data_part_day,age_cat_breaks,as.Date(survey_start) + i_day)
+ 
+    # select symptomatic participants and their contacts on 'i_day' 
+    # note: symptomatic people are only identified if they have contacts on day i_day (potential bias!)
+    # data_cnt_day    <- data_cnt_all[data_cnt_all$sim_day == i_day & data_cnt_all$part_sympt == 1,]
+    data_part_sympt <- data_part_day[data_part_day$is_symptomatic == 1,]
+    survey_sympt       <- plot_socrates_location(data_cnt_day,data_part_sympt,age_cat_breaks,as.Date(survey_start) + i_day,title_add='SYMPT')
+  
+    # select non-symptomatic participants and their contacts on 'i_day' 
+    # data_cnt_day        <- data_cnt_all[data_cnt_all$sim_day == i_day & data_cnt_all$part_sympt == 0,]
+    data_part_non_sympt <- data_part_day[!data_part_day$local_id %in% data_part_sympt$local_id,]
+    survey_non_sympt       <- plot_socrates_location(data_cnt_day,data_part_non_sympt,age_cat_breaks,as.Date(survey_start) + i_day,title_add='NON-SYMPT')
+
+    if(bool_rds){
+      mij_summary[[paste0('day',i_day)]] <- list(survey_all       = survey_all,
+                                                 survey_sympt     = survey_sympt,
+                                                 survey_non_sympt = survey_non_sympt,
+                                                 date             = as.Date(survey_start) + i_day,
+                                                 exp_tag          = exp_tag)
+    } 
+    
+  } # end for-loop opt_days
   dev.off()
   
-  .rstride$create_pdf(project_dir,paste0(exp_tag,'_cnt_matrix_symptomatic'))
-  # symptomatic
-  for(i_day in opt_day){
-   
-    # select contacts of 'i_day' and symptomatic participants (of the infected seeds)
-    data_part_sympt <- data_part[data_part$is_infected == 1  & (data_part$start_symptomatic-1) <= i_day & (data_part$end_symptomatic-1) > i_day,]
-    data_cnt_day    <- data_cnt[data_cnt$sim_day == i_day & data_cnt$local_id %in% data_part_sympt$local_id,]
-    
-    if(nrow(data_part_sympt)>0 & nrow(data_cnt_day)>0){
-      print(i_day)  
-      plot_socrates_location(data_cnt_day,data_part_sympt,age_cat_breaks,as.Date(survey_start) + i_day)
-    }
+  # option to store the contact matrices as rds file
+  if(bool_rds){
+    saveRDS(mij_summary,file=smd_file_path(project_dir,paste0(exp_tag,'_cnt_matrix.rds')))
   }
-  
-   dev.off()
-  
-  }
-   # data_cnt <- data_cnt_day; data_part <- data_part_sympt;survey_day <- as.Date(survey_start) + i_day
-plot_socrates_location <- function(data_cnt,data_part,age_cat_breaks,survey_day){
+}
+
+ # data_cnt <- data_cnt_day; data_part <- data_part_all;survey_day <- as.Date(survey_start) + i_day;title_add=''
+plot_socrates_location <- function(data_cnt,data_part,age_cat_breaks,survey_day,title_add=''){
   
   par(mfrow=c(2,3))
   
   ## TOTAL
-  plot_contact_matrix_socrates(data_cnt,data_part,'total',age_cat_breaks)
+  mij_cij_total <- plot_contact_matrix_socrates(data_cnt,data_part,paste(title_add,'total'),age_cat_breaks)
   
   ## HOUSEHOLD
-  plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_home==1,],data_part,'@household',age_cat_breaks)
+  mij_cij_household <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_home==1,],data_part,paste(title_add,'@household'),age_cat_breaks)
   
   ## SCHOOL
-  plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_school==1,],data_part[data_part$student==T,],'@school',age_cat_breaks)
+  mij_cij_school             <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_school==1,],data_part,paste(title_add,'@school'),age_cat_breaks)
+  mij_cij_school_conditional <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_school==1,],data_part[data_part$student==T,],paste(title_add,'@school (conditional)'),age_cat_breaks,bool_plot = FALSE)
   
   ## WORK
-  plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_work==1,],data_part[data_part$employed==T,],'@work',age_cat_breaks)
+  mij_cij_workplace             <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_workplace==1,],data_part,paste(title_add,'@workplace'),age_cat_breaks)
+  mij_cij_workplace_conditional <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_workplace==1,],data_part[data_part$employed==T,],paste(title_add,'@workplace (conditional)'),age_cat_breaks,bool_plot = FALSE)
   
   ## PRIMARY COMMUNITY
-  plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_prim_comm==1,],data_part,'@weekend community',age_cat_breaks)
+  mij_cij_community_weekend <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_community_weekend==1,],data_part,paste(title_add,'@weekend community'),age_cat_breaks)
   
   ## SECONDARY COMMUNITY
-  plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_sec_comm==1,],data_part,'@week community',age_cat_breaks)
+  mij_cij_community_weekday <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_community_weekday==1,],data_part,paste(title_add,'@week community'),age_cat_breaks)
   
   ## HOUSEHOLD CLUSTER
-  plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_hh_cluster==1,],data_part,'@household cluster',age_cat_breaks)
+  mij_cij_household_cluster <- plot_contact_matrix_socrates(data_cnt[data_cnt$cnt_household_cluster==1,],data_part,paste(title_add,'@household cluster'),age_cat_breaks)
   
   plot(0,0,col=0,axes=F,xlab='',ylab='')
   # survey_day <- as.Date(exp_summary$start_date) + unique(data_cnt$sim_day)
   survey_day <- as.Date(survey_day)
-  text(0,0,paste(format(survey_day,'%A'),survey_day),pos=3)
-  text(0,0,paste('Contacts when symptomatic:',sum(data_cnt$part_sympt),
-                  '\nNumber of participants:',nrow(data_part)),pos=1)
+  Sys.setlocale("LC_TIME", 'en_GB.UTF-8')
+  text(0,0,paste(title_add,format(survey_day,'\n%A'),survey_day),pos=3)
+  text(0,0,paste('Number of participants:',nrow(data_part),
+                 '\nNumber symptomatic participants:',sum(data_part$is_symptomatic),
+                 '\nContacts when symptomatic:',sum(data_cnt$part_sympt[data_cnt$local_id %in% data_part$local_id])),pos=1)
+ 
   
+  return(list(mij_total                 = mij_cij_total$matrix,
+              mij_household             = mij_cij_household$matrix,
+              mij_school                = mij_cij_school$matrix,
+              mij_school_conditional    = mij_cij_school_conditional$matrix,
+              mij_workplace             = mij_cij_workplace$matrix,
+              mij_workplace_conditional = mij_cij_workplace_conditional$matrix,
+              mij_community_weekend     = mij_cij_community_weekend$matrix,
+              mij_community_weekday     = mij_cij_community_weekday$matrix,
+              mij_household_cluster     = mij_cij_household_cluster$matrix,
+              
+              cij_total                 = mij_cij_total$matrix.per.capita,
+              cij_household             = mij_cij_household$matrix.per.capita,
+              cij_school                = mij_cij_school$matrix.per.capita,
+              cij_school_conditional    = mij_cij_school_conditional$matrix.per.capita,
+              cij_workplace             = mij_cij_workplace$matrix.per.capita,
+              cij_workplace_conditional = mij_cij_workplace_conditional$matrix.per.capita,
+              cij_community_weekend     = mij_cij_community_weekend$matrix.per.capita,
+              cij_community_weekday     = mij_cij_community_weekday$matrix.per.capita,
+              cij_household_cluster     = mij_cij_household_cluster$matrix.per.capita,
+              
+              participants              = mij_cij_total$participants))
 }
 
-# data_cnt <- data_cnt[data_cnt$cnt_work==1,]; data_part <- data_part[data_part$employed==T,]
-plot_contact_matrix_socrates <- function(data_cnt,data_part,figure_title,age_cat_breaks){
+# data_cnt <- data_cnt[data_cnt$cnt_workplace==1,]; data_part <- data_part[data_part$student==T,]
+plot_contact_matrix_socrates <- function(data_cnt,data_part,figure_title,age_cat_breaks,bool_plot = TRUE){
   
+   # select participant id and age
+   data_part_sel <- data_part[,c('local_id','part_age')]
+ 
+   # make sure the participant data is not empty and contains the maximum age
+   # this dummy participant has no contacts, so has no impact on the final results
+   if(nrow(data_part_sel)==0 || max(data_part_sel$part_age < max(age_cat_breaks))){
+     data_part_sel <- rbind(data_part_sel,c(local_id=NA,part_age=max(age_cat_breaks)))
+     colnames(data_part_sel) <- c('local_id','part_age')
+   }
+      
+  # get socialmixr 'participants' object
+  db_participants   <- data.frame(part_id     = data_part_sel$local_id,
+                                  part_age    = data_part_sel$part_age,
+                                  part_gender = NA,
+                                  country     = "Belgium",
+                                  day         = NA,
+                                  month       = NA,
+                                  year        = 2020,
+                                  dayofweek   = NA,
+                                  holiday     = FALSE,
+                                  weekday     = NA,
+                                  stringsAsFactors = F)
   
-  if(nrow(data_cnt)>0 & nrow(data_part)>0){
-    
-    # get socialmixr 'participants' object
-    db_participants   <- data.frame(part_id     = data_part$local_id,
-                                    part_age    = data_part$part_age,
-                                    part_gender = NA,
-                                    country     = "Belgium",
-                                    day         = NA,
-                                    month       = NA,
-                                    year        = 2020,
-                                    dayofweek   = NA,
-                                    holiday     = FALSE,
-                                    weekday     = NA,
-                                    stringsAsFactors = F)
-    
-    # get socialmixr 'contacts' object
-    db_contacts       <- data.frame(part_id         = data_cnt$local_id,
-                                    cnt_age_exact   = as.integer(round(data_cnt$cnt_age)),
-                                    cnt_age_est_min = as.integer(round(data_cnt$cnt_age)),
-                                    cnt_age_est_max = as.integer(round(data_cnt$cnt_age)),
-                                    data_cnt[,c("cnt_home","cnt_work","cnt_school",
-                                                "cnt_college","cnt_prim_comm","cnt_sec_comm","part_sympt","cnt_sympt" )])
-    
-    # get socialmixr 'survey' object
-    survey_rstride <- survey(participants = db_participants,
-                             contacts     = db_contacts)
+  # get socialmixr 'contacts' object
+  db_contacts       <- data.frame(part_id         = data_cnt$local_id,
+                                  cnt_age_exact   = as.integer(round(data_cnt$cnt_age)),
+                                  cnt_age_est_min = as.integer(round(data_cnt$cnt_age)),
+                                  cnt_age_est_max = as.integer(round(data_cnt$cnt_age)),
+                                  data_cnt[,c("cnt_home","cnt_workplace","cnt_school",
+                                              "cnt_community_weekend","cnt_community_weekday","part_sympt","cnt_sympt" )])
   
-    # get matrix
-    cnt_matrix <- contact_matrix(survey_rstride,age.limits = age_cat_breaks)  
-    
-    # plot matrix
+  # get socialmixr 'survey' object
+  survey_rstride <- survey(participants = db_participants,
+                           contacts     = db_contacts)
+
+  # get matrix
+  suppressWarnings(
+  cnt_matrix <- contact_matrix(survey_rstride,age.limits = age_cat_breaks,per.capita = TRUE)  
+  )
+  
+  # account for NA
+  cnt_matrix$matrix[is.na(cnt_matrix$matrix)] <- 0
+  
+  # plot matrix
+  if(bool_plot && any(cnt_matrix$matrix>0)){
     plot_cnt_matrix(cnt_matrix$matrix,figure_title)
   }
+  
+  # return matrix
+  return(cnt_matrix)
 }
 
 #mij <- contact_matrix(polymod, countries = "United Kingdom", age.limits = c(0, 1, 5, 15))$matrix
-#mij <- matrix_out$matrix
+#mij <- cnt_matrix$matrix
 plot_cnt_matrix <- function(mij,plot_title_extra = ''){
   
   if(all(is.na(mij))){
@@ -150,14 +228,16 @@ plot_cnt_matrix <- function(mij,plot_title_extra = ''){
   axis(1, at=plt_ticks, labels = c(colnames(mij)),cex.axis=0.9,tick = FALSE)
   
   # format results (rounding/scientific)
-  if(any(mij>1,na.rm=T)){
-    mij <- round(mij,digits=format_num_digits)
+  if(any(mij>1e-2,na.rm=T)){
+    mij_labels <- round(mij,digits=format_num_digits)
+    cex_labels  <- 1
   } else{
-    mij <- format(mij,digits = format_num_digits)
+    mij_labels <- format(mij,digits = format_num_digits)
+    cex_labels <- 0.5
   }
-  # get grid centers and add value
+  # get grid centres and add value
   e_grid <- expand.grid(plt_ticks,plt_ticks)
-  text(e_grid, labels = mij)
+  text(e_grid, labels = mij_labels,cex = cex_labels)
 }
 
 

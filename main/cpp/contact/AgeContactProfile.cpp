@@ -10,7 +10,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with the software. If not, see <http://www.gnu.org/licenses/>.
  *
- *  Copyright 2019, Willem L, Kuylen E, Broeckhove J
+ *  Copyright 2024
  */
 
 /**
@@ -31,22 +31,22 @@ using namespace boost::property_tree;
 AgeContactProfile::AgeContactProfile(Id poolType, const ptree& contactPt) : std::array<double, MaximumAge() + 1>()
 {
         string typeKey = "";
-        // TODO ELiminate this hack by fixing the data file
-        if (poolType == Id::K12School || poolType == Id::College) {
+        // TODO Eliminate this switch by fixing the data file
+        if (poolType == Id::School) {
                 typeKey = "school";
         } else if (poolType == Id::Household) {
                 typeKey = "household";
         } else if (poolType == Id::Workplace) {
-                typeKey = "work";
-        } else if (poolType == Id::PrimaryCommunity) {
-                typeKey = "primary_community";
-        } else if (poolType == Id::SecondaryCommunity) {
-                typeKey = "secondary_community";
+                typeKey = "workplace";
+        } else if (poolType == Id::CommunityWeekend) {
+                typeKey = "community_weekend";
+        } else if (poolType == Id::CommunityWeekday) {
+                typeKey = "community_weekday";
         } else if (poolType == Id::HouseholdCluster) {
              	typeKey = "household";
         } else if (poolType == Id::Collectivity) {
-         	typeKey = "collectivity";
-                }
+         		typeKey = "collectivity";
+        }
 
         // construct XML key
         const string key{string("matrices.").append(typeKey)};

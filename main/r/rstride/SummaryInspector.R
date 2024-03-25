@@ -13,7 +13,7 @@
 #  see http://www.gnu.org/licenses/.
 #
 #
-#  Copyright 2020, Willem L, Kuylen E & Broeckhove J
+#  Copyright 2024
 ############################################################################ #
 #
 # MODEL SUMMARY EXPLORATION
@@ -133,17 +133,20 @@ inspect_summary <- function(project_dir)
   
 }
 
-## HELP FUNCTION ####
+## VARIABLE MODEL PARAMETERS ####
 .rstride$get_variable_model_param <- function(project_summary){
   
   if(ncol(project_summary) == 1){
     return(unique(project_summary))
   }
-  
+
+  # get list with unique parameter values per parameter
   input_opt    <- .rstride$get_unique_param_list(project_summary)
+  
+  # select parameters with more than 1 option
   input_opt    <- input_opt[lapply(input_opt,length)>1]
   
-  # get parameter combinations
+  # get unique parameter combinations
   input_opt_design <- unique(project_summary[,names(input_opt)])
   
   # with only one parameter, convert vector into nx2 matrix with dummy column
@@ -152,29 +155,23 @@ inspect_summary <- function(project_dir)
                                    num_days = unique(project_summary$num_days) )
   }
   
-  # with only identical parameters, use the r0
+  # without variable parameters, include r0 and num_days
   if(length(input_opt)==0){
     input_opt_design <- data.frame(r0=unique(project_summary$r0),
                                    num_days=unique(project_summary$num_days))
   }
   
   return(input_opt_design)
-  
 }
 
-## HELP FUNCTION ####
+## UNIQUE PARAMETERS ####
 .rstride$get_unique_param_list <- function(project_summary){
 
-  # option to select "holidays_calendar" basic file name by excluding the relative path, to overcome (experiment-specific) file names 
-  if('holidays_file' %in% names(project_summary)){
-    project_summary$holidays_file <- basename(project_summary$holidays_file)
-  }
-  
-  col_output <- c('run_time', 'total_time', 'num_cases', 'AR' )
+  col_output <- c('run_time', 'num_cases', 'AR')
   col_extra  <- c('rng_seed','output_prefix','transmission_probability','exp_id','config_id','contact_id')
   col_poison <- names(project_summary)[grepl('_pois',names(project_summary))]
   col_input  <- !(names(project_summary) %in% c(col_output,col_extra,col_poison))
-  
+
   # get unique values per parameter
   input_opt    <- lapply(project_summary[,col_input],unique)
   
@@ -182,7 +179,7 @@ inspect_summary <- function(project_dir)
   return(input_opt)
 }
 
-## HELP FUNCTION ####
+## IDs ####
 .rstride$get_config_id <- function(project_matrix){
     
   # retrieve all variable model parameters
@@ -219,3 +216,19 @@ inspect_summary <- function(project_dir)
   return(contact_id)
 }
 
+## DATES ####
+.rstride$get_intervention_dates <- function(project_summary){
+
+  if(is.null(nrow(project_summary))) {
+    return(NULL)  
+  }
+  
+  # retrieve intervention dates
+  intervention_dates_str <- unlist(project_summary[,grepl('distancing.*_date',names(project_summary))])
+  intervention_dates     <- unique(unlist(strsplit(x=paste(intervention_dates_str,collapse=','),split=',')))
+  
+  # remove NA
+  intervention_dates <- intervention_dates[!(is.na(intervention_dates) | intervention_dates == "NA")]
+  
+  return(intervention_dates)
+}

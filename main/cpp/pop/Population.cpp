@@ -20,7 +20,7 @@
 
 #include "Population.h"
 
-#include "disease/Health.h"
+#include "health/Health.h"
 #include "util/Assert.h"
 #include "util/FileSys.h"
 #include "util/LogUtils.h"
@@ -46,15 +46,15 @@ std::shared_ptr<Population> Population::Create(const boost::property_tree::ptree
                                                std::shared_ptr<spdlog::logger> strideLogger)
 {
         if (!strideLogger) {
-                strideLogger = LogUtils::CreateNullLogger("Population_logger");
+                strideLogger = LogUtils::CreateNullLogger("stride_logger");
         }
 
         // --------------------------------------------------------------
-        // Create empty population & and give it a InfectorLogger.
+        // Create empty population & and give it an EventLogger.
         // --------------------------------------------------------------
             
         const auto pop = Create();
-        if (config.get<bool>("run.event_output_file", true)) {
+        if(EventLogMode::ToMode(config.get<string>("run.event_log_level", "None")) > EventLogMode::Id::None) {
                 const auto prefix       = config.get<string>("run.output_prefix");
                 const auto logPath      = FileSys::BuildPath(prefix, "event_log.txt");
                 pop->RefEventLogger()   = LogUtils::CreateRotatingLogger("event_logger", logPath.string());
@@ -88,11 +88,11 @@ std::shared_ptr<Population> Population::Create() {
 }
 
 Person* Population::CreatePerson(unsigned int id, double age, unsigned int profession, unsigned int householdId, unsigned int k12SchoolId,
-                                 unsigned int college, unsigned int workId, unsigned int primaryCommunityId,
-                                 unsigned int secondaryCommunityId, unsigned int householdClusterId, unsigned int collectivityId)
+                                 unsigned int workplaceId, unsigned int communityWeekendId,
+                                 unsigned int communityWeekdayId, unsigned int householdClusterId, unsigned int collectivityId)
 {
-        return emplace_back(id, age, profession, householdId, k12SchoolId, college, workId, primaryCommunityId,
-                            secondaryCommunityId, householdClusterId, collectivityId);
+        return emplace_back(id, age, profession, householdId, k12SchoolId, workplaceId, communityWeekendId,
+                            communityWeekdayId, householdClusterId, collectivityId);
 }
 
 unsigned int Population::GetTotalInfected() const
@@ -111,6 +111,16 @@ unsigned int Population::CountInfectedCases() const
         for (const auto& p : *this) {
                 const auto& h = p.GetHealth();
                 total += h.IsInfected();
+        }
+        return total;
+}
+
+unsigned int Population::CountNewlyInfectedCases() const
+{
+        unsigned int total{0U};
+        for (const auto& p : *this) {
+                const auto& h = p.GetHealth();
+                total += h.IsInfectedToday();
         }
         return total;
 }
@@ -145,6 +155,54 @@ unsigned int Population::CountSymptomaticCases() const
         return total;
 }
 
+unsigned int Population::CountInfectiousSymptomaticCases() const
+{
+        unsigned int total{0U};
+        for (const auto& p : *this) {
+                const auto& h = p.GetHealth();
+                total += h.IsInfectious() && h.IsSymptomatic();
+        }
+        return total;
+}
+unsigned int Population::CountHospitalisedCases() const
+{
+        unsigned int total{0U};
+        for (const auto& p : *this) {
+            const auto& h = p.GetHealth();
+            total += h.IsHospitalised();
+        }
+        return total;
+}
+
+unsigned int Population::GetTotalHospitalised() const
+{
+        unsigned int total{0U};
+        for (const auto& p : *this) {
+            const auto& h = p.GetHealth();
+            total += h.WasHospitalised();
+        }
+        return total;
+}
+
+unsigned int Population::CountRecoveredCases() const
+{
+        unsigned int total{0U};
+        for (const auto& p : *this) {
+            const auto& h = p.GetHealth();
+            total += h.IsRecovered();
+        }
+        return total;
+}
+
+unsigned int Population::GetAtRisk() const
+{
+        unsigned int total{0U};
+        for (const auto& p : *this) {
+            total += !p.IsImmune();
+        }
+        return total;
+}
+
 unsigned int Population::GetMaxAge() const
 {
         unsigned int maxAge{0U};
@@ -168,6 +226,26 @@ unsigned int Population::GetPoolSize(ContactType::Id typeId, const Person* p) co
 
 	// return ContactPool size
 	return m_pool_sys.CRefPools(typeId)[poolId].size();
+}
+
+void Population::LogPrevalence(unsigned short int simDay){
+
+	// log the current burden of disease prevalance
+	m_event_logger->info("[PREVALENCE] {} {} {} {} {} {} {} {} {} {} {} {}",
+			simDay,
+			GetTotalInfected(),
+			GetTotalHospitalised(),
+			CountInfectedCases(),
+			CountExposedCases(),
+			CountInfectiousCases(),
+			CountSymptomaticCases(),
+			CountInfectiousSymptomaticCases(),
+			CountHospitalisedCases(),
+			GetAtRisk(),
+			CountNewlyInfectedCases(),
+			CountRecoveredCases()
+			);
+
 }
 
 

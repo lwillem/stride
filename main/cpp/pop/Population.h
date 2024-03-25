@@ -55,14 +55,17 @@ public:
 public:
         /// Create Person in the population.
         Person* CreatePerson(unsigned int id, double age, unsigned int profession, unsigned int householdId, unsigned int k12SchoolId,
-                             unsigned int collegeId, unsigned int workId, unsigned int primaryCommunityId,
-                             unsigned int secondaryCommunityId, unsigned int householdClusterId, unsigned int collectivityId);
+                             unsigned int workplaceId, unsigned int communityWeekendId,
+                             unsigned int communityWeekdayId, unsigned int householdClusterId, unsigned int collectivityId);
 
         /// Get the cumulative number of cases.
         unsigned int GetTotalInfected() const;
 
         /// Get the current number of infected cases.
         unsigned int CountInfectedCases() const;
+
+        /// Get the number of new infected cases today
+        unsigned int CountNewlyInfectedCases() const;
 
         /// Get the current number of exposed cases.
         unsigned int CountExposedCases() const;
@@ -72,6 +75,21 @@ public:
 
         /// Get the current number of symptomatic cases.
         unsigned int CountSymptomaticCases() const;
+
+        /// Get the current number of infectious and symptomatic cases.
+        unsigned int CountInfectiousSymptomaticCases() const;
+
+        /// Get the current number of hospitalised cases.
+        unsigned int CountHospitalisedCases() const;
+
+        /// Get the cumulative number of hospitalisations.
+        unsigned int GetTotalHospitalised() const;
+
+        /// Get the current number of recovered cases.
+        unsigned int CountRecoveredCases() const;
+
+        /// Get the number of people at risk in the population
+        unsigned int GetAtRisk() const;
 
         /// Get the maximum age in the population.
         unsigned int GetMaxAge() const;
@@ -88,6 +106,8 @@ public:
         /// Get the ContactPool size of a given type and id
         unsigned int GetPoolSize(ContactType::Id typeId, const Person* p) const;
 
+        /// Log the current disease prevalence in the population. Time consuming!
+        void LogPrevalence(unsigned short int simDay);
 
 private:
         /// Non-trivial default constructor.

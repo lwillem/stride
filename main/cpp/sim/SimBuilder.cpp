@@ -25,12 +25,13 @@
 #include "contact/ContactDivider.h"
 #include "contact/ContactHeterogeneitySeeder.h"
 #include "contact/PoolCharacteristicsSeeder.h"
-#include "disease/DiseaseSeeder.h"
-#include "disease/HealthSeeder.h"
-#include "disease/ImmunitySeeder.h"
-#include "disease/PublicHealthAgency.h"
-#include "pop/SurveySeeder.h"
+#include "health/DiseaseSeeder.h"
+#include "health/HealthSeeder.h"
+#include "health/ImmunitySeeder.h"
+#include "healthcare/PublicHealthAgency.h"
+#include "pop/SurveyManager.h"
 #include "sim/Sim.h"
+#include "util/StringUtils.h"
 #include "util/FileSys.h"
 #include "util/RnMan.h"
 
@@ -43,7 +44,7 @@ using namespace ContactType;
 
 SimBuilder::SimBuilder(const ptree& config) : m_config(config) {}
 
-shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> pop, RnMan rnMan)
+shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> pop)
 {
         std::cout << "Read config info and setup random number manager" << std::endl;
         // --------------------------------------------------------------
@@ -60,24 +61,24 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         unsigned int num_days                = m_config.get<unsigned short>("run.num_days");
         sim->m_calendar                      = make_shared<Calendar>(m_config,num_days);
         sim->m_event_log_mode                = EventLogMode::ToMode(m_config.get<string>("run.event_log_level", "None"));
-        sim->m_rn_man                        = std::move(rnMan);
+        sim->m_rn_man_ptr 				     = std::make_shared<util::RnMan>(m_config.get<unsigned long>("run.rng_seed", 0U),
+													                    	m_config.get<unsigned int>("run.num_threads"));
 
-        std::cout << "Contact handlers" << std::endl;
+
+		// --------------------------------------------------------------
+        // Select infector template(s) based on configuration.
         // --------------------------------------------------------------
-        // Contact handlers, each with generator bound to different
-        // random engine stream) and infector.
-        // --------------------------------------------------------------
-        for (unsigned int i = 0; i < sim->m_num_threads; i++) {
-                auto gen = sim->m_rn_man.GetUniform01Generator(i);
-                sim->m_rn_handlers.emplace_back(util::RnHandler(gen));
-        }
         const auto& select = make_tuple(sim->m_event_log_mode, sim->m_track_index_case);
         sim->m_infector_default    = InfectorMap().at(select);
 
-        // additional infector if logmode is Tracing
+        // additional infector if logmode is ContactTracing or Participants
         if(m_config.get<string>("run.event_log_level", "None") == "ContactTracing"){
-        	const auto& select_tracing  = make_tuple(EventLogMode::Id::All, sim->m_track_index_case);
+        	const auto& select_tracing  = make_tuple(EventLogMode::ToMode("ContactTracing"), sim->m_track_index_case);
         	sim->m_infector_tracing    = InfectorMap().at(select_tracing);
+        } else if(m_config.get<string>("run.event_log_level", "None") == "Participants"){
+        	sim->m_infector_tracing    = sim->m_infector_default;
+        	const auto& select_default = make_tuple(EventLogMode::ToMode("Transmissions"), sim->m_track_index_case);
+        	sim->m_infector_default    = InfectorMap().at(select_default);
         } else{
         	sim->m_infector_tracing    = InfectorMap().at(select);
         }
@@ -102,48 +103,39 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         
         std::cout << "Seed the population with health data." << std::endl;
         // --------------------------------------------------------------
-        // Seed the population with health data.
+        // Seed the population with health data (incl. hospital admission)
         // --------------------------------------------------------------
-        HealthSeeder(diseasePt).Seed(sim->m_population, sim->m_transmission_profile, sim->m_rn_handlers);
+        HealthSeeder(m_config, diseasePt).Seed(sim->m_population, sim->m_transmission_profile, sim->m_rn_man_ptr);
 
         std::cout << "Seed population with immunity: naturally or vaccine-induced." << std::endl;
         // --------------------------------------------------------------
-	// Seed population with immunity: naturally or vaccine-induced.
-	// --------------------------------------------------------------
-        ImmunitySeeder(m_config, sim->m_rn_man).Seed(sim->m_population);
+		// Seed population with immunity: naturally or vaccine-induced.
+		// --------------------------------------------------------------
+        ImmunitySeeder(m_config, sim->m_rn_man_ptr).Seed(sim->m_population);
 
-        std::cout << "Seed population with infection." << std::endl;
         // --------------------------------------------------------------
-        // Seed population with infection.
+        // Register infected seeds.
         // --------------------------------------------------------------
-        DiseaseSeeder(m_config, sim->m_rn_man).Seed(sim->m_population, sim->m_transmission_profile, sim->m_rn_handlers[0]);
-        sim->m_num_daily_imported_cases = m_config.get<double>("run.num_daily_imported_cases",0);
+		sim->GetCalendar()->RegisterInfectedSeeds(m_config.get<unsigned int>("run.num_infected_seeds",0));
 
         std::cout << "Set Universal Testing " << std::endl;
         // --------------------------------------------------------------
-	// Set Universal Testing 
-        // --------------------------------------------------------------
-        sim->m_universal_testing.Initialize(m_config);
-        
-        std::cout << "Set Public Health Agency" << std::endl;
-        // --------------------------------------------------------------
-        // Set Public Health Agency
-        // --------------------------------------------------------------
+		// Set Public Health Agency
+		// --------------------------------------------------------------
         sim->m_public_health_agency.Initialize(m_config);
-		sim->m_cnt_intensity_householdCluster       = m_config.get<double>("run.cnt_intensity_householdCluster",0);
-		sim->m_is_isolated_from_household           = m_config.get<bool>("run.is_isolated_from_household",false);
+		sim->m_is_isolated_from_household = m_config.get<bool>("run.is_isolated_from_household",false);
 
         std::cout << "Seed population with survey participants." << std::endl;
         // --------------------------------------------------------------
         // Seed population with survey participants.
         // --------------------------------------------------------------
-        SurveySeeder(m_config, sim->m_rn_man).Seed(sim->m_population);
+		sim->m_survey_manager = make_shared<SurveyManager>(sim->m_population, m_config, sim->m_rn_man_ptr);
 
         std::cout << "Seed population with non-compliant individuals." << std::endl;
         // --------------------------------------------------------------
-        // Seed population with non-compliant individuals. & Heterogeneity on contacts
+        // Seed heterogeniety in social contact behaviour.
         // --------------------------------------------------------------
-        ContactHeterogeneitySeeder(m_config, sim->m_rn_man).Seed(sim->m_population);
+        ContactHeterogeneitySeeder(m_config, sim->m_rn_man_ptr).Seed(sim->m_population);
 
         std::cout << "Calculate contacts based on age contact profile and duration in location" << std::endl;
         //---------------------------------------------------------------

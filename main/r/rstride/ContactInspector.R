@@ -13,7 +13,7 @@
 #  see http://www.gnu.org/licenses/.
 #
 #
-#  Copyright 2020, Willem L, Kuylen E & Broeckhove J
+#  Copyright 2024 Willem L, Kuylen E & Broeckhove J
 ############################################################################ #
 
 
@@ -66,7 +66,7 @@ inspect_contact_data <- function(project_dir){
 ############################################################################# #
 # PLOT SOCIAL CONTACT MATRICES AND COUNTS                                  ####
 ############################################################################# #
-# exp_summary <- project_summary[i_exp,]; data_dir <- './data'
+# exp_summary <- project_summary[i_exp,]; data_dir <- './data'; bool_rds=FALSE;survey_start = exp_summary$start_date
 .rstride$plot_contacts <- function(project_dir,exp_summary,data_dir)
 {
 
@@ -75,74 +75,153 @@ inspect_contact_data <- function(project_dir){
   ##################### #
 
   # load data
-  data_cnt      <- .rstride$load_aggregated_output(project_dir,'data_contacts',exp_summary$exp_id)
-  data_part     <- .rstride$load_aggregated_output(project_dir,'data_participants',exp_summary$exp_id)
+  data_cnt_all      <- .rstride$load_aggregated_output(project_dir,'data_contacts',exp_summary$exp_id)
+  data_part_demo    <- .rstride$load_aggregated_output(project_dir,'data_participants',exp_summary$exp_id)
+  data_health_all   <- .rstride$load_aggregated_output(project_dir,'data_health',exp_summary$exp_id)
 
-  ## reformat
-  data_cnt$cnt_school    <- as.numeric(data_cnt$cnt_school)
-  data_cnt$cnt_prim_comm <- as.numeric(data_cnt$cnt_prim_comm)
-  data_cnt$cnt_sec_comm  <- as.numeric(data_cnt$cnt_sec_comm)
-  data_cnt$sim_day       <- as.numeric(data_cnt$sim_day)
-  data_cnt$cnt_prob      <- as.numeric(data_cnt$cnt_prob)
-  data_cnt$part_sympt    <- as.numeric(data_cnt$part_sympt)
-  data_cnt$cnt_sympt     <- as.numeric(data_cnt$cnt_sympt)
+  # get ID based on local_id and sim day
+  get_panel_id <- function(survey_data){
+    return(paste(survey_data$local_id, survey_data$sim_day,sep='d'))
+  } 
+  data_cnt_all$panel_id    <- get_panel_id(data_cnt_all)
+  data_part_demo$panel_id  <- get_panel_id(data_part_demo)
+  data_health_all$panel_id <- get_panel_id(data_health_all)
   
-  summary(data_part)
-  data_part$college_id          <- as.numeric(data_part$college_id)
-  data_part$is_susceptible      <- as.numeric(data_part$is_susceptible)
-  data_part$is_infected         <- as.numeric(data_part$is_infected)
-  data_part$is_infectious       <- as.numeric(data_part$is_infectious)
-  data_part$is_recovered        <- as.numeric(data_part$is_recovered)
-  data_part$is_immune           <- as.numeric(data_part$is_immune)
-  data_part$start_symptomatic   <- as.numeric(data_part$start_symptomatic)
-  data_part$end_infectiousness  <- as.numeric(data_part$end_infectiousness)
+  # select participant and contact data from contact survey (and not infected seeds)
+  data_part_demo  <- data_part_demo[data_part_demo$survey_type == "contacts",]
+  data_cnt_all    <- data_cnt_all[data_cnt_all$panel_id %in% data_part_demo$panel_id,]
+  data_health_all <- data_health_all[data_health_all$panel_id %in% data_part_demo$panel_id,]
+  
+  dim(data_part_demo)
+  dim(data_health_all)
+  
+  # focus on demographic characteristics (and use panel_id)
+  data_part_demo <- data_part_demo[,!grepl('is_',names(data_part_demo))]
+  data_part_demo$sim_day  <- NULL
+  data_part_demo$local_id <- NULL
+  
+  # join demographic and health data
+  data_part_all <- merge(data_health_all,data_part_demo,by=c('panel_id','exp_id'))
+
+  dim(data_part_all)
+  dim(data_part_demo)
+  dim(data_health_all)
+  
+  ## reformat
+  data_cnt_all$cnt_school    <- as.numeric(data_cnt_all$cnt_school)
+  data_cnt_all$cnt_community_weekend <- as.numeric(data_cnt_all$cnt_community_weekend)
+  data_cnt_all$cnt_community_weekday  <- as.numeric(data_cnt_all$cnt_community_weekday)
+  data_cnt_all$sim_day       <- as.numeric(data_cnt_all$sim_day)
+  data_cnt_all$cnt_prob      <- as.numeric(data_cnt_all$cnt_prob)
+  data_cnt_all$part_sympt    <- as.numeric(data_cnt_all$part_sympt)
+  data_cnt_all$cnt_sympt     <- as.numeric(data_cnt_all$cnt_sympt)
+  
+  summary(data_part_all)
+  data_part_all$is_susceptible      <- as.numeric(data_part_all$is_susceptible)
+  data_part_all$is_infected         <- as.numeric(data_part_all$is_infected)
+  data_part_all$is_infectious       <- as.numeric(data_part_all$is_infectious)
+  data_part_all$is_symptomatic      <- as.numeric(data_part_all$is_symptomatic)
+  data_part_all$is_recovered        <- as.numeric(data_part_all$is_recovered)
+  data_part_all$is_immune           <- as.numeric(data_part_all$is_immune)
+  data_part_all$start_symptomatic   <- as.numeric(data_part_all$start_symptomatic)
+  data_part_all$end_infectiousness  <- as.numeric(data_part_all$end_infectiousness)
   
   # if at least one data source is missing... stop
-  if(nrow(data_cnt)==0 || nrow(data_part)==0) 
+  if(nrow(data_cnt_all)==0 || nrow(data_part_all)==0) 
   {
-    smd_print("PARTICIPANT OR CONTACT DATA MISSING... STOP CONTACT ANALYSIS FOR",exp_summary$output_prefix)
+    #smd_print("PARTICIPANT OR CONTACT DATA MISSING... STOP CONTACT ANALYSIS FOR",exp_summary$output_prefix)
     return(NULL) 
   }
     
   ## people without contacts
-  dim(data_part)[1] - length(unique(data_cnt$local_id))
-
-  ## merge school and college contacts
-  data_cnt$cnt_school <- as.numeric(data_cnt$cnt_school + data_cnt$cnt_college > 0)
-      
+  dim(data_part_all)[1] - length(unique(data_cnt_all$panel_id))
+     
   ## employed and student population
-  data_part$employed <- data_part$workplace_id != 0
-  data_part$student  <- data_part$school_id != 0 | data_part$college_id !=0
+  data_part_all$employed <- data_part_all$workplace_id != 0
+  data_part_all$student  <- data_part_all$school_id != 0
+  
+  # get experiment tag
+  exp_tag <- .rstride$create_exp_tag(exp_summary$exp_id)
+  
+  ## Socrates matrices ####
+  
+  # get results with default (minors and adults) or specific age groups    
+  age_cat_breaks <- c(0,18,110)
+  if('contact_survey_ages' %in% names(exp_summary)){
+    age_cat_breaks <- as.numeric(unlist(strsplit(exp_summary$contact_survey_ages,',')))
+  }
+  plot_socrates_all(data_cnt_all   = data_cnt_all,
+                    data_part_all  = data_part_all,
+                    age_cat_breaks = age_cat_breaks,
+                    project_dir    = project_dir,
+                    exp_tag        = paste0(exp_tag,'_AG'),
+                    survey_start   = exp_summary$start_date,
+                    bool_rds       = TRUE)
+  
+  # # check rds
+  # cnt_matrix_all <- readRDS(file.path(project_dir,'exp0002_AG_cnt_matrix.rds'))
+  # names(cnt_matrix_all)
+  # names(cnt_matrix_all$day0)
+  # names(cnt_matrix_all$day0$survey_all)
+  # cnt_matrix_all$day0$survey_all$cij_total
+  
+  ## Other figures ####
+  opt_day <- unique(data_cnt_all$sim_day)
+  i_day <- 0
+  for(i_day in opt_day){
+    
+    data_part_day <- data_part_all[data_part_all$sim_day == i_day,]
+    data_cnt_day <- data_cnt_all[data_cnt_all$sim_day == i_day,]
+    .rstride$plot_cnt_counts(data_part_day = data_part_day,
+                             data_cnt_day  = data_cnt_day,
+                             exp_tag       = exp_tag,
+                             exp_summary   = exp_summary,
+                             data_dir      = data_dir)
+  }
+
+  
+  
+  
+} # end function
+
+#################################  OTHER HELP FUNCTIONS  ################################ #
+
+
+.rstride$plot_cnt_counts <- function(data_part_day,
+                                     data_cnt_day,
+                                     exp_tag,
+                                     exp_summary,
+                                     data_dir){
   
   ## SETTINGS 
-  L <- max(c(80,data_part$part_age))
-  num_days      <- exp_summary$num_days
-  
+  L <- max(c(80,data_part_day$part_age))
+  num_days      <- length(unique(data_cnt_day$sim_day))
+  sim_day       <- paste(unique(data_cnt_day$sim_day),collapse='-')
+ 
   # open pdf stream  
-  exp_tag <- .rstride$create_exp_tag(exp_summary$exp_id)
-  .rstride$create_pdf(project_dir,paste0(exp_tag,'_cnt_patterns'),10,5)
+  .rstride$create_pdf(project_dir,paste0(exp_tag,'_cnt_patterns_d',sim_day),10,5)
   #par(mfrow=c(2,2))
   
   ## TOTAL
-  mij_total  <- .rstride$plot_cnt_matrix(data_cnt,data_part,'total',L,num_days)
+  mij_total  <- .rstride$plot_cnt_matrix(data_cnt_day,data_part_day,'total',L,num_days)
   
   ## HOUSEHOLD
-  mij_hh     <- .rstride$plot_cnt_matrix(data_cnt[data_cnt$cnt_home==1,],data_part,'household',L,num_days)
+  mij_hh     <- .rstride$plot_cnt_matrix(data_cnt_day[data_cnt_day$cnt_home==1,],data_part_day,'household',L,num_days)
   
   ## SCHOOL
-  mij_school <- .rstride$plot_cnt_matrix(data_cnt[data_cnt$cnt_school==1,],data_part[data_part$student==T,],'school',L,num_days)
+  mij_school <- .rstride$plot_cnt_matrix(data_cnt_day[data_cnt_day$cnt_school==1,],data_part_day[data_part_day$student==T,],'school',L,num_days)
   
-  ## WORK
-  mij_work   <- .rstride$plot_cnt_matrix(data_cnt[data_cnt$cnt_work==1,],data_part[data_part$employed==T,],'work',L,num_days)
+  ## WORKPLACE
+  mij_workplace   <- .rstride$plot_cnt_matrix(data_cnt_day[data_cnt_day$cnt_workplace==1,],data_part_day[data_part_day$employed==T,],'workplace',L,num_days)
   
-  ## PRIMARY COMMUNITY
-  mij_prim_comm <- .rstride$plot_cnt_matrix(data_cnt[data_cnt$cnt_prim_comm==1,],data_part,'prim_comm',L,num_days)
+  ## WEEKEND COMMUNITY
+  mij_community_weekend <- .rstride$plot_cnt_matrix(data_cnt_day[data_cnt_day$cnt_community_weekend==1,],data_part_day,'community_weekend',L,num_days)
   
-  ## SECUNDARY COMMUNITY
-  mij_sec_comm <- .rstride$plot_cnt_matrix(data_cnt[data_cnt$cnt_sec_comm==1,],data_part,'sec_comm',L,num_days)
+  ## WEEKDAY COMMUNITY
+  mij_community_weekday <- .rstride$plot_cnt_matrix(data_cnt_day[data_cnt_day$cnt_community_weekday==1,],data_part_day,'community_weekday',L,num_days)
   
   ## HOUSEHOLD CLUSTER
-  mij_sec_comm <- .rstride$plot_cnt_matrix(data_cnt[data_cnt$cnt_hh_cluster==1,],data_part,'hh_cluster',L,num_days)
+  .rstride$plot_cnt_matrix(data_cnt_day[data_cnt_day$cnt_household_cluster==1,],data_part_day,'household_cluster',L,num_days)
   
   #dev.off()
   
@@ -156,23 +235,23 @@ inspect_contact_data <- function(project_dir){
   survey_data <- xmlToList(file.path(data_dir,exp_summary$age_contact_matrix_file))
   names(survey_data)
   
-  get_survey_data <- function(cluster_type){
+  get_survey_data <- function(cluster_type,survey_data){
     survey_cluster     <- unlist(survey_data[[cluster_type]])
     flag_rate          <- grepl('contact.rate',names(survey_cluster))
     survey_mij_cluster <- matrix(as.numeric(survey_cluster[flag_rate]),nrow=sum(flag_rate))
     return(survey_mij_cluster)
   }
   
-  survey_mij_hh         <- get_survey_data('household')
-  survey_mij_school     <- get_survey_data('school')
-  survey_mij_work       <- get_survey_data('work')
-  survey_mij_community  <- get_survey_data('secondary_community')
-  survey_mij_total      <- get_survey_data('regular_weekday')
+  survey_mij_hh         <- get_survey_data('household',survey_data)
+  survey_mij_school     <- get_survey_data('school',survey_data)
+  survey_mij_workplace  <- get_survey_data('workplace',survey_data)
+  survey_mij_community  <- get_survey_data('community_weekday',survey_data)
+  survey_mij_total      <- get_survey_data('regular_weekday',survey_data)
   
   survey_mij_school_weekend     <- survey_mij_school*0
-  survey_mij_work_weekend       <- survey_mij_work*0
-  survey_mij_community_weekend  <- get_survey_data('primary_community')
-  survey_mij_total_weekend      <- get_survey_data('regular_weekend')
+  survey_mij_workplace_weekend  <- survey_mij_workplace*0
+  survey_mij_community_weekend  <- get_survey_data('community_weekend',survey_data)
+  survey_mij_total_weekend      <- get_survey_data('regular_weekend',survey_data)
   
   ## COMPARE
   par(mfrow=c(2,3))
@@ -191,68 +270,51 @@ inspect_contact_data <- function(project_dir){
   points(rowSums(mij_school,na.rm=T),col=2)
   legend('topright',c('week','weekend','model'),col=c(1,1,2),lty=c(1,2,0),pch=c(-1,-1,1),cex=0.8,title=ref_data_tag)
   
-  plot(rowSums(survey_mij_work),main='work',xlab='age',ylab='contacts',type='l',ylim=c(-0.1,20))
-  lines(rowSums(survey_mij_work_weekend),type='l',lty=2)
-  points(rowSums(mij_work,na.rm=T),col=2)
+  plot(rowSums(survey_mij_workplace),main='workplace',xlab='age',ylab='contacts',type='l',ylim=c(-0.1,20))
+  lines(rowSums(survey_mij_workplace_weekend),type='l',lty=2)
+  points(rowSums(mij_workplace,na.rm=T),col=2)
   legend('topright',c('week','weekend','model'),col=c(1,1,2),lty=c(1,2,0),pch=c(-1,-1,1),cex=0.8,title=ref_data_tag)
   
-  plot(rowSums(survey_mij_community),main='primary community',xlab='age',ylab='contacts',type='l',ylim=c(-0.1,25))
+  plot(rowSums(survey_mij_community),main='weekend community',xlab='age',ylab='contacts',type='l',ylim=c(-0.1,25))
   lines(rowSums(survey_mij_community_weekend),type='l',lty=2)
-  points(rowSums(mij_prim_comm,na.rm=T),col=2)
+  points(rowSums(mij_community_weekend,na.rm=T),col=2)
   legend('topright',c('week','weekend','model'),col=c(1,1,2),lty=c(1,2,0),pch=c(-1,-1,1),cex=0.8,title=ref_data_tag)
   
-  plot(rowSums(survey_mij_community),main='secondary community',xlab='age',ylab='contacts',type='l',ylim=c(-0.1,25))
+  plot(rowSums(survey_mij_community),main='weekday community',xlab='age',ylab='contacts',type='l',ylim=c(-0.1,25))
   lines(rowSums(survey_mij_community_weekend),type='l',lty=2)
-  points(rowSums(mij_sec_comm,na.rm=T),col=2)
+  points(rowSums(mij_community_weekday,na.rm=T),col=2)
   legend('topright',c('week','weekend','model'),col=c(1,1,2),lty=c(1,2,0),pch=c(-1,-1,1),cex=0.8,title=ref_data_tag)
   par(mfrow=c(1,1))
   
-  dev.off() # close pdf stream
-  
   ## Transmission probability ####
-  .rstride$create_pdf(project_dir,paste0(exp_tag,'_cnt_transm_probability'))
   par(mfrow=c(2,2))
-  cnt_location_opt <- c('cnt_home', 'cnt_school', 'cnt_work', 'cnt_prim_comm', 'cnt_sec_comm','cnt_hh_cluster')
+  cnt_location_opt <- c('cnt_home', 'cnt_school', 'cnt_workplace', 'cnt_community_weekend', 'cnt_community_weekday','cnt_household_cluster')
   for(i_cnt in cnt_location_opt){
-    flag <- data_cnt[,i_cnt] == 1
+    flag <- data_cnt_day[,i_cnt] == 1
     if(any(flag))
-      boxplot(cnt_prob ~ part_age, data=data_cnt[flag,],
+      boxplot(cnt_prob ~ part_age, data=data_cnt_day[flag,],
               main=paste(i_cnt, '[CNT]'),xlab='age',ylab='contact probability')
   }
   
   for(i_cnt in cnt_location_opt){
-    flag <- data_cnt[,i_cnt] == 1
+    flag <- data_cnt_day[,i_cnt] == 1
     if(any(flag))
-      boxplot(trm_prob ~ part_age, data=data_cnt[flag,],
+      boxplot(trm_prob ~ part_age, data=data_cnt_day[flag,],
               main=paste(i_cnt, '[TRM]'),xlab='age',ylab='transmission probability')
   }
   
   dev.off() # close pdf stream
-
-  ## Socrates matrices ####
-
-  # results with 2 age groups (minors and adults)   
-  age_cat_breaks <- c(0,18,110)
-  plot_socrates_all(data_cnt,data_part,age_cat_breaks,project_dir,paste0(exp_tag,'_AG2'),exp_summary$start_date)
   
-  # results by 5 age groups
-  age_cat_breaks <- c(0,18,36,65,75,110)
-  plot_socrates_all(data_cnt,data_part,age_cat_breaks,project_dir,paste0(exp_tag,'_AG5'),exp_summary$start_date)
-  
-} # end function
-
-#################################  OTHER HELP FUNCTIONS  ################################ #
-
-
+}
 
 
 ## RESHAPE DATA AND PLOT ####
-#f_data_cnt = data_cnt;f_data_part=data_part_age_cat;tag='total';L;num_days
+#f_data_cnt = data_cnt_all;f_data_part=data_part_all;tag='total';L;num_days
 .rstride$plot_cnt_matrix <- function(f_data_cnt,f_data_part,tag,L,num_days)
 {
   
   # select participants
-  data_cnt_flag <- f_data_cnt$local_id %in% f_data_part$local_id 
+  data_cnt_flag <- f_data_cnt$panel_id %in% f_data_part$panel_id 
   
   # temporary max age
   L_temp <- max(f_data_cnt$part_age,L,f_data_cnt$cnt_age)+1
@@ -377,13 +439,13 @@ inspect_contact_data <- function(project_dir){
 .rstride$plot_cnt_count_ggplot <- function(f_data_cnt,f_data_part,L,num_days,title){
   
   if(nrow(f_data_cnt)==0){
-    ggplot_data <-data.frame(local_id = -1,
+    ggplot_data <-data.frame(panel_id = -1,
                              part_age = f_data_part$part_age,
                              cnt_count = 0)
   } else{
     # Covert matrix into data.frame for plotting with ggplot
-    ggplot_data        <- data.frame(table(f_data_cnt$local_id)/ num_days) 
-    names(ggplot_data) <- c('local_id','cnt_count')
+    ggplot_data        <- data.frame(table(f_data_cnt$panel_id)/ num_days) 
+    names(ggplot_data) <- c('panel_id','cnt_count')
     ggplot_data <- merge(ggplot_data,f_data_part)
   }
   
@@ -391,7 +453,7 @@ inspect_contact_data <- function(project_dir){
   ggplot_data <- ggplot_data[ggplot_data$part_age<=L,]
   
   # average count per age
-  cnt_age_mean <- aggregate(.~ part_age , data = ggplot_data[,2:3] ,mean) 
+  cnt_age_mean <- aggregate(cnt_count~ part_age , data = ggplot_data ,mean) 
   
   # create plot
   g_plot <- ggplot(ggplot_data, aes(x=part_age, y=cnt_count)) + 
@@ -401,7 +463,7 @@ inspect_contact_data <- function(project_dir){
     theme_bw() +
     ggtitle(title) +
     geom_line(data = cnt_age_mean, aes(x=part_age, y=cnt_count,group = 1),
-              size=2, colour="red") +
+              linewidth=2, colour="red") +
     theme(legend.justification = c(1, 1),
           legend.position = 'right',
           legend.text = element_text(size=18),
@@ -431,16 +493,15 @@ inspect_contact_data <- function(project_dir){
   data_part     <- .rstride$load_aggregated_output(project_dir,'data_participants')
 
   ## reformat
-  data_cnt$cnt_school    <- as.numeric(data_cnt$cnt_school)
-  data_cnt$cnt_prim_comm <- as.numeric(data_cnt$cnt_prim_comm)
-  data_cnt$cnt_sec_comm  <- as.numeric(data_cnt$cnt_sec_comm)
+  data_cnt$cnt_school              <- as.numeric(data_cnt$cnt_school)
+  data_cnt$cnt_community_weekend  <- as.numeric(data_cnt$cnt_community_weekend)
+  data_cnt$cnt_community_weekday  <- as.numeric(data_cnt$cnt_community_weekday)
   data_cnt$sim_day       <- as.numeric(data_cnt$sim_day)
   data_cnt$cnt_prob      <- as.numeric(data_cnt$cnt_prob)
   data_cnt$part_sympt    <- as.numeric(data_cnt$part_sympt)
   data_cnt$cnt_sympt     <- as.numeric(data_cnt$cnt_sympt)
   
   summary(data_part)
-  data_part$college_id          <- as.numeric(data_part$college_id)
   data_part$is_susceptible      <- as.numeric(data_part$is_susceptible)
   data_part$is_infected         <- as.numeric(data_part$is_infected)
   data_part$is_infectious       <- as.numeric(data_part$is_infectious)
@@ -448,7 +509,6 @@ inspect_contact_data <- function(project_dir){
   data_part$is_immune           <- as.numeric(data_part$is_immune)
   data_part$start_symptomatic   <- as.numeric(data_part$start_symptomatic)
   data_part$end_infectiousness  <- as.numeric(data_part$end_infectiousness)
-  
   
   
   
@@ -463,7 +523,7 @@ inspect_contact_data <- function(project_dir){
   
   
   ## COMMUNITY
-  flag_cnt <- data_cnt$cnt_prim_comm == 1 | data_cnt$cnt_sec_comm == 1
+  flag_cnt <- data_cnt$cnt_community_weekend == 1 | data_cnt$cnt_community_weekday == 1
   xx <- table(data_cnt$exp_id[flag_cnt],data_cnt$sim_date[flag_cnt])
   xx  / 8010
   
@@ -497,7 +557,7 @@ inspect_contact_data <- function(project_dir){
          xx[4,]/ 8010)
   
   ## COMBINED
-  flag_cnt <- data_cnt$cnt_prim_comm == 1 | data_cnt$cnt_sec_comm == 1 | data_cnt$cnt_hh_cluster == 1
+  flag_cnt <- data_cnt$cnt_community_weekend == 1 | data_cnt$cnt_community_weekday == 1 | data_cnt$cnt_household_cluster == 1
   yy <- table(data_cnt$exp_id[flag_cnt],data_cnt$sim_date[flag_cnt])
   plot(as.Date(colnames(yy)),
          yy[3,]/ 8010,
@@ -511,7 +571,7 @@ inspect_contact_data <- function(project_dir){
          col=1) 
   
  ## HH BUBBLE
-  flag_cnt <- data_cnt$cnt_hh_cluster == 1
+  flag_cnt <- data_cnt$cnt_household_cluster == 1
   zz <- table(data_cnt$exp_id[flag_cnt],data_cnt$sim_date[flag_cnt])
     
 }

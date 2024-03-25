@@ -23,7 +23,7 @@
 #include "contact/IdSubscriptArray.h"
 #include "pop/Person.h"
 #include "pop/Population.h"
-#include "pop/SurveySeeder.h"
+#include "pop/SurveyManager.h"
 #include "util/FileSys.h"
 #include "util/RnMan.h"
 #include "util/StringUtils.h"
@@ -138,10 +138,6 @@ shared_ptr<Population> PopBuilder::MakePersonsOpt(shared_ptr<Population> pop)
         throw runtime_error(string(__func__) + "> Error opening population file " + filePath.string());
     }
 
-    // get age break between 2 school types
-    //TODO: rename school types and/or add 3rd for secondary school
-    const unsigned int age_break_school_types = m_config.get<unsigned int>("run.age_break_school_types",18);
-
     string line;
     getline(popFile, line); // step over file header
     auto headers   = Split(line, ";");
@@ -163,11 +159,11 @@ shared_ptr<Population> PopBuilder::MakePersonsOpt(shared_ptr<Population> pop)
         const auto person_id            = static_cast<unsigned int>(IntFromString(values[1]));
         const auto profession           = static_cast<unsigned int>(IntFromString(values[2]));
         const auto householdId          = static_cast<unsigned int>(IntFromString(values[3]));
-        auto schoolId                   = static_cast<unsigned int>(IntFromString(values[4]));
-        const auto workId               = static_cast<unsigned int>(IntFromString(values[5]));
-        const auto primaryCommunityId   = static_cast<unsigned int>(IntFromString(values[6]));
-        const auto secondaryCommunityId = static_cast<unsigned int>(IntFromString(values[7]));
-       
+        const auto schoolId             = static_cast<unsigned int>(IntFromString(values[4]));
+        const auto workplaceId          = static_cast<unsigned int>(IntFromString(values[5]));
+        const auto communityWeekendId   = static_cast<unsigned int>(IntFromString(values[6]));
+        const auto communityWeekdayId   = static_cast<unsigned int>(IntFromString(values[7]));
+
         unsigned int householdClusterId = defaultHouseholdClusterId;
         unsigned int collectivityId = defaultCollectivityId;
         if (values.size() == 9) {
@@ -178,16 +174,9 @@ shared_ptr<Population> PopBuilder::MakePersonsOpt(shared_ptr<Population> pop)
             }
         }
 
-        //TODO: rename school types to current approach
-        unsigned int collegeId = 0;
-        if(schoolId != 0 && age >= age_break_school_types && age < 23){
-            collegeId = schoolId;
-            schoolId = 0;
-        }
-
-        pop->CreatePerson(person_id, age, profession, householdId, schoolId, collegeId, workId, primaryCommunityId,
-                          secondaryCommunityId, householdClusterId, collectivityId);
-        ;
+        pop->CreatePerson(person_id, age, profession, householdId, schoolId, workplaceId, communityWeekendId,
+                          communityWeekdayId, householdClusterId, collectivityId);
+        ++person_id;
     }
 
 
@@ -209,8 +198,7 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
         //------------------------------------------------
         // Add persons
         //------------------------------------------------
-//        MakePersons(pop);  // Toggle between these two if preferring old version
-        MakePersonsOpt(pop);
+        MakePersons(pop);
 
         // --------------------------------------------------------------
         // Determine maximum pool ids in population.
@@ -237,7 +225,7 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
 
         // --------------------------------------------------------------
         // Insert persons (pointers) in their contactpools. Having Id 0
-        // means "not belonging pool of that type" (e.g. school/ work -
+        // means "not belonging pool of that type" (e.g. school/ workplace -
         // cannot belong to both, or e.g. out-of-work).
         //
         // Pools are uniquely identified by (type, subscript) and a Person

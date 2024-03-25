@@ -4015,7 +4015,7 @@
       </contacts>
     </participant>
   </school>
-  <work>
+  <workplace>
     <participant>
       <age>1</age>
       <contacts>
@@ -5015,8 +5015,8 @@
         </contact>
       </contacts>
     </participant>
-  </work>
-  <secondary_community>
+  </workplace>
+  <community_weekday>
     <participant>
       <age>1</age>
       <contacts>
@@ -6016,8 +6016,8 @@
         </contact>
       </contacts>
     </participant>
-  </secondary_community>
-  <primary_community>
+  </community_weekday>
+  <community_weekend>
     <participant>
       <age>1</age>
       <contacts>
@@ -7017,7 +7017,7 @@
         </contact>
       </contacts>
     </participant>
-  </primary_community>
+  </community_weekend>
   <professional_contacts_minors>
     <participant>
       <age>1</age>
@@ -9020,7 +9020,7 @@
       </contacts>
     </participant>
   </professional_contacts_adults>
-  <secondary_community_excl_professional>
+  <community_weekday_excl_professional>
     <participant>
       <age>1</age>
       <contacts>
@@ -10020,5 +10020,5 @@
         </contact>
       </contacts>
     </participant>
-  </secondary_community_excl_professional>
+  </community_weekday_excl_professional>
 </matrices>

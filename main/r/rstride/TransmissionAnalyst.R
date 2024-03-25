@@ -167,21 +167,10 @@ analyse_transmission_data_for_r0 <- function(project_dir)
 #           ylim=y_lim,
 #           boxwex=0.001
 #           )
-#   
-#   lines(poly_input,R0_poly_fit,type='l',col=3,lwd=4)
-#   # leg_text_model   <- paste0(c(paste0('b',0:2,': '),'R^2: '),round(c(fit_b0,fit_b1,fit_b2,mod$r.squared),digits=2))
-#   # leg_text_fitting <- c(leg_text_model,paste0('R0 max:',round(R0_limit,digits=2)),paste0('R0 range: ',fit_r0_range))
-#   # legend('topleft',legend=leg_text_fitting,cex=0.8,title='b0+b1*x+b2*x^2',ncol=2)
+   
    leg_text_model   <- paste0(c(paste0('b',0:1,': '),'R^2: '),round(c(fit_b0,fit_b1,mod$r.squared),digits=2))
    leg_text_fitting <- c(leg_text_model,paste0('R0 range: ',fit_r0_range))
-#   legend('topleft',legend=leg_text_fitting,cex=0.8,title='b0+b1*x',ncol=2)
-#   
-#   
-#   # add mean
-#   mean_sec_cases <- aggregate(sec_cases ~ transmission_probability + R0_poly_fit, data=sec_transm,mean)
-#   points(mean_sec_cases$transmission_probability,mean_sec_cases$sec_cases,col=4,pch=15)
-#   legend('top','mean',pch=15,col=4,cex=0.8)
-  
+
   # other x-scale
   boxplot(sec_transm$sec_cases ~ sec_transm$R0_poly_fit,
           xlab='Predicted R0 (using updated transmission parameters)',ylab='Secondary cases',
@@ -320,8 +309,6 @@ analyse_transmission_data_for_r0 <- function(project_dir)
   # update filename: add run_tag
   run_tag                    <- unique(project_summary$run_tag)
   disease_config_update_file <- paste0(run_tag,'_',disease_config_file)
-  # update filename: remove file extension
-  disease_config_update_file <- sub('.xml','',disease_config_update_file)
   
   # save
   new_disease_config_filename <- .rstride$save_config_xml(config_disease,'disease',file.path(project_dir,disease_config_update_file))
@@ -363,17 +350,6 @@ analyse_transmission_data_for_r0 <- function(project_dir)
   return(x1)
 }
 
-if(0==1){
-  
-  xx <- seq(0,0.6,0.1)
-  plot(xx,.rstride$f_poly_r0(xx,1.47,35.27,-10.23),type='b',ylim=c(0,20)) #child
-  lines(xx,.rstride$f_poly_r0(xx,0.99,22.5,-1.58),type='b',col=2) # adult
-  lines(xx,.rstride$f_poly_r0(xx,1.46,35.33,-10.29),type='b',col=3) #child, index
-  lines(xx,.rstride$f_poly_r0(xx,1.36,35.92,-11.1),type='b',col=1,lty=2) #child, other rng seed
-  lines(xx,.rstride$f_poly_r0(xx,0,41.9,-15.28),type='b',col=1,lty=2) #child, new
-  grid()
-  abline(h=1)  
-}
 
 ###################################### #
 ## LITERATURE BASED DISTRIBUTIONS  ----
@@ -529,7 +505,6 @@ analyse_transmission_data_for_hospital_admissions <- function(project_dir){
   hosp_surge_data  <- load_hospital_surge_survey_data()
   tbl_hosp_age_rel <- hosp_surge_data$admissions_relative
   tbl_hosp_age_rel
-  
   
   # load simulation data
   data_transm <- .rstride$load_aggregated_output(project_dir,'data_transmission')

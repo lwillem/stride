@@ -1,0 +1,33 @@
+#############################################################################
+#  This file is part of the Stride software.
+#  It is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or any
+#  later version.
+#  The software is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#  You should have received a copy of the GNU General Public License,
+#  along with the software. If not, see <http://www.gnu.org/licenses/>.
+#  see http://www.gnu.org/licenses/.
+#
+#  Copyright 2021
+#############################################################################
+
+=============================================================================
+    Build and install with cmake:
+=============================================================================
+To use the cmake command line:
+
+Build and install happens together with the stride executable,
+as described in the STRIDE INSTALL.TXT description.
+To install the pylibstride library to a given python version
+(e.g. a virtual environment), add the following flags to the stride cmake command:
+
+    -DPYTHON_LIBRARY_DIR="site-packages" -DPYTHON_EXECUTABLE="python-executable"
+
+With site-packages and python-executable referring to the paths to the python site packages
+and executable of the python version you want to use the library with.
+
+#############################################################################

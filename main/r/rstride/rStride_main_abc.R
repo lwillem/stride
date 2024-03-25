@@ -13,7 +13,7 @@
 #  see http://www.gnu.org/licenses/.
 #
 #
-#  Copyright 2020, Willem L
+#  Copyright 2023, Willem L
 ############################################################################ #
 # 
 # ABC controller for the Stride model
@@ -21,10 +21,19 @@
 ############################################################################ #
 
 #' Main rStride function for ABC
+if(0==1){
 # abc_function_param <- c(15,3.4,256,0.4,0.85,7.4,0.85,4.51)
-#abc_function_param <- c(41,4,400,0.4,0.85,7.4,0.85,4.51)
-# abc_function_param <- run_param; remove_run_output <- FALSE
-
+# abc_function_param <- c(41,4,400,0.4,0.85,7.4,0.85,4.51)
+abc_function_param <- c(rng_seed = 100,
+                        r0 = 3,
+                        num_infected_seeds= 400,
+                        hosp_probability_factor=0.4,
+                        distancing_workplace_ratio=0.85,
+                        distancing_workplace_delay=7.4,
+                        distancing_community_ratio=0.85,
+                        distancing_community_delay=4.51
+                        ); remove_run_output <- FALSE
+}
 ################################################ #
 ## RUN  ----
 ################################################ #
@@ -75,7 +84,7 @@ run_rStride_abc <- function(abc_function_param,
   # set event_log_level to "Incidence"
   config_exp$event_log_level <- 'Incidence'
   
-  # incorportate experiment-specific parameter values
+  # incorporate experiment-specific parameter values
   model_param_update <- readRDS(file.path('./sim_output',run_tag,'model_param_update.rds'))
   config_exp[names(model_param_update)] <- model_param_update
  
@@ -84,21 +93,29 @@ run_rStride_abc <- function(abc_function_param,
      names(abc_function_param) <- c('rng_seed',names(readRDS(file.path('./sim_output',run_tag,'stride_prior.rds'))))
   }
 
-   # copy parameter values
-   for(i_param in names(abc_function_param)){
-      config_exp[i_param]  <- abc_function_param[i_param]
-   }
+  # make sure "number" and "delay" parameters are coded as integer value
+  sel_integer <- grepl('num',names(abc_function_param)) | grepl('delay',names(abc_function_param))
+  abc_function_param[sel_integer] <- round(abc_function_param[sel_integer])
+  
+  # copy parameter values
+  for(i_param in names(abc_function_param)){
+     config_exp[i_param]  <- abc_function_param[i_param]
+  }
   
   # aggregate age-specific parameters
   config_exp <- collapse_age_param(config_exp)
 
-  # make sure some input parameters are coded as integer value
-  config_exp$num_infected_seeds         <- round(config_exp$num_infected_seeds )
-  config_exp$compliance_delay_workplace <- round(config_exp$compliance_delay_workplace)
-  config_exp$compliance_delay_other     <- round(config_exp$compliance_delay_other)
-  config_exp$num_daily_imported_cases   <- round(config_exp$num_daily_imported_cases)
+  # define 2020 lockdown start
+  date_t0                    <- as.Date('2020-03-13')
+  # config_exp$distancing_workplace_ratio       <- c_str(cnt_reduction_workplace)
+  config_exp$distancing_workplace_date        <- c_str(paste(date_t0))
+  # config_exp$distancing_workplace_delay       <- c_str(compliance_delay_workplace)
+  # config_exp$distancing_community_ratio       <- c_str(cnt_reduction_community)
+  config_exp$distancing_community_date        <- c_str(paste(date_t0))
+  # config_exp$distancing_community_delay       <- c_str(compliance_delay_community)
   
-  
+  # define holiday file with covid-19 lockdown parameters
+  config_exp$holidays_file <- 'calendar_belgium_2020_covid19_exit_school_adjusted.csv'
 
   ################################## #
   ## RUN                          ####
@@ -106,19 +123,15 @@ run_rStride_abc <- function(abc_function_param,
   
   # create experiment tag
   i_exp   <- rng_seed
-  exp_tag <- .rstride$create_exp_tag(i_exp)
+  exp_tag <- .rstride$create_exp_tag(i_exp,prefix='abc')
   
    # set output files prefix
-   output_prefix       = smd_file_path(project_dir,exp_tag,.verbose=FALSE)
+   output_prefix       = smd_file_path(project_dir,exp_tag,.verbose=FALSE,.overwrite = TRUE)
    config_exp$output_prefix <- output_prefix 
    
-   # Temporary fix to include the lockdown/exit parameters into the calendar (backward compatibility)
-   if(any(config_exp[grepl('cnt_reduction_workplace',names(config_exp)) | 
-                     grepl('cnt_reduction_other',names(config_exp))] > 0)){
-      config_exp  <- integrate_lockdown_parameters_into_calendar(config_exp)
-      #smd_print("Deprecated lockdown and exit parameters merged into the calendar. Please make use of the updated calendar features",WARNING = T)
-   }
-   
+   # include temporal parameters into the calendar
+   config_exp  <- integrate_parameters_in_calendar(config_exp)
+ 
    # save the config as XML file
    config_exp_filename = paste0(output_prefix,".xml")
    save_config_xml(config_exp, config_exp_filename)

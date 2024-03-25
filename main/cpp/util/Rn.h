@@ -10,128 +10,90 @@
  *  You should have received a copy of the GNU General Public License
  *  along with the software. If not, see <http://www.gnu.org/licenses/>.
  *
- *  Copyright 2018, Kuylen E, Willem L, Broeckhove J
+ *  Copyright 2024
  */
 
 /**
  * @file
- * Interface of RnPcg.
+ * Interface of Rn to manage one random number generator.
  */
 
 #pragma once
-
-#include "RnInfo.h"
 
 #include <trng/discrete_dist.hpp>
 #include <trng/lcg64.hpp>
 #include <trng/uniform01_dist.hpp>
 #include <trng/uniform_int_dist.hpp>
-#include <functional>
-#include <pcg/pcg_random.hpp>
+
 #include <random>
-#include <randutils/randutils.hpp>
-#include <string>
-#include <vector>
 
 namespace stride {
 namespace util {
 
-/**
- * Manages random number generation in parallel (OpenMP) calculations.
- */
-template <typename E>
-class Rn : protected std::vector<randutils::random_generator<E, randutils::seed_seq_fe128>>
-{
-public:
-        using EngineType    = E;
-        using RnType        = randutils::random_generator<E, randutils::seed_seq_fe128>;
-        using ContainerType = std::vector<randutils::random_generator<E, randutils::seed_seq_fe128>>;
 
-        using ContainerType::operator[];
-        using ContainerType::at;
-        using ContainerType::size;
+class Rn {
 
-public:
-        /// Default constructor build empty manager.
-        Rn() : ContainerType(), m_seed_seq_init(""), m_stream_count(0U) {}
+  public:
+	Rn() : m_engine() {}
 
-        /// Initializes.
-        explicit Rn(const RnInfo& info)
-            : ContainerType(info.m_stream_count), m_seed_seq_init(info.m_seed_seq_init),
-              m_stream_count(info.m_stream_count)
-        {
-                Initialize(info);
-        }
+	double SampleUniform01(){
+		return uniform01(m_engine);
+	}
 
-        /// No copying.
-        Rn(const Rn&) = delete;
+	/// Perform binomial trial with given probability.
+	bool Binomial(double probability_a)
+	{
+		return SampleUniform01() < probability_a;
+	}
 
-        /// No copy assignment.
-        Rn& operator=(const Rn&) = delete;
+	/// Perform binomial trial with the product of the given probabilities.
+    bool Binomial(double probability_a, double probability_b)
+    {
+    	return SampleUniform01() < probability_a * probability_b;
+    }
 
-        /// Equality of states
-        bool operator==(const Rn& other);
+    trng::lcg64& GetEngine()
+    {
+       return m_engine;
+    }
 
-        /// Return the state of the random engines.
-        RnInfo GetInfo() const;
+ 	const trng::lcg64& GetEngine() const
+ 	{
+ 		return m_engine;
+ 	}
 
-        /// Return a generator for uniform doubles in [0, 1[ using i-th random engine.
-        std::function<double()> GetUniform01Generator(unsigned int i = 0U)
-        {
-                return ContainerType::at(i).variate_generator(trng::uniform01_dist<double>());
-        }
+     template <typename Iter>
+     void shuffle(Iter first, Iter last)
+     {
+         std::shuffle(first, last, m_engine);
+     }
 
-        /// Return a generator for uniform ints in [a, b[ (a < b) using i-th random engine.
-        std::function<int()> GetUniformIntGenerator(int a, int b, unsigned int i = 0U)
-        {
-                return ContainerType::at(i).variate_generator(trng::uniform_int_dist(a, b));
-        }
+     /// Return a generator function for uniform integers in [a, b[ (a < b)
+	 std::function<int()> GetUniformIntGenerator(int a, int b)
+	 {
+	 	return std::bind(trng::uniform_int_dist(a, b), std::ref(GetEngine()));
+	 }
 
-        /// Return a generator for doubles from a Gamma distribution with a given shape and scale
-        std::function<double()> GetGammaGenerator(double shape, double scale, unsigned int i = 0U)
-		{
-        		return ContainerType::at(i).variate_generator(std::gamma_distribution<double>(shape, scale));
-		}
+	 /// Return a generator function for doubles from a Gamma distribution with a given shape and scale
+	 std::function<double()> GetGammaGenerator(double shape, double scale)
+	 {
+		return std::bind(std::gamma_distribution<double>(shape, scale), std::ref(GetEngine()));
+	 }
 
-        /// Return generator for integers [0, n-1[ with non-negative weights p_j (i=0,..,n-1) using i-th random engine.
-        //std::function<int()> GetDiscreteGenerator(const std::vector<double>& weights, unsigned int i = 0U)
-        //{
-        //        return ContainerType::at(i).variate_generator(trng::discrete_dist(weights.begin(), weights.end()));
-        //}
+     /// Random shuffle of vector of unsigned integers indices
+     void Shuffle(std::vector<unsigned int>& indices)
+     {
+     	shuffle(indices.begin(), indices.end());
+     }
 
-        /// Return generator for integers [0, n-1[ with non-negative weights p_j (i=0,..,n-1) using i-th random engine.
-        template<typename It>
-        std::function<int()> GetDiscreteGenerator(It begin, It end, unsigned int i = 0U)
-        {
-                return ContainerType::at(i).variate_generator(trng::discrete_dist(begin, end));
-        }
+  private:
 
-        /// Initalize with data in Info.
-        void Initialize(const RnInfo& info);
+       trng::lcg64 m_engine;                     /// random number engine
+       trng::uniform01_dist<double> uniform01;   /// uniform distribution between 0 and 1
 
-        /// Is this een empty (i.e. non-initialized Rn)?
-        bool IsEmpty() const { return ContainerType::empty() || (m_stream_count == 0U); }
+ }; // end class
 
-        /// Random shuffle of vector of unsigned int indices using i-th engine.
-        void Shuffle(std::vector<unsigned int>& indices, unsigned int i)
-        {
-                ContainerType::at(i).shuffle(indices.begin(), indices.end());
-        }
+} // end namespace util
+} // end namespace stride
 
-private:
-        /// Actual first-time seeding. Procedure varies according to engine type, see specialisations.
-        void Seed(randutils::seed_seq_fe128& seseq);
 
-private:
-        std::string  m_seed_seq_init; ///< Seed sequence initializer used with engines.
-        unsigned int m_stream_count;  ///< Number of threads/streams set up with the engine.
-};
-
-template <>
-void Rn<pcg64>::Seed(randutils::seed_seq_fe128& seseq);
-
-extern template class Rn<pcg64>;
-extern template class Rn<trng::lcg64>;
-
-} // namespace util
-} // namespace stride

@@ -23,9 +23,9 @@
 #include "calendar/Calendar.h"
 #include "contact/ContactType.h"
 #include "contact/IdSubscriptArray.h"
-#include "disease/Health.h"
-#include "util/RnHandler.h"
-#include "util/SegmentedVector.h"
+#include "health/Health.h"
+#include "healthcare/Vaccine.h"
+#include "util/Rn.h"
 
 #include <cstddef>
 #include <queue>
@@ -56,20 +56,19 @@ public:
 
 public:
         /// Default construction (for population vector).
-        Person() :  m_id(0), m_age(0.0), m_profession(0), m_pool_ids(), m_pool_durations(), m_pool_contacts(), m_individual_contact_factor(1.0), m_health(), m_in_pools(), m_is_participant(),
-		m_non_complier(), m_is_tracing_index(false), m_contact_tracing_list(),
+        Person() :  m_id(0), m_age(0.0), m_profession(0), m_vaccine(), m_pool_ids(), m_pool_durations(), m_pool_contacts(), m_individual_contact_factor(1.0), m_health(), m_in_pools(), m_is_participant(),
+		m_is_tracing_index(false), m_contact_tracing_list(),
         m_isolated(false), m_events() {}
 
         /// Constructor: set the person data.
-        Person(unsigned int id, float age, unsigned int profession, unsigned int householdId, unsigned int k12SchoolId, unsigned int collegeId,
-               unsigned int workId, unsigned int primaryCommunityId, unsigned int secondaryCommunityId, unsigned int householdClusterId,
+        Person(unsigned int id, float age, unsigned int profession, unsigned int householdId, unsigned int k12SchoolId,unsigned int workplaceId, unsigned int CommunityWeekendId, unsigned int CommunityWeekdayId, 
+         unsigned int householdClusterId,
 			   unsigned int collectivityId)
             : m_age(age), m_profession(profession), m_id(id), m_pool_ids{{householdId},
           {k12SchoolId},
-          {collegeId},
-          {workId},
-          {primaryCommunityId},
-          {secondaryCommunityId},
+          {workplaceId},
+          {CommunityWeekendId},
+          {CommunityWeekdayId},
           {householdClusterId},
           {collectivityId},
           {},  
@@ -77,8 +76,8 @@ public:
           {},  
           {}}, m_pool_durations(), m_pool_contacts(),
 	  m_individual_contact_factor(1.0),
-              m_health(), m_in_pools(true), m_is_participant(false), m_non_complier(false),
-			  m_is_tracing_index(false), m_contact_tracing_list(), m_isolated(false),
+              m_health(), m_in_pools(true), m_is_participant(false), 
+                m_is_tracing_index(false), m_contact_tracing_list(), m_isolated(false),
               m_events()
         {
         }
@@ -116,18 +115,22 @@ public:
         /// Participate in social contact study and log person details
         void ParticipateInSurvey() { m_is_participant = true; }
 
+        /// Leave social contact study
+        void QuitSurvey() { m_is_participant = false; }
+
         //Isolate the individual over an interval of days 
         void Isolate(unsigned int simDay, unsigned int from, unsigned int to); 
 
         //Is the individual being isolated?
         bool InIsolation() const { return m_isolated; }
 
-        /// Daily update of the isolation status, health status and presence in contact pools.
-        void Update(bool isRegularWeekday, bool isK12SchoolOff, bool isCollegeOff,
-        		bool isHouseholdClusteringAllowed,
-        		bool isIsolatedFromHousehold, 
-				util::RnHandler& rnHandler,
+        /// Daily update of the isolation status and health-related presence in contact pools.
+        void UpdatePresence(bool isIsolatedFromHousehold,
+				util::Rn& rn,
                 unsigned short int simDay, bool run_simplified, bool subpools_community);
+
+        /// Daily update of the health status.
+		void UpdateHealth();
                 
         /// Set the age of the person
         void SetAge(unsigned int newAge) { m_age = newAge; }
@@ -168,9 +171,28 @@ public:
             return a->GetId() < b->GetId();
         }
 
-        void SetNonComplier(const ContactType::Id& poolType) {  m_non_complier[poolType] = true; }
+        /// Vaccinate
+        void SetVaccine(std::unique_ptr<Vaccine> &v) { m_vaccine = std::move(v); }
 
-        bool IsNonComplier(const ContactType::Id& poolType) const { return m_non_complier[poolType]; }
+        // Is the individual vaccinated?
+        bool IsVaccinated() { return (bool)m_vaccine; }
+
+        /// Get the last vaccine that was administered.
+        Vaccine& GetVaccine() 
+        {
+            if (!m_vaccine)
+                throw std::runtime_error("No vaccine administered");
+            else
+                return *m_vaccine.get();
+        }
+
+        bool IsImmune() const 
+        {
+            if (m_vaccine)
+                return m_vaccine->GetVeSusceptible() == 1.0;
+            else
+                return false;
+        }
 
         std::array<unsigned int, 7>& PoolIds(ContactType::Id id) { return m_pool_ids[id]; }
         const std::array<unsigned int, 7>& CPoolIds(ContactType::Id id) const { return m_pool_ids[id]; }
@@ -201,20 +223,19 @@ private:
 
         ContactType::IdSubscriptArray<std::array<unsigned int, 7>> m_pool_contacts;
 
+        std::unique_ptr<Vaccine> m_vaccine; ///< Vaccination profile, can be empty
+
         ///< Factor with which to scale contact rate in community pools for this individual
         double m_individual_contact_factor;
 
         ///< Health info (immune, infected, etc) for this person.
         Health m_health;
 
-        ///< Is person present/absent in pools of each of the types (school, work, etc)?
+        ///< Is person present/absent in pools of each of the types (school, workplace, etc)?
         ContactType::IdSubscriptArray<bool> m_in_pools;
 
         ///< Is this a participant in the social contact study?
         bool m_is_participant;
-
-        ///< Is the person a non-complier to social distancing measures in the contact pools they belong to?
-        ContactType::IdSubscriptArray<bool> m_non_complier;
 
         ///< Is this an index case for track,trace, isolate strategies
         bool m_is_tracing_index;

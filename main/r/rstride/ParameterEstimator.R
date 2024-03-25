@@ -595,7 +595,8 @@ get_longitudinal_doubling_time <- function(dat){
   }
   
   npts <- length(dat)
-  n_knots <- min(10,length(dat))
+  #n_knots <- min(10,length(dat))
+  n_knots <- min(10,sum(!is.na(dat)))
   
   # fix if number of new infections is almost zero
   if(n_knots <= 2){

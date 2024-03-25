@@ -10,7 +10,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with the software. If not, see <http://www.gnu.org/licenses/>.
  *
- *  Copyright 2017, Kuylen E, Willem L, Broeckhove J
+ *  Copyright 2024
  */
 
 /**
@@ -31,18 +31,17 @@ namespace util {
  * Provides a stopwatch interface to time: it accumulates time between
  * start/stop pairs.
  */
-template <typename T = std::chrono::steady_clock>
 class Stopwatch
 {
 public:
-        using TClock = T;
+        using TClock = std::chrono::steady_clock;
 
         /// Constructor initializes stopwatch.
         explicit Stopwatch(std::string name = "stopwatch", bool running = false)
-            : m_accumulated(T::duration::zero()), m_last_start(), m_name(std::move(name)), m_running(running)
+            : m_accumulated(TClock::duration::zero()), m_last_start(), m_name(std::move(name)), m_running(running)
         {
                 if (m_running) {
-                        m_last_start = T::now();
+                        m_last_start = std::chrono::steady_clock::now();
                 }
         }
 
@@ -51,7 +50,7 @@ public:
         {
                 if (!m_running) {
                         m_running    = true;
-                        m_last_start = T::now();
+                        m_last_start = TClock::now();
                 }
                 return *this;
         }
@@ -60,7 +59,7 @@ public:
         Stopwatch& Stop()
         {
                 if (m_running) {
-                        m_accumulated += (T::now() - m_last_start);
+                        m_accumulated += (TClock::now() - m_last_start);
                         m_running = false;
                 }
                 return *this;
@@ -69,7 +68,7 @@ public:
         /// Resets stopwatch i.e. stopwatch is stopped and time accumulator is cleared.
         Stopwatch& Reset()
         {
-                m_accumulated = T::duration::zero();
+                m_accumulated = std::chrono::steady_clock::duration::zero();
                 m_running     = false;
                 return *this;
         }
@@ -81,14 +80,24 @@ public:
         std::string GetName() const { return m_name; }
 
         /// Returns the accumulated value without altering the stopwatch state.
-        typename T::duration Get() const
+        typename std::chrono::steady_clock::duration Get() const
         {
                 auto fTemp = m_accumulated;
                 if (m_running) {
-                        fTemp += (T::now() - m_last_start);
+                        fTemp += (TClock::now() - m_last_start);
                 }
                 return fTemp;
         }
+
+        /// Returns integer representation of readout
+		unsigned int ToUnsignedInteger() const
+		{
+
+				using namespace std::chrono;
+				milliseconds dur    = duration_cast<milliseconds>(Get());
+				return static_cast<unsigned int>(dur.count());
+
+		}
 
         /// Returns string representation of readout
         std::string ToString() const
@@ -112,20 +121,11 @@ public:
         }
 
 private:
-        typename T::duration   m_accumulated;
-        typename T::time_point m_last_start;
+        typename TClock::duration   m_accumulated;
+        typename TClock::time_point m_last_start;
         std::string            m_name;
         bool                   m_running;
 };
-
-/**
- * Insert accumulated time into output stream without altering stopwatch state.
- */
-template <typename T>
-std::ostream& operator<<(std::ostream& oss, Stopwatch<T> const& stopwatch)
-{
-        return (oss << stopwatch.ToString());
-}
 
 } // namespace util
 } // namespace stride

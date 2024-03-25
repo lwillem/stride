@@ -12,7 +12,7 @@
 #  along with the software. If not, see <http://www.gnu.org/licenses/>.
 #  see http://www.gnu.org/licenses/.
 #
-#  Copyright 2021, 2019, 2018 Willem L, Kuylen E & Broeckhove J
+#  Copyright 2024
 #############################################################################
 
 The project depends on a number of resources. Non-included dependencies need
@@ -47,12 +47,6 @@ conditional compilations. We have slightly extended the implementation.
 See https://github.com/chipbuster/libdomp
 
 -----------------------------------------------------------------------------
-    SHA-1: see src/main/resources/lib/sha1
------------------------------------------------------------------------------
-Code to compute the sha-1 hash of a string.
-See http://www.zedwood.com/article/cpp-sha1-function
-
------------------------------------------------------------------------------
     SPDLOG: see src/main/resources/lib/spdlog
 -----------------------------------------------------------------------------
 A C++ asynchronous an multi-threaded logging library, in header only format
@@ -76,7 +70,7 @@ design principles are based on a proposal for an extensible random number
 generator facility, that has become part of the C++11 standard.
 
 -----------------------------------------------------------------------------
-    Googletest: see src/test/resources/lib/gtext
+    Googletest: see src/test/resources/lib/gtest
 -----------------------------------------------------------------------------
 A C++ unit test framwework developed by Gooogle and available at
 https://github.com/google/googletest.

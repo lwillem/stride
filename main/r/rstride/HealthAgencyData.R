@@ -34,9 +34,10 @@ get_observed_incidence_data <- function()
   }
   
   # download files
-  hosp_ref_file  <- download_ref_file('https://epistat.sciensano.be/Data/COVID19BE_HOSP.csv')
-  cases_ref_file <- download_ref_file('https://epistat.sciensano.be/Data/COVID19BE_CASES_AGESEX.csv')
-  tests_ref_file <- download_ref_file('https://epistat.sciensano.be/Data/COVID19BE_tests.csv')
+  # note: exit server has closed
+  hosp_ref_file  <- NA #download_ref_file('https://epistat.sciensano.be/Data/COVID19BE_HOSP.csv')
+  cases_ref_file <- NA #download_ref_file('https://epistat.sciensano.be/Data/COVID19BE_CASES_AGESEX.csv')
+  tests_ref_file <- NA #download_ref_file('https://epistat.sciensano.be/Data/COVID19BE_tests.csv')
   
   # if any download failed => use defaults
   if(any(is.na(c(hosp_ref_file,cases_ref_file,tests_ref_file)))){
@@ -233,7 +234,7 @@ get_hospital_incidence_age <- function(age_breaks_str = NA){
     ref_data <- read.csv(ref_data_file_name,header = T)
   } else{
     ref_data <- read.csv(backup_file,header = T)
-    smd_print("!! USING DUMMY FILE FOR AGE SPECIFIC HOSPITAL ADMISSIONS !!")
+    smd_print("!! USING DUMMY REFERENCE FILE FOR AGE SPECIFIC HOSPITAL ADMISSIONS !!")
   }
   
   # reformat

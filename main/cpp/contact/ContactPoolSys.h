@@ -15,7 +15,7 @@
 
 /**
  * @file
- * Container for the contact pools of various type (household, work, ...)..
+ * Container for the contact pools of various type (household, workplace, ...)..
  */
 
 #pragma once
@@ -28,7 +28,7 @@
 namespace stride {
 
 /**
- * ContactPoolSys contains for each of the type of pools (Household, K12School, ...)
+ * ContactPoolSys contains for each of the type of pools (Household, School, ...)
  * a vector of with all of the contact pools of the type.
  * The ContactPoolSys container is an std::array extended to be subscriptable
  * with the enum class of the pool type Ids.
@@ -43,7 +43,7 @@ public:
         ContactPool* CreateContactPool(ContactType::Id typeId);
 
         /// Templated version of @CreateContactPool for use when type id is fixed.
-        /// \tparam T   One of the ContactType::Id's (Household, K12 School, ...).
+        /// \tparam T   One of the ContactType::Id's (Household, School, ...).
         /// \return     Pointer to the newly created ContactPool.
         template <ContactType::Id T>
         ContactPool* CreateContactPool()
@@ -65,6 +65,9 @@ public:
                 return m_sys[T];
         }
 
+        /// Added for MDP memory management: clear the contact pools
+        void ClearContactPools();
+
 private:
         /// /// Access through non-const reference to ContactPools of type 'id'.
         /// \param id   ContactType::Id of pools container you want to access.
@@ -80,7 +83,7 @@ private:
 private:
         /// The contact pool counters (one per type id) for assigning pool UIDs. Counters
         /// generate a non zero UID that's unique per type of pool, so <type, UID> uniquely
-        /// detemines the pool. UID zero means 'NA" e.g. worklace UID for a K12school student
+        /// detemines the pool. UID zero means 'NA" e.g. workplace UID for a school student
         /// will be zero. As a defensive measure, the ContactPoolSys gets initialized with
         /// (for each type) an empty pool in the vector storing the contact pools. As a
         /// consequence, one has:

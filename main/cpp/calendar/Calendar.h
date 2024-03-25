@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include "contact/ContactPool.h"
+
 #include <boost/property_tree/ptree_fwd.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
 
@@ -27,7 +29,6 @@
 #include <cstdlib>
 #include <memory>
 #include <vector>
-
 
 
 namespace stride {
@@ -90,7 +91,6 @@ public:
 		}
 
 
-
         /// Check if distancing measures are in place for workplaces
         bool IsWorkplaceDistancingEnforced() const
         {
@@ -127,20 +127,26 @@ public:
 			return m_ventilation[m_day_index];
 		}
 
-		/// Check if contact tracing is place
-		bool IsContactTracingActivated() const
+		/// Check if contact tracing is in place
+		bool IsContactTracingActive() const
 		{
 			 return m_contact_tracing[m_day_index];
 		}
 
-  		/// Check if universal testing is place
-		bool IsUniversalTestingActivated() const
+		/// Check if social contact survey is ongoing
+		bool IsContactSurveyActive() const
 		{
-			 return m_universal_testing[m_day_index];
+			 return m_contact_survey[m_day_index];
 		}
 
 		/// Check if household clustering is allowed
 		bool IsHouseholdClusteringAllowed() const
+		{
+			 return m_household_clustering[m_day_index] > 0.0;
+		}
+
+		// Get social interaction level for household clusters
+		double GetHouseholdClusteringLevel() const
 		{
 			 return m_household_clustering[m_day_index];
 		}
@@ -149,6 +155,14 @@ public:
 		{
 			return m_imported_cases[m_day_index];
 		}
+
+		/// Update the contact reduction vectors
+		void UpdateCntReduction(std::vector<double> workplace_distancing, std::vector<double> community_distancing,
+                                std::vector<double> collectivity_distancing);
+
+		void RegisterInfectedSeeds(unsigned int num_infected_seeds);
+
+		double GetDistancingFactor(const ContactPool& pool) const;
 
 private:
 
@@ -178,9 +192,6 @@ private:
 			return (GetDayOfTheWeek() == 6 || GetDayOfTheWeek() == 0);
 		}
 
-		/// Initialize the calendar (json)
-        void Initialize(const boost::property_tree::ptree& configPt);
-
 
 		/// Initialize the calendar (csv)
         void Initialize_csv(const boost::property_tree::ptree& configPt);
@@ -188,17 +199,16 @@ private:
         boost::gregorian::date              m_date;                       ///< Current simulated date.
         boost::gregorian::date              m_date_start;                 ///< Start simulation.
         boost::gregorian::date              m_date_end;                   ///< End simulation.
-        std::vector<bool> m_public_holidays;            ///< Vector of public holidays
-        std::vector<double> m_workplace_distancing;     ///< Vector with social distancing level enforcement at work places
-        std::vector<double> m_community_distancing;     ///< Vector with social distancing level enforcement in the community
-        std::vector<double> m_collectivity_distancing;  ///< Vector with social distancing level enforcement in collectivities
-        std::vector<bool> m_contact_tracing;            ///< Vector of days with case finding measures
-        std::vector<bool> m_universal_testing;          ///< Vector of days with universal testing measures
-        std::vector<bool> m_household_clustering;       ///< Vector of days when household clusters are allowed
-		std::vector<double> m_ventilation;              ///< Vector with ventilation increase or decrease
+        std::vector<bool>   m_public_holidays;          ///< Vector of public holidays
+        std::vector<double> m_workplace_distancing;     ///< Vector with daily social distancing level enforcement at workplaces
+        std::vector<double> m_community_distancing;     ///< Vector with daily social distancing level enforcement in the community
+        std::vector<double> m_collectivity_distancing;  ///< Vector with daily social distancing level enforcement in collectivities
+        std::vector<bool>   m_contact_tracing;          ///< Vector of days with case finding measures
+        std::vector<bool>   m_contact_survey;           ///< Vector of days to conduct a social contact survey
+        std::vector<double> m_household_clustering;     ///< Vector with daily social interaction level within household clusters
+		std::vector<double> m_ventilation;              ///< Vector with ventilation increase or decrease      
 
-        std::vector<unsigned int>m_imported_cases; ///<Vector of days when cases are imported (~daily seeding activated)
-
+        std::vector<unsigned int>        m_imported_cases;  ///<Vector imported cases per day (for initial and/or daily seeding)
         std::vector<std::vector<double>> m_school_closures; /// Matrix for [age x time] with social distancing at school]
 
         std::size_t m_weekday;
