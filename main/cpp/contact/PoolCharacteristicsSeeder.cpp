@@ -40,12 +40,12 @@ namespace stride {
 
 using namespace ContactType;
 
-PoolCharacteristicsSeeder::PoolCharacteristicsSeeder(const ptree& config, RnMan& rnMan) : m_config(config), m_rn_man(rnMan) {}
+PoolCharacteristicsSeeder::PoolCharacteristicsSeeder(const ptree& config, std::shared_ptr<util::RnMan> rnMan) : m_config(config), m_rn_man(rnMan) {}
 
 shared_ptr<Population> PoolCharacteristicsSeeder::Seed(shared_ptr<Population> pop, const ptree& poolCharacteristicsPt)
 {
 	
-	auto uniform01Generator = m_rn_man.GetUniform01Generator(0U);
+	auto uniform01Number= m_rn_man->at(0U).SampleUniform01();
 
 	auto& population = *pop;
 
@@ -71,7 +71,7 @@ shared_ptr<Population> PoolCharacteristicsSeeder::Seed(shared_ptr<Population> po
 			if (*ventilation_distribution == "Gamma") {
 				double shape = ventilation_distribution_overdispersion;
 				double scale = ventilationPoolTypeAverage / shape;
-				auto gamma_generator = m_rn_man.GetGammaGenerator(shape, scale, 0U);
+				auto gamma_generator = m_rn_man->at(0U).GetGammaGenerator(shape, scale);
 				for (auto& pool: poolSys.RefPools(typ)) {
 					double pool_ventilation_probability = gamma_generator();
 					pool.SetVentilation(pool_ventilation_probability);
@@ -96,10 +96,10 @@ shared_ptr<Population> PoolCharacteristicsSeeder::Seed(shared_ptr<Population> po
 	double ceiling_height;
 	int pool_duration;
 	for (ContactType::Id typ: ContactType::IdList) {
-		if (typ != Id::Household && typ != Id::PrimaryCommunity && typ != Id::SecondaryCommunity && typ != Id::HouseholdCluster) {
+		if (typ != Id::Household && typ != Id::CommunityWeekend && typ != Id::CommunityWeekday && typ != Id::HouseholdCluster) {
 			std::string typString = ToString(typ);
-			if (typ == Id::K12School){
-				unsigned int maxAge = 17; 
+			if (typ == Id::School){
+				unsigned int maxAge = 13; 
 				for (unsigned int index_age = 0; index_age <= maxAge; index_age++) {
 					double input_average_area_per_person = poolCharacteristicsPt.get<double>("pool_characteristics.average_area_per_person." + typString + ".age" + std::to_string(index_age), 1.0);
 					double input_variability_area = poolCharacteristicsPt.get<double>("pool_characteristics.variability_area." + typString + ".age" + std::to_string(index_age), 1.0);
@@ -132,7 +132,7 @@ shared_ptr<Population> PoolCharacteristicsSeeder::Seed(shared_ptr<Population> po
 				const auto& pMembers = pool.m_members;
 				const auto  pSize    = pMembers.size();
 			
-				if (typ == Id::K12School){
+				if (typ == Id::School){
 					float age = pMembers[0]->GetAge();
 					average_area_per_person = average_area_per_person_vector[age];
 					variability_area = variability_area_vector[age];
@@ -144,13 +144,12 @@ shared_ptr<Population> PoolCharacteristicsSeeder::Seed(shared_ptr<Population> po
 					double ceiling_height = ceiling_height_vector[poolTypeSpecification];
 				}
 			
-			double random01 = uniform01Generator();
-			double variatie = random01 * variability_area;
+			double variatie = uniform01Number * variability_area;
     		double grootte = average_area_per_person + variatie;
     		grootte *= pSize;
     		grootte = max(grootte, minimum_area);
     		pool.SetAirMass(grootte*ceiling_height);
-			if (typ == Id::K12School || typ == Id::College || typ == Id::Workplace) {	 
+			if (typ == Id::School || typ == Id::Workplace) {	 
 				for (size_t i_person1 = 0; i_person1 < pSize; i_person1++) {
 					const auto p = pMembers[i_person1];
 					for (int dayWeek = 1; dayWeek <= 5; ++dayWeek) {

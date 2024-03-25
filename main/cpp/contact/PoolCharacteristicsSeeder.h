@@ -44,7 +44,7 @@ public:
 	/// Initialize Seeder.
 	/// \param config 		Configuration parameters.
 	/// \param rnMan			Random number manager.
-	PoolCharacteristicsSeeder(const boost::property_tree::ptree& config, util::RnMan& rnMan);
+	PoolCharacteristicsSeeder(const boost::property_tree::ptree& config, std::shared_ptr<util::RnMan> rnMan);
 
     /// Fill extra characteristics in the contactPoolSys for airborne transmission.
     /// \param pop               Population.
@@ -56,7 +56,7 @@ public:
 
 private:
     const boost::property_tree::ptree& m_config; ///< Run config.
-    util::RnMan&                       m_rn_man; ///< Random number manager.
+    std::shared_ptr<util::RnMan>          m_rn_man; ///< Random number manager.
 };
 
 } // namespace stride

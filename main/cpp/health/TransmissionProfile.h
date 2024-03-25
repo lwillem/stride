@@ -67,7 +67,7 @@ public:
 	double GetLinkingHazardVirus() const;
 
 	/// Return age-specific susceptibility adjustment factor.
-	double GetIndividualSusceptibility(util::RnHandler& generator, unsigned int age) const;
+	double GetIndividualSusceptibility(util::Rn& rn, unsigned int age) const;
 
 	/// Return age-, health-, and person-specific transmission probability.
 	double GetProbability(Person* p_infected, Person* p_susceptible) const;

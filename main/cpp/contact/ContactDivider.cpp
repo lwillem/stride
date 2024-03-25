@@ -23,7 +23,7 @@ namespace stride {
 
 using namespace ContactType;
 
-ContactDivider::ContactDivider(const ptree& config, RnMan& rnMan) : m_config(config), m_rn_man(rnMan) {}
+ContactDivider::ContactDivider(const ptree& config, std::shared_ptr<util::RnMan> rnMan) : m_config(config), m_rn_man(rnMan) {}
 
 shared_ptr<Population> ContactDivider::Divide(shared_ptr<Population> pop, const AgeContactProfiles& ageContactProfiles)
 {
@@ -35,7 +35,7 @@ shared_ptr<Population> ContactDivider::Divide(shared_ptr<Population> pop, const 
 
 	auto& logger = population.RefEventLogger();
 
-	auto uniform01Generator = m_rn_man.GetUniform01Generator(0U);
+	auto uniform01Number= m_rn_man->at(0U).SampleUniform01();
     
 	for (size_t i = 0; i < population.size(); ++i) {
 		auto &p = population[i];
@@ -43,8 +43,8 @@ shared_ptr<Population> ContactDivider::Divide(shared_ptr<Population> pop, const 
 
 		for (size_t day = 0; day < 7; day++){
 	   		const AgeContactProfile& profile = (day == 0 || day == 6) ?
-                                       ageContactProfiles[Id::PrimaryCommunity] :
-                                       ageContactProfiles[Id::SecondaryCommunity];
+                                       ageContactProfiles[Id::CommunityWeekend] :
+                                       ageContactProfiles[Id::CommunityWeekday];
 
 			double reference_num_contacts_p{profile[EffectiveAge(static_cast<unsigned int>(age))]};
 			int rounded_reference_num_contacts_p = static_cast<int>(round(reference_num_contacts_p));
@@ -106,7 +106,7 @@ shared_ptr<Population> ContactDivider::Divide(shared_ptr<Population> pop, const 
 
         		unsigned int selectedCategory = 0;
 				for (size_t i = 0; i < cumulativeProbabilities.size(); ++i) {
-    				if (uniform01Generator() < cumulativeProbabilities[i]) {
+    				if (uniform01Number < cumulativeProbabilities[i]) {
         				selectedCategory = i;
         				break;
     				}

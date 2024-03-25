@@ -151,7 +151,7 @@ public:
         static void Trans(const std::shared_ptr<spdlog::logger>& logger, const Person* p1, const Person* p2,
                           ContactType::Id type, unsigned short int sim_day, unsigned int id_index_case, const double pVentilation, bool airborne)
         {
-        	RegisterTransmissionFull(logger,p1,p2,type,sim_day,id_index_case, const double pVentilation, bool airborne);
+        	RegisterTransmissionFull(logger,p1,p2,type,sim_day,id_index_case, pVentilation, airborne);
         }
 
 
@@ -173,7 +173,7 @@ public:
         static void Trans(const std::shared_ptr<spdlog::logger>& logger, const Person* p1, const Person* p2,
                           ContactType::Id type, unsigned short int sim_day, unsigned int id_index_case, const double pVentilation, bool airborne)
         {
-        	RegisterTransmissionFull(logger,p1,p2,type,sim_day,id_index_case, const double pVentilation, bool airborne);
+        	RegisterTransmissionFull(logger,p1,p2,type,sim_day,id_index_case, pVentilation, airborne);
         }
 
        
@@ -194,7 +194,7 @@ public:
         static void Trans(const std::shared_ptr<spdlog::logger>& logger, const Person* p1, const Person* p2,
                           ContactType::Id type, unsigned short int sim_day, unsigned int id_index_case, const double pVentilation, bool airborne)
         {
-        	RegisterTransmissionFull(logger,p1,p2,type,sim_day,id_index_case, const double pVentilation, bool airborne);
+        	RegisterTransmissionFull(logger,p1,p2,type,sim_day,id_index_case, pVentilation, airborne);
         }
 
 
@@ -298,13 +298,13 @@ inline double GetContactProbability(const AgeContactProfile& profile, const Pers
         return contact_probability;
 }
 
-Person* determineInfectorResponsible(util::RnHandler& rnHandler, const std::list<std::pair<double, Person*>>& virusContributors, double virusStock){
-        double   uniform01Generator = rnHandler();
+Person* determineInfectorResponsible(util::Rn& rn, const std::list<std::pair<double, Person*>>& virusContributors, double virusStock){
+        double   uniform01Number = rn.SampleUniform01();
         double   cumulative_chance = 0;
         for (const auto& pair : virusContributors) {
                 double chance = pair.first / virusStock;
                 cumulative_chance += chance;
-                if (uniform01Generator <= cumulative_chance) {
+                if (uniform01Number <= cumulative_chance) {
                         return pair.second;
                 }
         }      
@@ -370,7 +370,7 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
                                 } else {
                                         vProb = 1;
                                 }
-                        if (rnHandler.Binomial(cProb,vProb)) {
+                        if (rn.Binomial(cProb,vProb)) {
 								const auto  tProb_p1_p2    = transProfile.GetProbability(p1,p2);
 								const auto  tProb_p2_p1    = transProfile.GetProbability(p2,p1);
 
@@ -470,9 +470,9 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
                                                         }}
 
                                                 const double aProb = 1.0 - std::exp(-((linkingHazardVirus * v) / (pVentilation * pAirMass *35.3147)) * (person_duration - (1.0 - std::exp(-pVentilation * person_duration)) / pVentilation));              
-                                                if (rnHandler.Binomial(rel_suscep,aProb)) {
-                                                                                double rel_inf = transProfile.GetIndividualInfectiousness(rnHandler);
-                                                                                Person* contributor = determineInfectorResponsible(rnHandler,virusContributors, v);
+                                                if (rn.Binomial(rel_suscep,aProb)) {
+                                                                                double rel_inf = transProfile.GetIndividualInfectiousness(rn);
+                                                                                Person* contributor = determineInfectorResponsible(rn,virusContributors, v);
                                                                                 unsigned int id_index_case = contributor->GetHealth().GetIdIndexCase();
                                                                                 unsigned int id_infector = contributor->GetId();                                                                            
                                                                                 h1.StartInfection(id_index_case, id_infector, rel_inf);
@@ -553,7 +553,7 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                                 } else {
                                         vProb = 1;
                                 }
-                                if (rnHandler.Binomial(cProb_p1, tProb_p1_p2, vProb)) {
+                                if (rn.Binomial(cProb_p1, tProb_p1_p2, vProb)) {
 
                                         auto& h2 = p2->GetHealth();
                                         if (h1.IsInfectious() && h2.IsSusceptible()) {
@@ -623,9 +623,9 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                                                         }
 
                                                 const double aProb = 1.0 - std::exp(-((linkingHazardVirus * v) / (pVentilation * pAirMass *35.3147)) * (person_duration - (1.0 - std::exp(-pVentilation * person_duration)) / pVentilation));              
-                                                if (rnHandler.Binomial(rel_suscep,aProb)) {
-                                                                                double rel_inf = transProfile.GetIndividualInfectiousness(rnHandler);
-                                                                                Person* contributor = determineInfectorResponsible(rnHandler, virusContributors, v);
+                                                if (rn.Binomial(rel_suscep,aProb)) {
+                                                                                double rel_inf = transProfile.GetIndividualInfectiousness(rn);
+                                                                                Person* contributor = determineInfectorResponsible(rn, virusContributors, v);
                                                                                 unsigned int id_index_case = contributor->GetHealth().GetIdIndexCase();
                                                                                 unsigned int id_infector = contributor->GetId();                                                                            
                                                                                 h1.StartInfection(id_index_case,id_infector, rel_inf);

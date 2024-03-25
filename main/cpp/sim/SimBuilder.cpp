@@ -116,20 +116,20 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         // --------------------------------------------------------------
         // Register infected seeds.
         // --------------------------------------------------------------
-		sim->GetCalendar()->RegisterInfectedSeeds(m_config.get<unsigned int>("run.num_infected_seeds",0));
+	sim->GetCalendar()->RegisterInfectedSeeds(m_config.get<unsigned int>("run.num_infected_seeds",0));
 
         std::cout << "Set Universal Testing " << std::endl;
         // --------------------------------------------------------------
 		// Set Public Health Agency
 		// --------------------------------------------------------------
         sim->m_public_health_agency.Initialize(m_config);
-		sim->m_is_isolated_from_household = m_config.get<bool>("run.is_isolated_from_household",false);
+	sim->m_is_isolated_from_household = m_config.get<bool>("run.is_isolated_from_household",false);
 
         std::cout << "Seed population with survey participants." << std::endl;
         // --------------------------------------------------------------
         // Seed population with survey participants.
         // --------------------------------------------------------------
-		sim->m_survey_manager = make_shared<SurveyManager>(sim->m_population, m_config, sim->m_rn_man_ptr);
+	sim->m_survey_manager = make_shared<SurveyManager>(sim->m_population, m_config, sim->m_rn_man_ptr);
 
         std::cout << "Seed population with non-compliant individuals." << std::endl;
         // --------------------------------------------------------------
@@ -142,7 +142,7 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         // Calculate contacts based on age contact profile and duration in location
         //---------------------------------------------------------------
         if (sim->m_subpools_community){
-                ContactDivider(m_config, sim->m_rn_man).Divide(sim->m_population, sim->m_contact_profiles);
+                ContactDivider(m_config, sim->m_rn_man_ptr).Divide(sim->m_population, sim->m_contact_profiles);
         };
 
         std::cout << "Fill in characteristics in the contactPoolSys for airborne transmission." << std::endl;
@@ -150,7 +150,7 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         // Fill in characteristics in the contactPoolSys for airborne transmission
         // --------------------------------------------------------------
         const auto poolCharacteristicsPt = ReadPoolCharacteristicsPtree();
-        PoolCharacteristicsSeeder(m_config, sim->m_rn_man).Seed(sim->m_population, poolCharacteristicsPt);
+        PoolCharacteristicsSeeder(m_config, sim->m_rn_man_ptr).Seed(sim->m_population, poolCharacteristicsPt);
 
         // --------------------------------------------------------------
         // Done.

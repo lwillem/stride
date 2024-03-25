@@ -64,39 +64,14 @@ void Sim::TimeStep()
 {
         // Define the type of day
         const bool isRegularWeekday                = m_calendar->IsRegularWeekday();
-
-<<<<<<< HEAD
-        // Logic where you compute (on the basis of input/config for initial day or on the basis of
-        // number of sick persons, duration of epidemic etc) what kind of DaysOff scheme you apply.
         const auto  dayWeek      = m_calendar->GetDayOfTheWeek(); 
-        const bool  isRegularWeekday     = m_calendar->IsRegularWeekday();
-        const bool  isHouseholdClusteringAllowed    = m_calendar->IsHouseholdClusteringAllowed();
-
-		// To be used in update of population & contact pools.
-=======
-		// To be used in population & contact pool update
->>>>>>> upstream/dev
+        
+	// To be used in update of population & contact pools.
         Population& population    = *m_population;
         auto&       logger        = population.RefEventLogger();
         auto&       poolSys       = population.RefPoolSys();
         auto        eventLogger   = population.RefEventLogger();
         const auto  simDay        = m_calendar->GetSimulationDay();
-<<<<<<< HEAD
-        
-        // Select infector, based on tracing
-        const auto& infector      = m_public_health_agency.IsContactTracingActive(m_calendar) ? *m_infector_tracing : *m_infector_default;
-
-        // set HouseholdCluster intensity
-        double cnt_intensity_householdCluster = 0.0;
-		if (isHouseholdClusteringAllowed && poolSys.RefPools(ContactType::Id::HouseholdCluster).size() > 1){
-			cnt_intensity_householdCluster = m_cnt_intensity_householdCluster;
-		}
-        // Set other distancing factors except for school (requires pool min age)
-        double workplace_distancing_factor = m_calendar->GetWorkplaceDistancingFactor();
-        double community_distancing_factor = m_calendar->GetCommunityDistancingFactor();
-        double collectivity_distancing_factor = m_calendar->GetCollectivityDistancingFactor();
-        double ventilation_factor = m_calendar -> GetVentilationFactor();
-=======
 
         // Select infector, based on tracing and social contact survey activities
         auto& infector      = (m_public_health_agency.IsContactTracingActive(m_calendar) ||
@@ -104,6 +79,8 @@ void Sim::TimeStep()
 
         // Get household clustering intensity
         double cnt_intensity_householdCluster = m_calendar->GetHouseholdClusteringLevel();
+
+        double ventilation_factor = m_calendar -> GetVentilationFactor();
 
         // Update Health before introducing new cases (infected on simDay)
 #pragma omp parallel num_threads(m_num_threads)
@@ -114,7 +91,6 @@ void Sim::TimeStep()
 
 			}
 		} // end pragma openMP
->>>>>>> upstream/dev
 
         // Import infected cases into the population
         if(m_calendar->GetNumberOfImportedCases() > 0){

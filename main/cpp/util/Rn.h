@@ -52,6 +52,12 @@ class Rn {
     	return SampleUniform01() < probability_a * probability_b;
     }
 
+	/// Perform binomial trial with the product of three given probabilities.
+    bool Binomial(double probability_a, double probability_b, double probability_c)
+    {
+    	return SampleUniform01() < probability_a * probability_b * probability_c;
+    }
+
     trng::lcg64& GetEngine()
     {
        return m_engine;

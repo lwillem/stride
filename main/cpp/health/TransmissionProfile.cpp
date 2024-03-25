@@ -139,7 +139,7 @@ double TransmissionProfile::GetSusceptibilityFactor() const {
 	return susceptibility_mean;
 }
 
-double TransmissionProfile::GetIndividualSusceptibility(RnHandler& generator,unsigned int age) const {
+double TransmissionProfile::GetIndividualSusceptibility(Rn& rn,unsigned int age) const {
 	
 	if (m_susceptibility_probability_distribution == "Gamma") {
 		double susceptibility_probability;
@@ -159,7 +159,7 @@ double TransmissionProfile::GetIndividualSusceptibility(RnHandler& generator,uns
 		double cdf1 = cdf(gamma_dist, 0.0);
 		double cdf2 = cdf(gamma_dist, 1.0);
 
-		double individual_probability = quantile(gamma_dist, cdf1 + generator() * (cdf2 - cdf1));
+		double individual_probability = quantile(gamma_dist, cdf1 + rn.SampleUniform01() * (cdf2 - cdf1));
 
 		return individual_probability;
 
