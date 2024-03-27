@@ -43,9 +43,9 @@ Sim::Sim()
 	  m_run_simplified(false),
       m_calendar(nullptr), m_contact_profiles(), m_infector_default(),m_infector_tracing(),
       m_population(nullptr), m_rn_man_ptr(), m_transmission_profile(),
-      m_is_isolated_from_household(false),
-	  m_public_health_agency(),
-	  m_survey_manager(nullptr)
+      m_is_isolated_from_household(false), m_subpools_community(false), m_airborne_transmission(false),
+	  m_public_health_agency(), m_survey_manager(nullptr)
+
 {
 }
 
@@ -64,8 +64,9 @@ void Sim::TimeStep()
 {
         // Define the type of day
         const bool isRegularWeekday                = m_calendar->IsRegularWeekday();
-
-		// To be used in population & contact pool update
+        const auto  dayWeek      = m_calendar->GetDayOfTheWeek(); 
+        
+	// To be used in update of population & contact pools.
         Population& population    = *m_population;
         auto&       logger        = population.RefEventLogger();
         auto&       poolSys       = population.RefPoolSys();
@@ -78,6 +79,8 @@ void Sim::TimeStep()
 
         // Get household clustering intensity
         double cnt_intensity_householdCluster = m_calendar->GetHouseholdClusteringLevel();
+
+        double ventilation_factor = m_calendar -> GetVentilationFactor();
 
         // Update Health before introducing new cases (infected on simDay)
 #pragma omp parallel num_threads(m_num_threads)
@@ -111,7 +114,7 @@ void Sim::TimeStep()
 				population[i].UpdatePresence(m_is_isolated_from_household,
 //                        m_rn_handlers[thread_num],
 						m_rn_man_ptr->at(thread_num),
-                        simDay, m_run_simplified);
+                        simDay, m_run_simplified, m_subpools_community);
 			}
         }// end pragma openMP
 
@@ -132,16 +135,22 @@ void Sim::TimeStep()
 						(typ == ContactType::Id::HouseholdCluster && cnt_intensity_householdCluster==0)) {
 							continue;
 					}
-#pragma omp for schedule(static)
-					// Skip pools with id = 0, because it means Not Applicable.
-					for (size_t i = 1; i < poolSys.RefPools(typ).size(); i++) { // NOLINT
 
-						// enable ContactPool specific physical distancing
+#pragma omp for schedule(static)
+					for (size_t i = 1; i < poolSys.RefPools(typ).size(); i++) { // NOLINT                 
+                        if (typ == ContactType::Id::OtherHouse || typ == ContactType::Id::RestoCafe || typ == ContactType::Id::OtherPlace || typ == ContactType::Id::Transport) {
+                            const auto day_week_pool = poolSys.RefPools(typ)[i].GetDayWeek();
+                            if (day_week_pool != dayWeek){
+                                continue;
+                            }
+                        }
+                            // enable ContactPool specific physical distancing
 						double typ_distancing_factor = m_calendar->GetDistancingFactor(poolSys.RefPools(typ)[i]);
 
-						infector(poolSys.RefPools(typ)[i], m_contact_profiles[typ], m_transmission_profile,
-								m_rn_man_ptr->at(thread_num), simDay, eventLogger,
-								 m_population, cnt_intensity_householdCluster, typ_distancing_factor);
+                            infector(poolSys.RefPools(typ)[i], m_contact_profiles[typ], m_transmission_profile,
+									 m_rn_man_ptr->at(thread_num), simDay, eventLogger,
+									 m_population, cnt_intensity_householdCluster, typ_distancing_factor, dayWeek, m_airborne_transmission, m_subpools_community, ventilation_factor);
+
 					}
 			}
         } // end pragma openMP

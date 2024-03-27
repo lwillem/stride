@@ -37,9 +37,8 @@ using boost::property_tree::ptree;
 Calendar::Calendar(const ptree& configPt,unsigned int num_days) :
 		m_date(), m_date_start(), m_date_end(), m_public_holidays(num_days),
 		m_workplace_distancing(num_days), m_community_distancing(num_days), m_collectivity_distancing(num_days),
-		m_contact_tracing(num_days),
-		m_contact_survey(num_days),
-		m_household_clustering(num_days), m_imported_cases(num_days,0U),
+		m_contact_tracing(num_days), m_ventilation(num_days),
+		m_contact_survey(num_days), m_household_clustering(num_days), m_imported_cases(num_days,0U),
 		m_school_closures(100, vector<double>(num_days)),
         //
         m_weekday(), m_day(), m_day_index()
@@ -140,13 +139,14 @@ void Calendar::Initialize_csv(const ptree& configPt)
 					// convert value into boolean
 					const bool value_boolean = value == 1.0;
 
-					if(category == "general")                {  m_public_holidays[date_index] = value_boolean; }
-					if(category == "schools_closed")         {  m_school_closures[age][date_index] = value;    }
-					if(category == "workplace_distancing")   {  m_workplace_distancing[date_index] = value;    }
-					if(category == "community_distancing")   {  m_community_distancing[date_index] = value;    }
-					if(category == "collectivity_distancing"){m_collectivity_distancing[date_index] = value;   }
-					if(category == "household_clustering")   {  m_household_clustering[date_index] = value;    }
-					if(category == "contact_tracing")        {  m_contact_tracing[date_index] = value_boolean; }
+					if(category == "general")              {  m_public_holidays[date_index] = value_boolean; }
+					if(category == "schools_closed")       {  m_school_closures[age][date_index] = value; }
+					if(category == "workplace_distancing") {  m_workplace_distancing[date_index] = value; }
+					if(category == "community_distancing") {  m_community_distancing[date_index] = value; }
+					if(category == "collectivity_distancing"){m_collectivity_distancing[date_index] = value; }
+					if(category == "household_clustering") {  m_household_clustering[date_index] = value_boolean; }
+					if(category == "contact_tracing")      {  m_contact_tracing[date_index] = value_boolean; }
+					if(category == "ventilation")          {  m_ventilation[date_index] = value; }
 					if(category == "contact_survey")         {  m_contact_survey[date_index] = value_boolean;  }
 					if(category == "imported_cases")
 					{

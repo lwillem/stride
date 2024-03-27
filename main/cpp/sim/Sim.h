@@ -99,6 +99,8 @@ private:
 
         // temporary...
         bool                        m_is_isolated_from_household;
+        bool                        m_subpools_community;
+        bool                        m_airborne_transmission;
 
         PublicHealthAgency          m_public_health_agency;
         std::shared_ptr<SurveyManager>   m_survey_manager;

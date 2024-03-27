@@ -71,7 +71,9 @@ void Person::Isolate(unsigned int simDay, unsigned int from, unsigned int to)
 void Person::UpdatePresence(bool isIsolatedFromHousehold,
 		util::Rn& rn,
         unsigned short int simDay,
-		bool run_simplified)
+		bool run_simplified,
+		bool subpools_community)
+        
 {
         UpdateEvents(simDay);
 
@@ -101,6 +103,11 @@ void Person::UpdatePresence(bool isIsolatedFromHousehold,
 			m_in_pools[Id::CommunityWeekday] = false;
 			m_in_pools[Id::HouseholdCluster]   = false;
 			m_in_pools[Id::Collectivity]       = false;
+			m_in_pools[Id::OtherHouse]		   = false;
+			m_in_pools[Id::RestoCafe]		   = false;
+			m_in_pools[Id::OtherPlace]         = false;
+			m_in_pools[Id::Transport]          = false;
+			
 
         } else {
         	   // by default: a person intents to be present at each location
@@ -109,7 +116,23 @@ void Person::UpdatePresence(bool isIsolatedFromHousehold,
         	   m_in_pools[Id::HouseholdCluster]   = true;
       		   m_in_pools[Id::Workplace]          = true;
        		   m_in_pools[Id::CommunityWeekend]   = true;
-       		   m_in_pools[Id::CommunityWeekday] = true;
+       		   m_in_pools[Id::CommunityWeekday]   = true;
+
+    		   // work with subpools commmunity or with the big communities?
+			   if (subpools_community){
+				m_in_pools[Id::CommunityWeekend]      = false;
+				m_in_pools[Id::CommunityWeekday]      = false;
+				m_in_pools[Id::OtherHouse]            = true;
+				m_in_pools[Id::RestoCafe]             = true;
+				m_in_pools[Id::OtherPlace]            = true;
+				m_in_pools[Id::Transport]             = true;
+			   } else{
+				m_in_pools[Id::OtherHouse]            = false;
+				m_in_pools[Id::RestoCafe]             = false;
+				m_in_pools[Id::OtherPlace]            = false;
+				m_in_pools[Id::Transport]             = false;
+			
+			   }
 
         	   // Update presence in contact pools if symptomatic with/without isolation
         	   if (m_health.IsSymptomatic()) {

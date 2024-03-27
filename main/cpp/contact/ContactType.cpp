@@ -24,6 +24,8 @@
 
 #include <boost/algorithm/string.hpp>
 #include <map>
+#include <cctype>     // voor std::isspace
+#include <algorithm>  // voor std::transform en std::find_if
 
 namespace stride {
 namespace ContactType {
@@ -34,14 +36,18 @@ using boost::to_upper;
 bool IsId(const string& s)
 {
         static map<string, Id> ids{
-            make_pair("HOUSEHOLD", Id::Household),
-            make_pair("SCHOOL", Id::School),
-//            make_pair("SCHOOL", Id::College),
-            make_pair("WORKPLACE", Id::Workplace),
-            make_pair("COMMUNITY_WEEKEND", Id::CommunityWeekend),
-            make_pair("COMMUNITY_WEEKDAY", Id::CommunityWeekday),
-			make_pair("HOUSEHOLD_CLUSTER", Id::HouseholdCluster),
-			make_pair("COLLECTIVITY", Id::Collectivity)
+            make_pair("Household", Id::Household),
+            make_pair("School", Id::School),
+            // make_pair("College", Id::College),
+            make_pair("Workplace", Id::Workplace),
+            make_pair("Community_Weekend", Id::CommunityWeekend),
+            make_pair("Community_Weekday", Id::CommunityWeekday),
+			make_pair("HouseholdCluster", Id::HouseholdCluster),
+			make_pair("Collectivity", Id::Collectivity),
+            make_pair("OtherHouse", Id::OtherHouse),
+            make_pair("RestoCafe", Id::RestoCafe),
+            make_pair("OtherPlace", Id::OtherPlace),
+            make_pair("Transport", Id::Transport)
 
         };
         string t{s};
@@ -52,18 +58,37 @@ bool IsId(const string& s)
 Id ToId(const string& s)
 {
         static map<string, Id> ids{
-            make_pair("HOUSEHOLD", Id::Household),
-            make_pair("SCHOOL", Id::School),
-            make_pair("WORKPLACE", Id::Workplace),
-            make_pair("COMMUNITY_WEEKEND", Id::CommunityWeekend),
-            make_pair("COMMUNITY_WEEKDAY", Id::CommunityWeekday),
-			make_pair("HOUSEHOLD_CLUSTER", Id::HouseholdCluster),
-			make_pair("COLLECTIVITY", Id::Collectivity)
+            make_pair("Household", Id::Household),
+            make_pair("School", Id::School),
+            make_pair("Workplace", Id::Workplace),
+            make_pair("Community_Weekend", Id::CommunityWeekend),
+            make_pair("Community_Weekday", Id::CommunityWeekday),
+			make_pair("HouseholdCluster", Id::HouseholdCluster),
+			make_pair("Collectivity", Id::Collectivity),
+            make_pair("OtherHouse", Id::OtherHouse),
+            make_pair("RestoCafe", Id::RestoCafe),
+            make_pair("OtherPlace", Id::OtherPlace),
+            make_pair("Transport", Id::Transport)
 
         };
-        string t{s};
-        to_upper(t);
-        return (ids.count(t) == 1) ? ids[t] : throw runtime_error("ContactType::ToId> not available:" + t);
+
+    string t{s};
+    //to_upper(t);
+    // Verwijder aanhalingstekens rondom de invoerstring
+    t.erase(std::remove_if(t.begin(), t.end(), [](char c) { return c == '"'; }), t.end());
+
+    if (ids.count(t) == 1) {
+        return ids[t];
+    } else {
+        cerr << "DEBUG: s = " << s << ", t = " << t << ", ids contents:" << endl;
+        for (const auto& entry : ids) {
+            cerr << entry.first << " -> " << static_cast<int>(entry.second) << " (Match: " << (entry.first == t) << ")" << endl;
+        }
+        throw runtime_error("ContactType::ToId> not available: " + s);
+    }
+
+       // return (ids.count(t) == 1) ? ids[t] : throw runtime_error("ContactType::ToId> not available:" + s + " " + t );
+       
 }
 
 string ToString(Id c)
@@ -76,6 +101,10 @@ string ToString(Id c)
             make_pair(Id::CommunityWeekday, "CommunityWeekday"),
 			make_pair(Id::HouseholdCluster, "HouseholdCluster"),
 			make_pair(Id::Collectivity, "Collectivity"),
+            make_pair(Id::OtherHouse, "OtherHouse"),
+            make_pair(Id::RestoCafe, "RestoCafe"),
+            make_pair(Id::OtherPlace, "OtherPlace"),
+            make_pair(Id::Transport, "Transport")
         };
         return (names.count(c) == 1) ? names[c] : throw runtime_error("ContactType::ToString> not available:");
 }

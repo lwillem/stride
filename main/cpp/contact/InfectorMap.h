@@ -54,7 +54,6 @@ private:
         {
                 using namespace EventLogMode;
 
-
                 this->emplace(std::make_pair(std::make_tuple(Id::None, B), &Infector<Id::None, B>::Exec));
                 this->emplace(std::make_pair(std::make_tuple(Id::Incidence, B), &Infector<Id::Incidence, B>::Exec));
                 this->emplace(std::make_pair(std::make_tuple(Id::Transmissions, B), &Infector<Id::Transmissions, B>::Exec));

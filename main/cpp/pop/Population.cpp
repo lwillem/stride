@@ -52,6 +52,7 @@ std::shared_ptr<Population> Population::Create(const boost::property_tree::ptree
         // --------------------------------------------------------------
         // Create empty population & and give it an EventLogger.
         // --------------------------------------------------------------
+            
         const auto pop = Create();
         if(EventLogMode::ToMode(config.get<string>("run.event_log_level", "None")) > EventLogMode::Id::None) {
                 const auto prefix       = config.get<string>("run.output_prefix");
@@ -76,24 +77,21 @@ std::shared_ptr<Population> Population::Create(const boost::property_tree::ptree
         return pop;
 }
 
-std::shared_ptr<Population> Population::Create()
-{
-
-		// --------------------------------------------------------------
-        // Create (empty) population and return it
-        // --------------------------------------------------------------
-        struct make_shared_enabler : public Population
-        {
-        };
-        auto r = make_shared<make_shared_enabler>();
-        return r;
+std::shared_ptr<Population> Population::Create() {
+  // --------------------------------------------------------------
+  // Create (empty) population and return it
+  // --------------------------------------------------------------
+  struct make_shared_enabler : public Population {
+  };
+  auto r = make_shared<make_shared_enabler>();
+  return r;
 }
 
-Person* Population::CreatePerson(unsigned int id, double age, unsigned int householdId, unsigned int k12SchoolId,
+Person* Population::CreatePerson(unsigned int id, double age, unsigned int profession, unsigned int householdId, unsigned int k12SchoolId,
                                  unsigned int workplaceId, unsigned int communityWeekendId,
                                  unsigned int communityWeekdayId, unsigned int householdClusterId, unsigned int collectivityId)
 {
-        return emplace_back(id, age, householdId, k12SchoolId, workplaceId, communityWeekendId,
+        return emplace_back(id, age, profession, householdId, k12SchoolId, workplaceId, communityWeekendId,
                             communityWeekdayId, householdClusterId, collectivityId);
 }
 

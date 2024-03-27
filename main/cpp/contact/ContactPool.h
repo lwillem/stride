@@ -60,11 +60,34 @@ public:
         /// Get the type of ContactPool, used for logging and tests
         ContactType::Id GetType() const { return m_pool_type; }
 
+        /// Get the ventilation of the venue
+        double GetVentilation() const { return m_ventilation; }
+
+        ///< Set ventilation of a pool
+        void SetVentilation(double ventilation) { m_ventilation = ventilation; }
+
+        /// Get compliance of a pool
+        void SetNonComplier() {  m_venue_non_complier = true; }
+
+        bool IsNonComplier() const { return m_venue_non_complier; }
+
         /// Inspect whether this pool contains an infant
         bool HasInfant() const { return m_min_age < 1; }
 
         /// Get the minimum age of the members
         unsigned int GetMinAge() const {return m_min_age;}
+
+        // Get the day of week of the pool
+        unsigned int GetDayWeek() const {return m_day_week;} 
+
+        // change the day of week of the pool
+        void SetDayWeek(unsigned int dayWeek) { m_day_week = dayWeek; }
+
+        // Get the air mass of the pool
+        double GetAirMass() const {return m_air_mass;} 
+
+        // change the air mass of the pool
+        void SetAirMass(double airMass) { m_air_mass = airMass; }
 
 public:
         // To iterate over the members.
@@ -89,6 +112,7 @@ private:
         /// Calculates contacts and transmissions; accesses private methods and data.
         template <EventLogMode::Id LL, bool TIC, bool TO>
         friend class Infector;
+        friend class PoolCharacteristicsSeeder;
 
 private:
         unsigned int         m_index_immune; ///< Index of the first immune member in the ContactPool.
@@ -96,6 +120,10 @@ private:
         ContactType::Id      m_pool_type;    ///< The type of the ContactPool (for logging and testing purposes).
         std::vector<Person*> m_members;      ///< Pointers to contactpool members (raw pointers intentional).
         unsigned int         m_min_age;      ///< The minimum age of the members
+        double               m_ventilation; ///< Percentage of reduction of transmission in the venue
+        bool                 m_venue_non_complier; ///< There is ventilation on the venue or not
+        unsigned int         m_day_week;    ///< day on which the pool is valid, if multiple days, m_day = 7
+        double               m_air_mass;    ///< air_mass in the pool
 };
 
 } // namespace stride

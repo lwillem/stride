@@ -36,6 +36,8 @@ void TransmissionProfile::Initialize(const ptree& configPt, const ptree& disease
     // 1. setup general transmission aspects
     m_rel_transmission_asymptomatic   = diseasePt.get<double>("disease.rel_transmission_asymptomatic", 1);
     m_rel_susceptibility_children     = diseasePt.get<double>("disease.rel_susceptibility_children", 1);
+	m_per_person_viral_shedding  = diseasePt.get<double>("disease.k", 1);
+    m_linking_hazard_virus     = diseasePt.get<double>("disease.delta", 0.226);
 
     // 2. setup transmission probability: with a given R0 or a given mean transmission probability
     // Use boost:optional to check which parameters are available in the config file
@@ -117,6 +119,13 @@ void TransmissionProfile::Initialize(const ptree& configPt, const ptree& disease
     		m_transmission_probability_distribution_overdispersion = configPt.get<double>("run.transmission_probability_distribution_overdispersion");
     }
 
+	// Check whether susceptibility probability follows a distribution (otherwise it remains constant / age)
+    boost::optional<string> t_prob_susceptibility_distribution = configPt.get_optional<string>("run.susceptibility_probability_distribution");
+    if (t_prob_distribution) {
+    		m_susceptibility_probability_distribution = *t_prob_susceptibility_distribution;
+    		// Get target overdispersion
+    		m_susceptibility_probability_distribution_overdispersion = configPt.get<double>("run.susceptibility_probability_distribution_overdispersion");
+    }
 
 }
 
@@ -130,12 +139,52 @@ double TransmissionProfile::GetSusceptibilityFactor() const {
 	return susceptibility_mean;
 }
 
-double TransmissionProfile::GetIndividualSusceptibility(unsigned int age) const {
-	if (age < m_susceptibility_age.size()) {
-		return m_susceptibility_age[age];
+double TransmissionProfile::GetIndividualSusceptibility(Rn& rn,unsigned int age) const {
+	
+	if (m_susceptibility_probability_distribution == "Gamma") {
+		double susceptibility_probability;
+		if (age < m_susceptibility_age.size()) {
+			susceptibility_probability = m_susceptibility_age[age];
+		} else {
+			susceptibility_probability = m_susceptibility_age[m_susceptibility_age.size() - 1];
+		}
+
+		// Generate truncated (between 0 and 1) gamma distribution
+		// Based on script https://rdrr.io/cran/RGeode/src/R/rgammatr.R
+		double shape = m_susceptibility_probability_distribution_overdispersion;
+		double scale = susceptibility_probability / shape;
+
+		boost::math::gamma_distribution<double> gamma_dist = boost::math::gamma_distribution<double>(shape, scale); // FIXME: Be consistent in which implementation of Gamma distribution to use
+
+		double cdf1 = cdf(gamma_dist, 0.0);
+		double cdf2 = cdf(gamma_dist, 1.0);
+
+		double individual_probability = quantile(gamma_dist, cdf1 + rn.SampleUniform01() * (cdf2 - cdf1));
+
+		return individual_probability;
+
 	} else {
-		return m_susceptibility_age[m_susceptibility_age.size() - 1];
+		if (age < m_susceptibility_age.size()) {
+			return m_susceptibility_age[age];
+		} else {
+			return m_susceptibility_age[m_susceptibility_age.size() - 1];
+		}
 	}
+
+}
+
+
+
+double TransmissionProfile::GetTransmissionReductionAsymptomatic() const {
+	return m_rel_transmission_asymptomatic;
+}
+
+double TransmissionProfile::GetPerPersonViralShedding() const {
+	return m_per_person_viral_shedding;
+}
+
+double TransmissionProfile::GetLinkingHazardVirus() const {
+	return m_linking_hazard_virus;
 }
 
 double TransmissionProfile::GetProbability(Person* p_infected, Person* p_susceptible) const {

@@ -215,8 +215,9 @@ ptree FileSys::ReadPtreeFile(const filesys::path& f_p)
         } else {
                 try {
                         read_xml(canonical(f_p).string(), ret, xml_parser::trim_whitespace);
+                        
                 } catch (xml_parser_error& e) {
-                        const string s = "FileSys::ReadPtreeFile> Abort! Error reading " + f_p.string();
+                        const string s = "FileSys::ReadPtreeFile> Abort! Error reading " + f_p.string() + ". " + e.what();
                         cerr << s << endl;
                         throw runtime_error(s);
                 }

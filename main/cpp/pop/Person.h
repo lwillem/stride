@@ -56,20 +56,28 @@ public:
 
 public:
         /// Default construction (for population vector).
-        Person() : m_age(0.0), m_id(0), m_vaccine(), m_pool_ids(), m_individual_contact_factor(1.0), m_health(), m_in_pools(), m_is_participant(),
+        Person() :  m_id(0), m_age(0.0), m_profession(0), m_vaccine(), m_pool_ids(), m_pool_durations(), m_pool_contacts(), m_individual_contact_factor(1.0), m_health(), m_in_pools(), m_is_participant(),
 		m_is_tracing_index(false), m_contact_tracing_list(),
         m_isolated(false), m_events() {}
 
         /// Constructor: set the person data.
-        Person(unsigned int id, float age, unsigned int householdId, unsigned int k12SchoolId,
-               unsigned int workplaceId, unsigned int CommunityWeekendId, unsigned int CommunityWeekdayId, unsigned int householdClusterId,
+        Person(unsigned int id, float age, unsigned int profession, unsigned int householdId, unsigned int k12SchoolId,unsigned int workplaceId, unsigned int CommunityWeekendId, unsigned int CommunityWeekdayId, 
+         unsigned int householdClusterId,
 			   unsigned int collectivityId)
-            : m_age(age), m_id(id), m_vaccine(), m_pool_ids{householdId, k12SchoolId,
-                                               workplaceId, CommunityWeekendId, CommunityWeekdayId,
-											   householdClusterId, collectivityId},
-			  m_individual_contact_factor(1.0),
-              m_health(), m_in_pools(true), m_is_participant(false),
-			  m_is_tracing_index(false), m_contact_tracing_list(), m_isolated(false),
+            : m_age(age), m_profession(profession), m_id(id), m_pool_ids{{householdId},
+          {k12SchoolId},
+          {workplaceId},
+          {CommunityWeekendId},
+          {CommunityWeekdayId},
+          {householdClusterId},
+          {collectivityId},
+          {},  
+          {},  
+          {},  
+          {}}, m_pool_durations(), m_pool_contacts(),
+	  m_individual_contact_factor(1.0),
+              m_health(), m_in_pools(true), m_is_participant(false), 
+                m_is_tracing_index(false), m_contact_tracing_list(), m_isolated(false),
               m_events()
         {
         }
@@ -79,6 +87,9 @@ public:
 
         /// Get the age.
         float GetAge() const { return m_age; }
+
+        /// Get the profession
+        unsigned int GetProfession() const { return m_profession; }
 
         /// Return person's health status.
         Health& GetHealth() { return m_health; }
@@ -90,7 +101,7 @@ public:
         unsigned int GetId() const { return m_id; }
 
         /// Get ID of contactpool_type
-        unsigned int GetPoolId(const ContactType::Id& poolType) const { return m_pool_ids[poolType]; }
+        unsigned int GetPoolId(const ContactType::Id& poolType) const { return m_pool_ids[poolType][0]; }
 
         ///< Factor with which to scale contact rate in community pools for this individual
         double GetIndividualContactFactor() const { return m_individual_contact_factor; }
@@ -116,7 +127,7 @@ public:
         /// Daily update of the isolation status and health-related presence in contact pools.
         void UpdatePresence(bool isIsolatedFromHousehold,
 				util::Rn& rn,
-                unsigned short int simDay, bool run_simplified);
+                unsigned short int simDay, bool run_simplified, bool subpools_community);
 
         /// Daily update of the health status.
 		void UpdateHealth();
@@ -130,7 +141,7 @@ public:
         /// Sets (for the type of ContactPool) the Id of the ContactPool the person belongs to.
         void SetPoolId(ContactType::Id type, unsigned int poolId)
         {
-                m_pool_ids[type] = poolId;
+                m_pool_ids[type][0] = poolId;
                 m_in_pools[type] = (poolId != 0); // Means present in Household, absent elsewhere.
         }
 
@@ -183,6 +194,16 @@ public:
                 return false;
         }
 
+        std::array<unsigned int, 7>& PoolIds(ContactType::Id id) { return m_pool_ids[id]; }
+        const std::array<unsigned int, 7>& CPoolIds(ContactType::Id id) const { return m_pool_ids[id]; }
+
+        std::array<unsigned int, 7>& PoolDurations(ContactType::Id id) { return m_pool_durations[id]; }
+        const std::array<unsigned int, 7>& CPoolDurations(ContactType::Id id) const { return m_pool_durations[id]; }
+
+        std::array<unsigned int, 7>& PoolContacts(ContactType::Id id) { return m_pool_contacts[id]; }
+        const std::array<unsigned int, 7>& CPoolContacts(ContactType::Id id) const { return m_pool_contacts[id]; }
+
+
 private:
         ///< Schedule an event, if the event should take place on simDay, it is executed right away.
         void ScheduleEvent(unsigned int simDay, const Event &event);
@@ -190,14 +211,19 @@ private:
         void UpdateEvents(unsigned int simDay);
 
 private:
-        float        m_age; ///< The age.
         unsigned int m_id;  ///< The id.
+        float        m_age; ///< The age.
+        unsigned int m_profession; ///< The profession (worker, other, teacher)
+
+        ///< Ids (school, work, etc) of pools you belong to Id value 0 means you do not belong to any
+        ///< pool of that type (e.g. school and work are mutually exclusive).
+        ContactType::IdSubscriptArray<std::array<unsigned int, 7>> m_pool_ids;
+
+        ContactType::IdSubscriptArray<std::array<unsigned int, 7>> m_pool_durations;
+
+        ContactType::IdSubscriptArray<std::array<unsigned int, 7>> m_pool_contacts;
 
         std::unique_ptr<Vaccine> m_vaccine; ///< Vaccination profile, can be empty
-
-        ///< Ids (school, workplace, etc) of pools you belong to Id value 0 means you do not belong to any
-        ///< pool of that type (e.g. schools and workplaces are mutually exclusive).
-        ContactType::IdSubscriptArray<unsigned int> m_pool_ids;
 
         ///< Factor with which to scale contact rate in community pools for this individual
         double m_individual_contact_factor;

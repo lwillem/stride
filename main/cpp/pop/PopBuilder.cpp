@@ -21,6 +21,7 @@
 
 #include "contact/ContactType.h"
 #include "contact/IdSubscriptArray.h"
+#include "pop/Person.h"
 #include "pop/Population.h"
 #include "pop/SurveyManager.h"
 #include "util/FileSys.h"
@@ -72,49 +73,58 @@ shared_ptr<Population> PopBuilder::MakePersons(shared_ptr<Population> pop)
 
     string line;
     getline(popFile, line); // step over file header
-    auto headers   = Split(line, ",");
+    auto headers   = Split(line, ";");
     //
-    bool has_extra_column = headers.size() == 7;
+    bool has_extra_column = headers.size() == 8;
     string extra_id = "";
-    if (has_extra_column) { extra_id = Trim(ToString(headers[6]),ToString('"')); }
+    if (has_extra_column) { extra_id = Trim(ToString(headers[7]),ToString('"')); }
     bool household_cluster_id = extra_id == "household_cluster_id";
     bool collectivity_id = extra_id == "collectivity_id";
     const unsigned int defaultHouseholdClusterId = 0;
     const unsigned int defaultCollectivityId = 0;
 
     // Read lines from file
-    unsigned int person_id = 0U;
+    
 
     while (getline(popFile, line)) {
-        const auto values               = Split(line, ",");
+        const auto values               = Split(line, ";");
         const auto age                  = static_cast<unsigned int>(IntFromString(values[0]));
-        const auto householdId          = static_cast<unsigned int>(IntFromString(values[1]));
-        const auto schoolId             = static_cast<unsigned int>(IntFromString(values[2]));
-        const auto workplaceId          = static_cast<unsigned int>(IntFromString(values[3]));
-        const auto communityWeekendId   = static_cast<unsigned int>(IntFromString(values[4]));
-        const auto communityWeekdayId   = static_cast<unsigned int>(IntFromString(values[5]));
+        const auto person_id            = static_cast<unsigned int>(IntFromString(values[1]));
+        const auto profession           = static_cast<unsigned int>(IntFromString(values[2]));
+        const auto householdId          = static_cast<unsigned int>(IntFromString(values[3]));
+        const auto schoolId             = static_cast<unsigned int>(IntFromString(values[4]));
+        const auto workplaceId          = static_cast<unsigned int>(IntFromString(values[5]));
+        const auto communityWeekendId   = static_cast<unsigned int>(IntFromString(values[6]));
+        const auto communityWeekdayId   = static_cast<unsigned int>(IntFromString(values[7]));
 
         unsigned int householdClusterId = defaultHouseholdClusterId;
         unsigned int collectivityId = defaultCollectivityId;
-        if (values.size() == 7) {
+        if (values.size() == 9) {
             if (household_cluster_id) {
-                householdClusterId = static_cast<unsigned int>(IntFromString(values[6]));
+                householdClusterId = static_cast<unsigned int>(IntFromString(values[8]));
             } else if (collectivity_id) {
-                collectivityId = static_cast<unsigned int>(IntFromString(values[6]));
+                collectivityId = static_cast<unsigned int>(IntFromString(values[8]));
             }
         }
 
-        pop->CreatePerson(person_id, age, householdId, schoolId, workplaceId, communityWeekendId,
+        pop->CreatePerson(person_id, age, profession, householdId, schoolId, workplaceId, communityWeekendId,
                           communityWeekdayId, householdClusterId, collectivityId);
-        ++person_id;
+       
     }
+
 
     popFile.close();
 
-    m_stride_logger->trace("Done building default population.");
-
     return pop;
 }
+
+std::string RemoveQuotes(const std::string& input) {
+                if (!input.empty() && input.front() == '"' && input.back() == '"') {
+                return input.substr(1, input.size() - 2);
+                }
+                return input;
+                }
+
 
 shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
 {
@@ -127,18 +137,23 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
         // Determine maximum pool ids in population.
         // --------------------------------------------------------------
         IdSubscriptArray<unsigned int> maxIds{0U};
+
         for (const auto& p : *pop) {
-                for (Id typ : IdList) {
+                for (Id typ : IdList) {    
+                        if (typ != Id::OtherHouse && typ != Id::RestoCafe && typ != Id::OtherPlace && typ != Id::Transport) {
                         maxIds[typ] = max(maxIds[typ], p.GetPoolId(typ));
+                        }
+
                 }
         }
         // --------------------------------------------------------------
         // Initialize poolSys with empty ContactPools (even for Id=0).
         // --------------------------------------------------------------
         for (Id typ : IdList) {
+                if (typ != Id::OtherHouse && typ != Id::RestoCafe && typ != Id::OtherPlace && typ != Id::Transport) {
                 for (unsigned int i = 1; i < maxIds[typ] + 1; i++) {
                         pop->RefPoolSys().CreateContactPool(typ);
-                }
+                }}
         }
 
         // --------------------------------------------------------------
@@ -150,14 +165,105 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
         // belongs, per type, to the pool with subscript p.GetPoolId(type).
         // Defensive measure: we have a pool for Id 0 and leave it empty.
         // --------------------------------------------------------------
+        
+        std::map<int, Person*> id_pointer_persons;
+        
         for (auto& p : *pop) {
+                unsigned int person_id = p.GetId();
+                id_pointer_persons.emplace(person_id, &p);
+
                 for (Id typ : IdList) {
+                        if (typ != Id::OtherHouse && typ != Id::RestoCafe && typ != Id::OtherPlace && typ != Id::Transport) {
                         const auto poolId = p.GetPoolId(typ);
                         if (poolId > 0) {
                                 pop->RefPoolSys().RefPools(typ)[poolId].AddMember(&p);
                         }
-                }
+                }}
+                
         }
+
+        const auto allowed_subpools_communities = m_config.get<bool>("run.subpools_community_used");
+        const auto fileName = m_config.get<string>("run.subpools_community_file");
+        m_stride_logger->info("Building subpools from file {}.", fileName);
+        const auto use_install_dirs = m_config.get<bool>("run.use_install_dirs");
+        const auto filePath         = (use_install_dirs) ? FileSys::GetDataDir() /= fileName : filesys::path(fileName);
+        if (!is_regular_file(filePath)) {
+        throw runtime_error(string(__func__) + "> subpools community file " + filePath.string() + " not present.");
+        }
+
+        if (allowed_subpools_communities) {
+    
+                ifstream subpoolsCommunityFile;
+                subpoolsCommunityFile.open(filePath.string());
+                if (!subpoolsCommunityFile.is_open()) {
+                throw runtime_error(string(__func__) + "> Error opening new community file " + filePath.string());
+                }
+
+
+
+                string line;
+                getline(subpoolsCommunityFile, line); // step over file header
+                auto headers   = Split(line, ";");
+
+                int line_number = 1;
+
+                while (getline(subpoolsCommunityFile, line)) {
+                const auto values               = Split(line, ";");
+                 
+        const auto person_id = static_cast<unsigned int>(IntFromString(values[0]));
+        const auto subpool_id = static_cast<unsigned int>(IntFromString(values[1]));
+        const std::string& location = values[2];
+        const auto day_week = static_cast<unsigned int>(IntFromString(values[3]));
+        const auto duration = static_cast<unsigned int>(IntFromString(values[4]));
+                          
+                ContactType::Id typ = ToId(location);
+
+                if (line_number < 5) {
+                maxIds[typ] = subpool_id;
+                        } 
+                if (line_number == 5) {
+                // --------------------------------------------------------------
+        // Initialize poolSys with empty ContactPools (even for Id=0).
+        // --------------------------------------------------------------
+                for (Id typ : IdList) {
+                        if (typ == Id::OtherHouse || typ == Id::RestoCafe || typ == Id::OtherPlace || typ == Id::Transport) {
+                                for (unsigned int i = 1; i < maxIds[typ] + 1; i++) {
+                                        
+                                pop->RefPoolSys().CreateContactPool(typ);
+                }}}
+
+                }
+
+                if (line_number > 4) {
+                              
+                Person* p=id_pointer_persons[person_id];
+                               
+                if (subpool_id > 0) {
+                
+                pop->RefPoolSys().RefPools(typ)[subpool_id].SetDayWeek(day_week);
+                pop->RefPoolSys().RefPools(typ)[subpool_id].AddMember(p);
+                }
+                
+                Person& person = *p;
+
+                person.PoolIds(typ)[day_week] = subpool_id;
+                                
+                person.PoolDurations(typ)[day_week] = duration;
+
+                }
+
+                line_number++;
+                
+                }
+
+                subpoolsCommunityFile.close();
+       
+        }
+        
+
+       
+m_stride_logger->info("Building population ready");
+        
 
 
         return pop;

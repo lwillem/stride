@@ -54,6 +54,9 @@ private:
         /// Get the disease configuration data.
         boost::property_tree::ptree ReadDiseasePtree();
 
+        /// Get the pool characteristics data.
+        boost::property_tree::ptree ReadPoolCharacteristicsPtree();
+
 private:
         boost::property_tree::ptree m_config; ///< Run config in ptree.
 };

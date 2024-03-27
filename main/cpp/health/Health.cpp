@@ -48,7 +48,6 @@ Health::Health(unsigned short int start_infectiousness, unsigned short int start
 			m_end_infectiousness;
 }
 
-
 void Health::StartInfection(unsigned int id_index_case, unsigned int id_infector, double relative_infectiousness)
 {
         AssertThrow(m_status == HealthStatus::Susceptible, "Inconsistent Health change", nullptr);
@@ -58,6 +57,8 @@ void Health::StartInfection(unsigned int id_index_case, unsigned int id_infector
         m_id_infector   = id_infector;
         m_relative_infectiousness = relative_infectiousness;
 }
+
+
 
 bool Health::NumberDaysSymptomatic(unsigned int days_before) const
 {

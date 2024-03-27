@@ -45,9 +45,13 @@ endif
 #============================================================================
 #   MACRO definitions to pass on to cmake
 #============================================================================
-CMAKE_ARGS += -DCMAKE_GENERATOR="Unix Makefiles"
+#============================================================================
+#   MACRO definitions to pass on to cmake
+#============================================================================
+CXXFLAGS += -g  # Voeg deze regel toe voor debug-informatie
+CMAKE_ARGS += -DCMAKE_GENERATOR="Unix Makefiles" -DCMAKE_CXX_FLAGS:STRING="$(CXXFLAGS)"
 ifneq ($(CMAKE_C_COMPILER),)
-	CMAKE_ARGS += -DCMAKE_C_COMPILER:FILEPATH=$(CMAKE_C_COMPILER)
+    CMAKE_ARGS += -DCMAKE_C_COMPILER:FILEPATH=$(CMAKE_C_COMPILER)
 endif
 ifneq ($(CMAKE_BUILD_TYPE),)
 	CMAKE_ARGS += -DCMAKE_BUILD_TYPE:STRING=$(CMAKE_BUILD_TYPE)

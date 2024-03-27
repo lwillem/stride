@@ -74,8 +74,11 @@ private:
         /// \return     The requested reference.
         util::SegmentedVector<ContactPool>& RefPools(ContactType::Id id) { return m_sys[id]; }
 
+        unsigned int currentPoolIds(ContactType::Id id) {return m_currentContactPoolId[id]; }
+
         friend class PopBuilder;
         friend class Sim;
+        friend class PoolCharacteristicsSeeder;
 
 private:
         /// The contact pool counters (one per type id) for assigning pool UIDs. Counters
@@ -92,7 +95,7 @@ private:
         /// each Id contains a SegmentedVector with the ContactPools for that ContactType::Id.
         /// We use the SegmentedVector not to run in re-allocations and to be able to use
         /// pointers into the SegmentedVector.
-        ContactType::IdSubscriptArray<util::SegmentedVector<ContactPool>> m_sys;
+        ContactType::IdSubscriptArray<util::SegmentedVector<ContactPool>> m_sys; 
 };
 
 } // namespace stride
