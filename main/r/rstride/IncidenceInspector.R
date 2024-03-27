@@ -174,16 +174,16 @@ inspect_incidence_data <- function(project_dir, bool_add_param=TRUE)
   
   ## AGE-SPECIFIC PLOTS ####
   # .rstride$create_pdf(project_dir,'incidence_hospital_age',width = 14, height = 14)
-  par(mar=c(5,4,4,2),mfrow=c(3,3))
+  par(mar=c(5,4,4,2),mfrow=c(4,3))
   i_age <- 4
   names(data_incidence_sel)
   col_ind_hosp_age <- which(grepl('hospital_admissions',names(hosp_adm_data)))
-  
-  for(i_age in 1:9){
+
+  for(i_age in 1:10){
     
     data_incidence_sel <- data_incidence_all
     for(i_col in c('new_hospital_admissions','new_infections')){
-      data_incidence_sel[,i_col] <- data_incidence_sel[,grepl(paste0(i_col,'_age',i_age),names(data_incidence_sel))]
+      data_incidence_sel[,i_col] <- data_incidence_sel[,grepl(paste0(i_col,'_age',i_age,"$"),names(data_incidence_sel))]
     }
     
     hosp_adm_data_sel <- hosp_adm_data
@@ -197,10 +197,14 @@ inspect_incidence_data <- function(project_dir, bool_add_param=TRUE)
                         input_opt_design,
                         prevalence_ref,
                         bool_add_param,
-                        bool_only_hospital_adm = TRUE)
+                        bool_only_hospital_adm = TRUE,
+                        bool_add_legend = FALSE)
     title(paste('AG',i_age))
   }
   
+   plot(0,col=0,axes = FALSE,xlab='',ylab='')
+   add_legend_hosp(data.frame(H = 'blue',D = 'black'))
+
   dev.off()
   
   
@@ -215,7 +219,8 @@ plot_incidence_data <- function(data_incidence_sel,project_summary,
                                 bool_add_axis4 = TRUE,
                                 bool_only_hospital_adm = FALSE,
                                 bool_seroprev_limited = FALSE,
-                                bool_add_doubling_time = FALSE){
+                                bool_add_doubling_time = FALSE,
+                                bool_add_legend = TRUE){
 
   if(nrow(data_incidence_sel)==0){
     return(NULL)
@@ -242,8 +247,12 @@ plot_incidence_data <- function(data_incidence_sel,project_summary,
     pcolor$alpha <- 0.2
   }
   
-  ## FIX FOR PLOTTING: Set all values for the last sim_day to NA
-  data_incidence_sel[data_incidence_sel$sim_date %in% max(data_incidence_sel$sim_date,na.rm=T),] <- NA
+  ## FIX FOR PLOTTING: Set all values for the last sim_day per exp_id to NA
+  db_max_sim_day <- aggregate(sim_date ~ exp_id, data = data_incidence_sel,max)
+  # find corresponding pairs by making a string <exp_id sim_date> and find matching strings
+  bool_NA <- paste(data_incidence_sel$exp_id,data_incidence_sel$sim_date) %in% 
+              paste(db_max_sim_day$exp_id,db_max_sim_day$sim_date)
+  data_incidence_sel[bool_NA,] <- NA
   
   # set y-lim
   y_lim <- range(0,pretty(max(hosp_adm_data$num_adm,na.rm=T)*1.1),max(data_incidence_sel$new_hospital_admissions,na.rm=T),na.rm=T)
@@ -262,7 +271,9 @@ plot_incidence_data <- function(data_incidence_sel,project_summary,
   add_y_axis(y_lim)
   points(hosp_adm_data$date,hosp_adm_data$num_adm,col=pcolor$D,pch=pcolor$pch)
   add_intervention_dates(project_summary)
-  add_legend_hosp(pcolor)
+  if(bool_add_legend){
+    add_legend_hosp(pcolor)
+  }
   
   # add config tag
   adm_mean_final <- aggregate(new_hospital_admissions ~ sim_date + config_id, data=data_incidence_sel,mean)

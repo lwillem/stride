@@ -221,8 +221,8 @@ get_population_data <- function(country,year,age_breaks=NA){
 # function to combine the reported hospital admissions and age-specific proportions over time
 get_hospital_incidence_age <- function(age_breaks_str = NA){
 
-  # if function argument is NA => use 10-year age groups from 0 up to 80+
-  age_breaks_str <- ifelse(is.na(age_breaks_str),paste(seq(0,80,10),collapse=','),age_breaks_str)
+  # if function argument is NA => use 10-year age groups from 0 up to 90+
+  age_breaks_str <- ifelse(is.na(age_breaks_str),paste(seq(0,90,10),collapse=','),age_breaks_str)
 
   ## hospital admissions by age----
   # note: we cannot include this data in the public repository (yet)
@@ -240,10 +240,6 @@ get_hospital_incidence_age <- function(age_breaks_str = NA){
   # reformat
   ref_data   <- t(ref_data[,-1])
   
-  # select age groups with 80+ 
-  #TODO: make flexible
-  ref_data[,9] <- ref_data[,9] + ref_data[,10]
-  ref_data     <- ref_data[,-10]
   
   # get ages and dates
   age_min    <- as.numeric(unlist(strsplit(age_breaks_str,",")))
