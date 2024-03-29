@@ -111,7 +111,8 @@ parse_event_logfile <- function(event_logfile,exp_id,
                              'start_infectiousness','end_infectiousness','start_symptoms','end_symptoms',
                              'hospital_admission_start',
                              'hospital_admission_end',
-                             'infector_is_symptomatic','part_rel_infectiousness','part_rel_susceptibility')
+                             'infector_is_symptomatic','part_rel_infectiousness','part_rel_susceptibility',
+                             'fctor_ventilation','is_airborne')
   }
   
   rstride_out$data_transmission  <- reformat_log_data(event_logfile = event_logfile,

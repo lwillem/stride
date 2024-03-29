@@ -442,30 +442,30 @@ if(nrow(project_summary) != nrow(ref_project_summary)){
 ref_project_summary$holidays_file <- basename(ref_project_summary$holidays_file)
 project_summary$holidays_file     <- basename(project_summary$holidays_file)
 
+names(project_summary)[!names(project_summary) %in% names(ref_project_summary)]
 
 ## COMPARE SUMMARY ----
+# remove new rows
+select_project_summary <- project_summary[project_summary$gtester_label %in% unique(ref_project_summary$gtester_label),]
 
-if(!setequal(project_summary[,!grepl('_id',names(project_summary))],
+# check columns
+if(all(dim(select_project_summary) == dim(ref_project_summary))){
+  col_changed <- which(colSums(select_project_summary != ref_project_summary) > 0)
+  smd_print('column(s) with changes:', paste(names(col_changed),collapse = ','),WARNING = T)
+} else{
+  smd_print(paste(c('Summary dimensions changed:',setdiff(names(select_project_summary),names(ref_project_summary))),collapse='\n\t\t'),WARNING = T)
+}
+
+# remove new column names
+select_project_summary <- project_summary[,names(project_summary) %in% names(ref_project_summary)]
+
+# remove redundant exp
+ref_project_summary <- ref_project_summary[,names(ref_project_summary) %in% names(select_project_summary)]
+
+if(!setequal(select_project_summary[,!grepl('_id',names(select_project_summary))],
              ref_project_summary[,!grepl('_id',names(ref_project_summary))])){ 
   
   smd_print("SUMMARY CHANGED",WARNING = T)
-  
-  # remove new rows
-  select_project_summary <- project_summary[project_summary$gtester_label %in% unique(ref_project_summary$gtester_label),]
-  
-  # check columns
-  if(all(dim(select_project_summary) == dim(ref_project_summary))){
-    col_changed <- which(colSums(select_project_summary != ref_project_summary) > 0)
-    smd_print('column(s) with changes:', paste(names(col_changed),collapse = ','),WARNING = T)
-  } else{
-    smd_print(paste(c('Summary dimensions changed:',setdiff(names(select_project_summary),names(ref_project_summary))),collapse='\n\t\t'),WARNING = T)
-  }
-  
-  # remove new column names
-  select_project_summary <- project_summary[,names(project_summary) %in% names(ref_project_summary)]
-  
-  # remove redundant exp
-  ref_project_summary <- ref_project_summary[,names(ref_project_summary) %in% names(select_project_summary)]
   
   # get difference (excluding _id columns)
   diff_summary    <- setdiff(select_project_summary[,!grepl('_id',names(select_project_summary))],

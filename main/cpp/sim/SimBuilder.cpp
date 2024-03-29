@@ -113,6 +113,7 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
 		// --------------------------------------------------------------
         ImmunitySeeder(m_config, sim->m_rn_man_ptr).Seed(sim->m_population);
 
+        std::cout << "Seed population with infected cases." << std::endl;
         // --------------------------------------------------------------
         // Register infected seeds.
         // --------------------------------------------------------------

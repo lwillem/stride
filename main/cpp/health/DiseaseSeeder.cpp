@@ -69,7 +69,7 @@ void DiseaseSeeder::ImportInfectedCases(std::shared_ptr<Population> pop, unsigne
 
                         //TODO: make use of Infector template functions
                         if (log_level >= EventLogMode::Id::Transmissions) {
-                                logger->info("[PRIM] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}",
+                                logger->info("[PRIM] {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}",
                                 		p.GetId(), -1, p.GetAge(), -1, -1, simDay, p.GetId(),
 										p.GetHealth().GetStartInfectiousness(),p.GetHealth().GetEndInfectiousness(),
 										p.GetHealth().GetStartSymptomatic(),p.GetHealth().GetEndSymptomatic(),
@@ -77,7 +77,8 @@ void DiseaseSeeder::ImportInfectedCases(std::shared_ptr<Population> pop, unsigne
 										endHospitalisation,
                                         -1,
 										p.GetHealth().GetRelativeInfectiousness(),
-										p.GetHealth().GetRelativeSusceptibility());
+										p.GetHealth().GetRelativeSusceptibility(),
+										0,false);
 
                         } else if(log_level == EventLogMode::Id::Incidence){
                         	{
