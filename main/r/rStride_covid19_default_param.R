@@ -34,14 +34,14 @@ get_covid19_default_param <- function(){
                 num_seeds                     = 10,
                 num_participants_survey       = 30,
                 num_infected_seeds            = 263,
-                disease_config_file           = "disease_covid19_lognorm.xml",
-                population_file               = "pop_belgium11M_c500_teachers_censushh.csv",
-                age_contact_matrix_file       = "contact_matrix_flanders_conditional_teachers.xml",
+                disease_config_file           = "data/disease_covid19_lognorm.xml",
+                population_file               = "data/pop_belgium11M_c500_teachers_censushh.csv",
+                age_contact_matrix_file       = "data/contact_matrix_flanders_conditional_teachers.xml",
                
                 # update 2024-01-12: shifted from 17/2 to 16/2 because infected cases are now introduced on day 0 instead of -1 
                 start_date                    = '2020-02-16', 
                 # holidays_file                 = 'calendar_belgium_2020_covid19_exit_school_adjusted.csv',
-                holidays_file                 = 'calendar_belgium_2019_2021.csv',
+                holidays_file                 = 'data/calendar_belgium_2019_2021.csv',
                 cnt_intensity_householdCluster = 0,
                
                 # tracing 

@@ -89,7 +89,7 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         // Initialize the age-related contact profiles.
         // --------------------------------------------------------------
         std::cout << "Initialize the age-related contact profiles." << std::endl;
-        const auto ageContactPt = ReadAgeContactPtree();
+        const auto ageContactPt = FileSys::ReadPtreeFile(m_config.get<string>("run.age_contact_matrix_file", "data/contact_matrix.xml"));
         for (Id typ : IdList) {
                 if (typ != Id::OtherHouse && typ != Id::RestoCafe && typ != Id::OtherPlace && typ != Id::Transport){
                 sim->m_contact_profiles[typ] = AgeContactProfile(typ, ageContactPt);
@@ -101,7 +101,7 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         // Initialize the transmission profile (fixes rates).
         // --------------------------------------------------------------
         std::cout << "Initialize the transmission profile (fixes rates)." << std::endl;
-        const auto diseasePt = ReadDiseasePtree();
+        const auto diseasePt = FileSys::ReadPtreeFile(m_config.get<string>("run.disease_config_file"));
         sim->m_transmission_profile.Initialize(m_config, diseasePt);
         
 
@@ -160,7 +160,7 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         // --------------------------------------------------------------
         if(sim->m_airborne_transmission){
             std::cout << "Fill in characteristics in the contactPoolSys for airborne transmission." << std::endl;
-        	const auto poolCharacteristicsPt = ReadPoolCharacteristicsPtree();
+        	const auto poolCharacteristicsPt = FileSys::ReadPtreeFile(m_config.get<string>("run.pool_characteristics_file"));
         	PoolCharacteristicsSeeder(m_config, sim->m_rn_man_ptr).Seed(sim->m_population, poolCharacteristicsPt);
         }
         // --------------------------------------------------------------
@@ -168,27 +168,5 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         // --------------------------------------------------------------
         return sim;
 }
-
-ptree SimBuilder::ReadAgeContactPtree()
-{
-        const auto fn = m_config.get<string>("run.age_contact_matrix_file", "contact_matrix.xml");
-        const auto fp = m_config.get<bool>("run.use_install_dirs") ? FileSys::GetDataDir() /= fn : filesys::path(fn);
-        return FileSys::ReadPtreeFile(fp);
-}
-
-ptree SimBuilder::ReadDiseasePtree()
-{
-        const auto fn = m_config.get<string>("run.disease_config_file");
-        const auto fp = m_config.get<bool>("run.use_install_dirs") ? FileSys::GetDataDir() /= fn : filesys::path(fn);
-        return FileSys::ReadPtreeFile(fp);
-}
-
-ptree SimBuilder::ReadPoolCharacteristicsPtree()
-{
-        const auto fn = m_config.get<string>("run.pool_characteristics_file");
-        const auto fp = m_config.get<bool>("run.use_install_dirs") ? FileSys::GetDataDir() /= fn : filesys::path(fn);
-        return FileSys::ReadPtreeFile(fp);
-}
-
 
 } // namespace stride

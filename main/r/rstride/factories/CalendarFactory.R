@@ -563,7 +563,7 @@ integrate_parameters_in_calendar <- function(config_exp,
   }
   
   # # else, modify calendar
-  file_name_exp <- ifelse(bool_maintain_file_name,config_exp$holidays_file,file.path('data',config_exp$holidays_file))
+  file_name_exp <- ifelse(bool_maintain_file_name,config_exp$holidays_file,config_exp$holidays_file)
   # config_exp$holidays_file <- create_calendar_file(file_name = file_name, show_plots = T)
   
   if(file.exists(file_name_exp)){
@@ -575,7 +575,7 @@ integrate_parameters_in_calendar <- function(config_exp,
       config_exp$holidays_file <- file_name_new
     }
   } else{
-    config_exp$holidays_file <- create_calendar_file(file_name = file_name_new, show_plots = T)
+    config_exp$holidays_file <- create_calendar_file(file_name = file_name_exp, show_plots = T)
   }
  
   if('distancing_workplace_ratio' %in% names(config_exp)){
@@ -648,9 +648,6 @@ integrate_parameters_in_calendar <- function(config_exp,
                                         bool_singletons= TRUE,
                                         erase_category = erase_category)
   }
-  
-  # # fix for calendar path
-  config_exp$holidays_file <- paste0('../',config_exp$holidays_file)
   
   # return list
   return(config_exp)

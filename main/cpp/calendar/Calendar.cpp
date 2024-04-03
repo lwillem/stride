@@ -97,8 +97,8 @@ size_t Calendar::GetYear() const { return m_date.year(); }
 void Calendar::Initialize_csv(const ptree& configPt)
 {
         // Load csv file
-		const auto fileName = configPt.get<string>("run.holidays_file", "holidays_belgium_2019_2021.csv");
-		const filesys::path filePath{FileSys::GetDataDir() /= fileName};
+		const auto fileName = configPt.get<string>("run.holidays_file", "data/holidays_belgium_2019_2021.csv");
+		const filesys::path filePath{fileName};
 		if (!is_regular_file(filePath)) {
 				throw runtime_error(string(__func__) + "> Holidays file " + filePath.string() + " not present.");
 		}

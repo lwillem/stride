@@ -403,11 +403,7 @@ if(!(exists('.rstride'))){
                          exp_design$holidays_file,
                          exp_design$population_file))
   
-  # add the path to the data folder
-  data_dir <- './data'
-  file_names <- file.path(data_dir,file_names)
-  
-  # check the existance of the files
+  # check the existence of the files
   file_not_exist_bool   <- !file.exists(file_names)
   
   # if any file missing => return FALSE
@@ -450,7 +446,7 @@ if(!(exists('.rstride'))){
     for(disease_config_file in unique(exp_design$disease_config_file)){
       
       # load disease config file
-      config_disease    <- xmlToList(file.path('data',disease_config_file))
+      config_disease    <- xmlToList(disease_config_file)
       
       # get R0 limit    
       fit_r0_limit <- as.numeric(config_disease$label$fit_r0_limit)
@@ -493,14 +489,10 @@ if(!(exists('.rstride'))){
   # select unique combinations of population file and seeding rate
   unique_exp_design <- data.frame(population_file= unique(exp_design[,c('population_file')]))
   
-  # add the path to the data folder
-  data_dir <- './data'
-  unique_exp_design$population_file_full <- file.path(data_dir,unique_exp_design$population_file)
-  
   # count lines
   unique_exp_design$population_size <- NA
   for(i_file in 1:nrow(unique_exp_design)){
-    file_connnection                         <- file(unique_exp_design$population_file_full[i_file]) 
+    file_connnection                         <- file(unique_exp_design$population_file[i_file]) 
     unique_exp_design$population_size[i_file] <- length(readLines(file_connnection)) - 1              # -1 for header  
     close(file_connnection)
   }

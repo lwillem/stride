@@ -49,20 +49,18 @@ int main(int argc, char** argv)
                 CmdLine cmd("stride", ' ', "3.0");
 
                 string sc = "Specifies the run configuration parameters. The format may be  is -c <file> ."
-                            "\nDefaults to -c file=run_default.xml";
-                ValueArg<string> configArg("c", "config", sc, false, "run_default.xml", "CONFIGURATION", cmd);
+                            "\nDefaults to -c file=./config/run_default.xml";
+                ValueArg<string> configArg("c", "config", sc, false, "config/run_default.xml", "CONFIGURATION", cmd);
 
 
                 cmd.parse(argc, static_cast<const char* const*>(argv));
 
                 // -----------------------------------------------------------------------------------------
-                // Get configuration and path with overrides (if any).
+                // Get configuration.
                 // -----------------------------------------------------------------------------------------
                 auto  config = configArg.getValue();
-                ptree configPt;
+                ptree configPt = FileSys::ReadPtreeFile(config);;
 
-                const filesys::path configPath = FileSys::GetConfigDir() /= config;
-                configPt = FileSys::ReadPtreeFile(configPath);
 
                 // -----------------------------------------------------------------------------------------
                 // config and run simulation in cli

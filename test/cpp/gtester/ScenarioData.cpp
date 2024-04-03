@@ -124,7 +124,7 @@ tuple<ptree, unsigned int, double> ScenarioData::Get(string tag)
 			pt.put("run.num_daily_imported_cases", 10U);
 	}
 	if (tag == "covid19_distancing") {
-			pt.put("run.holidays_file","calendar_gtester_covid19_distancing.csv");
+			pt.put("run.holidays_file","data/calendar_gtester_covid19_distancing.csv");
 			pt.put("run.cnt_reduction_workplace",1);
 			pt.put("run.cnt_reduction_other",1);
 //			pt.put("run.holidays_file","calendar_belgium_2020_covid19_exit_school_adjusted.csv");
@@ -135,20 +135,20 @@ tuple<ptree, unsigned int, double> ScenarioData::Get(string tag)
 
 	}
 	if (tag == "covid19_age_15min") {
-			pt.put("run.disease_config_file", "disease_covid19_age_15min.xml");
-			pt.put("run.age_contact_matrix_file", "contact_matrix_flanders_conditional_teachers_15min.xml");
+			pt.put("run.disease_config_file", "data/disease_covid19_age_15min.xml");
+			pt.put("run.age_contact_matrix_file", "data/contact_matrix_flanders_conditional_teachers_15min.xml");
 	}
 	if (tag == "covid19_householdclusters") {
-			pt.put("run.holidays_file", "calendar_belgium_2020_covid19_exit_schoolcategory_adjusted_hhclustering.csv");
+			pt.put("run.holidays_file", "data/calendar_belgium_2020_covid19_exit_schoolcategory_adjusted_hhclustering.csv");
 //			pt.put("run.holidays_file", "calendar_belgium_2020_covid19_exit_schoolcategory_adjusted.csv");
 			pt.put("run.start_date", "2020-05-31");
-			pt.put("run.population_file", "pop_belgium600k_c500_teachers_censushh_extended3_size2.csv");
+			pt.put("run.population_file", "data/pop_belgium600k_c500_teachers_censushh_extended3_size2.csv");
 			pt.put("run.event_log_level", "Transmissions");
 	}
 	// set default tracing parameters
 	if (tag == "covid19_tracing" || tag == "covid19_tracing_all") {
 		    pt.put("run.event_log_level", "Transmissions");
-			pt.put("run.holidays_file", "calendar_belgium_2020_covid19_exit_schoolcategory_adjusted.csv");
+			pt.put("run.holidays_file", "data/calendar_belgium_2020_covid19_exit_schoolcategory_adjusted.csv");
 			pt.put("run.start_date", "2020-05-31");
 			pt.put("run.detection_probability", 0.5);
 			pt.put("run.tracing_efficiency_household", 1.0);

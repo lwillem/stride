@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <run>
-    <age_contact_matrix_file>contact_matrix_flanders_conditional_teachers.xml</age_contact_matrix_file>
+    <age_contact_matrix_file>data/contact_matrix_flanders_conditional_teachers.xml</age_contact_matrix_file>
     <event_log_level>Transmissions</event_log_level>
     <event_output_file>true</event_output_file>
-    <disease_config_file>disease_measles_adaptive_behavior.xml</disease_config_file>
-    <holidays_file>holidays_none.csv</holidays_file>
+    <disease_config_file>data/disease_measles_adaptive_behavior.xml</disease_config_file>
+    <holidays_file>data/holidays_none.csv</holidays_file>
 	<immunity_profile>None</immunity_profile>
     <immunity_rate>0.8</immunity_rate>
     <num_days>50</num_days>
@@ -15,9 +15,9 @@
     <output_prefix></output_prefix>
     <output_summary>false</output_summary>
 	<pool_characteristics_file>pool_characteristics.xml</pool_characteristics_file>
-    <population_file>pop_belgium10k_c500_teachers_censushh.csv</population_file>
+    <population_file>data/pop_belgium10k_c500_teachers_censushh.csv</population_file>
     <rng_seed>2020</rng_seed>
-    <r0>11</r0>
+    <r0>11</r0> 
     <seeding_age_max>99</seeding_age_max>
     <seeding_age_min>1</seeding_age_min>
     <num_infected_seeds>120</num_infected_seeds>

@@ -85,11 +85,11 @@ string RunConfigManager::CreateTestsInfluenza()
         return R"###(
 <?xml version="1.0" encoding="utf-8"?>
 <run>
-        <age_contact_matrix_file>contact_matrix_flanders_conditional_teachers.xml</age_contact_matrix_file>
+        <age_contact_matrix_file>data/contact_matrix_flanders_conditional_teachers.xml</age_contact_matrix_file>
         <event_log_level>None</event_log_level>
         <event_output_file>false</event_output_file>
-        <disease_config_file>disease_influenza.xml</disease_config_file>
-        <holidays_file>holidays_none.csv</holidays_file>
+        <disease_config_file>data/disease_influenza.xml</disease_config_file>
+        <holidays_file>data/holidays_none.csv</holidays_file>
         <immunity_link_probability>0</immunity_link_probability>
         <immunity_profile>Random</immunity_profile>
         <immunity_rate>0</immunity_rate>
@@ -97,7 +97,7 @@ string RunConfigManager::CreateTestsInfluenza()
         <num_participants_survey>10</num_participants_survey>
         <num_threads>1</num_threads>
         <output_prefix></output_prefix>
-        <population_file>pop_belgium600k_c500_teachers_censushh.csv</population_file>
+        <population_file>data/pop_belgium600k_c500_teachers_censushh.csv</population_file>
         <population_type>default</population_type>
         <rng_seed>4730214</rng_seed>
         <r0>3</r0>
@@ -118,18 +118,18 @@ string RunConfigManager::CreateTestsMeasles()
         return R"###(
 <?xml version="1.0" encoding="utf-8"?>
 <run>
-        <age_contact_matrix_file>contact_matrix_flanders_conditional_teachers.xml</age_contact_matrix_file>
+        <age_contact_matrix_file>data/contact_matrix_flanders_conditional_teachers.xml</age_contact_matrix_file>
         <event_log_level>Transmissions</event_log_level>
         <event_output_file>false</event_output_file>
-        <disease_config_file>disease_measles_adaptive_behavior.xml</disease_config_file>
-        <holidays_file>holidays_belgium_2019_2021.csv</holidays_file>
+        <disease_config_file>data/disease_measles_adaptive_behavior.xml</disease_config_file>
+        <holidays_file>data/holidays_belgium_2019_2021.csv</holidays_file>
         <immunity_rate>0.80000000000000004</immunity_rate>
         <immunity_profile>None</immunity_profile>
         <num_days>50</num_days>
         <num_participants_survey>10</num_participants_survey>
         <num_threads>1</num_threads>
         <output_prefix></output_prefix>
-        <population_file>pop_belgium600k_c500_teachers_censushh.csv</population_file>
+        <population_file>data/pop_belgium600k_c500_teachers_censushh.csv</population_file>
         <population_type>default</population_type>
         <rng_seed>1097253,2387652,9963540,4730214</rng_seed>
         <seeding_age_max>99</seeding_age_max>
@@ -151,11 +151,11 @@ string RunConfigManager::CreateTestsCovid19()
         return R"###(
 <?xml version="1.0" encoding="utf-8"?>
 <run>
-        <age_contact_matrix_file>contact_matrix_flanders_conditional_teachers.xml</age_contact_matrix_file>
+        <age_contact_matrix_file>data/contact_matrix_flanders_conditional_teachers.xml</age_contact_matrix_file>
         <event_log_level>None</event_log_level>
         <event_output_file>false</event_output_file>
-        <disease_config_file>disease_covid19_age.xml</disease_config_file>
-        <holidays_file>holidays_belgium_2019_2021.csv</holidays_file>
+        <disease_config_file>data/disease_covid19_age.xml</disease_config_file>
+        <holidays_file>data/holidays_belgium_2019_2021.csv</holidays_file>
         <immunity_link_probability>0</immunity_link_probability>
         <immunity_profile>Random</immunity_profile>
         <immunity_rate>0</immunity_rate>
@@ -163,7 +163,7 @@ string RunConfigManager::CreateTestsCovid19()
         <num_participants_survey>10</num_participants_survey>
         <num_threads>1</num_threads>
         <output_prefix></output_prefix>
-        <population_file>pop_belgium600k_c500_teachers_censushh.csv</population_file>
+        <population_file>data/pop_belgium600k_c500_teachers_censushh.csv</population_file>
         <population_type>default</population_type>
         <rng_seed>4730214</rng_seed>
         <r0>2.5</r0>

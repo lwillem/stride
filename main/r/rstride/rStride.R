@@ -358,7 +358,7 @@ run_rStride <- function(exp_design               = exp_design,
                        save_config_xml(config_exp, config_exp_filename)
 
                        # run stride (using the C++ Controller)
-                       cmd = paste(stride_bin,config_opt, paste0("../", config_exp_filename))
+                       cmd = paste(stride_bin,config_opt, config_exp_filename)
                        out_dir = output_prefix
                        if(stderr_fn != "") {
                         cmd = paste(cmd, paste0(" 2> ",out_dir,"/",stderr_fn)) 

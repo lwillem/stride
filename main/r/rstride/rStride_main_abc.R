@@ -115,7 +115,7 @@ run_rStride_abc <- function(abc_function_param,
   # config_exp$distancing_community_delay       <- c_str(compliance_delay_community)
   
   # define holiday file with covid-19 lockdown parameters
-  config_exp$holidays_file <- 'calendar_belgium_2020_covid19_exit_school_adjusted.csv'
+  config_exp$holidays_file <- 'data/calendar_belgium_2020_covid19_exit_school_adjusted.csv'
 
   ################################## #
   ## RUN                          ####
@@ -137,7 +137,7 @@ run_rStride_abc <- function(abc_function_param,
    save_config_xml(config_exp, config_exp_filename)
    
    # run stride (using the C++ Controller)
-   cmd = paste(stride_bin,config_opt, paste0("../", config_exp_filename))
+   cmd = paste(stride_bin,config_opt, config_exp_filename)
    system(cmd,ignore.stdout = TRUE)
 
    # load output summary

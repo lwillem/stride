@@ -50,11 +50,11 @@ exp_design_base <- expand.grid(r0                       = 2.5,
                           rng_seed                      = seq(num_seeds),
                           num_participants_survey       = 10,   
                           num_infected_seeds            = 540,
-                          disease_config_file           = 'disease_covid19_age.xml',
-                          population_file               = 'pop_belgium600k_c500_teachers_censushh.csv',
-                          age_contact_matrix_file       = 'contact_matrix_flanders_conditional_teachers.xml',
+                          disease_config_file           = 'data/disease_covid19_age.xml',
+                          population_file               = 'data/pop_belgium600k_c500_teachers_censushh.csv',
+                          age_contact_matrix_file       = 'data/contact_matrix_flanders_conditional_teachers.xml',
                           start_date                    = '2020-03-04',
-                          holidays_file                 = 'holidays_belgium_2019_2021.csv',
+                          holidays_file                 = 'data/holidays_belgium_2019_2021.csv',
 
                           detection_probability          = 0,
                           tracing_efficiency_household   = 0,
@@ -131,7 +131,7 @@ exp_design_daily$gtester_label            <- 'covid_daily'
 
 # distancing ----
 exp_design_dist <- exp_design_base
-exp_design_dist$holidays_file              <- 'calendar_belgium_2020_covid19_exit_school_adjusted.csv'
+exp_design_dist$holidays_file              <- 'data/calendar_belgium_2020_covid19_exit_school_adjusted.csv'
 exp_design_dist$distancing_workplace_ratio <- 0.3;
 exp_design_dist$distancing_workplace_date  <- '2020-03-13';
 exp_design_dist$distancing_workplace_delay <- 3  
@@ -143,14 +143,14 @@ exp_design_dist$gtester_label              <- 'covid_distancing'
 
 # age_15min ----
 exp_design_15min <- exp_design_base
-exp_design_15min$disease_config_file     <- 'disease_covid19_age_15min.xml'
-exp_design_15min$age_contact_matrix_file <- 'contact_matrix_flanders_conditional_teachers_15min.xml'
+exp_design_15min$disease_config_file     <- 'data/disease_covid19_age_15min.xml'
+exp_design_15min$age_contact_matrix_file <- 'data/contact_matrix_flanders_conditional_teachers_15min.xml'
 exp_design_15min$gtester_label           <- 'covid_15min'
 
 # householdCluster ----
 exp_design_hhcl <- exp_design_base
-exp_design_hhcl$population_file       <- 'pop_belgium600k_c500_teachers_censushh_extended3_size2.csv'
-exp_design_hhcl$holidays_file         <- 'calendar_belgium_2020_covid19_exit_schoolcategory_adjusted.csv'
+exp_design_hhcl$population_file       <- 'data/pop_belgium600k_c500_teachers_censushh_extended3_size2.csv'
+exp_design_hhcl$holidays_file         <- 'data/calendar_belgium_2020_covid19_exit_schoolcategory_adjusted.csv'
 # exp_design_hhcl$holidays_file         <- 'calendar_belgium_2020_covid19_exit_schoolcategory_adjusted_hhclustering.csv' # hardcoded ratio of 4/7
 exp_design_hhcl$start_date            <- '2020-05-31'
 exp_design_hhcl$household_clustering_ratio <- 4/7
@@ -162,7 +162,7 @@ exp_design_hhcl$gtester_label         <- 'covid_hhcl'
 # contact tracing ----
 exp_design_cts <- exp_design_base
 exp_design_cts$detection_probability        <- 0.5
-exp_design_cts$holidays_file                <- 'calendar_belgium_2020_covid19_exit_schoolcategory_adjusted.csv'
+exp_design_cts$holidays_file                <- 'data/calendar_belgium_2020_covid19_exit_schoolcategory_adjusted.csv'
 exp_design_cts$start_date                   <- '2020-05-31'
 exp_design_cts$tracing_efficiency_household <- 1.0
 exp_design_cts$tracing_efficiency_other     <- 0.7
@@ -231,25 +231,25 @@ exp_design_fitting_agegroup$disease_susceptibility_agecat <- c('0,18,59,70')
 
 # collectivity ----
 exp_design_collectivity <- exp_design_base
-exp_design_collectivity$population_file              <- 'pop_belgium600k_c500_teachers_censushh_collectivity.csv'
-exp_design_collectivity$age_contact_matrix_file      <- 'contact_matrix_flanders_conditional_teachers_collectivity20.xml'
+exp_design_collectivity$population_file              <- 'data/pop_belgium600k_c500_teachers_censushh_collectivity.csv'
+exp_design_collectivity$age_contact_matrix_file      <- 'data/contact_matrix_flanders_conditional_teachers_collectivity20.xml'
 exp_design_collectivity$gtester_label                <- 'covid_collectivity'
 
 # collectivity population, but in strict isolation
 exp_design_collectivity_isolation <- exp_design_base
-exp_design_collectivity_isolation$population_file    <- 'pop_belgium600k_c500_teachers_censushh_collectivity.csv'
+exp_design_collectivity_isolation$population_file    <- 'data/pop_belgium600k_c500_teachers_censushh_collectivity.csv'
 exp_design_collectivity_isolation$gtester_label      <- 'covid_collectivity_isolation'
 
 # collectivity mixing, default population
 exp_design_collectivity_mixing <- exp_design_base
-exp_design_collectivity_mixing$age_contact_matrix_file  <- 'contact_matrix_flanders_conditional_teachers_collectivity20.xml'
+exp_design_collectivity_mixing$age_contact_matrix_file  <- 'data/contact_matrix_flanders_conditional_teachers_collectivity20.xml'
 exp_design_collectivity_mixing$gtester_label            <- 'covid_collectivity_mixing'
 
 # default param ----
 exp_design_default_param <- exp_design_base
 exp_design_default_param[,names(get_covid19_default_param())] <- get_covid19_default_param()
 exp_design_default_param[,!names(exp_design_default_param) %in% names(exp_design_base)] <- NULL
-exp_design_default_param$population_file              <- 'pop_belgium600k_c500_teachers_censushh.csv'
+exp_design_default_param$population_file              <- 'data/pop_belgium600k_c500_teachers_censushh.csv'
 exp_design_default_param$num_days                     <- 61
 exp_design_default_param$gtester_label                <- 'covid_default_param'
 names(exp_design_base) %in% names(exp_design_default_param)
@@ -283,7 +283,7 @@ exp_design$rng_seed[grepl('covid_fitting',exp_design$gtester_label)] <- exp_desi
 
 
 # # selection? ----
-# exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base'),]
+exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_hosp'),]
 #exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_collectivity','covid_collectivity_isolation','covid_collectivity_mixing'),]
 #exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_fitting_base','covid_fitting_adapt'),]
 #exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_transm','covid_transm_gamma'),]
@@ -410,7 +410,17 @@ data_participants <- .rstride$load_aggregated_output(project_dir,'data_participa
 if(!any(is.na(data_contacts))){
   data_contacts                 <- aggregate(. ~ exp_id,data = data_contacts, mean)
 }
+
+str2id <- function(str){
+  unlist(lapply(str,str2id_base))
+}
+str2id_base <- function(str){
+  str <- tolower(as.character(str))
+  return(sum(as.numeric(factor(unlist(strsplit(str, "")), levels = letters))))
+}
+
 data_participants$survey_type <- as.factor(data_participants$survey_type)
+#data_participants$survey_type <- str2id(data_participants$survey_type)
 data_participants             <- aggregate(. ~ exp_id,data = data_participants, mean)
 
 
@@ -420,7 +430,6 @@ ref_data_incidence   <- readRDS(file='tests/regression_rstride_incidence.rds')
 ref_data_prevalence  <- readRDS(file='tests/regression_rstride_prevalence.rds')
 ref_data_contacts    <- readRDS(file='tests/regression_rstride_contacts.rds')
 ref_data_participants<- readRDS(file='tests/regression_rstride_participants.rds')
-
 
 
 # Do we have to select reference scenarios?
@@ -442,6 +451,13 @@ if(nrow(project_summary) != nrow(ref_project_summary)){
 ref_project_summary$holidays_file <- basename(ref_project_summary$holidays_file)
 project_summary$holidays_file     <- basename(project_summary$holidays_file)
 
+# # make sure numeric parameters are not set as string
+# bool_is_numeric <- suppressWarnings(!is.na(as.numeric(ref_project_summary[1,])))
+# # convert string into numeric
+# for(i_col in which(bool_is_numeric)){
+#   ref_project_summary[,i_col] <- as.numeric(ref_project_summary[,i_col])
+# }
+
 names(project_summary)[!names(project_summary) %in% names(ref_project_summary)]
 
 ## COMPARE SUMMARY ----
@@ -462,15 +478,24 @@ select_project_summary <- project_summary[,names(project_summary) %in% names(ref
 # remove redundant exp
 ref_project_summary <- ref_project_summary[,names(ref_project_summary) %in% names(select_project_summary)]
 
+summary(select_project_summary)
+summary(ref_project_summary)
+select_project_summary$hospital_category_age
+ref_project_summary$hospital_category_age
+
 if(!setequal(select_project_summary[,!grepl('_id',names(select_project_summary))],
              ref_project_summary[,!grepl('_id',names(ref_project_summary))])){ 
   
   smd_print("SUMMARY CHANGED",WARNING = T)
   
+  # identify columns with changes
+  col_changed <- which(colSums(select_project_summary != ref_project_summary) > 0)
+  smd_print('column(s) with changes:', paste(names(col_changed),collapse = ','),WARNING = T)
+  
   # get difference (excluding _id columns)
-  diff_summary    <- setdiff(select_project_summary[,!grepl('_id',names(select_project_summary))],
-                             ref_project_summary[,!grepl('_id',names(select_project_summary))])
-  if(length(diff_summary)>0 && all(dim(select_project_summary) == dim(ref_project_summary))){
+  diff_summary    <- setdiff(select_project_summary[,!(grepl('_id',names(select_project_summary)) | grepl('_file',names(select_project_summary)))],
+                             ref_project_summary[,!(grepl('_id',names(select_project_summary)) | grepl('_file',names(select_project_summary)))])
+  if(length(diff_summary)>0 && all(dim(select_project_summary) == dim(ref_project_summary)) && nrow(diff_summary)>0){
     smd_print('CHANGES: ',paste(names(diff_summary),collapse = ', '),WARNING = T)
     flag <- (select_project_summary[,names(diff_summary)] != ref_project_summary[,names(diff_summary)])
    if(length(diff_summary)>1) {
@@ -498,6 +523,8 @@ if(!setequal(select_project_summary[,!grepl('_id',names(select_project_summary))
       
       par(mfrow=c(1,1),mar=c(8,4,4,2))
     }
+  } else{
+    smd_print('no numerical changes',WARNING = T)
   }
   #print(head(diff_summary))
 } else{
@@ -590,11 +617,10 @@ if(!any(is.na(data_participants))){
     smd_print("PARTICIPANT DATA OK")
   } else{
     smd_print("PARTICIPANT DATA CHANGED!",WARNING = T)
-    stride_diff <- setdiff(data_participants[,sel_col],ref_data_participants[,sel_col])
+    stride_diff <- setdiff(colSums(data_participants[,sel_col]),colSums(ref_data_participants[,sel_col]))
     smd_print(names(stride_diff),WARNING = T)
   }
 }
-
 
 ## COMPARE ABC ----
 ref_rstride_out_abc <- readRDS(file='tests/regression_rstride_out_abc.rds')
