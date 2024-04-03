@@ -56,7 +56,7 @@ public:
 
 public:
         /// Default construction (for population vector).
-        Person() :  m_id(0), m_age(0.0), m_profession(0), m_vaccine(), m_pool_ids(), m_pool_durations(), m_pool_contacts(), m_individual_contact_factor(1.0), m_health(), m_in_pools(), m_is_participant(),
+        Person() :  m_id(0), m_age(0.0), m_profession(0), m_pool_ids(), m_pool_durations(), m_pool_contacts(), m_vaccine(), m_individual_contact_factor(1.0), m_health(), m_in_pools(), m_is_participant(),
 		m_is_tracing_index(false), m_contact_tracing_list(),
         m_isolated(false), m_events() {}
 
@@ -64,7 +64,7 @@ public:
         Person(unsigned int id, float age, unsigned int profession, unsigned int householdId, unsigned int k12SchoolId,unsigned int workplaceId, unsigned int CommunityWeekendId, unsigned int CommunityWeekdayId, 
          unsigned int householdClusterId,
 			   unsigned int collectivityId)
-            : m_age(age), m_profession(profession), m_id(id), m_pool_ids{{householdId},
+            : m_id(id), m_age(age), m_profession(profession), m_pool_ids{{householdId},
           {k12SchoolId},
           {workplaceId},
           {CommunityWeekendId},

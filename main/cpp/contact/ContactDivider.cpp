@@ -33,8 +33,6 @@ shared_ptr<Population> ContactDivider::Divide(shared_ptr<Population> pop, const 
 
 	auto& poolSys = population.CRefPoolSys();
 
-	auto& logger = population.RefEventLogger();
-
 	auto uniform01Number= m_rn_man->at(0U).SampleUniform01();
     
 	for (size_t i = 0; i < population.size(); ++i) {
@@ -47,7 +45,7 @@ shared_ptr<Population> ContactDivider::Divide(shared_ptr<Population> pop, const 
                                        ageContactProfiles[Id::CommunityWeekday];
 
 			double reference_num_contacts_p{profile[EffectiveAge(static_cast<unsigned int>(age))]};
-			int rounded_reference_num_contacts_p = static_cast<int>(round(reference_num_contacts_p));
+			unsigned int rounded_reference_num_contacts_p = static_cast<unsigned int>(round(reference_num_contacts_p));
 
 			unsigned int idOtherHouse = p.CPoolIds(Id::OtherHouse)[day];
 			unsigned int idRestoCafe = p.CPoolIds(Id::RestoCafe)[day];

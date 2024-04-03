@@ -103,7 +103,6 @@ protected:
         std::string                     m_output_prefix;    ///< Prefix to output (name prefix or prefix dir)
         util::Stopwatch                 m_run_clock;        ///< Stopwatch for timing the computation.
         std::shared_ptr<spdlog::logger> m_stride_logger;    ///< General logger.
-        bool                            m_use_install_dirs; ///< Working dir or install dir mode.
 
         std::shared_ptr<Sim>            m_simulator;
 };

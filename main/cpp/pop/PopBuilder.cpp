@@ -59,8 +59,7 @@ shared_ptr<Population> PopBuilder::MakePersons(shared_ptr<Population> pop)
     const auto fileName = m_config.get<string>("run.population_file");
     m_stride_logger->info("Building default population from file {}.", fileName);
 
-    const auto use_install_dirs = m_config.get<bool>("run.use_install_dirs");
-    const auto filePath         = (use_install_dirs) ? FileSys::GetDataDir() /= fileName : filesys::path(fileName);
+    const auto filePath         = FileSys::GetDataDir() /= fileName ;
     if (!is_regular_file(filePath)) {
         throw runtime_error(string(__func__) + "> Population file " + filePath.string() + " not present.");
     }
@@ -202,8 +201,7 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
 
         const auto fileName = m_config.get<string>("run.subpools_community_file");
         m_stride_logger->info("Building subpools from file {}.", fileName);
-        const auto use_install_dirs = m_config.get<bool>("run.use_install_dirs");
-        const auto filePath         = (use_install_dirs) ? FileSys::GetDataDir() /= fileName : filesys::path(fileName);
+        const auto filePath         = FileSys::GetDataDir() /= fileName;
         if (!is_regular_file(filePath)) {
         throw runtime_error(string(__func__) + "> subpools community file " + filePath.string() + " not present.");
         }

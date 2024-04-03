@@ -307,7 +307,8 @@ Person* determineInfectorResponsible(util::Rn& rn, const std::list<std::pair<dou
                 if (uniform01Number <= cumulative_chance) {
                         return pair.second;
                 }
-        }      
+        }
+        //TODO: add dummy return, to cover all options
 }
 
 }
@@ -573,7 +574,7 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                 }
         }
         if (m_subpools_community && m_airborne_transmission){
-        if (pType != Id::Household || pType != Id::HouseholdCluster) {
+        if (pType != Id::Household || pType != Id::HouseholdCluster) { //TODO: should be && ??
                 // set up some stuff for the pool & disease in general
                         const auto pAirMass = pool.m_air_mass;
                         const auto linkingHazardVirus = transProfile.GetLinkingHazardVirus();

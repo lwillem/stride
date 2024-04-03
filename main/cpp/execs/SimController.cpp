@@ -41,7 +41,7 @@ namespace stride {
 
 SimController::SimController()
     : m_config(), m_output_prefix(), m_run_clock("run"),
-	  m_stride_logger(nullptr), m_use_install_dirs(),
+	  m_stride_logger(nullptr),
 	  m_simulator(nullptr)
 
 {
@@ -57,17 +57,14 @@ SimController::SimController(const ptree& config) : SimController()
         m_run_clock.Start();
         m_config           = config;
         m_output_prefix    = m_config.get<string>("run.output_prefix");
-        m_use_install_dirs = m_config.get<bool>("run.use_install_dirs");
 }
 
 void SimController::CheckEnv()
 {
-        if (m_use_install_dirs) {
-                auto log = [](const string& s) -> void { cerr << s << endl; };
-                if (!FileSys::CheckInstallEnv(log)) {
-                        throw runtime_error("SimController::CheckEnv> Install dirs not OK.");
-                }
-        }
+	auto log = [](const string& s) -> void { cerr << s << endl; };
+	if (!FileSys::CheckInstallEnv(log)) {
+			throw runtime_error("SimController::CheckEnv> Install dirs not OK.");
+	}
 }
 
 void SimController::CheckOutputPrefix()
@@ -110,11 +107,9 @@ void SimController::LogStartup()
         m_stride_logger->info("Creating dir:  {}", m_output_prefix);
         m_stride_logger->trace("Executing:           {}", FileSys::GetExecPath().string());
         m_stride_logger->trace("Current directory:   {}", FileSys::GetCurrentDir().string());
-        if (m_use_install_dirs) {
-                m_stride_logger->trace("Install directory:   {}", FileSys::GetRootDir().string());
-                m_stride_logger->trace("Config  directory:   {}", FileSys::GetConfigDir().string());
-                m_stride_logger->trace("Data    directory:   {}", FileSys::GetDataDir().string());
-        }
+		m_stride_logger->trace("Install directory:   {}", FileSys::GetRootDir().string());
+		m_stride_logger->trace("Config  directory:   {}", FileSys::GetConfigDir().string());
+		m_stride_logger->trace("Data    directory:   {}", FileSys::GetDataDir().string());
         if (ConfigInfo::HaveOpenMP()) {
                 m_stride_logger->info("Max number OpenMP threads in this environment: {}",
                                       ConfigInfo::NumberAvailableThreads());
