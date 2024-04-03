@@ -152,6 +152,7 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         // --------------------------------------------------------------
         if(sim->m_airborne_transmission){
         	const auto poolCharacteristicsPt = ReadPoolCharacteristicsPtree();
+        	PoolCharacteristicsSeeder(m_config, sim->m_rn_man_ptr).Seed(sim->m_population, poolCharacteristicsPt);
         }
         // --------------------------------------------------------------
         // Done.
