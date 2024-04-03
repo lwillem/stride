@@ -121,7 +121,7 @@ void TransmissionProfile::Initialize(const ptree& configPt, const ptree& disease
 
 	// Check whether susceptibility probability follows a distribution (otherwise it remains constant / age)
     boost::optional<string> t_prob_susceptibility_distribution = configPt.get_optional<string>("run.susceptibility_probability_distribution");
-    if (t_prob_distribution) {
+    if (t_prob_susceptibility_distribution) {
     		m_susceptibility_probability_distribution = *t_prob_susceptibility_distribution;
     		// Get target overdispersion
     		m_susceptibility_probability_distribution_overdispersion = configPt.get<double>("run.susceptibility_probability_distribution_overdispersion");
