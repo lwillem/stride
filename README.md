@@ -4,7 +4,7 @@
 
 The Stride acronym stands for **S**imulate **tr**ansmission of **i**nfectious **d**is**e**ases.
  
-The project is hosted in a [GitHub repository](https://github.com/lwillem/stride.git). The [user manual](https://github.com/lwillem/stride/blob/master/doc/latex/UserManual.pdf) contains basic info on the project and how to build & use the software. More information on layout, installation, dependencies of the project, licence and platforms that are supported, can be found in the files INSTALL.txt, DEPENDENCIES.txt, LICENSE.txt and PLATFORMS.txt, respectively.
+The project is hosted in a [GitHub repository](https://github.com/lwillem/stride.git). The [user manual](https://github.com/lwillem/stride/blob/master/doc/latex/UserManual.pdf) contains basic info on the project and how to build & use the software. More information on layout, installation, dependencies of the project and licence, can be found in the files INSTALL.txt, DEPENDENCIES.txt and LICENSE.txt, respectively.
 
 **Scientific output** related to this software:
 

@@ -17,10 +17,10 @@ Compilation and installation of the software creates the following files and dir
       		\begin{compactitem}
         			\item $stride$: executable.
         			\item $gtester$: regression tests for the sequential code.
-        			\item $rStride$: R-based simulation wrapper (under construction)
+        			\item $rStride$: R-based simulation wrapper
         	\end{compactitem}
 %
-    \item Configuration files (xml and json) in directory \texttt{<install\_dir>/config}
+    \item Configuration files (xml) in directory \texttt{<install\_dir>/config}
       	\begin{compactitem}
 			\item $run\_default.xml$: default configuration file for Stride.
         		\item \ldots
@@ -28,23 +28,22 @@ Compilation and installation of the software creates the following files and dir
 %        
     \item Data files (csv) in directory \texttt{<project\_dir>/data}
       	\begin{compactitem}
- 			\item $contact\_matrix\_flanders_conditional_teachers.xml$: Social contact rates for flanders for different locations, conditional upon presence, including teaching activities.
+ 			\item $contact\_matrix\_flanders\_conditional\_teachers.xml$: Social contact rates for Flanders for different locations, conditional upon presence, including teaching activities.
 			\item $contact\_matrix\_flanders_conditional_teachers_15min.xml$: Idem as above... but selecting only contact of at least 15 minutes. 
-			\item $disease\_xxx$: Disease characteristics (incubation and infectious period) for xxx.
-			\item $holidays\_xxx$: Holiday characteristics for xxx.
-			\item $pop\_belgium600k\_teachter\_censushh.zip$: compressed folder with population data of 600k people for Belgium, including teaching activities.
+			\item $disease\_xxx$: Disease characteristics (incubation and infectious period) for disease X.
+			\item $holidays\_xxx$: Holiday characteristics for disease X.
+			\item $pop\_belgium600k\_teacher\_censushh.zip$: compressed folder with population data of 600k people for Belgium, including teaching activities.
 			\item $immunity\_xxx$: Age specific immunity profiles.
         \end{compactitem}
 %
     \item Documentation files in directory \texttt{./target/installed/doc}
       	\begin{compactitem}
-        			\item Reference manual
-        			\item User manual
+            	\item User manual
         \end{compactitem}
 %
 \end{compactitem}
 
-The install directory is also the workspace for \texttt{Stride}. The \texttt{Stride} executable allows you to use a different output directory for each new calculation (see the next section).
+The install directory is also the workspace for \texttt{Stride}. 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Run
@@ -57,29 +56,19 @@ From the workspace directory, the simulator can be started  using the command \m
 
 USAGE: 
  
-   bin/stride  [-c <CONFIGURATION>] [-o <<NAME>=<VALUE>>] ... 
-			[-i] [--] [--version] [-h]
+   bin/stride  [-c <CONFIGURATION>] [-o <<NAME>=<VALUE>>] [--] [--version] [-h]
                
 Where: 
  
    -c <CONFIGURATION>,  --config <CONFIGURATION>
-     Specifies the run configuration parameters. The format may be either
-     -c file=<file> or -c name=<name>. The first is mostly used and may be
-     shortened to -c <file>. The second refers to built-in configurations
-     specified by their name.
+     Specifies the run configuration parameters. This should be the file name
+     including the path from the workspace directory.
  
-     Defaults to -c file=run_default.xml
+     Defaults to -c file=config/run\_default.xml
  
    -o <<NAME>=<VALUE>>,  --override <<NAME>=<VALUE>>  (accepted multiple
       times)
      Override configuration file parameters with values provided here.
- 
-   -i,  --installed
-     File are read from the appropriate (config, data) directories of the
-     stride install directory. If false, files are read and written to the
-     local directory. 
- 
-     Defaults to true.
  
    --,  --ignore_rest
      Ignores the rest of the labeled arguments following this flag.
@@ -98,5 +87,5 @@ Where:
 % Wrapper
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{rStride Wrapper}
-An R wrapper is under development to perform multiple runs with the C++ executable.
+An R wrapper is conceived to perform multiple runs with the C++ executable and to process model output.
 
