@@ -598,7 +598,7 @@ compare_output <- function(project_dir,output_type){
       # make sure we can use rowSums (which requires 2 dimensions)
       diff_row           <- rowSums(as.matrix(project_output[,elements_are_different_fp]) != as.matrix(reference_output[,elements_are_different_fp])) >0
       diff_gtester_label <- project_summary$gtester_label[project_summary$exp_id %in% project_exp_id[diff_row]]
-      smd_print(paste0("Model output did substantially change for gtester(s): "),paste(unique(diff_gtester_label),collapse = ', '), WARNING = TRUE)
+      smd_print(paste0("Model output '",output_type,"' did substantially change for gtester(s): "),paste(unique(diff_gtester_label),collapse = ', '), WARNING = TRUE)
       
       if(sum(elements_are_different_fp)<10){
         smd_print(paste(c('with different results for:', names(project_output)[elements_are_different_fp]),collapse=' '), WARNING = TRUE
