@@ -303,7 +303,7 @@ exp_design$rng_seed[grepl('covid_fitting',exp_design$gtester_label)] <- exp_desi
 
 
 # # selection? ----
-exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_hosp','covid_subpools','covid_airborne'),]
+#exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_hosp','covid_subpools','covid_airborne'),]
 #exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_collectivity','covid_collectivity_isolation','covid_collectivity_mixing'),]
 #exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_fitting_base','covid_fitting_adapt'),]
 #exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_transm','covid_transm_gamma'),]
@@ -373,11 +373,6 @@ smd_print('START REGRESSION TEST')
 
 ## Load project summary 
 project_summary <- .rstride$load_project_summary(project_dir)
-project_summary$run_time_id    <- project_summary$run_time
-project_summary$output_prefix  <- NULL
-project_summary$run_tag        <- NULL
-project_summary$run_time       <- NULL
-project_summary$total_time     <- NULL
 
 # CHECK summary: plot number of cases
 plot_final_sizes <- function(project_summary){
@@ -412,244 +407,246 @@ plot_final_sizes <- function(project_summary){
 }
 par(mfrow=c(1,1))
 plot_final_sizes(project_summary)
-# plot_final_sizes(ref_project_summary)
 
-# load incidence output
-data_incidence     <- .rstride$load_aggregated_output(project_dir,'data_incidence')
-dim(data_incidence)
-
-# get prevalence output
-data_prevalence <- .rstride$load_aggregated_output(project_dir,'data_prevalence')
-dim(data_prevalence)
-
-# get social contact survey output
-data_contacts     <- .rstride$load_aggregated_output(project_dir,'data_contacts')
-data_participants <- .rstride$load_aggregated_output(project_dir,'data_participants')
-
-# aggregate data
-if(!any(is.na(data_contacts))){
-  data_contacts                 <- aggregate(. ~ exp_id,data = data_contacts, mean)
-}
 
 str2id <- function(str){
-  unlist(lapply(str,str2id_base))
+  
+  if(length(dim(str))==2){
+    str_num <- matrix(0,nrow(str),ncol(str))
+    for(i in 1:nrow(str)){
+      for(j in 1:ncol(str)){
+        str_num[i,j] <- str2id_base(str[i,j])
+      }
+    }
+    return(str_num)
+  } else{
+    return(unlist(lapply(str,str2id_base)))
+  }
 }
+
 str2id_base <- function(str){
+  if(is.numeric(str)){
+    return(str)
+  }
   str <- tolower(as.character(str))
-  return(sum(as.numeric(factor(unlist(strsplit(str, "")), levels = letters))))
+  return(sum(as.numeric(factor(unlist(strsplit(str, "")), levels = letters)),na.rm=T))
 }
 
-data_participants$survey_type <- as.factor(data_participants$survey_type)
-#data_participants$survey_type <- str2id(data_participants$survey_type)
-data_participants             <- aggregate(. ~ exp_id,data = data_participants, mean)
-
-
-## Load reference data
-ref_project_summary  <- readRDS(file='tests/regression_rstride_summary.rds')
-ref_data_incidence   <- readRDS(file='tests/regression_rstride_incidence.rds')
-ref_data_prevalence  <- readRDS(file='tests/regression_rstride_prevalence.rds')
-ref_data_contacts    <- readRDS(file='tests/regression_rstride_contacts.rds')
-ref_data_participants<- readRDS(file='tests/regression_rstride_participants.rds')
-
-
-# Do we have to select reference scenarios?
-if(nrow(project_summary) != nrow(ref_project_summary)){
-  ref_project_summary <- ref_project_summary[ref_project_summary$gtester_label %in% unique(project_summary$gtester_label),]
-  ref_data_incidence  <- ref_data_incidence[ref_data_incidence$exp_id %in% unique(ref_project_summary$exp_id),]
-  ref_data_prevalence <- ref_data_prevalence[ref_data_prevalence$exp_id %in% unique(ref_project_summary$exp_id),]
-  ref_data_contacts   <- ref_data_contacts[ref_data_contacts$exp_id %in% unique(ref_project_summary$exp_id),]
-  ref_data_participants <- ref_data_participants[ref_data_participants$exp_id %in% unique(ref_project_summary$exp_id),]
+mean_by_exp_id <- function(project_output){
   
-  # adjust exp_id (i.e. this is based on the number of experiments, but make sure the other parameters are similar)
-  ref_project_summary$exp_id <- 1:nrow(ref_project_summary)
-
-  smd_print("REGRESSION TEST DOES NOT CONTAIN ALL SCENARIOS",WARNING = T)
+  # safety check
+  if(all(is.na(project_output))){
+    return(project_output)
+  }
+  
+  # make sure all columns are numeric
+  is_character <- grepl('Length',summary(project_output)[1,])
+  if(any(is_character)){
+    project_output[,is_character]   <- str2id(project_output[,is_character])
+  }
+ 
+  # replace 'NA' by '0' 
+  project_output[is.na(project_output)] <- 0 
+ 
+  # aggregate by calculating the mean
+  project_output   <- aggregate(. ~ exp_id, data = project_output, mean)
+  
+  # return
+  return(project_output)
 }
 
-# fix: use base name of file names (and get rid of project-specific file paths)
-# note: this is not needed any more (2024-01-10)
-ref_project_summary$holidays_file <- basename(ref_project_summary$holidays_file)
-project_summary$holidays_file     <- basename(project_summary$holidays_file)
-
-# # make sure numeric parameters are not set as string
-# bool_is_numeric <- suppressWarnings(!is.na(as.numeric(ref_project_summary[1,])))
-# # convert string into numeric
-# for(i_col in which(bool_is_numeric)){
-#   ref_project_summary[,i_col] <- as.numeric(ref_project_summary[,i_col])
-# }
-
-names(project_summary)[!names(project_summary) %in% names(ref_project_summary)]
-
-## COMPARE SUMMARY ----
-# remove new rows
-select_project_summary <- project_summary[project_summary$gtester_label %in% unique(ref_project_summary$gtester_label),]
-
-# check columns
-if(all(dim(select_project_summary) == dim(ref_project_summary))){
-  col_changed <- which(colSums(select_project_summary != ref_project_summary) > 0)
-  smd_print('column(s) with changes:', paste(names(col_changed),collapse = ','),WARNING = T)
-} else{
-  smd_print(paste(c('Summary dimensions changed:',setdiff(names(select_project_summary),names(ref_project_summary))),collapse='\n\t\t'),WARNING = T)
-}
-
-# remove new column names
-select_project_summary <- project_summary[,names(project_summary) %in% names(ref_project_summary)]
-
-# remove new exp from model results
-select_project_summary <- select_project_summary[select_project_summary$gtester_label %in% unique(ref_project_summary$gtester_label),]
-data_incidence         <- data_incidence[data_incidence$exp_id %in% select_project_summary$exp_id,]
-data_prevalence        <- data_prevalence[data_prevalence$exp_id %in% select_project_summary$exp_id,]
-if(!all(is.na(data_contacts))) data_contacts <- data_contacts[data_contacts$exp_id %in% select_project_summary$exp_id,]
-data_participants      <- data_participants[data_participants$exp_id %in% select_project_summary$exp_id,]
-
-# remove redundant exp from reference
-ref_project_summary <- ref_project_summary[,names(ref_project_summary) %in% names(select_project_summary)]
-
-
-summary(select_project_summary)
-summary(ref_project_summary)
-select_project_summary$hospital_category_age
-ref_project_summary$hospital_category_age
-
-if(!setequal(select_project_summary[,!grepl('_id',names(select_project_summary))],
-             ref_project_summary[,!grepl('_id',names(ref_project_summary))])){ 
+compare_output <- function(project_dir,output_type){
   
-  smd_print("SUMMARY CHANGED",WARNING = T)
+  # load reference file names
+  reference_file_names   <- dir('./tests',full.names = TRUE,pattern = '.rds')
   
-  # identify columns with changes
-  col_changed <- which(colSums(select_project_summary != ref_project_summary) > 0)
-  smd_print('column(s) with changes:', paste(names(col_changed),collapse = ','),WARNING = T)
+  # make sure the provided output_type is valid
+  if(!any(grepl(output_type,reference_file_names))){
+    smd_print("ERROR in 'compare_output()' with invallid output_type:",output_type,WARNING = T)
+    return(NULL)
+  }
   
-  # get difference (excluding _id columns)
-  diff_summary    <- setdiff(select_project_summary[,!(grepl('_id',names(select_project_summary)) | grepl('_file',names(select_project_summary)))],
-                             ref_project_summary[,!(grepl('_id',names(select_project_summary)) | grepl('_file',names(select_project_summary)))])
-  if(length(diff_summary)>0 && all(dim(select_project_summary) == dim(ref_project_summary)) && nrow(diff_summary)>0){
-    smd_print('CHANGES: ',paste(names(diff_summary),collapse = ', '),WARNING = T)
-    flag <- (select_project_summary[,names(diff_summary)] != ref_project_summary[,names(diff_summary)])
-   if(length(diff_summary)>1) {
-     flag <- rowSums(flag)>0
-   } 
-    smd_print('EXP_ID with changes:', paste(unique(select_project_summary$gtester_label[flag]),collapse = ','))
-    select_project_summary[flag,c('gtester_label',names(diff_summary))] ==
-    ref_project_summary[flag,c('gtester_label',names(diff_summary))]
-    
-    if("num_cases" %in% names(diff_summary)){
-      #par(mfrow=c(1,2),mar=c(8,4,4,2))
-      par(mar=c(8,4,4,2))
-      y_lim <- range(pretty(c(ref_project_summary$num_cases,select_project_summary$num_cases)))
-      bplt_ref <- boxplot(num_cases ~ gtester_label,
-                          data=ref_project_summary,main='REFERENCE',ylim=y_lim, las=2,xlab='');grid()
-      boxplot(num_cases ~ gtester_label,
-              data=ref_project_summary,main='BOTH',ylim=y_lim, las=2,xlab='');grid()
-      bplt_new <- boxplot(num_cases ~ gtester_label,
-                          data=select_project_summary,add=T,
-                          border=2,
-                          col=alpha(2,0.4),main='',ylim=y_lim,las=2,xlab='')  ;
-      bool_different <- colSums(bplt_new$stats != bplt_ref$stats) >0
-      legend('topleft',c('reference','new','changed'),col=c(1,alpha(2,0.4),4),pch=c('I','I','*'),cex=0.8)
-      points(which(bool_different)+0.5,bplt_new$stats[3,bool_different],col=4,pch='*',cex=3)
+  ## Load project summary 
+  project_summary                <- .rstride$load_project_summary(project_dir)
+
+  # load new results
+  project_output     <- .rstride$load_aggregated_output(project_dir,output_type)
+  
+  # define a boolean for the summary comparison
+  bool_summary       <- output_type == 'summary'
+  if(bool_summary){
+    project_output <- project_summary
+  }
+
+  if(all(is.na(project_output)) || nrow(project_output) == 0){
+    smd_print("NO OUTPUT TO COMPARE FOR:",output_type)
+    return(NULL)
+  }
       
-      par(mfrow=c(1,1),mar=c(8,4,4,2))
+  # load previous results  
+  reference_output       <- readRDS(file=reference_file_names[grepl(output_type,reference_file_names)])
+  reference_summary      <- readRDS(file=reference_file_names[grepl('summary.rds',reference_file_names)])
+  
+  # Do we have to select reference scenarios?
+  if(nrow(project_summary) != nrow(reference_summary) && nrow(reference_output)>0){
+    reference_summary <- reference_summary[reference_summary$gtester_label %in% unique(project_summary$gtester_label),]
+    reference_output  <- reference_output[reference_output$exp_id %in% unique(reference_summary$exp_id),]
+    if(bool_summary) smd_print("REGRESSION TEST DOES NOT CONTAIN ALL SCENARIOS",WARNING = T)
+  }
+  
+  # Do we have to exclude new scenarios?
+  if(nrow(project_summary) != nrow(reference_summary) && nrow(project_output)>0){
+    project_summary <- project_summary[project_summary$gtester_label %in% unique(reference_summary$gtester_label),]
+    project_output  <- project_output[project_output$exp_id %in% unique(project_summary$exp_id),]
+    if(bool_summary)  smd_print("REGRESSION TEST HAS NEW SCENARIOS",WARNING = T)
+  }
+  
+
+  # compare length and names, and adjust if possible
+  if(length(project_output) != length(reference_output) || 
+     length(setdiff(names(reference_output),names(project_output)))>0){
+    smd_print(c('!! Model output has different columns or column names for type = ',output_type),WARNING = TRUE)
+    
+    smd_print(paste('!! NEW: ',paste(names(project_output)[!names(project_output) %in% names(reference_output)],collapse = ', ')), WARNING = TRUE)
+    smd_print(paste('!! PREV: ',paste(names(reference_output)[!names(reference_output) %in% names(project_output)],collapse = ', ')), WARNING = TRUE)
+  }
+  
+  # make sure that columns with identical names are compared   
+  common_names     <- intersect(names(reference_output),names(project_output))
+  project_output   <- project_output[,common_names]
+  reference_output <- reference_output[,common_names]
+  
+  # make sure all columns are numeric
+  is_character <- grepl('Length',summary(project_output)[1,])
+  if(any(is_character)){
+    project_output[,is_character]   <- str2id(project_output[,is_character])
+    reference_output[,is_character] <- str2id(reference_output[,is_character])
+  }
+  
+  # option to aggregate data
+  if(output_type %in% c('contacts','participants') &&
+     !any(is.na(project_output))){
+    project_output <- mean_by_exp_id(project_output)
+    reference_output <- mean_by_exp_id(reference_output)
+  }
+  
+  # compare rows and adjust if possible
+  if(nrow(project_output) != nrow(reference_output)){
+    smd_print(paste0('!! Model output has different number of rows for type = ',output_type),
+              paste0('[NEW: ', nrow(project_output),' -- PREV: ', nrow(reference_output),']'),
+              WARNING = TRUE)
+    smd_print('CONTINUE WITH AGGREGATED STATISTICS', WARNING = TRUE)
+    
+    project_output   <- mean_by_exp_id(project_output)
+    reference_output <- mean_by_exp_id(reference_output)
+  }
+  
+  # compare again length and names, but first select non-id columns
+  col_select       <- which(!(grepl('_id',names(project_output))  | 
+                              grepl('time',names(project_output)) |
+                              grepl('run',names(project_output)) |
+                              grepl('tag',names(project_output))))
+  project_exp_id   <- project_output$exp_id
+  project_output   <- project_output[,col_select]
+  reference_output <- reference_output[,col_select]
+  
+  # compare output, both using compare.list() and '=='
+  diff_list      <- !compare.list(project_output,reference_output)
+  diff_operator  <- colSums(project_output != reference_output,na.rm=T) != 0
+  elements_are_different  <- diff_list & diff_operator
+
+  if(all(!elements_are_different)){
+    smd_print(paste0("Model output '",output_type,"' did not change."))
+  } else{
+    
+    #check for textual changes
+    is_character[col_select]
+    if(any(elements_are_different & is_character[col_select])){
+      diff_character <- names(elements_are_different)[elements_are_different & is_character[col_select]]
+      smd_print(paste0("Model output '",output_type,"' did change for element(s): ",diff_character), WARNING = TRUE)
+      
+      # make sure we can use rowSums (which requires 2 dimensions)
+      diff_row           <- rowSums(as.matrix(project_output[,diff_character]) != as.matrix(reference_output[,diff_character])) > 0
+      diff_gtester_label <- project_summary$gtester_label[project_summary$exp_id %in% project_exp_id[diff_row]]
+      smd_print(paste0("Model output '",output_type,"' did change for gtester(s): "),paste(unique(diff_gtester_label),collapse =', '), WARNING = TRUE)
+      
+      # narrow down for numerical results
+      elements_are_different[is_character[col_select]] <- FALSE
     }
-  } else{
-    smd_print('no numerical changes',WARNING = T)
-  }
-  #print(head(diff_summary))
-} else{
-  smd_print("SUMMARY OK")
-}
-
-## COMPARE INCIDENCE ----
-data_incidence     <- data_incidence[,names(data_incidence) %in% names(ref_data_incidence)]
-ref_data_incidence <- ref_data_incidence[,names(ref_data_incidence) %in% names(data_incidence)]
-
-if(setequal(data_incidence[,names(data_incidence) != 'exp_id'], 
-            ref_data_incidence[,names(ref_data_incidence) != 'exp_id'])){
-  smd_print("INCIDENCE OK")
-} else{
-  
-  missing_colnames_new <- names(data_incidence)[!names(data_incidence) %in% names(ref_data_incidence)]
-  if(length(missing_colnames_new)>0){
-    smd_print('INCIDENCE columns added:', paste(missing_colnames_new,collapse = ','),WARNING = T)
-  }
-  
-  missing_colnames_ref <- names(ref_data_incidence)[!names(ref_data_incidence) %in% names(data_incidence)]
-  if(length(missing_colnames_ref)>0){
-    smd_print('INCIDENCE columns missing:', paste(missing_colnames_ref,collapse = ','),WARNING = T)
-  }
-  
-  compare_col <- names(ref_data_incidence)[!names(ref_data_incidence) %in% c('exp_id',missing_colnames_ref,missing_colnames_new)]
-  diff_incidence  <- setdiff(data_incidence[,compare_col],ref_data_incidence[,compare_col])
-  if(length(diff_incidence)>0){ 
-    smd_print("INCIDENCE CHANGED",WARNING = T)
-    
-    diff_incidence_colnames <- names(diff_incidence)[names(diff_incidence) %in% names(ref_data_incidence)]
-    diff_incidence_colnames <- unique(gsub('_age.*','',diff_incidence_colnames))
-    smd_print(diff_incidence_colnames,WARNING = T)
-    
-    # # include "exp_id" column, to make sure there are at least 2 columns for the rowSums
-    # diff_incidence$exp_id <- data_incidence$exp_id
-    
-    if(all(dim(data_incidence) == dim(ref_data_incidence))){
-      flag <- rowSums(data_incidence[,names(diff_incidence)] != ref_data_incidence[,names(diff_incidence)],na.rm=T)>0
-      smd_print('EXP_ID with changes:', paste(unique(data_incidence$exp_id[flag]),collapse = ','))
-      # data_incidence[flag,names(diff_incidence)]
-      smd_print('gtester_label with changes:', paste(unique(project_summary$gtester_label[project_summary$exp_id %in% data_incidence$exp_id[flag]]),collapse = ','))
-      # ref_data_incidence[flag,names(diff_incidence)]    
-      
-      # db_changes <- data.frame(exp_id = data_incidence$exp_id,
-      #                          num_changes = rowSums(data_incidence[,names(diff_incidence)] != ref_data_incidence[,names(diff_incidence)],na.rm=T))
-      # db_changes <- merge(db_changes,project_summary,by='exp_id')
-      # aggregate(num_changes ~ gtester_label,data=db_changes,sum)
-      
-      # head(data_incidence[,bool_colnames])
-      # head(ref_data_incidence[,bool_colnames])
-      #head(data_incidence[names(diff_incidence)])
-      
-    } else { # dimensions changed!!
-      smd_print('INCIDENCE ISSUE: dimensions changed',WARNING = TRUE)
-
+ 
+    # if there are still changes, check for floating point issues
+    if(any(elements_are_different)){
+    digits_cutoff   <- 6
+    elements_are_different_fp <- elements_are_different
+    if(any(elements_are_different_fp)){
+      for(i_elem in 1:length(project_output)){
+        if(elements_are_different_fp[i_elem]){
+          if(all(dim(project_output[[i_elem]]) == dim(reference_output[[i_elem]]))){
+            order <- -(log10(abs(range(unlist(project_output[[i_elem]]) - unlist(reference_output[[i_elem]]),na.rm=T))))
+            if(all(order > digits_cutoff)){
+              elements_are_different_fp[i_elem] <- FALSE
+            } 
+          } 
+        }
+      }  
     }
-  } else {
-    smd_print("OVERLAPPING INCIDENCE OK",WARNING = FALSE)
+    # report outcome of comparison
+    if(!any(elements_are_different_fp)){
+      smd_print(paste0("Model output '",output_type,"' did not differ more than 1e-",digits_cutoff))
+    } else{
+      
+      # make sure we can use rowSums (which requires 2 dimensions)
+      diff_row           <- rowSums(as.matrix(project_output[,elements_are_different_fp]) != as.matrix(reference_output[,elements_are_different_fp])) >0
+      diff_gtester_label <- project_summary$gtester_label[project_summary$exp_id %in% project_exp_id[diff_row]]
+      smd_print(paste0("Model output did substantially change for gtester(s): "),paste(unique(diff_gtester_label),collapse = ', '), WARNING = TRUE)
+      
+      if(sum(elements_are_different_fp)<10){
+        smd_print(paste(c('with different results for:', names(project_output)[elements_are_different_fp]),collapse=' '), WARNING = TRUE
+        )
+      } else{
+        smd_print("with at least more than 10 columns changed", WARNING = TRUE)
+      }
+      
+      return(unique(diff_gtester_label))
+    }
+    }
   }
-}
-
-## COMPARE PREVALENCE ----
-data_prevalence <- data_prevalence[data_prevalence$exp_id %in% select_project_summary$exp_id,]
-sel_col <- names(data_prevalence)[names(data_prevalence) %in% names(ref_data_prevalence) & names(data_prevalence) != 'exp_id'] # make sure the same columns are compared
-if(length(sel_col)>0 && setequal(data_prevalence[,sel_col],
-            ref_data_prevalence[,sel_col])){ 
-  smd_print("PREVALENCE OK")
-} else{
-  smd_print("PREVALENCE CHANGED",WARNING = T)
-  #diff_prevalence <- setdiff(data_prevalence,ref_data_prevalence)
-  #print(head(diff_prevalence))
-}
+  return(NULL)
+} # end function
 
 
-## COMPARE SOCIAL CONTACT SURVEY DATA ----
-if(!any(is.na(data_contacts))){
-  sel_col <- names(data_contacts)[names(data_contacts) %in% names(ref_data_contacts) & names(data_contacts) != 'exp_id'] # make sure the same columns are compared
-  if(setequal(colSums(data_contacts[,sel_col]),colSums(ref_data_contacts[,sel_col]))){
-    smd_print("CONTACT DATA OK")
-  } else{
-    smd_print("CONTACT DATA CHANGED!",WARNING = T)
-    stride_diff <- setdiff(colSums(data_contacts[,sel_col]),colSums(ref_data_contacts[,sel_col]))
-    smd_print(names(stride_diff),WARNING = T)
-  }  
+# COMPARE SUMMARY ----
+diff_gtester <- compare_output(project_dir,'summary')
+
+# plot potential changes in number of cases
+if(length(diff_gtester)>0){
+  ref_project_summary  <- readRDS(file='tests/regression_rstride_summary.rds')
+
+  summary_new <- project_summary[project_summary$gtester_label %in% diff_gtester,]
+  summary_ref <- ref_project_summary[ref_project_summary$gtester_label %in% diff_gtester,]
+  
+  par(mar=c(8,4,4,2))
+  y_lim <- range(pretty(c(summary_new$num_cases,summary_ref$num_cases)))
+  bplt_ref <- boxplot(num_cases ~ gtester_label,
+                data=summary_ref,main='CHANGES',ylim=y_lim, las=2,xlab='');grid()
+  if(length(bplt_ref$name)==1) axis(1,at=1,labels=bplt_ref$names)
+  bplt_new <- boxplot(num_cases ~ gtester_label,
+                      data=summary_new,add=T,
+                      border=2,
+                      col=alpha(2,0.4),main='',ylim=y_lim,las=2,xlab='')  ;
+  bool_different <- colSums(bplt_new$stats != bplt_ref$stats) >0
+  legend('topleft',c('reference','new','changed'),col=c(1,alpha(2,0.4),4),pch=c('I','I','*'),cex=0.8)
+  points(which(bool_different)+0.5,bplt_new$stats[3,bool_different],col=4,pch='*',cex=3)
+
+  par(mfrow=c(1,1),mar=c(8,4,4,2))
 }
 
-if(!any(is.na(data_participants))){
-  sel_col <- names(data_participants)[names(data_participants) %in% names(ref_data_participants) & !grepl('_id',names(data_participants))] # make sure the same columns are compared
-  if(setequal(colSums(data_participants[,sel_col]),colSums(ref_data_participants[,sel_col]))){
-    smd_print("PARTICIPANT DATA OK")
-  } else{
-    smd_print("PARTICIPANT DATA CHANGED!",WARNING = T)
-    stride_diff <- setdiff(colSums(data_participants[,sel_col]),colSums(ref_data_participants[,sel_col]))
-    smd_print(names(stride_diff),WARNING = T)
-  }
-}
+
+## COMPARE OTHER MODEL OUTPUT ----
+compare_output(project_dir,"incidence")
+compare_output(project_dir,"prevalence")
+compare_output(project_dir,"contacts")
+compare_output(project_dir,"participants")
 
 ## COMPARE ABC ----
 ref_rstride_out_abc <- readRDS(file='tests/regression_rstride_out_abc.rds')
@@ -661,22 +658,23 @@ if(setequal(rstride_out_abc,ref_rstride_out_abc)){
   smd_print(names(stride_diff),WARNING = T)
 }
 
+
+
 # COMPARE PERFORMANCE ----
-# current_run_times  <- project_summary$run_time_id /1e3
-# previous_run_times <- ref_project_summary$run_time_id /1e3
-# run_time_diff <- current_run_times - previous_run_times
-current_run_times  <- aggregate(run_time_id ~ gtester_label, data= select_project_summary,mean)
-previous_run_times <- aggregate(run_time_id ~ gtester_label, data= ref_project_summary,mean)
-run_time_diff     <- current_run_times$run_time_id - previous_run_times$run_time_id
-smd_print('Total run time and abs. difference (s):', 
-          round(sum(current_run_times$run_time_id/1e3),1), '::',
+ref_project_summary  <- readRDS(file='tests/regression_rstride_summary.rds')
+common_gtester_label <- intersect(project_summary$gtester_label,ref_project_summary$gtester_label)
+current_run_times    <- aggregate(run_time ~ gtester_label, data= project_summary[project_summary$gtester_label %in% common_gtester_label,],mean)
+previous_run_times   <- aggregate(run_time ~ gtester_label, data= ref_project_summary[ref_project_summary$gtester_label %in% common_gtester_label,],mean)
+run_time_diff        <- current_run_times$run_time - previous_run_times$run_time
+smd_print('Total run time and abs. difference (s):',
+          round(sum(current_run_times$run_time/1e3),1), '::',
           round(sum(run_time_diff/1e3),1)
 )
-smd_print('Average run time and abs. difference  (s):', 
-          round(mean(current_run_times$run_time_id/1e3),1), '::',
+smd_print('Average run time and abs. difference  (s):',
+          round(mean(current_run_times$run_time/1e3),1), '::',
           round(mean(run_time_diff/1e3),1)
 )
-smd_print('Test with highest time differenct:', 
+smd_print('Test with highest time differenct:',
           current_run_times$gtester_label[order(run_time_diff)[1]])
 
 
@@ -686,7 +684,7 @@ smd_print('REGRESSION TEST COMPLETE')
 # short call for "reset reference values"
 rrv <- function(stride_repo_dir = 'tests'){
   
-  saveRDS(project_summary,
+  saveRDS(.rstride$load_project_summary(project_dir),
           file=file.path(stride_repo_dir,'regression_rstride_summary.rds'))
   saveRDS(.rstride$load_aggregated_output(project_dir,'data_incidence'), 
           file=file.path(stride_repo_dir,'regression_rstride_incidence.rds'))
@@ -696,13 +694,13 @@ rrv <- function(stride_repo_dir = 'tests'){
           file=file.path(stride_repo_dir,'regression_rstride_out_abc.rds'))
   
   # store aggregated social contact survey data
-  saveRDS(data_contacts,
+  saveRDS(mean_by_exp_id(.rstride$load_aggregated_output(project_dir,'data_contacts')),
           file=file.path(stride_repo_dir,'regression_rstride_contacts.rds'))
-  saveRDS(data_participants,
+  saveRDS(mean_by_exp_id(.rstride$load_aggregated_output(project_dir,'data_participants')),
           file=file.path(stride_repo_dir,'regression_rstride_participants.rds'))
-
-  pdf(file=file.path(stride_repo_dir,'regression_rstride_summary.pdf'),14,7)
-    plot_final_sizes(project_summary)
+  
+  pdf(file=file.path(stride_repo_dir,'regression_rstride_cases.pdf'),14,7)
+  plot_final_sizes(project_summary)
   dev.off()
   
   smd_print('NEW REFERENCE VALES STORED IN FOLDER:',stride_repo_dir)
@@ -714,5 +712,6 @@ rrv_repo <- function(){
   rrv(stride_repo_dir = stride_repo_dir)
   rrv()
 }
+
 
 
