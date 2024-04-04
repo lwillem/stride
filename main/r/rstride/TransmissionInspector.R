@@ -379,7 +379,11 @@ get_transmission_statistics <- function(data_transm,
 
   
   ## LOCATION ----
-  pool_type_opt <- c("Household","HouseholdCluster","CommunityWeekend","CommunityWeekday","Workplace",'Collectivity','School') # TODO: make this flexible?
+  pool_type_opt <- c("Household","HouseholdCluster",
+                     "CommunityWeekend","CommunityWeekday",
+                     "Workplace",'Collectivity','School',
+                     'OtherHouse','Transport',
+                     'OtherPlace','RestoCafe') # TODO: make this flexible?
   summary_location <- get_summary_table(data_transm,'infection_date','pool_type','location',pool_type_opt) 
   summary_location$location    <- NULL # remove
   if('location_NA' %in% names(summary_location)) {

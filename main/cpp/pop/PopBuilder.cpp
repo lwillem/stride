@@ -72,7 +72,6 @@ shared_ptr<Population> PopBuilder::MakePersons(shared_ptr<Population> pop)
 
     string line;
     getline(popFile, line); // step over file header
-    cout << line << endl;
 
     // Fix for different population separators
     bool bool_semicolumn = (line.find(";") != std::string::npos );

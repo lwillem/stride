@@ -123,7 +123,8 @@ const char* tags_covid19[] = {"covid19_base", "covid19_logParticipants", "covid1
 		"covid19_transm","covid19_transm_gamma",
 		"covid19_suscept","covid19_suscept_age","covid19_suscept_adapt",
 		"covid19_fitting","covid19_fitting_adapt",
-		"covid19_logTransmission","covid19_hospital"};
+		"covid19_logTransmission","covid19_hospital",
+		"covid19_subpools","covid19_airborne"};
 
 
 } // namespace

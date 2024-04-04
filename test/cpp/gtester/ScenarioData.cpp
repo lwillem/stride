@@ -61,7 +61,8 @@ tuple<ptree, unsigned int, double> ScenarioData::Get(string tag)
 		{"covid19_transm", 82500U},{"covid19_transm_gamma", 72300U},
 		{"covid19_suscept", 82500U},{"covid19_suscept_age", 82500U},{"covid19_suscept_adapt", 56650U},
 		{"covid19_fitting", 82500U},{"covid19_fitting_adapt", 41100U},
-		{"covid19_logTransmission", 82500U},{"covid19_hospital", 82500U}};
+		{"covid19_logTransmission", 82500U},{"covid19_hospital", 82500U},
+		{"covid19_subpools", 8500U},{"covid19_airborne", 9000U}};
 
 
 	// Set margins per scenario
@@ -75,7 +76,8 @@ tuple<ptree, unsigned int, double> ScenarioData::Get(string tag)
 		{"covid19_transm", 1.0e-01},{"covid19_transm_gamma", 1.0e-01},
 		{"covid19_suscept", 1.0e-01},{"covid19_suscept_age", 1.0e-01},{"covid19_suscept_adapt", 1.0e-01},
 		{"covid19_fitting", 1.0e-01},{"covid19_fitting_adapt", 1.0e-01},
-		{"covid19_logTransmission", 1.0e-01},{"covid19_hospital", 1.0e-01}};
+		{"covid19_logTransmission", 1.0e-01},{"covid19_hospital", 1.0e-01},
+		{"covid19_subpools", 1.0e-01},{"covid19_airborne", 1.0e-01}};
 
 
 	unsigned int target;
@@ -224,6 +226,16 @@ tuple<ptree, unsigned int, double> ScenarioData::Get(string tag)
 		pt.put("run.hospital_mean_delay_age","3,7,7,6");
 	}
 
+	if (tag == "covid19_subpools" || tag == "covid19_airborne") {
+		pt.put("run.population_file","data/pop_belgium10k_c500_teachers_censushh.csv");
+		pt.put("run.subpools_community_file","data/pop_belgium10k_c500_teachers_censushh_subpools_community.csv");
+		pt.put("run.subpools_community_used","true");
+	}
+
+	if (tag == "covid19_airborne") {
+		pt.put("run.pool_characteristics_file","data/pool_characteristics.xml");
+		pt.put("run.airborne_transmission","true");
+	}
 
 	return make_tuple(pt, target, margin);
 }

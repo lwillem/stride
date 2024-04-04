@@ -100,6 +100,11 @@ exp_design_base <- expand.grid(r0                       = 2.5,
                       
                           contact_survey_dates = NA,
                           contact_survey_ages = c_str(0,18,110),
+                          
+                          subpools_community_file = NA,
+                          subpools_community_used = NA,
+                          pool_characteristics_file = NA,
+                          airborne_transmission = NA,
                           stringsAsFactors = F)
 
 # Contacts: virtual survey ---- 
@@ -255,6 +260,20 @@ exp_design_default_param$gtester_label                <- 'covid_default_param'
 names(exp_design_base) %in% names(exp_design_default_param)
 names(exp_design_default_param) %in% names(exp_design_base)
 
+# subpools ----
+exp_design_subpools <- exp_design_base
+exp_design_subpools$population_file           <- 'data/pop_belgium10k_c500_teachers_censushh.csv'
+exp_design_subpools$subpools_community_file   <- 'data/pop_belgium10k_c500_teachers_censushh_subpools_community.csv'
+exp_design_subpools$subpools_community_used   <- 'true'
+exp_design_subpools$gtester_label             <- 'covid_subpools'
+
+# airborne transmission ----
+exp_design_airborne <- exp_design_subpools
+exp_design_airborne$pool_characteristics_file <- 'data/pool_characteristics.xml'
+exp_design_airborne$airborne_transmission     <- 'true'
+exp_design_airborne$gtester_label             <- 'covid_airborne'
+
+
 # rbind all designs
 exp_design <- rbind(exp_design_base, exp_design_all,
                     exp_design_cts_all, exp_design_cts,
@@ -267,7 +286,8 @@ exp_design <- rbind(exp_design_base, exp_design_all,
                     exp_design_collectivity,exp_design_collectivity_isolation,
                     exp_design_collectivity_mixing,
                     exp_design_none, exp_design_hosp,
-                    exp_design_default_param)
+                    exp_design_default_param,
+                    exp_design_subpools,exp_design_airborne)
 
 
 # add a unique seed for each run
@@ -283,7 +303,7 @@ exp_design$rng_seed[grepl('covid_fitting',exp_design$gtester_label)] <- exp_desi
 
 
 # # selection? ----
-exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_hosp'),]
+exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_hosp','covid_subpools','covid_airborne'),]
 #exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_collectivity','covid_collectivity_isolation','covid_collectivity_mixing'),]
 #exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_fitting_base','covid_fitting_adapt'),]
 #exp_design <- exp_design[exp_design$gtester_label %in% c('covid_base','covid_transm','covid_transm_gamma'),]
@@ -475,8 +495,16 @@ if(all(dim(select_project_summary) == dim(ref_project_summary))){
 # remove new column names
 select_project_summary <- project_summary[,names(project_summary) %in% names(ref_project_summary)]
 
-# remove redundant exp
+# remove new exp from model results
+select_project_summary <- select_project_summary[select_project_summary$gtester_label %in% unique(ref_project_summary$gtester_label),]
+data_incidence         <- data_incidence[data_incidence$exp_id %in% select_project_summary$exp_id,]
+data_prevalence        <- data_prevalence[data_prevalence$exp_id %in% select_project_summary$exp_id,]
+if(!all(is.na(data_contacts))) data_contacts <- data_contacts[data_contacts$exp_id %in% select_project_summary$exp_id,]
+data_participants      <- data_participants[data_participants$exp_id %in% select_project_summary$exp_id,]
+
+# remove redundant exp from reference
 ref_project_summary <- ref_project_summary[,names(ref_project_summary) %in% names(select_project_summary)]
+
 
 summary(select_project_summary)
 summary(ref_project_summary)
@@ -588,6 +616,7 @@ if(setequal(data_incidence[,names(data_incidence) != 'exp_id'],
 }
 
 ## COMPARE PREVALENCE ----
+data_prevalence <- data_prevalence[data_prevalence$exp_id %in% select_project_summary$exp_id,]
 sel_col <- names(data_prevalence)[names(data_prevalence) %in% names(ref_data_prevalence) & names(data_prevalence) != 'exp_id'] # make sure the same columns are compared
 if(length(sel_col)>0 && setequal(data_prevalence[,sel_col],
             ref_data_prevalence[,sel_col])){ 
@@ -636,7 +665,7 @@ if(setequal(rstride_out_abc,ref_rstride_out_abc)){
 # current_run_times  <- project_summary$run_time_id /1e3
 # previous_run_times <- ref_project_summary$run_time_id /1e3
 # run_time_diff <- current_run_times - previous_run_times
-current_run_times  <- aggregate(run_time_id ~ gtester_label, data= project_summary,mean)
+current_run_times  <- aggregate(run_time_id ~ gtester_label, data= select_project_summary,mean)
 previous_run_times <- aggregate(run_time_id ~ gtester_label, data= ref_project_summary,mean)
 run_time_diff     <- current_run_times$run_time_id - previous_run_times$run_time_id
 smd_print('Total run time and abs. difference (s):', 

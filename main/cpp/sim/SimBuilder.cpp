@@ -142,7 +142,7 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
 
 
         // --------------------------------------------------------------
-        // Seed heterogeniety in social contact behaviour.
+        // Seed heterogeneity in social contact behaviour.
         // --------------------------------------------------------------
         std::cout << "Seed population with non-compliant individuals." << std::endl;
         ContactHeterogeneitySeeder(m_config, sim->m_rn_man_ptr).Seed(sim->m_population);
