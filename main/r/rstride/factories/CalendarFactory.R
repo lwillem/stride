@@ -695,6 +695,10 @@ include_temporal_distancing_factors <- function(db_category,db_values_char,
     db_dates  <- c(db_dates[1],db_dates + db_delay,db_dates[-1])
     db_values <- c(0,db_values,db_values[-length(db_values)])
     
+    # sort
+    db_values <- db_values[order(as.Date(db_dates))]
+    db_dates  <- db_dates[order(as.Date(db_dates))]
+    
     # add right tail
       db_dates  <- c(db_dates,max(db_dates)+356*3)
       db_values <- c(db_values,db_values[length(db_values)])
