@@ -59,9 +59,13 @@ exp_param_list$num_seeds                 <- 2
 #                                "2020-07-07"##"2020-06-12"
 #                                ) # exit, without school
 
+exp_param_list$contact_survey_dates          <- c_str(exp_param_list$start_date,'2020-02-20','2020-03-30')
+exp_param_list$contact_survey_ages           <- c_str(seq(0,90,10))
+exp_param_list$contact_survey_resample       <- 1
+
 
 # change parameters
-exp_param_list$population_file <- 'pop_belgium600k_c500_teachers_censushh.csv'
+exp_param_list$population_file <- 'data/pop_belgium600k_c500_teachers_censushh.csv'
 
 # check period
 range(as.Date(exp_param_list$start_date), as.Date(exp_param_list$start_date)+ exp_param_list$num_days)
@@ -81,7 +85,7 @@ dim(exp_design)
 project_dir <- run_rStride(exp_design  = exp_design,
                            dir_postfix = dir_postfix,
                            ignore_stdout            = TRUE,
-                           remove_run_output        = TRUE)
+                           remove_run_output        = FALSE)
 
 
 #####################################################

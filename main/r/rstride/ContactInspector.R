@@ -26,8 +26,7 @@ if(0==1) # for debugging
   #setwd('..')
   project_summary <- .rstride$load_project_summary(project_dir)
   exp_summary <- project_summary[2,]
-  data_dir    <- './data'
-  .rstride$plot_contacts(exp_summary,data_dir)
+  .rstride$plot_contacts(exp_summary)
 }
 
 ############################################################################# #
@@ -53,7 +52,7 @@ inspect_contact_data <- function(project_dir){
           .export = '.rstride') %do% 
   {  
     # plot contacts
-    .rstride$plot_contacts(project_dir,project_summary[i_exp,],'./data')
+    .rstride$plot_contacts(project_dir,project_summary[i_exp,])
   }
   
   # end slave nodes
@@ -66,8 +65,8 @@ inspect_contact_data <- function(project_dir){
 ############################################################################# #
 # PLOT SOCIAL CONTACT MATRICES AND COUNTS                                  ####
 ############################################################################# #
-# exp_summary <- project_summary[i_exp,]; data_dir <- './data'; bool_rds=FALSE;survey_start = exp_summary$start_date
-.rstride$plot_contacts <- function(project_dir,exp_summary,data_dir)
+# exp_summary <- project_summary[i_exp,]; bool_rds=FALSE;survey_start = exp_summary$start_date
+.rstride$plot_contacts <- function(project_dir,exp_summary)
 {
 
   ##################### #
@@ -175,8 +174,7 @@ inspect_contact_data <- function(project_dir){
     .rstride$plot_cnt_counts(data_part_day = data_part_day,
                              data_cnt_day  = data_cnt_day,
                              exp_tag       = exp_tag,
-                             exp_summary   = exp_summary,
-                             data_dir      = data_dir)
+                             exp_summary   = exp_summary)
   }
 
   
@@ -190,8 +188,7 @@ inspect_contact_data <- function(project_dir){
 .rstride$plot_cnt_counts <- function(data_part_day,
                                      data_cnt_day,
                                      exp_tag,
-                                     exp_summary,
-                                     data_dir){
+                                     exp_summary){
   
   ## SETTINGS 
   L <- max(c(80,data_part_day$part_age))
@@ -232,7 +229,7 @@ inspect_contact_data <- function(project_dir){
   }
   
   # LOAD SURVEY DATA FROM FLANDERS AND FULLY CONNECTED HOUSEHOLDS
-  survey_data <- xmlToList(file.path(data_dir,exp_summary$age_contact_matrix_file))
+  survey_data <- xmlToList(file.path(exp_summary$age_contact_matrix_file))
   names(survey_data)
   
   get_survey_data <- function(cluster_type,survey_data){

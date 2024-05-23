@@ -44,8 +44,8 @@ dir_postfix <- '_explore'
 exp_param_list <- get_covid19_default_param()
 
 # change population file
-exp_param_list$population_file <- 'pop_belgium600k_c500_teachers_censushh.csv'
-#exp_param_list$population_file <- 'pop_belgium1000k_c500_teachers_censushh.csv'
+exp_param_list$population_file <- 'data/pop_belgium600k_c500_teachers_censushh.csv'
+#exp_param_list$population_file <- 'data/pop_belgium1000k_c500_teachers_censushh.csv'
 
 # change parameters and values to combine in a full-factorial grid
 exp_param_list$num_days <- 300
