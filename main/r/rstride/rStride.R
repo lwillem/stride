@@ -45,7 +45,8 @@ smd_load_packages(c('XML',           # to parse and write XML files
                     'lhs',           # to sample from a latin hypercube design (instead of using a full factorial grid)
                     'corrplot',      # to visualise the parameter correlations in the paretor front selection
                     'wpp2019',       # to derive population data
-                    'dplyr'          # to join data.frames and data.tables
+                    'dplyr',         # to join data.frames and data.tables
+                    'useful'         # to use compare.list
                     ))
 
 # load general help functions
