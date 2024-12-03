@@ -76,8 +76,8 @@ project_dir <- smd_file_path('./sim_output',run_tag_data)
 model_param_update <- get_covid19_default_param()
 
 # TEMP
-model_param_update$population_file <- "pop_belgium600k_c500_teachers_censushh.csv"
-model_param_update$num_days        <- 74
+model_param_update$population_file <- "data/pop_belgium600k_c500_teachers_censushh.csv"
+model_param_update$num_days        <- 34
 #model_param_update$logparsing_cases_upperlimit <- 2.5e6
 
 
@@ -100,9 +100,9 @@ sum_stat_obs <- get_abc_reference_data(ref_period,
 # set priors
 stride_prior <- list(r0                         = c("unif",1.0,5.0),   
                      num_infected_seeds         = c("unif",200,600),
-                     hosp_probability_factor    = c("unif",0.05,0.95),
-                     distancing_workplace_rate  = c("unif",0.60,0.95),
-                     distancing_workplace_delay = c("unif",4.51,7.49),  # rounded: 5-7
+                     # hosp_probability_factor    = c("unif",0.05,0.95),
+                     # distancing_workplace_rate  = c("unif",0.60,0.95),
+                     # distancing_workplace_delay = c("unif",4.51,7.49),  # rounded: 5-7
                      distancing_community_rate  = c("unif",0.60,0.95),
                      distancing_community_delay = c("unif",4.51,7.49))  # rounded: 5-7
 
