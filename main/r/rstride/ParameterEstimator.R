@@ -267,10 +267,12 @@ select_ensemble_and_plot <- function(df_loglike,input_opt_design,hosp_adm_data,
   plot_range_q <- 0.4
   for(plot_range_q in c(1,0.4)){
     par(mfrow=c(2,2))
+    plot_main <- ifelse(plot_range_q==1,'all results',paste0(plot_range_q*100,'% best results'))
     plot(df_loglike$hospital_pois,
          df_loglike$doubling_pois,
          xlab='Pois negloglike (hospital admissions)',
          ylab='Pois negloglike (doubling time)',
+         main=plot_main,
          xlim=quantile(df_loglike$hospital_pois,c(0,plot_range_q),na.rm=T),
          ylim=quantile(df_loglike$doubling_pois,c(0,plot_range_q),na.rm=T))
     points(df_loglike$hospital_pois[df_loglike$pareto_front],
@@ -285,6 +287,7 @@ select_ensemble_and_plot <- function(df_loglike,input_opt_design,hosp_adm_data,
          df_loglike$doubling_pois,
          xlab='Pois negloglike (total_incidence)',
          ylab='Pois negloglike (doubling time)',
+         main=plot_main,
          xlim=quantile(df_loglike$incidence_pois,c(0,plot_range_q),na.rm=T),
          ylim=quantile(df_loglike$doubling_pois,c(0,plot_range_q),na.rm=T))
     points(df_loglike$incidence_pois[df_loglike$pareto_front],
@@ -295,6 +298,7 @@ select_ensemble_and_plot <- function(df_loglike,input_opt_design,hosp_adm_data,
          df_loglike$incidence_pois,
          xlab='Pois negloglike (hospital admissions)',
          ylab='Pois negloglike (total incidence)',
+         main=plot_main,
          xlim=quantile(df_loglike$hospital_pois,c(0,plot_range_q),na.rm=T),
          ylim=quantile(df_loglike$incidence_pois,c(0,plot_range_q),na.rm=T))
     points(df_loglike$hospital_pois[df_loglike$pareto_front],

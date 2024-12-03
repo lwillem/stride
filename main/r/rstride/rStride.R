@@ -342,7 +342,7 @@ run_rStride <- function(exp_design               = exp_design,
                        # create experiment tag
                        exp_tag <- .rstride$create_exp_tag(i_exp)
                       
-                       output_prefix       = smd_file_path(project_dir,exp_tag,.verbose=FALSE,.overwrite = TRUE)
+                       output_prefix       = smd_file_path(project_dir,exp_tag,.verbose=FALSE,.overwrite = TRUE) # overwrite!
                        config_exp_filename = paste0(output_prefix,".xml")
                        config_exp          = create_config_exp(config_default, output_prefix, exp_design, i_exp)
                         

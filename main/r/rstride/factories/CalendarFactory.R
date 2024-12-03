@@ -452,8 +452,11 @@ adjust_calendar_file <- function(db_category, db_update, file_name, db_age = 'NA
   
   # define start and end date
   date_out   <- seq(min(as.Date(df_update[,1])),max(as.Date(df_update[,1])),1)
-  date_out   <- date_out[date_out<=max(d_calendar_all$date)]
   
+  if(length(d_calendar_all$date)>0){
+    date_out   <- date_out[date_out<=max(d_calendar_all$date,na.rm = T)]    
+  }
+
   # extrapolate given dates and values
   df_update_full <- list(date = df_update[,1],
                          value = as.numeric(df_update[,2]))
@@ -471,11 +474,7 @@ adjust_calendar_file <- function(db_category, db_update, file_name, db_age = 'NA
   
   # integrate (new) values in calendar
   for(i_db_age in as.character(db_age)){
-    # remove existing values for these dates and ages (if any)
-    d_calendar_all <- d_calendar_all[!(as.character(date) %in% as.character(df_update_full$date) &
-                                       category == db_category &
-                                       age_char == i_db_age),]
-    # include new values
+    # extrapolate new values
     dcal_new <- data.table(category = db_category,
                            date     = paste(df_update_full$date),
                            value    = df_update_full$value,
@@ -484,7 +483,18 @@ adjust_calendar_file <- function(db_category, db_update, file_name, db_age = 'NA
                            age_char = i_db_age,
                            stringsAsFactors = F
     ) 
-    d_calendar_all <- rbind(d_calendar_all,dcal_new) 
+    if(nrow(d_calendar_all)==0){
+      d_calendar_all <- dcal_new
+    } else {
+      # remove existing values for these dates and ages (if any)
+      d_calendar_all <- d_calendar_all[!(as.character(date) %in% as.character(df_update_full$date) &
+                                           category == db_category &
+                                           age_char == i_db_age),]
+      
+      # add new values
+      d_calendar_all <- rbind(d_calendar_all,dcal_new) 
+    }
+    
   }
 
   # check

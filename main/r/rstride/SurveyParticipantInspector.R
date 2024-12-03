@@ -63,7 +63,7 @@ inspect_participant_data <- function(project_dir, save_pdf = TRUE)
     data_part           <- .rstride$load_aggregated_output(project_dir,'data_participants',project_summary$exp_id[flag_exp])
     num_runs_exp        <- sum(flag_exp)
 
-    # check if participant data is avaiable, if not, go to next iteration
+    # check if participant data is available, if not, go to next iteration
     if(nrow(data_part)==0){
       next
     }
