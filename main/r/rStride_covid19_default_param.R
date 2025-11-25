@@ -52,6 +52,7 @@ get_covid19_default_param <- function(){
                 delay_isolation_index          = 1,
                 delay_contact_tracing          = 1, 
                 test_false_negative            = 0.1,
+                #contact_tracing_date           = '2020-02-16',
                
                 # log level
                 event_log_level                 = "Transmissions",

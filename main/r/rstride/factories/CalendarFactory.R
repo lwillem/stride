@@ -563,6 +563,7 @@ integrate_parameters_in_calendar <- function(config_exp,
                                    grepl('clustering',names(config_exp)) |            # OR colname contains clustering
                                    grepl('imported',names(config_exp)) |              # OR colname contains imported
                                    grepl('survey',names(config_exp)) |
+                                   grepl('contact_tracing_date',names(config_exp)) |
                                    grepl('distancing',names(config_exp)) &            # OR colname contains distancing)
                                    !is.na(config_exp)]                                # AND different from NA 
   param_calendar <- unlist(param_calendar)
@@ -658,7 +659,17 @@ integrate_parameters_in_calendar <- function(config_exp,
                                         bool_singletons= TRUE,
                                         erase_category = erase_category)
   }
-  
+  if('contact_tracing_date' %in% names(config_exp)){
+    
+    include_temporal_distancing_factors(db_category    = 'contact_tracing',
+                                        db_values_char = 1,
+                                        db_delay_char  = 0,
+                                        file_name      = config_exp$holidays_file,
+                                        show_plots     = T,
+                                        db_dates_char  = config_exp$contact_tracing_date,
+                                        bool_singletons= FALSE,
+                                        erase_category = erase_category)
+  }
   # return list
   return(config_exp)
 }
@@ -667,7 +678,9 @@ integrate_parameters_in_calendar <- function(config_exp,
 # db_values <- seq(0.8,0.9,length=12)
 include_temporal_distancing_factors <- function(db_category,db_values_char,
                                                 db_age_char = NA,
-                                                db_delay_char,file_name,show_plots=T,
+                                                db_delay_char,
+                                                file_name,
+                                                show_plots=T,
                                                 db_dates_char=NA,
                                                 bool_singletons = FALSE,
                                                 erase_category  = TRUE){

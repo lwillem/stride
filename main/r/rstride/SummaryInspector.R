@@ -49,7 +49,11 @@ inspect_summary <- function(project_dir)
   
   # set y-asis ticks and labels
   y_ticks            <- pretty(project_summary$num_cases,10)
-  y_ticks_label      <- paste0(round(y_ticks/1e3),'k')
+  if(max(y_ticks)>5000){
+    y_ticks_label      <- paste0(round(y_ticks/1e3),'k')
+  } else{
+    y_ticks_label <- y_ticks
+  }
   y_ticks_pop        <- pretty(project_summary$num_cases,5)
   y_ticks_pop_label  <- round(y_ticks_pop/pop_size,digit=2)
   
