@@ -12,14 +12,15 @@
 #  along with the software. If not, see <http://www.gnu.org/licenses/>.
 #  see http://www.gnu.org/licenses/.
 #
-#  Copyright 2024
+#  Copyright 2026
 #############################################################################
 
 #================================================================================================
 # Copy the Python scripts to the bin folder.
 #================================================================================================
 
-add_subdirectory(pybind)
+# exclude for now
+#add_subdirectory(pybind)
 
 
 #############################################################################
