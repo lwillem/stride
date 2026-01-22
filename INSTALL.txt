@@ -12,7 +12,7 @@
 #  along with the software. If not, see <http://www.gnu.org/licenses/>.
 #  see http://www.gnu.org/licenses/.
 #
-#  Copyright 2024
+#  Copyright 2026
 #############################################################################
 
 =============================================================================
@@ -36,7 +36,7 @@ this directory, cmake will include it, thus defining the macros. An example
 CMakeLocal.cmake can be found in resources/cmake.
 
 =============================================================================
-    Build and install project artifacts (application, tests, documentation):
+    Build and install project artifacts (application, tests):
 =============================================================================
 You can either work with cmake directly or use make with the Makefile in
 this directory to drive cmake.
@@ -47,10 +47,8 @@ You can define a build type such as Debug or Release using the macro
 CMAKE_BUILD_TYPE. The project artifacts are installed in a directory
 named by the macro CMAKE_INSTALL_PREFIX.
 
-There are the following steps: configure, build, install, test.
-While some of the unit tests can run without an installation, most tests
-depend on installed workspace, output directories for test reports, etc.
-We have opted to run all tests after installation.
+There are the following steps: configure, install, test.
+
 
 Note that the main and test artifacts are built or installed by default,
 but not the  doc artifacts. For those you need to explicitly set the macro
@@ -65,7 +63,6 @@ invocations:
  	"make distclean"      to remove the build directory
  	"make clean"          to clean the build directory
     "make configure"      set up build directory and generate Makefiles in it
-    "make all"            build all artifacts after configuring for cmake
     "make install"        installs all the artifacts
     "make test"           runs tests (and that needs to come after install)
 The Makefile and cmake define the appropriate dependencies between the
@@ -73,24 +70,17 @@ targets. To include documentation in the build or install, you need to
 set the macro STRIDE_INCLUDE_DOC=TRUE in the make invocation or in your
 CMakeLocal.cmake configuration file.
 
-If you want to develop code, there is an additional "make format" that formats
-source files using the the format in the file .clang-format (provided the
-clang-format tool is installed on the system).
 
 =============================================================================
-    Build and install with cmake:
+    Build and install (with cmake in the back)
 =============================================================================
-To use the cmake command line:
-    "mkdir build; cd build"
-        creates the build directory named target and changes to it
-    "cmake -DCMAKE_INSTALL_PREFIX:PATH=/tmp/some_dir .."
-        generates Makefiles, defining the install directory macro
-    "make all; make install; make test"
-        builds, installs and tests everything
+To use the command line:
+    "make configure"
+        to set up build directory and display the system details and target folder
+    "make install"
+        to compile and install all binaries with input and config files in the target folder
 
-If you want a different build type e.g. Debug, then in the third step you have
-to define the CMAKE_BUILD_TYPE. To include documentation in the build or install,
-you need to set the macro -DSTRIDE_INCLUDE_DOC=TRUE in the second step or in
-your CMakeLocal.cmake configuration file.
+If you want a different target directory, you need to change the macro 
+-DCMAKE_INSTALL_PREFIX in the CMakeLocal.cmake configuration file.
 
 #############################################################################
