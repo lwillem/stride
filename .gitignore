@@ -125,3 +125,4 @@ covid19_hospital_age_2020_full.csv
 *.Rproj
 regression_rstride_cases.pdf
 .positai
+main/r/rstride/rmarkdown/*.html

@@ -1,5 +1,5 @@
 ---
-title: "Social Contact Matrices for STRIDE — USA (Wisconsin, Dane County) 2026"
+title: "USA Social Contact Matrices for STRIDE"
 author: "Willem L"
 date: "`r format(Sys.Date())`"
 output:
@@ -336,4 +336,4 @@ out_filename <- paste0(file_name, '.xml')
 cat(saveXML(xml_doc, indent = TRUE, prefix = newXMLCommentNode(xml_prefix)), file = out_filename)
 ```
 
-The final contact matrices for STRIDE are written to `r out_filename`.
+The final contact matrices for STRIDE are written to `r file.path(getwd(),out_filename)`.
