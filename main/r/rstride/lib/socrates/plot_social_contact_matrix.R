@@ -180,7 +180,7 @@ plot_contact_matrix_socrates <- function(data_cnt,data_part,figure_title,age_cat
 
   # get matrix
   suppressWarnings(
-  cnt_matrix <- contact_matrix(survey_rstride,age.limits = age_cat_breaks,per.capita = TRUE)  
+  cnt_matrix <- socialmixr::contact_matrix(survey_rstride,age.limits = age_cat_breaks,per.capita = TRUE)  
   )
   
   # account for NA

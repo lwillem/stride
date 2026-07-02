@@ -1,4 +1,4 @@
-#############################################################################
+############################################################################ #
 #  This file is part of the Stride software. 
 #  It is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by 
@@ -12,12 +12,12 @@
 #  along with the software. If not, see <http://www.gnu.org/licenses/>.
 #  see http://www.gnu.org/licenses/.
 #
-#  Copyright 2019, Willem L, Kuylen E & Broeckhove J
-#############################################################################
+#  Copyright 2026, Willem L, Kuylen E & Broeckhove J
+############################################################################ #
 # 
 # R script to pre-process the social contact rates into Stride xml format
 #
-#############################################################################
+############################################################################ #
 
 if(0==1) # for debugging
 {
@@ -30,13 +30,16 @@ if(0==1) # for debugging
   # if(grepl('15touch',exp_summary$age_contact_matrix_file)){
   #   ref_data_tag <- 'ref_fl2010_15touch'
   # }
+    
+    ref_data_tag  <- 'ref_fl2010'
+    
 }
 
-#############################################################################
-# GENERATE XML FILE WITH SOCIAL CONTACT PATTERNS                           ##
-#############################################################################
+############################################################################ #
+# GENERATE XML FILE WITH SOCIAL CONTACT PATTERNS                             #
+############################################################################ #
 
-generate_social_contact_data_file <- function(ref_data_tag,cnt_matrices_lib,postfix=''){
+generate_social_contact_data_file <- function(ref_data_tag, cnt_matrices_lib, bool_by_age = FALSE, postfix = ''){
   
   ref_data_tag
   data_dir <- './data'
@@ -76,7 +79,7 @@ generate_social_contact_data_file <- function(ref_data_tag,cnt_matrices_lib,post
   i_context <- 1
   for(i_context in 1:length(cnt_matrices_lib))
   {
-    print(cnt_matrices_opt[i_context])
+    print(paste('Include:',cnt_matrices_opt[i_context]))
     
     # add input file name
     cnt_meta_data           <- newXMLNode(names(cnt_matrices_lib)[i_context], parent=cnt_matrix_meta)
@@ -101,13 +104,23 @@ generate_social_contact_data_file <- function(ref_data_tag,cnt_matrices_lib,post
       
       contacts  <- newXMLNode("contacts",parent=participant)
       
-      for(j in 1:ncol(survey_mij)){
+      if(bool_by_age){
+        for(j in 1:ncol(survey_mij)){
         contact  <- newXMLNode("contact",parent=contacts)
         age <- newXMLNode("age", parent=contact);
         xmlValue(age) <- j
         rate <- newXMLNode("rate", parent=contact);
         xmlValue(rate) <- paste(survey_mij[i,j])
+        }
       }
+      else {
+        contact  <- newXMLNode("contact",parent=contacts)
+        age <- newXMLNode("age", parent=contact);
+        xmlValue(age) <- "all"
+        rate <- newXMLNode("rate", parent=contact);
+        xmlValue(rate) <- paste(sum(survey_mij[i,]))
+      }
+      
     }
   }
   
@@ -120,8 +133,10 @@ generate_social_contact_data_file <- function(ref_data_tag,cnt_matrices_lib,post
   # save as XML,
   # note: if we use an XMLdoc to include prefix, the line break dissapears...
   # fix: http://r.789695.n4.nabble.com/saveXML-prefix-argument-td4678407.html
-  cat( saveXML( xml_doc, indent = TRUE, prefix = newXMLCommentNode(xml_prefix)),  file = filename) 
+  cat(saveXML(xml_doc, indent = TRUE, prefix = newXMLCommentNode(xml_prefix)), file = filename) 
   
+  # print statement
+  print(filename)
 }
 
 

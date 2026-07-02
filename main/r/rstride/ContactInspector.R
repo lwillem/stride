@@ -218,7 +218,7 @@ inspect_contact_data <- function(project_dir){
   mij_community_weekday <- .rstride$plot_cnt_matrix(data_cnt_day[data_cnt_day$cnt_community_weekday==1,],data_part_day,'community_weekday',L,num_days)
   
   ## HOUSEHOLD CLUSTER
-  .rstride$plot_cnt_matrix(data_cnt_day[data_cnt_day$cnt_household_cluster==1,],data_part_day,'household_cluster',L,num_days)
+  mij_household_cluster <- .rstride$plot_cnt_matrix(data_cnt_day[data_cnt_day$cnt_household_cluster==1,],data_part_day,'household_cluster',L,num_days)
   
   #dev.off()
   
@@ -250,6 +250,16 @@ inspect_contact_data <- function(project_dir){
   survey_mij_community_weekend  <- get_survey_data('community_weekend',survey_data)
   survey_mij_total_weekend      <- get_survey_data('regular_weekend',survey_data)
   
+  # if survey data does not contain explicitly total estimates, impute them
+  if(nrow(survey_mij_total) == 0){
+    survey_mij_total <- survey_mij_hh + survey_mij_school + 
+                          survey_mij_workplace + survey_mij_community
+  }
+  if(nrow(survey_mij_total_weekend) == 0){
+    survey_mij_total <- survey_mij_hh + survey_mij_school_weekend + 
+                          survey_mij_workplace_weekend + survey_mij_community_weekend
+  }
+  
   ## COMPARE
   par(mfrow=c(2,3))
   
@@ -258,7 +268,7 @@ inspect_contact_data <- function(project_dir){
   points(rowSums(mij_total,na.rm=T),col=2)
   legend('topright',c('week','weekend','model'),col=c(1,1,2),lty=c(1,2,0),pch=c(-1,-1,1),cex=0.8,title=ref_data_tag)
   
-  plot(rowSums(survey_mij_hh),main='household',xlab='age',ylab='contacts',type='l',ylim=c(-0.1,5))
+  plot(rowSums(survey_mij_hh),main='household',xlab='age',ylab='contacts',type='l',ylim=c(-0.1,8))
   points(rowSums(mij_hh,na.rm=T),col=2)
   legend('topright',c('week','weekend','model'),col=c(1,1,2),lty=c(1,2,0),pch=c(-1,-1,1),cex=0.8,title=ref_data_tag)
   
@@ -309,6 +319,11 @@ inspect_contact_data <- function(project_dir){
 #f_data_cnt = data_cnt_all;f_data_part=data_part_all;tag='total';L;num_days
 .rstride$plot_cnt_matrix <- function(f_data_cnt,f_data_part,tag,L,num_days)
 {
+  
+  # if f_data_cnt is empty, return matrix with 0's, and don't print
+  if(nrow(f_data_cnt) == 0){
+    return(matrix(0,L,L))
+  }
   
   # select participants
   data_cnt_flag <- f_data_cnt$panel_id %in% f_data_part$panel_id 
