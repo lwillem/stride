@@ -14,7 +14,7 @@
 #  see http://www.gnu.org/licenses/.
 #
 #
-#  Copyright 2024, Willem L
+#  Copyright 2026, Willem L
 #############################################################################
 #
 # Call this script from the main project folder (containing bin, config, lib, ...)
@@ -51,10 +51,10 @@ exp_design <- expand.grid(r0                            = sort(c(seq(1,5,length=
                           num_infected_seeds            = 20,
                           seeding_age_min               = 1,
                           seeding_age_max               = 99,
-                          disease_config_file           = "disease_covid19_lognorm.xml",
-                          population_file               = "pop_belgium600k_c500_teachers_censushh.csv",
-                          age_contact_matrix_file       = "contact_matrix_flanders_conditional_teachers.xml",
-                          holidays_file                 = "holidays_none.csv",
+                          disease_config_file           = "data/disease_covid19_lognorm.xml",
+                          population_file               = "data/pop_belgium600k_c500_teachers_censushh.csv",
+                          age_contact_matrix_file       = "data/contact_matrix_flanders_conditional_teachers.xml",
+                          holidays_file                 = "data/holidays_none.csv",
                           stringsAsFactors = F)
 
 # add a unique seed for each run

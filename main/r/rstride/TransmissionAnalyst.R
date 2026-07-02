@@ -192,7 +192,7 @@ analyse_transmission_data_for_r0 <- function(project_dir)
   disease_config_file     <- unique(project_summary$disease_config_file)
   
   # load disease config file
-  config_disease    <- xmlToList(file.path('data',disease_config_file))
+  config_disease    <- xmlToList(disease_config_file)
   
   par(mfrow=c(2,2))
   plot(seq_len(length(config_disease$time_asymptomatic))-1,config_disease$time_asymptomatic,xlab='days',ylab='probability',main='time_asymptomatic')
@@ -308,7 +308,7 @@ analyse_transmission_data_for_r0 <- function(project_dir)
   
   # update filename: add run_tag
   run_tag                    <- unique(project_summary$run_tag)
-  disease_config_update_file <- paste0(run_tag,'_',disease_config_file)
+  disease_config_update_file <- paste0(run_tag,'_',basename(disease_config_file))
   
   # save
   new_disease_config_filename <- .rstride$save_config_xml(config_disease,'disease',file.path(project_dir,disease_config_update_file))
