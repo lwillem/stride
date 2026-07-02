@@ -1,0 +1,129 @@
+---
+title: "rStride README: How the Code Is Meant to Be Used"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# How rStride Started
+
+rStride was developed alongside the C++ kernel of Stride. The concept is to provide an R wrapper that runs the C++ executable multiple times with specific parameter settings, and that processes the resulting model output. During compilation and installation of the C++ project, all R code, data, and config files are copied to the build folder.
+
+# How to Start Using rStride
+
+Open the R project in `main/r/rstride/rstride.Rproj` and load the R file `Misc.R`. Sourcing this file loads some basic helper functions into your workspace. Running the code below, which also appears at the top of `Misc.R`, sets the working directory to the latest Stride install directory in `opt`.
+
+```{r, eval = FALSE}
+# load helper file
+source('Misc.R')
+
+# set the working directory to the latest Stride install dir in '$HOME/opt'
+.rstride$set_wd()
+
+```
+
+# How to Continue
+
+The following R files are intended as starting points for your own analyses:
+
+- `rStride_explore.R`: run transmission scenarios
+- `rStride_contacts.R`: explore social contacts in the virtual population
+- `rStride_r0.R`: explore and calibrate pathogen and transmission dynamics
+
+Each of these files follows the same pattern: load rStride, define the design of experiments, run all parameter combinations, and then run the post-processing code.
+
+The current build-and-install approach is designed to ensure you are always working against the latest C++ kernel. Note that R files in the build folder are overwritten by the ones in the project directory. So if you adjust rStride files while exploring, it is best to edit the R files in the project repository directory, or create a local copy under a different name in your install directory. To add your own rStride files to the installation, list their names in the `main/r/CMakeLists.txt` file.
+
+```{r, eval = FALSE}
+
+# rStride analysis scripts
+INSTALL( FILES 			
+            rStride_contacts.R
+            rStride_covid19_default_param.R	 	
+            rStride_explore.R
+            rStride_r0.R 	
+	DESTINATION ${BIN_INSTALL_LOCATION}  
+	PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_WRITE GROUP_READ
+)
+
+```
+
+For the Belgian COVID-19 analyses, we developed an R script containing all baseline parameters for scenario runs, so that the exploration scripts only needed to specify the parameters to change for a given exploration. See `rStride_covid19_default_param.R` for details; it contains an R function that returns all default parameter values.
+
+```{r, eval = FALSE}
+# Load default parameter configurations
+source('./bin/rStride_covid19_default_param.R')
+
+# get default parameters and values to combine in a full-factorial grid
+exp_param_list <- get_covid19_default_param()
+
+```
+
+To obtain the parameter names to be used, look at: 
+
+```{r, eval = FALSE}
+
+names(get_covid19_default_param())
+
+```
+
+
+# Design of Experiments
+
+If you want to change model parameters, please update or add them to the `exp_param_list`, and use this list to generate different parameter combinations to be executed.
+
+Note that some functions are conceived within the `.rstride` environment, which is hidden from the global environment. As such, you need to call them explicitly, e.g. `.rstride$get_full_grid_exp_design()`. It is not clear whether this environment option is the optimal approach, or whether there is a better way to separate internal and external functions in this R codebase.
+
+```{r, eval = FALSE}
+
+# e.g. set 2 options for R0 and the modelling horizon
+exp_param_list$r0 = c(2, 3)
+exp_param_list$num_days = c(25, 40)
+
+# set the number of stochastic realisations, i.e. the number of
+# random number generator (RNG) seeds
+exp_param_list$num_seeds = 5
+
+# build a grid-based design of experiments, accounting for the number of RNG seeds
+exp_design <- .rstride$get_full_grid_exp_design(exp_param_list = exp_param_list,
+                                                 num_seeds      = exp_param_list$num_seeds)
+
+# run rStride
+project_dir <- run_rStride(exp_design           = exp_design,
+                            dir_postfix          = dir_postfix,
+                            num_parallel_workers = exp_param_list$num_parallel_workers,
+                            remove_run_output    = FALSE)
+
+```
+
+# How to Explore Model Output
+
+Exploration starts from the model output in the `project_dir` directory. Both `.csv` and `.RData` files are used by the R code, in both serial and parallel processing streams.
+
+```{r, eval = FALSE}
+
+# explore general stats
+inspect_summary(project_dir)
+
+# explore individual characteristics
+inspect_participant_data(project_dir)
+
+# explore incidence output
+inspect_incidence_data(project_dir)
+
+# explore prevalence output
+inspect_prevalence_data(project_dir)
+
+# transmission dynamics
+inspect_transmission_dynamics(project_dir)
+
+# explore contact-tracing (if active)
+inspect_tracing_data(project_dir)
+
+# explore contact data (if available)
+inspect_contact_data(project_dir)
+```
+
+

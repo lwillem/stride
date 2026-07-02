@@ -12,14 +12,15 @@
 #  along with the software. If not, see <http://www.gnu.org/licenses/>.
 #  see http://www.gnu.org/licenses/.
 #
-#  Copyright 2026, Willem L, Kuylen E & Broeckhove J
+#  Copyright 2017, Willem L, Kuylen E & Broeckhove J
 #############################################################################
 
-#############################################################################
-# Add subdirs:
-#############################################################################
-add_subdirectory(doxygen)
-add_subdirectory(latex)
-add_subdirectory(markdown)
+#============================================================================
+# Manual
+#============================================================================
+install(
+		FILES          rStride_readme.pdf
+		DESTINATION    ${DOC_INSTALL_LOCATION} 
+)	
 
 #############################################################################
