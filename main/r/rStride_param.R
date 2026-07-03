@@ -14,7 +14,7 @@
 #  see http://www.gnu.org/licenses/.
 #
 #
-#  Copyright 2024, Willem L
+#  Copyright 2026, Willem L
 ############################################################################ #
 #
 # Call this script from the main project folder (containing bin, config, lib, ...)
@@ -41,20 +41,20 @@ dir_postfix <- '_param'
 ################################## #
 
 # set number of experiments
-num_experiments     <- 16
+num_experiments  <- 16
 
 # get default parameters and values to combine in a LHS design
-exp_param_list <- get_covid19_default_param()
+exp_param_list <- get_default_param()
 
-# check if some parameters have 
-table(unlist(lapply(exp_param_list,length)))
+# # to explore model parameters
+#View(get_default_param_info())
 
 # option to change parameter values
 exp_param_list$population_file <- 'data/pop_belgium600k_c500_teachers_censushh.csv'
 exp_param_list$num_days <- 34      #34, 74, 134
 exp_param_list$r0 <- c(0.5,4)
 exp_param_list$num_infected_seeds <- c(0,560)
-exp_param_list$num_seeds <- 3
+exp_param_list$num_rng_seeds <- 3
 
 # # add maximum for log parsing (memory boundaries)
 exp_param_list$logparsing_cases_upperlimit <- 1.5e6
@@ -72,7 +72,7 @@ range(as.Date(exp_param_list$start_date), as.Date(exp_param_list$start_date)+ ex
 # get LHS design of experiments
 exp_design <- .rstride$get_lhs_exp_design(exp_param_list,
                                           num_experiments = num_experiments,
-                                          num_rng_seeds    = exp_param_list$num_seeds)
+                                          num_rng_seeds    = exp_param_list$num_rng_seeds)
 
 ################################## #
 ## RUN rSTRIDE                  ####

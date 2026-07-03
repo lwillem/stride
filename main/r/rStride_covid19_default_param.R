@@ -31,7 +31,7 @@ get_covid19_default_param <- function(){
    ## parameters from a20201031_132800_param4_d73_05k_n10_parameter_pareto_incidence_single_hosp
    out <- list(r0                             = 3.42,
                 num_days                      = 196,
-                num_seeds                     = 10,
+                num_rng_seeds                 = 10,
                 num_participants_survey       = 30,
                 num_infected_seeds            = 263,
                 disease_config_file           = "data/disease_covid19_lognorm.xml",

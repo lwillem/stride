@@ -14,7 +14,7 @@
 #  see http://www.gnu.org/licenses/.
 #
 #
-#  Copyright 2024, Willem et al.
+#  Copyright 2026, Willem et al.
 #############################################################################
 #
 # Call this script from the main project folder (containing bin, config, lib, ...)
@@ -30,9 +30,6 @@ rm(list=ls())
 # load rStride
 source('./bin/rstride/rStride.R')
 
-# Load default parameter configurations
-source('./bin/rStride_covid19_default_param.R')
-
 # set directory postfix (optional)
 dir_postfix <- '_cnt'
 
@@ -41,14 +38,17 @@ dir_postfix <- '_cnt'
 ################################## #
 
 # get default parameters and values to combine in a full-factorial grid
-exp_param_list <- get_covid19_default_param()
+exp_param_list <- get_default_param()
+
+# # to explore model parameters
+#View(get_default_param_info())
 
 # contact parameters
 exp_param_list$event_log_level           <- "Participants"
-exp_param_list$num_days                  <- 1
-exp_param_list$num_infected_seeds        <- 1
-exp_param_list$num_participants_survey   <- 4999
-exp_param_list$num_seeds                 <- 2
+exp_param_list$num_days                  <- 2         # number of days after the start_day
+exp_param_list$num_infected_seeds        <- 1         # min 1
+exp_param_list$num_participants_survey   <- 5000
+exp_param_list$num_rng_seeds             <- 1         # stick to one, since there is no averaging over multiple runs (yet)
 
 # # specific start dates for COVID-19 in BEL
 # exp_param_list$start_date <- c('2020-02-17',#'2020-02-22', # weekday, weekend
@@ -59,7 +59,8 @@ exp_param_list$num_seeds                 <- 2
 #                                "2020-06-02",#"2020-06-07", # exit, with school
 #                                "2020-07-07"##"2020-06-12") # exit, without school
 
-exp_param_list$contact_survey_dates          <- c_str(exp_param_list$start_date)
+# option to specify selection of dates to run the survey (if you run longer periods)
+exp_param_list$contact_survey_dates          <- NA                    # NA: every day
 exp_param_list$contact_survey_ages           <- c_str(seq(0,90,10))
 exp_param_list$contact_survey_resample       <- 1
 
@@ -72,10 +73,6 @@ exp_param_list$start_date              <- c('2020-02-10', # Monday
 exp_param_list$population_file         <- 'data/pop_usa_wisconsin_dane474k_c1000.csv'
 exp_param_list$age_contact_matrix_file <- 'data/contact_matrix_usa_conditional.xml'
 exp_param_list$holidays_file           <- 'data/holidays_none.csv'
-exp_param_list$contact_survey_dates    <- c_str(exp_param_list$start_date)
-
-# check period
-range(as.Date(exp_param_list$start_date), as.Date(exp_param_list$start_date)+ exp_param_list$num_days)
 
 ################################################ #
 ## GENERATE DESIGN OF EXPERIMENT GRID         ####
@@ -83,7 +80,7 @@ range(as.Date(exp_param_list$start_date), as.Date(exp_param_list$start_date)+ ex
 
 # get grid-based design of experiments
 exp_design <- .rstride$get_full_grid_exp_design(exp_param_list = exp_param_list,
-                                                num_seeds      = exp_param_list$num_seeds)
+                                                num_rng_seeds  = exp_param_list$num_rng_seeds)
 dim(exp_design)
 
 ##################################
