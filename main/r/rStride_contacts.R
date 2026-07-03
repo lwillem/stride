@@ -50,22 +50,29 @@ exp_param_list$num_infected_seeds        <- 1
 exp_param_list$num_participants_survey   <- 4999
 exp_param_list$num_seeds                 <- 2
 
+# # specific start dates for COVID-19 in BEL
 # exp_param_list$start_date <- c('2020-02-17',#'2020-02-22', # weekday, weekend
 #                                '2020-02-24',              # holiday
 #                                "2020-03-24",#"2020-03-28", # lockdown: weekday, weekend
 #                                "2020-05-05",              # first deconfinement 
 #                                "2020-06-10",#"2020-06-11", # hh bubble start (weekend, weekday)
 #                                "2020-06-02",#"2020-06-07", # exit, with school
-#                                "2020-07-07"##"2020-06-12"
-#                                ) # exit, without school
+#                                "2020-07-07"##"2020-06-12") # exit, without school
 
-exp_param_list$contact_survey_dates          <- c_str(exp_param_list$start_date,'2020-02-20','2020-03-30')
+exp_param_list$contact_survey_dates          <- c_str(exp_param_list$start_date)
 exp_param_list$contact_survey_ages           <- c_str(seq(0,90,10))
 exp_param_list$contact_survey_resample       <- 1
 
-
-# change parameters
+# change parameters for development (BEL)
 exp_param_list$population_file <- 'data/pop_belgium600k_c500_teachers_censushh.csv'
+
+# change parameters for USA
+exp_param_list$start_date              <- c('2020-02-10', # Monday
+                                            '2020-02-16') # Sunday
+exp_param_list$population_file         <- 'data/pop_usa_wisconsin_dane474k_c1000.csv'
+exp_param_list$age_contact_matrix_file <- 'data/contact_matrix_usa_conditional.xml'
+exp_param_list$holidays_file           <- 'data/holidays_none.csv'
+exp_param_list$contact_survey_dates    <- c_str(exp_param_list$start_date)
 
 # check period
 range(as.Date(exp_param_list$start_date), as.Date(exp_param_list$start_date)+ exp_param_list$num_days)

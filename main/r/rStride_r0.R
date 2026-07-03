@@ -43,18 +43,28 @@ dir_postfix <- '_r0'
 # set the number of realisations per configuration set
 num_seeds  <- 10
 
-# add parameters and values to combine in a full-factorial grid
-exp_design <- expand.grid(r0                            = sort(c(seq(1,5,length=5))),
-                          num_days                      = c(20),
-                          rng_seed                      = seq(num_seeds),
-                          start_date                    = c('2020-02-01','2020-02-02','2020-02-03','2020-02-04','2020-02-05','2020-02-06','2020-02-07'),
-                          num_infected_seeds            = 20,
-                          seeding_age_min               = 1,
-                          seeding_age_max               = 99,
-                          disease_config_file           = "data/disease_covid19_lognorm.xml",
-                          population_file               = "data/pop_belgium600k_c500_teachers_censushh.csv",
-                          age_contact_matrix_file       = "data/contact_matrix_flanders_conditional_teachers.xml",
-                          holidays_file                 = "data/holidays_none.csv",
+# make parameter list (for COVID-19)
+exp_param_list <- list(r0                            = sort(c(seq(1,5,length=5))),
+                       num_days                      = c(20),
+                       rng_seed                      = seq(num_seeds),
+                       start_date                    = c('2020-02-01','2020-02-02','2020-02-03','2020-02-04','2020-02-05','2020-02-06','2020-02-07'),
+                       num_infected_seeds            = 20,
+                       seeding_age_min               = 1,
+                       seeding_age_max               = 99,
+                       disease_config_file           = "data/disease_covid19_lognorm.xml",
+                       population_file               = "data/pop_belgium600k_c500_teachers_censushh.csv",
+                       age_contact_matrix_file       = "data/contact_matrix_flanders_conditional_teachers.xml",
+                       holidays_file                 = "data/holidays_none.csv")
+
+# changes to simulate measles in the USA
+exp_param_list$r0                      <- sort(c(seq(1,20,length=5)))
+exp_param_list$start_date              <- '2020-02-01'
+exp_param_list$disease_config_file     <- "data/disease_measles_usa.xml"
+exp_param_list$population_file         <- "data/pop_usa_wisconsin_dane474k_c1000.csv"
+exp_param_list$age_contact_matrix_file <- "data/contact_matrix_usa_conditional.xml"
+
+# combine parameters in a full-factorial grid
+exp_design <- expand.grid(exp_param_list,
                           stringsAsFactors = F)
 
 # add a unique seed for each run
