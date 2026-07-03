@@ -111,12 +111,15 @@ pop_data <- tmp_wp[[1]] %>%
          secondary_community = com2_id) %>%
   mutate(school_id = dense_rank(school_id_og),
          school_id = ifelse(school_id_og == "X", 0, school_id),
-         # work_id = 0 #dense_rank(work_id_og),
+         work_id = dense_rank(work_id_og),
          work_id = ifelse(work_id_og == "X", 0, work_id)
-  )
+  ) %>%
+  select(c("age","household_id","school_id","work_id","primary_community","secondary_community"))
 comm_data <- tmp_wp[[2]]
 
+if(export == TRUE){
+  write.table(pop_data,
+              "data/pop_US-WI-MKE_c1000.csv",
+              sep = ",", col.names = TRUE, row.names = FALSE, quote = FALSE)
+}
 
-write.table(pop_data[, c("age","household_id","school_id","work_id","primary_community","secondary_community")],
-                        "data/pop_US-WI-MKE_c1000.csv",
-                        sep = ",", col.names = TRUE, row.names = FALSE, quote = FALSE)
