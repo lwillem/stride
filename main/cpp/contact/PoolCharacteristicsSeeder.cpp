@@ -51,8 +51,6 @@ shared_ptr<Population> PoolCharacteristicsSeeder::Seed(shared_ptr<Population> po
 
 	auto& poolSys = population.RefPoolSys();
 
-	auto& logger = population.RefEventLogger();
-
 	std::cout << "Start PoolCharacteristicsSeeder." << std::endl;
 
 
@@ -61,7 +59,7 @@ shared_ptr<Population> PoolCharacteristicsSeeder::Seed(shared_ptr<Population> po
 	double ventilation_distribution_overdispersion;
 	// Get target overdispersion
 	if (ventilation_distribution){
-		double ventilation_distribution_overdispersion = m_config.get<double>("run.ventilation_distribution_overdispersion");
+		ventilation_distribution_overdispersion = m_config.get<double>("run.ventilation_distribution_overdispersion");
 	}
 
 	for (ContactType::Id typ : ContactType::IdList) {
@@ -141,7 +139,7 @@ shared_ptr<Population> PoolCharacteristicsSeeder::Seed(shared_ptr<Population> po
 				}
 				else if (typ == Id::Workplace){
 					unsigned int poolTypeSpecification =  pool[0]->GetProfession();
-					double ceiling_height = ceiling_height_vector[poolTypeSpecification];
+					ceiling_height = ceiling_height_vector[poolTypeSpecification];
 				}
 			
 			double variatie = uniform01Number * variability_area;
