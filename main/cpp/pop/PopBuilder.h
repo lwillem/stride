@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include <boost/property_tree/ptree_fwd.hpp>
+#include "util/Ptree.h"
 #include <memory>
 #include <spdlog/logger.h>
 
@@ -41,7 +41,7 @@ public:
         /// Initializing constructor.
         /// \param config        Property_tree with general configuration settings.
         /// \param strideLogger  Logging.
-        PopBuilder(const boost::property_tree::ptree& config,
+        PopBuilder(const stride::util::ptree& config,
                            std::shared_ptr<spdlog::logger> strideLogger = nullptr);
 
         /// Build Population and return it afterwards.
@@ -57,7 +57,7 @@ private:
         /// Generates pop's individuals and return pop.
         std::shared_ptr<Population> MakePersons(std::shared_ptr<Population> pop);
 
-        const boost::property_tree::ptree& m_config;        ///< Configuration property tree.
+        const stride::util::ptree& m_config;        ///< Configuration property tree.
         std::shared_ptr<spdlog::logger>    m_stride_logger; /// Logger for build process.
 };
 

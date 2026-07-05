@@ -22,7 +22,7 @@
 
 #include "contact/ContactPool.h"
 
-#include <boost/property_tree/ptree_fwd.hpp>
+#include "util/Ptree.h"
 #include <boost/date_time/gregorian/gregorian.hpp>
 
 #include <algorithm>
@@ -41,7 +41,7 @@ class Calendar
 {
 public:
         /// Constructor
-        explicit Calendar(const boost::property_tree::ptree& configPt,unsigned int num_days);
+        explicit Calendar(const stride::util::ptree& configPt,unsigned int num_days);
 
         /// Advance the simulated calendar by one day.
         void AdvanceDay();
@@ -194,7 +194,7 @@ private:
 
 
 		/// Initialize the calendar (csv)
-        void Initialize_csv(const boost::property_tree::ptree& configPt);
+        void Initialize_csv(const stride::util::ptree& configPt);
 
         boost::gregorian::date              m_date;                       ///< Current simulated date.
         boost::gregorian::date              m_date_start;                 ///< Start simulation.

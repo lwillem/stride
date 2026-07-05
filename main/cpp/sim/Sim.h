@@ -28,7 +28,7 @@
 #include "pop/SurveyManager.h"
 #include "util/RnMan.h"
 
-#include <boost/property_tree/ptree.hpp>
+#include "util/Ptree.h"
 #include <string>
 
 
@@ -50,7 +50,7 @@ class Sim
 {
 public:
         /// Create Sim initialized by the configuration in property tree and population.
-        static std::shared_ptr<Sim> Create(const boost::property_tree::ptree& config, std::shared_ptr<Population> pop);
+        static std::shared_ptr<Sim> Create(const stride::util::ptree& config, std::shared_ptr<Population> pop);
 
         /// Calendar for the simulated world. Initialized with the start date in the simulation
         /// world. Use GetCalendar()->GetSimulationDay() for the number of days simulated.
@@ -81,7 +81,7 @@ private:
         friend class SimBuilder;
 
 private:
-        boost::property_tree::ptree m_config;                        ///< Configuration property tree
+        stride::util::ptree m_config;                        ///< Configuration property tree
         EventLogMode::Id            m_event_log_mode;                ///< Specifies contact/transmission logging mode.
         unsigned int                m_num_threads;                   ///< The number of (OpenMP) threads.
         bool                        m_track_index_case;              ///< General simulation or tracking index case.

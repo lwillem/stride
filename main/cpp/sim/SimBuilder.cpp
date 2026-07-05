@@ -37,7 +37,6 @@
 
 namespace stride {
 
-using namespace boost::property_tree;
 using namespace std;
 using namespace stride::util;
 using namespace ContactType;

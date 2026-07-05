@@ -25,7 +25,7 @@
 #include "util/ConfigInfo.h"
 #include "util/FileSys.h"
 
-#include <boost/property_tree/ptree.hpp>
+#include "util/Ptree.h"
 #include <cmath>
 #include <gtest/gtest.h>
 #include <iomanip>
@@ -36,7 +36,7 @@ using namespace std;
 using namespace stride;
 using namespace stride::util;
 using namespace ::testing;
-using boost::property_tree::ptree;
+using stride::util::ptree;
 
 namespace Tests {
 

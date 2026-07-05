@@ -27,12 +27,11 @@
 #include "util/FileSys.h"
 #include "util/RnMan.h"
 
-#include <boost/property_tree/ptree.hpp>
+#include "util/Ptree.h"
 #include <cassert>
 #include <cmath>
 #include <boost/math/distributions/gamma.hpp>
 
-using namespace boost::property_tree;
 using namespace stride::util;
 using namespace std;
 

@@ -25,7 +25,7 @@
 #include "util/RnMan.h"
 #include "util/SegmentedVector.h"
 
-#include <boost/property_tree/ptree_fwd.hpp>
+#include "util/Ptree.h"
 #include <memory>
 
 namespace stride {
@@ -40,13 +40,13 @@ class DiseaseSeeder
 {
 public:
         /// Initializing DiseaseSeeder.
-        DiseaseSeeder(const boost::property_tree::ptree& config, std::shared_ptr<util::RnMan> rnMan);
+        DiseaseSeeder(const stride::util::ptree& config, std::shared_ptr<util::RnMan> rnMan);
 
         /// Import infected cases into the population
         void ImportInfectedCases(std::shared_ptr<Population> pop, unsigned int numInfected, unsigned int simDay, const TransmissionProfile& transProfile, util::Rn& rn);
 
 private:
-        const boost::property_tree::ptree& m_config; ///< Run config.
+        const stride::util::ptree& m_config; ///< Run config.
         std::shared_ptr<util::RnMan>          m_rn_man; ///< Random number manager.
 };
 

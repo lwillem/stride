@@ -23,7 +23,7 @@
 #include "ContactType.h"
 #include "pop/Age.h"
 
-#include <boost/property_tree/ptree_fwd.hpp>
+#include "util/Ptree.h"
 #include <array>
 
 namespace stride {
@@ -38,7 +38,7 @@ public:
         AgeContactProfile() = default;
 
         /// Explicitly initialize
-        AgeContactProfile(ContactType::Id poolType, const boost::property_tree::ptree& contactPt);
+        AgeContactProfile(ContactType::Id poolType, const stride::util::ptree& contactPt);
 };
 
 } // namespace stride

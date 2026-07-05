@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include <boost/property_tree/ptree_fwd.hpp>
+#include "util/Ptree.h"
 #include <memory>
 
 #include "contact/ContactType.h"
@@ -47,7 +47,7 @@ public:
 	/// Initialize Seeder.
 	/// \param config 		Configuration parameters.
 	/// \param rnMan			Random number manager.
-	ContactDivider(const boost::property_tree::ptree& config, std::shared_ptr<util::RnMan> rnMan);
+	ContactDivider(const stride::util::ptree& config, std::shared_ptr<util::RnMan> rnMan);
 
   
     /// \param pop               Population.
@@ -55,7 +55,7 @@ public:
     std::shared_ptr<Population> Divide(std::shared_ptr<Population> pop, const AgeContactProfiles& ageContactProfiles);
 
 private:
-    const boost::property_tree::ptree& m_config; ///< Run config.
+    const stride::util::ptree& m_config; ///< Run config.
     std::shared_ptr<util::RnMan>          m_rn_man; ///< Random number manager.
     
 };

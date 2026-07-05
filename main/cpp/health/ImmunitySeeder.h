@@ -25,7 +25,7 @@
 #include "util/RnMan.h"
 #include "util/SegmentedVector.h"
 
-#include <boost/property_tree/ptree_fwd.hpp>
+#include "util/Ptree.h"
 #include <memory>
 
 namespace stride {
@@ -37,7 +37,7 @@ class ImmunitySeeder
 {
 public:
 		/// Initializing ImmunitySeeder.
-        explicit ImmunitySeeder(const boost::property_tree::ptree& config, std::shared_ptr<util::RnMan> rnMan);
+        explicit ImmunitySeeder(const stride::util::ptree& config, std::shared_ptr<util::RnMan> rnMan);
 
         /// Build the simulator.
         void Seed(std::shared_ptr<Population> pop);
@@ -53,7 +53,7 @@ private:
 
 
 private:
-		const boost::property_tree::ptree& m_config; ///< Run config.
+		const stride::util::ptree& m_config; ///< Run config.
 		std::shared_ptr<util::RnMan> m_rn_man; ///< Random number manager.
 };
 

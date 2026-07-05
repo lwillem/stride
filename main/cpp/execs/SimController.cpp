@@ -29,13 +29,11 @@
 #include "util/SummaryFile.h"
 #include "util/TimeStamp.h"
 
-#include <boost/property_tree/xml_parser.hpp>
 #include <regex>
 
 using namespace std;
 using namespace stride::util;
-using namespace boost::property_tree;
-using namespace boost::property_tree::xml_parser;
+
 
 namespace stride {
 
@@ -118,9 +116,7 @@ void SimController::LogStartup()
         } else {
                 m_stride_logger->info("Not using OpenMP threads.");
         }
-        stringstream ss;
-        write_xml(ss, m_config, xml_writer_make_settings<ptree::key_type>(' ', 8));
-        const auto s = ss.str();
+        const auto s = m_config.ToXmlString();
         stringstream spretty;
         std::regex_replace(std::ostreambuf_iterator<char>(spretty), s.begin(), s.end(), std::regex("(\\n+)"), "\n");
         m_stride_logger->trace("Config :\n {}", spretty.str());

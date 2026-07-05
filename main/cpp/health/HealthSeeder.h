@@ -22,7 +22,7 @@
 
 #include "pop/Age.h"
 
-#include <boost/property_tree/ptree_fwd.hpp>
+#include "util/Ptree.h"
 #include <memory>
 #include <string>
 #include <vector>
@@ -43,15 +43,15 @@ class HealthSeeder
 {
 public:
         /// Constructor requires overall and disease-specifc data.
-        explicit HealthSeeder(const boost::property_tree::ptree& runPt,
-        						const boost::property_tree::ptree& diseasePt);
+        explicit HealthSeeder(const stride::util::ptree& runPt,
+        						const stride::util::ptree& diseasePt);
 
         /// Seeds the population with Health data.
        void Seed(const std::shared_ptr<Population>& pop, const TransmissionProfile& transProfile, std::shared_ptr<util::RnMan> rnMan);
 
 private:
         /// Utility method to extract distribution from data in ptree.
-        void GetDistribution(std::vector<double>& distribution, const boost::property_tree::ptree& rootPt,
+        void GetDistribution(std::vector<double>& distribution, const stride::util::ptree& rootPt,
                              const std::string& xmlTag);
 
         /// Sample for each of the health data item individually.

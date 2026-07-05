@@ -22,7 +22,7 @@
 
 #include "execs/SimController.h"
 
-#include <boost/property_tree/ptree.hpp>
+#include "util/Ptree.h"
 #include <memory>
 #include <string>
 
@@ -44,7 +44,7 @@ class MDPRunner : public SimController
 public:
         /// Initialization with property tree.
         /// \param configPt config info for run and for config of simulator
-        explicit MDPRunner(const boost::property_tree::ptree& configPt, std::shared_ptr<Sim> sim);
+        explicit MDPRunner(const stride::util::ptree& configPt, std::shared_ptr<Sim> sim);
 
 };
 

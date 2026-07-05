@@ -20,13 +20,13 @@
 
 #include "AgeContactProfile.h"
 
-#include <boost/property_tree/ptree.hpp>
+#include "util/Ptree.h"
 
 namespace stride {
 
 using namespace std;
 using namespace stride::ContactType;
-using namespace boost::property_tree;
+using namespace stride::util;
 
 AgeContactProfile::AgeContactProfile(Id poolType, const ptree& contactPt) : std::array<double, MaximumAge() + 1>()
 {

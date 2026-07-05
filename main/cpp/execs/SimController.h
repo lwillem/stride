@@ -23,7 +23,7 @@
 #include "util/RnMan.h"
 #include "util/Stopwatch.h"
 
-#include <boost/property_tree/ptree.hpp>
+#include "util/Ptree.h"
 #include <memory>
 #include <spdlog/spdlog.h>
 #include <string>
@@ -49,7 +49,7 @@ class SimController
 {
 public:
         /// Straight initialization.
-        explicit SimController(const boost::property_tree::ptree& config);
+        explicit SimController(const stride::util::ptree& config);
 
         /// Simple destructor.
         ~SimController();
@@ -99,7 +99,7 @@ protected:
 		void PrintSummary();
 
 protected:
-        boost::property_tree::ptree     m_config;           ///< Main configuration for run and sim.
+        stride::util::ptree     m_config;           ///< Main configuration for run and sim.
         std::string                     m_output_prefix;    ///< Prefix to output (name prefix or prefix dir)
         util::Stopwatch                 m_run_clock;        ///< Stopwatch for timing the computation.
         std::shared_ptr<spdlog::logger> m_stride_logger;    ///< General logger.

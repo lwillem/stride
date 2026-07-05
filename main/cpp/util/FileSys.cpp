@@ -22,8 +22,7 @@
 
 #include "util/StringUtils.h"
 
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/xml_parser.hpp>
+#include "util/Ptree.h"
 #include <iostream>
 #include <regex>
 #include <string>
@@ -42,12 +41,12 @@ namespace {
 const auto empty_path = filesys::path();
 }
 
-namespace stride {
-namespace util {
 
+using namespace stride::util;
 using namespace std;
-using namespace boost::property_tree;
-using namespace boost::property_tree::xml_parser;
+
+namespace stride {
+
 
 filesys::path FileSys::BuildPath(const std::string& output_prefix, const std::string& filename)
 {
@@ -214,9 +213,8 @@ ptree FileSys::ReadPtreeFile(const filesys::path& f_p)
                 throw runtime_error(s);
         } else {
                 try {
-                        read_xml(canonical(f_p).string(), ret, xml_parser::trim_whitespace);
-                        
-                } catch (xml_parser_error& e) {
+                        ret = ptree::FromXmlFile(canonical(f_p).string());
+                } catch (runtime_error& e) {
                         const string s = "FileSys::ReadPtreeFile> Abort! Error reading " + f_p.string() + ". " + e.what();
                         cerr << s << endl;
                         throw runtime_error(s);
@@ -227,21 +225,20 @@ ptree FileSys::ReadPtreeFile(const filesys::path& f_p)
 
 ptree FileSys::ReadPtreeFile(const string& f_n) { return ReadPtreeFile(filesys::absolute(f_n)); }
 
-void FileSys::WritePtreeFile(const filesys::path& f_p, const boost::property_tree::ptree& pt)
+void FileSys::WritePtreeFile(const filesys::path& f_p, const stride::util::ptree& pt)
 {
         try {
-                write_xml(f_p.string(), pt, std::locale(), xml_writer_make_settings<ptree::key_type>(' ', 8));
-        } catch (xml_parser_error& e) {
+                pt.ToXmlFile(f_p.string());
+        } catch (runtime_error& e) {
                 const string s = "FileSys::ReadPtreeFile> Abort! Error reading " + f_p.string();
                 cerr << s << endl;
                 throw runtime_error(s);
         }
 }
 
-void FileSys::WritePtreeFile(const string& f_n, const boost::property_tree::ptree& pt)
+void FileSys::WritePtreeFile(const string& f_n, const stride::util::ptree& pt)
 {
         WritePtreeFile(filesys::absolute(f_n), pt);
 }
 
-} // namespace util
 } // namespace stride

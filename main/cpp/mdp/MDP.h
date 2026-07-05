@@ -30,7 +30,7 @@
 #include "util/RnMan.h"
 #include "execs/SimController.h"
 
-#include <boost/property_tree/ptree.hpp>
+#include "util/Ptree.h"
 #include <string>
 #include <map>
 #include <unordered_map>
@@ -129,7 +129,7 @@ public:
 
 private:
         /// Create an MDP (and the underlying simulation) from a given configuration
-        void Create_(const boost::property_tree::ptree& config, int seed,
+        void Create_(const stride::util::ptree& config, int seed,
                      const std::string& outputDir, const std::string& outputPrefix, bool childless, double uptake);
         /// Create a mapping of the age groups with the person IDs of people corresponding to those age groups.
         void CreateAgeGroups();
@@ -141,7 +141,7 @@ private:
         void CreateHouseholdMapping(double uptake);
 
 private:
-        boost::property_tree::ptree m_config;                       ///< Configuration property tree
+        stride::util::ptree m_config;                       ///< Configuration property tree
         std::shared_ptr<Sim> m_simulator;                           ///< The simulation
         std::shared_ptr<MDPRunner> m_runner;                        ///< The runner for the simulation
         std::shared_ptr<util::RnMan> m_rnMan;                          ///< The random number manager

@@ -19,7 +19,7 @@
  * Scenario tests data.
  */
 
-#include <boost/property_tree/ptree_fwd.hpp>
+#include "util/Ptree.h"
 #include <string>
 #include <tuple>
 
@@ -28,7 +28,7 @@ namespace Tests {
 class ScenarioData
 {
 public:
-        static std::tuple<boost::property_tree::ptree, unsigned int, double> Get(std::string tag);
+        static std::tuple<stride::util::ptree, unsigned int, double> Get(std::string tag);
 };
 
 } // namespace Tests

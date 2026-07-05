@@ -23,15 +23,13 @@
 #include "util/FileSys.h"
 #include "util/StringUtils.h"
 
-#include <boost/property_tree/json_parser.hpp>
-#include <boost/property_tree/ptree.hpp>
+#include "util/Ptree.h"
 
 namespace stride {
 
 using namespace std;
-using namespace boost::property_tree::json_parser;
 using namespace stride::util;
-using boost::property_tree::ptree;
+using stride::util::ptree;
 
 
 Calendar::Calendar(const ptree& configPt,unsigned int num_days) :

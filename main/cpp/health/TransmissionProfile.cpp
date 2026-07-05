@@ -28,7 +28,6 @@
 namespace stride {
 
 using namespace std;
-using namespace boost::property_tree;
 using namespace stride::util;
 
 void TransmissionProfile::Initialize(const ptree& configPt, const ptree& diseasePt)

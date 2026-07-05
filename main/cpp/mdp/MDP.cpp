@@ -53,13 +53,13 @@ void MDP::Create(const std::string& configPath,
                  std::shared_ptr<VaccineProperties> mRNA_properties, std::shared_ptr<VaccineProperties> adeno_properties,
                  int seed, const std::string& outputDir, const std::string& outputPrefix, bool childless, double uptake)
 {
-    boost::property_tree::ptree configPt = FileSys::ReadPtreeFile(configPath);
+    stride::util::ptree configPt = FileSys::ReadPtreeFile(configPath);
     MDP::Create_(configPt, seed, outputDir, outputPrefix, childless, uptake);
     m_mRNA_properties = mRNA_properties;
     m_adeno_properties = adeno_properties;
 }
 
-void MDP::Create_(const boost::property_tree::ptree& config, int seed,
+void MDP::Create_(const stride::util::ptree& config, int seed,
                   const std::string& outputDir, const std::string& outputPrefix, bool childless, double uptake)
 {
     // Update the config

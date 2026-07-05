@@ -49,7 +49,7 @@ Sim::Sim()
 {
 }
 
-std::shared_ptr<Sim> Sim::Create(const boost::property_tree::ptree& config, shared_ptr<Population> pop)
+std::shared_ptr<Sim> Sim::Create(const stride::util::ptree& config, shared_ptr<Population> pop)
 {
         struct make_shared_enabler : public Sim
         {

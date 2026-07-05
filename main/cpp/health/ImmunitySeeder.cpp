@@ -27,13 +27,12 @@
 #include "util/LogUtils.h"
 #include "util/StringUtils.h"
 
-#include <boost/property_tree/ptree.hpp>
+#include "util/Ptree.h"
 #include <numeric>
 #include <vector>
 
 namespace stride {
 
-using namespace boost::property_tree;
 using namespace stride::ContactType;
 using namespace stride::util;
 using namespace std;

@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include <boost/property_tree/ptree_fwd.hpp>
+#include "util/Ptree.h"
 #include <fstream>
 #include <string>
 
@@ -39,7 +39,7 @@ public:
         ~SummaryFile();
 
         /// Print the given output with corresponding tag.
-        void Print(const boost::property_tree::ptree& config_pt, unsigned int population_size, unsigned int num_cases,
+        void Print(const stride::util::ptree& config_pt, unsigned int population_size, unsigned int num_cases,
                    double transmission_probability, unsigned int run_time);
 
 private:

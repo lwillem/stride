@@ -22,15 +22,12 @@
 #include "util/ConfigInfo.h"
 #include "util/FileSys.h"
 
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/xml_parser.hpp>
+#include "util/Ptree.h"
 #include <initializer_list>
 #include <map>
 #include <sstream>
 #include <string>
 
-using namespace boost::property_tree;
-using namespace boost::property_tree::xml_parser;
 using namespace std;
 
 namespace stride {
@@ -180,20 +177,9 @@ string RunConfigManager::CreateTestsCovid19()
         )###";
 }
 
-ptree RunConfigManager::FromString(const string& s)
-{
-        ptree         pt;
-        istringstream is(s);
-        read_xml(is, pt, trim_whitespace);
-        return pt;
-}
+ptree RunConfigManager::FromString(const string& s) { return ptree::FromXmlString(s); }
 
-string RunConfigManager::ToString(const ptree& pt)
-{
-        ostringstream ss;
-        write_xml(ss, pt, xml_writer_make_settings<ptree::key_type>(' ', 8));
-        return ss.str();
-}
+string RunConfigManager::ToString(const ptree& pt) { return pt.ToXmlString(); }
 
 } // namespace util
 } // namespace stride
