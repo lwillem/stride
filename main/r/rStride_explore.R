@@ -91,7 +91,7 @@ range(as.Date(exp_param_list$start_date), as.Date(exp_param_list$start_date)+ ex
 
 # get grid-based design of experiments
 exp_design <- .rstride$get_full_grid_exp_design(exp_param_list = exp_param_list,
-                                                num_seeds      = exp_param_list$num_seeds)
+                                                num_rng_seeds  = exp_param_list$num_rng_seeds)
 dim(exp_design)
 
 ################################## #
