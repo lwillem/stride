@@ -82,6 +82,12 @@ include_directories(SYSTEM ${CMAKE_HOME_DIRECTORY}/main/resources/lib/trng-4.20/
 set(LIBS ${LIBS} trng)
 
 #----------------------------------------------------------------------------
+# pugixml (XML parsing/writing, replaces boost::property_tree's XML use)
+#----------------------------------------------------------------------------
+include_directories(SYSTEM ${CMAKE_HOME_DIRECTORY}/main/resources/lib/pugixml/src)
+set(LIBS ${LIBS} pugixml)
+
+#----------------------------------------------------------------------------
 # Spdlog Library (logging)
 #----------------------------------------------------------------------------
 include_directories(SYSTEM ${CMAKE_HOME_DIRECTORY}/main/resources/lib/spdlog/include)
