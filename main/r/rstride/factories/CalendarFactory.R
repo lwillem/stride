@@ -558,7 +558,14 @@ integrate_parameters_in_calendar <- function(config_exp,
                                              bool_maintain_file_name = FALSE,
                                              erase_category = TRUE){
 
-  # if there are no distancing parameters, return original config_exp
+  # check if social contact survey is activated, but no explicit dates are set
+  if(config_exp$event_log_level == "Participants"){
+    if(!"contact_survey_dates" %in% names(config_exp) || is.na(config_exp$contact_survey_dates)){
+      config_exp$contact_survey_dates <- c_str(as.Date(config_exp$start_date) + 0:(config_exp$num_days-1))
+    }
+  }
+  
+  # if there are no time-specific parameters, return original config_exp
   param_calendar <- config_exp[grepl('cnt_reduction_workplace',names(config_exp)) |   # OR colname contains reduction_workplace
                                    grepl('clustering',names(config_exp)) |            # OR colname contains clustering
                                    grepl('imported',names(config_exp)) |              # OR colname contains imported
@@ -569,19 +576,18 @@ integrate_parameters_in_calendar <- function(config_exp,
   param_calendar <- unlist(param_calendar)
   param_calendar[is.na(param_calendar)] <- 0
 
-  if(length(param_calendar) == 0 || !any(param_calendar!=0)){
+  if(length(param_calendar) == 0 || all(param_calendar == 0)){
     return(config_exp)
   }
   
-  # # else, modify calendar
-  file_name_exp <- ifelse(bool_maintain_file_name,config_exp$holidays_file,config_exp$holidays_file)
-  # config_exp$holidays_file <- create_calendar_file(file_name = file_name, show_plots = T)
+  # else, modify calendar
+  file_name_exp <- config_exp$holidays_file
   
   if(file.exists(file_name_exp)){
     if(!bool_maintain_file_name)
     {
-      file_name_new <- smd_file_path(config_exp$output_prefix,'calendar_belgium_covid19_v1_1_param.csv')
-      file.copy(from=file_name_exp,
+      file_name_new <- smd_file_path(config_exp$output_prefix, gsub('.csv', '_param.csv', basename(config_exp$holidays_file)))
+      file.copy(from = file_name_exp,
                 to = file_name_new,overwrite = TRUE)
       config_exp$holidays_file <- file_name_new
     }

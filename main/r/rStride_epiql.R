@@ -51,7 +51,7 @@ exp_param_list$population_file <- 'data/pop_belgium600k_c500_teachers_censushh.c
 exp_param_list$num_days <- 240
 exp_param_list$num_parallel_workers <- 8
 exp_param_list$event_log_level <- c("Transmissions")
-exp_param_list$num_seeds <- 2
+exp_param_list$num_rng_seeds <- 2
  
 names(exp_param_list)
 
@@ -80,7 +80,7 @@ range(as.Date(exp_param_list$start_date), as.Date(exp_param_list$start_date) + e
 
 # get grid-based design of experiments
 exp_design <- .rstride$get_full_grid_exp_design(exp_param_list = exp_param_list,
-                                                num_seeds      = exp_param_list$num_seeds)
+                                                num_rng_seeds  = exp_param_list$num_rng_seeds)
 dim(exp_design)
 
 ################################## #

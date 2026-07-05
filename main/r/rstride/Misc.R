@@ -647,10 +647,10 @@ cumsum_na <- function(x){
 ## DESIGN OF EXPERIMENT      ####
 ############################### #
 
-.rstride$get_full_grid_exp_design <- function(exp_param_list,num_seeds){
+.rstride$get_full_grid_exp_design <- function(exp_param_list,num_rng_seeds){
   
   # add sequence with all rng seeds
-  exp_param_list$rng_seed = seq(num_seeds)
+  exp_param_list$rng_seed = seq(num_rng_seeds)
   
   # generate grid with all combinations
   exp_design <- expand.grid(exp_param_list,

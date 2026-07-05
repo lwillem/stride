@@ -52,7 +52,7 @@ exp_param_list$num_days <- 300
 exp_param_list$num_parallel_workers <- 8
 #exp_param_list$event_log_level <- c("Incidence")
 exp_param_list$event_log_level <- c("Transmissions")
-exp_param_list$num_seeds<- 2
+exp_param_list$num_rng_seeds <- 2
  
 exp_param_list$distancing_workplace_ratio    <- c_str(exp_param_list$distancing_workplace_ratio,0.2)
 exp_param_list$distancing_workplace_date     <- c_str(exp_param_list$distancing_workplace_date,'2020-09-01')
@@ -91,7 +91,7 @@ range(as.Date(exp_param_list$start_date), as.Date(exp_param_list$start_date)+ ex
 
 # get grid-based design of experiments
 exp_design <- .rstride$get_full_grid_exp_design(exp_param_list = exp_param_list,
-                                                num_seeds      = exp_param_list$num_seeds)
+                                                num_rng_seeds  = exp_param_list$num_rng_seeds)
 dim(exp_design)
 
 ################################## #

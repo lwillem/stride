@@ -323,7 +323,7 @@ run_rStride <- function(exp_design               = exp_design,
   project_dir_exp <- smd_file_path(project_dir,'exp_all')
   
   time_stamp_loop = Sys.time()
-  i_exp=2
+  i_exp=1
   # run all experiments (in parallel)
   par_out <- foreach(i_exp=1:nrow(exp_design),
                      .combine='rbind',
@@ -342,12 +342,11 @@ run_rStride <- function(exp_design               = exp_design,
                        # create experiment tag
                        exp_tag <- .rstride$create_exp_tag(i_exp)
                       
+                       # transfer exp_design parameters into configuration for this experiment
                        output_prefix       = smd_file_path(project_dir,exp_tag,.verbose=FALSE,.overwrite = TRUE) # overwrite!
                        config_exp_filename = paste0(output_prefix,".xml")
                        config_exp          = create_config_exp(config_default, output_prefix, exp_design, i_exp)
                         
-                       #config_exp$holidays_file <- file.path('data',config_exp$holidays_file)
-                       
                        # include the distancing and other temporal parameters into the calendar
                        config_exp  <- integrate_parameters_in_calendar(config_exp)
                        
@@ -477,7 +476,7 @@ get_prevalence_data <- function(config_exp,file_name){
 
 # help function to combine numerical values into a string format
 c_str <- function(...){
-  values <- unlist(list(...))
+  values <- unlist(lapply(list(...),as.character))
   return(paste(values,sep=',',collapse=','))
 }
 

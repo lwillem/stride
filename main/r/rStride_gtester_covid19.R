@@ -42,12 +42,12 @@ dir_postfix <- '_gtester'
 #names(xmlToList('./config/run_default.xml'))
 
 # set the number of realisations per configuration set
-num_seeds  <- 5
+num_rng_seeds  <- 5
 
 # add parameters and values to combine in a full-factorial grid
 exp_design_base <- expand.grid(r0                       = 2.5,
                           num_days                      = 31,
-                          rng_seed                      = seq(num_seeds),
+                          rng_seed                      = seq(num_rng_seeds),
                           num_participants_survey       = 10,   
                           num_infected_seeds            = 540,
                           disease_config_file           = 'data/disease_covid19_age.xml',

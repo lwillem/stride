@@ -84,11 +84,11 @@ exp_param_list$num_days = c(25, 40)
 
 # set the number of stochastic realisations, i.e. the number of
 # random number generator (RNG) seeds
-exp_param_list$num_seeds = 5
+exp_param_list$num_rng_seeds = 5
 
 # build a grid-based design of experiments, accounting for the number of RNG seeds
 exp_design <- .rstride$get_full_grid_exp_design(exp_param_list = exp_param_list,
-                                                 num_seeds      = exp_param_list$num_seeds)
+                                                 num_rng_seeds = exp_param_list$num_rng_seeds)
 
 # run rStride
 project_dir <- run_rStride(exp_design           = exp_design,

@@ -41,12 +41,11 @@ source('./bin/rstride/rStride.R')
 dir_postfix <- '_r0'
 
 # set the number of realisations per configuration set
-num_seeds  <- 10
+num_rng_seeds  <- 10
 
 # make parameter list (for COVID-19)
 exp_param_list <- list(r0                            = sort(c(seq(1,5,length=5))),
                        num_days                      = c(20),
-                       rng_seed                      = seq(num_seeds),
                        start_date                    = c('2020-02-01','2020-02-02','2020-02-03','2020-02-04','2020-02-05','2020-02-06','2020-02-07'),
                        num_infected_seeds            = 20,
                        seeding_age_min               = 1,
@@ -57,6 +56,7 @@ exp_param_list <- list(r0                            = sort(c(seq(1,5,length=5))
                        holidays_file                 = "data/holidays_none.csv")
 
 # changes to simulate measles in the USA
+num_rng_seeds                          <- 3
 exp_param_list$r0                      <- sort(c(seq(1,20,length=5)))
 exp_param_list$start_date              <- '2020-02-01'
 exp_param_list$disease_config_file     <- "data/disease_measles_usa.xml"
@@ -64,11 +64,11 @@ exp_param_list$population_file         <- "data/pop_usa_wisconsin_dane474k_c1000
 exp_param_list$age_contact_matrix_file <- "data/contact_matrix_usa_conditional.xml"
 
 # combine parameters in a full-factorial grid
-exp_design <- expand.grid(exp_param_list,
-                          stringsAsFactors = F)
+exp_design <- .rstride$get_full_grid_exp_design(exp_param_list = exp_param_list,
+                                                num_rng_seeds = num_rng_seeds)
 
 # add a unique seed for each run
-set.seed(num_seeds)
+set.seed(num_rng_seeds)
 exp_design$rng_seed <- sample(nrow(exp_design))
 dim(exp_design)
 
