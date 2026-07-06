@@ -419,7 +419,7 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
         }
 
         if (m_subpools_community && m_airborne_transmission){
-        if (pType != Id::Household || pType != Id::HouseholdCluster) {
+        if (pType != Id::Household && pType != Id::HouseholdCluster) {
                 // set up some stuff for the pool & disease in general
                         const auto pAirMass = pool.m_air_mass;
                         const auto linkingHazardVirus = transProfile.GetLinkingHazardVirus();
@@ -574,7 +574,7 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                 }
         }
         if (m_subpools_community && m_airborne_transmission){
-        if (pType != Id::Household || pType != Id::HouseholdCluster) { //TODO: should be && ??
+        if (pType != Id::Household && pType != Id::HouseholdCluster) {
                 // set up some stuff for the pool & disease in general
                         const auto pAirMass = pool.m_air_mass;
                         const auto linkingHazardVirus = transProfile.GetLinkingHazardVirus();
