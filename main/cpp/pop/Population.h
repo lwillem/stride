@@ -27,7 +27,7 @@
 #include "util/RnMan.h"
 #include "util/SegmentedVector.h"
 
-#include <boost/property_tree/ptree_fwd.hpp>
+#include "util/Ptree.h"
 #include <memory>
 #include <spdlog/spdlog.h>
 
@@ -46,7 +46,7 @@ class Population : public util::SegmentedVector<Person, 2048>
 {
 public:
         /// Create a Population initialized by the configuration in property tree.
-        static std::shared_ptr<Population> Create(const boost::property_tree::ptree& config,
+        static std::shared_ptr<Population> Create(const stride::util::ptree& config,
                                                   std::shared_ptr<spdlog::logger> strideLogger = nullptr);
 
         /// Create an empty Population, used in gengeopop.

@@ -22,7 +22,7 @@
 
 #include "util/RnMan.h"
 
-#include <boost/property_tree/ptree.hpp>
+#include "util/Ptree.h"
 #include <memory>
 
 namespace stride {
@@ -42,23 +42,23 @@ class SimBuilder
 {
 public:
         /// Initializing SimBuilder.
-        explicit SimBuilder(const boost::property_tree::ptree& config);
+        explicit SimBuilder(const stride::util::ptree& config);
 
         /// Build the simulator and return it afterwards.
         std::shared_ptr<Sim> Build(std::shared_ptr<Sim> sim, std::shared_ptr<Population> pop);
 
 private:
         /// Get the contact configuration data.
-        boost::property_tree::ptree ReadAgeContactPtree();
+        stride::util::ptree ReadAgeContactPtree();
 
         /// Get the disease configuration data.
-        boost::property_tree::ptree ReadDiseasePtree();
+        stride::util::ptree ReadDiseasePtree();
 
         /// Get the pool characteristics data.
-        boost::property_tree::ptree ReadPoolCharacteristicsPtree();
+        stride::util::ptree ReadPoolCharacteristicsPtree();
 
 private:
-        boost::property_tree::ptree m_config; ///< Run config in ptree.
+        stride::util::ptree m_config; ///< Run config in ptree.
 };
 
 } // namespace stride

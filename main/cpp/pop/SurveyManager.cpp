@@ -26,10 +26,9 @@
 #include "util/RnMan.h"
 #include "util/StringUtils.h"
 
-#include <boost/property_tree/ptree.hpp>
+#include "util/Ptree.h"
 #include <cassert>
 
-using namespace boost::property_tree;
 using namespace stride::util;
 using namespace stride::ContactType;
 using namespace std;

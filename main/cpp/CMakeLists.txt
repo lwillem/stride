@@ -52,8 +52,11 @@ set(STRIDE_SRC
     sim/SimBuilder.cpp
     #---
     util/ConfigInfo.cpp
+    util/Date.cpp
     util/FileSys.cpp
+    util/GammaDistribution.cpp
     util/LogUtils.cpp
+    util/Ptree.cpp
     util/RunConfigManager.cpp
     util/SummaryFile.cpp
     util/TimeStamp.cpp

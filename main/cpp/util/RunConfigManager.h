@@ -22,7 +22,7 @@
 
 #include "util/ConfigInfo.h"
 
-#include <boost/property_tree/ptree_fwd.hpp>
+#include "util/Ptree.h"
 #include <string>
 #include <vector>
 
@@ -36,16 +36,16 @@ class RunConfigManager
 {
 public:
         /// Produce property tree for config with given name.
-        static boost::property_tree::ptree Create(const std::string& configName);
+        static stride::util::ptree Create(const std::string& configName);
 
         /// Set of threadcounts to use for tests based an nomber of available OpenMP threads.
         static std::vector<unsigned int> CreateNumThreads(unsigned int maxNum = ConfigInfo::NumberAvailableThreads());
 
         /// Reconstitute property tree from string representation.
-        static boost::property_tree::ptree FromString(const std::string& s);
+        static stride::util::ptree FromString(const std::string& s);
 
         /// Produce string representation of property tree.
-        static std::string ToString(const boost::property_tree::ptree& pt);
+        static std::string ToString(const stride::util::ptree& pt);
 
 private:
         /// Produce Influenza config for scenario tests.

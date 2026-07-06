@@ -29,20 +29,19 @@
 #include "util/StringUtils.h"
 #include "util/LogUtils.h"
 
-#include <boost/property_tree/ptree.hpp>
+#include "util/Ptree.h"
 #include <fstream>
+#include <map>
 #include "PopBuilder.h"
 #include "../contact/EventLogMode.h"
 
-namespace stride {
-
-using namespace ContactType;
-
-using namespace util;
-using namespace boost::property_tree;
+using namespace stride::ContactType;
+using namespace stride::util;
 using namespace std;
 
-PopBuilder::PopBuilder(const boost::property_tree::ptree& config,
+namespace stride {
+
+PopBuilder::PopBuilder(const stride::util::ptree& config,
                                        std::shared_ptr<spdlog::logger> strideLogger)
     : m_config(config), m_stride_logger(std::move(strideLogger))
 {

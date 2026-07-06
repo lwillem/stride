@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include <boost/property_tree/ptree_fwd.hpp>
+#include "util/Ptree.h"
 #include <memory>
 
 namespace stride {
@@ -42,7 +42,7 @@ public:
         /// \param pop           Population.
         /// \param config        Configuration parameters.
         /// \param rnMan         Random number manager.
-		SurveyManager(std::shared_ptr<Population> pop, const boost::property_tree::ptree& config, std::shared_ptr<util::RnMan> rnMan);
+		SurveyManager(std::shared_ptr<Population> pop, const stride::util::ptree& config, std::shared_ptr<util::RnMan> rnMan);
 
         /// Manage the survey participants in the given population.
         void ManagePanel(unsigned int simDay = 0U);

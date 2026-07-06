@@ -20,13 +20,12 @@
 
 #pragma once
 
-#include <boost/property_tree/ptree_fwd.hpp>
+#include "util/Ptree.h"
+#include <filesystem>
 #include <functional>
 #include <string>
 
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/path.hpp>
-namespace filesys = boost::filesystem;
+namespace filesys = std::filesystem;
 
 namespace stride {
 namespace util {
@@ -48,16 +47,16 @@ public:
         static filesys::path BuildPath(const std::string& output_prefix, const std::string& filename);
 
         /// Read ptree from file at path.
-        static boost::property_tree::ptree ReadPtreeFile(const filesys::path& f_p);
+        static stride::util::ptree ReadPtreeFile(const filesys::path& f_p);
 
         /// Read ptree from file specified by name string.
-        static boost::property_tree::ptree ReadPtreeFile(const std::string& f_n);
+        static stride::util::ptree ReadPtreeFile(const std::string& f_n);
 
         /// Write ptree to file at path.
-        static void WritePtreeFile(const filesys::path& f_p, const boost::property_tree::ptree& pt);
+        static void WritePtreeFile(const filesys::path& f_p, const stride::util::ptree& pt);
 
         /// Write ptree to file specified by name string.
-        static void WritePtreeFile(const std::string& f_n, const boost::property_tree::ptree& pt);
+        static void WritePtreeFile(const std::string& f_n, const stride::util::ptree& pt);
 
 public:
         /// Get path to the current directory.

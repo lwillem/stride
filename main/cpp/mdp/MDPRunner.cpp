@@ -22,7 +22,7 @@
 #include "pop/Population.h"
 #include "sim/Sim.h"
 
-using namespace boost::property_tree;
+using namespace stride::util;
 using namespace std;
 
 namespace stride {

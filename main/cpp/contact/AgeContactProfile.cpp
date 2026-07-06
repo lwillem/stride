@@ -20,13 +20,13 @@
 
 #include "AgeContactProfile.h"
 
-#include <boost/property_tree/ptree.hpp>
+#include "util/Ptree.h"
 
 namespace stride {
 
 using namespace std;
 using namespace stride::ContactType;
-using namespace boost::property_tree;
+using namespace stride::util;
 
 AgeContactProfile::AgeContactProfile(Id poolType, const ptree& contactPt) : std::array<double, MaximumAge() + 1>()
 {
@@ -52,7 +52,7 @@ AgeContactProfile::AgeContactProfile(Id poolType, const ptree& contactPt) : std:
         const string key{string("matrices.").append(typeKey)};
 
         // if the XML key is present, parse ptree and store data
-        if(contactPt.get_optional<std::string>(key).is_initialized()){
+        if(contactPt.get_optional<std::string>(key).has_value()){
         	unsigned int i = 0U;
 			for (const auto& participant : contactPt.get_child(key)) {
 					double totalContacts = 0;

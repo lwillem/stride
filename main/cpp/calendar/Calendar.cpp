@@ -23,15 +23,14 @@
 #include "util/FileSys.h"
 #include "util/StringUtils.h"
 
-#include <boost/property_tree/json_parser.hpp>
-#include <boost/property_tree/ptree.hpp>
+#include "util/Ptree.h"
+#include <fstream>
 
 namespace stride {
 
 using namespace std;
-using namespace boost::property_tree::json_parser;
 using namespace stride::util;
-using boost::property_tree::ptree;
+using stride::util::ptree;
 
 
 Calendar::Calendar(const ptree& configPt,unsigned int num_days) :
@@ -45,11 +44,11 @@ Calendar::Calendar(const ptree& configPt,unsigned int num_days) :
         m_weekday(), m_day(), m_day_index()
 {
         // Set start date
-        m_date = boost::gregorian::from_simple_string(configPt.get<string>("run.start_date", "2020-01-01"));
+        m_date = util::Date::FromString(configPt.get<string>("run.start_date", "2020-01-01"));
         m_date_start = m_date;
-        m_date_end = m_date + boost::gregorian::days(num_days);
+        m_date_end = m_date + static_cast<int>(num_days);
         //
-        m_weekday = m_date.day_of_week();
+        m_weekday = m_date.DayOfWeek();
         m_day = 0;
         m_day_index = GetDayIndex(m_date);
 
@@ -59,17 +58,17 @@ Calendar::Calendar(const ptree& configPt,unsigned int num_days) :
 
 void Calendar::AdvanceDay()
 {
-        m_date = m_date + boost::gregorian::date_duration(1);
-        m_weekday = m_date.day_of_week();
+        m_date = m_date + 1;
+        m_weekday = m_date.DayOfWeek();
         m_day = m_day + 1;
         m_day_index = GetDayIndex(m_date); // TODO: m_day_index = m_day, remove?
 }
 
-size_t Calendar::GetDay() const { return m_date.day(); }
+size_t Calendar::GetDay() const { return m_date.Day(); }
 
 size_t Calendar::GetDayOfTheWeek() const { return m_weekday; }
 
-size_t Calendar::GetMonth() const { return m_date.month(); }
+size_t Calendar::GetMonth() const { return m_date.Month(); }
 
 unsigned short int Calendar::GetSimulationDay() const {
 
@@ -77,20 +76,18 @@ unsigned short int Calendar::GetSimulationDay() const {
 }
 
 
-unsigned short int Calendar::GetDayIndex(boost::gregorian::date date) const{
+unsigned short int Calendar::GetDayIndex(util::Date date) const{
 
-	if(date == m_date_start){ return 0; }
-
-	return (date - m_date_start).days();
+	return static_cast<unsigned short int>(date - m_date_start);
 }
 
 unsigned short int Calendar::GetDayIndex(std::string date) const{
 
-	return GetDayIndex(boost::gregorian::from_simple_string(date));
+	return GetDayIndex(util::Date::FromString(date));
 }
 
 
-size_t Calendar::GetYear() const { return m_date.year(); }
+size_t Calendar::GetYear() const { return m_date.Year(); }
 
 
 
@@ -131,7 +128,7 @@ void Calendar::Initialize_csv(const ptree& configPt)
 				const auto age                  = FromString<unsigned int>(calendar_item[4]);
 
 				// convert date
-				const auto date = boost::gregorian::from_simple_string(date_str);
+				const auto date = util::Date::FromString(date_str);
                 const auto date_index = GetDayIndex(date);
 
 				// check date

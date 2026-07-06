@@ -23,13 +23,13 @@
 
 #include "util/RunConfigManager.h"
 
-#include <boost/property_tree/ptree.hpp>
+#include "util/Ptree.h"
 #include <map>
 
 using namespace std;
 using namespace stride;
 using namespace stride::util;
-using boost::property_tree::ptree;
+using stride::util::ptree;
 
 namespace Tests {
 

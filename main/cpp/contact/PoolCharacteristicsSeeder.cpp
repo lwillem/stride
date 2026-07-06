@@ -27,12 +27,10 @@
 #include "util/FileSys.h"
 #include "util/RnMan.h"
 
-#include <boost/property_tree/ptree.hpp>
+#include "util/Ptree.h"
 #include <cassert>
 #include <cmath>
-#include <boost/math/distributions/gamma.hpp>
 
-using namespace boost::property_tree;
 using namespace stride::util;
 using namespace std;
 
@@ -55,7 +53,7 @@ shared_ptr<Population> PoolCharacteristicsSeeder::Seed(shared_ptr<Population> po
 
 
 	// Ventilation
-	boost::optional<string> ventilation_distribution = m_config.get_optional<string>("run.ventilation_distribution");
+	std::optional<string> ventilation_distribution = m_config.get_optional<string>("run.ventilation_distribution");
 	double ventilation_distribution_overdispersion;
 	// Get target overdispersion
 	if (ventilation_distribution){
@@ -186,7 +184,7 @@ shared_ptr<Population> PoolCharacteristicsSeeder::NonCompliance(shared_ptr<Popul
 	// Seed non-compliance
 
 	// Non-compliance in pools
-	boost::optional<string> nonCompliancePooltype = m_config.get_optional<string>("run.non_compliance_pooltype");
+	std::optional<string> nonCompliancePooltype = m_config.get_optional<string>("run.non_compliance_pooltype");
 	if (nonCompliancePooltype) {
 		string nonComplianceType = m_config.get<string>("run.non_compliance_type");
 		ContactType::Id nonComplianceTypeId = ToId(nonComplianceType);

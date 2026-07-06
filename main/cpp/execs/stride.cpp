@@ -24,7 +24,7 @@
 #include "util/StringUtils.h"
 #include "util/TimeStamp.h"
 
-#include <boost/property_tree/ptree.hpp>
+#include "util/Ptree.h"
 #include <tclap/CmdLine.h>
 #include <iostream>
 #include <regex>
@@ -35,7 +35,6 @@ using namespace std;
 using namespace stride;
 using namespace stride::util;
 using namespace TCLAP;
-using namespace boost::property_tree;
 
 /// Main program of the stride simulator.
 int main(int argc, char** argv)

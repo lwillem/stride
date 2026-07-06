@@ -22,7 +22,7 @@
 
 #include "util/FileSys.h"
 
-#include <boost/property_tree/ptree.hpp>
+#include "util/Ptree.h"
 
 namespace stride {
 
@@ -47,7 +47,7 @@ void SummaryFile::Initialize(const string& output_prefix)
                   << endl;
 }
 
-void SummaryFile::Print(const boost::property_tree::ptree& config_pt, unsigned int population_size,
+void SummaryFile::Print(const stride::util::ptree& config_pt, unsigned int population_size,
                         unsigned int num_cases, double transmission_probability, unsigned int run_time)
 {
         m_fstream << config_pt.get<string>("run.population_file") << "," << config_pt.get<unsigned int>("run.num_days")

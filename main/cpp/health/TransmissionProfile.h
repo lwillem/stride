@@ -23,7 +23,7 @@
 #include "pop/Person.h"
 #include "util/Rn.h"
 
-#include <boost/property_tree/ptree.hpp>
+#include "util/Ptree.h"
 #include <vector>
 #include <numeric>
 
@@ -49,7 +49,7 @@ public:
 							 {}
 
 	/// Initialize.
-	void Initialize(const boost::property_tree::ptree& configPT, const boost::property_tree::ptree& diseasePt);
+	void Initialize(const stride::util::ptree& configPT, const stride::util::ptree& diseasePt);
 
 	/// Return mean transmission probability.
 	double GetHomogeneousProbability() const;

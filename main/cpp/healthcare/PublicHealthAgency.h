@@ -25,7 +25,7 @@
 #include "util/FileSys.h"
 #include "util/SegmentedVector.h"
 
-#include <boost/property_tree/ptree_fwd.hpp>
+#include "util/Ptree.h"
 #include <memory>
 
 namespace stride {
@@ -44,7 +44,7 @@ public:
 	    PublicHealthAgency();
 
         /// Initializing PublicHealthAgency.
-		void Initialize(const boost::property_tree::ptree& config);
+		void Initialize(const stride::util::ptree& config);
 
         /// Public Health Strategy: look for contacts of infected cases and quarantine infected cases
 		void PerformContactTracing(std::shared_ptr<Population> pop, std::shared_ptr<util::RnMan> rnMan, const std::shared_ptr<Calendar> calendar);

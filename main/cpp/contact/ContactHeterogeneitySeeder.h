@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include <boost/property_tree/ptree_fwd.hpp>
+#include "util/Ptree.h"
 #include <memory>
 
 #include "contact/ContactType.h"
@@ -45,14 +45,14 @@ public:
 	/// Initialize Seeder.
 	/// \param config 		Configuration parameters.
 	/// \param rnMan			Random number manager.
-	ContactHeterogeneitySeeder(const boost::property_tree::ptree& config, std::shared_ptr<util::RnMan> rnMan);
+	ContactHeterogeneitySeeder(const stride::util::ptree& config, std::shared_ptr<util::RnMan> rnMan);
 
     /// Seed the population with individual contact factors
     /// \param pop               Population.
     std::shared_ptr<Population> Seed(std::shared_ptr<Population> pop);
 
 private:
-    const boost::property_tree::ptree& m_config; ///< Run config.
+    const stride::util::ptree& m_config; ///< Run config.
     std::shared_ptr<util::RnMan>          m_rn_man; ///< Random number manager.
 };
 

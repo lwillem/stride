@@ -308,7 +308,9 @@ Person* determineInfectorResponsible(util::Rn& rn, const std::list<std::pair<dou
                         return pair.second;
                 }
         }
-        //TODO: add dummy return, to cover all options
+        // Floating-point rounding can leave cumulative_chance just short of 1.0,
+        // so fall back to the last contributor if none matched above.
+        return virusContributors.back().second;
 }
 
 }
@@ -419,7 +421,7 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
         }
 
         if (m_subpools_community && m_airborne_transmission){
-        if (pType != Id::Household || pType != Id::HouseholdCluster) {
+        if (pType != Id::Household && pType != Id::HouseholdCluster) {
                 // set up some stuff for the pool & disease in general
                         const auto pAirMass = pool.m_air_mass;
                         const auto linkingHazardVirus = transProfile.GetLinkingHazardVirus();
@@ -574,7 +576,7 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                 }
         }
         if (m_subpools_community && m_airborne_transmission){
-        if (pType != Id::Household || pType != Id::HouseholdCluster) { //TODO: should be && ??
+        if (pType != Id::Household && pType != Id::HouseholdCluster) {
                 // set up some stuff for the pool & disease in general
                         const auto pAirMass = pool.m_air_mass;
                         const auto linkingHazardVirus = transProfile.GetLinkingHazardVirus();

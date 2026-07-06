@@ -28,11 +28,10 @@
 #include "util/StringUtils.h"
 
 
-#include <boost/property_tree/ptree.hpp>
+#include "util/Ptree.h"
 
 namespace stride {
 
-using namespace boost::property_tree;
 using namespace stride::ContactType;
 using namespace stride::util;
 using namespace std;

@@ -22,7 +22,8 @@
 
 #include "ContactType.h"
 
-#include <boost/algorithm/string.hpp>
+#include "util/StringUtils.h"
+
 #include <map>
 #include <cctype>     // voor std::isspace
 #include <algorithm>  // voor std::transform en std::find_if
@@ -31,7 +32,6 @@ namespace stride {
 namespace ContactType {
 
 using namespace std;
-using boost::to_upper;
 
 bool IsId(const string& s)
 {
@@ -50,8 +50,7 @@ bool IsId(const string& s)
             make_pair("Transport", Id::Transport)
 
         };
-        string t{s};
-        to_upper(t);
+        string t = util::ToUpper(s);
         return (ids.count(t) == 1);
 }
 

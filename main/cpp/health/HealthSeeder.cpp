@@ -28,18 +28,17 @@
 #include "util/StringUtils.h"
 #include "util/RnMan.h"
 
-#include <boost/property_tree/ptree.hpp>
+#include "util/Ptree.h"
 #include <omp.h>
 
 
-using namespace boost::property_tree;
 using namespace stride::util;
 using namespace std;
 
 namespace stride {
 
-HealthSeeder::HealthSeeder(const boost::property_tree::ptree& runPt,
-							const boost::property_tree::ptree& diseasePt)
+HealthSeeder::HealthSeeder(const stride::util::ptree& runPt,
+							const stride::util::ptree& diseasePt)
     : m_start_symptomatic(), m_time_asymptomatic(), m_time_infectious(), m_time_symptomatic(), m_probability_symptomatic(),
 	  m_sympt_cnt_reduction_workplace_school(), m_sympt_cnt_reduction_community(),
 	  m_hospital_probabilities(), m_hospital_delays(), m_hospital_length_of_stay(0U)
@@ -96,7 +95,7 @@ HealthSeeder::HealthSeeder(const boost::property_tree::ptree& runPt,
 
 void HealthSeeder::GetDistribution(vector<double>& distribution, const ptree& rootPt, const string& xmlTag)
 {
-        const boost::property_tree::ptree& subtree = rootPt.get_child(xmlTag);
+        const stride::util::ptree& subtree = rootPt.get_child(xmlTag);
         for (const auto& tree : subtree) {
                 distribution.push_back(tree.second.get<double>(""));
         }
@@ -143,8 +142,8 @@ void HealthSeeder::Seed(const std::shared_ptr<stride::Population>& pop, const Tr
 
 
                         const bool isSymptomatic = rnMan->at(thread_num).SampleUniform01() <= m_probability_symptomatic[population[i].GetAge()];
-                        boost::optional<unsigned short int> daysToHospitalisation = {};
-                        boost::optional<unsigned short int> daysToLeaveHospital = {};
+                        std::optional<unsigned short int> daysToHospitalisation = {};
+                        std::optional<unsigned short int> daysToLeaveHospital = {};
                         if(!isSymptomatic){
                         	timeSymptomatic = 0;
                         } else if(GetHospitalProbability(population[i].GetAge()) > 0) {

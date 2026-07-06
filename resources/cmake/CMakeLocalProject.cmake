@@ -40,22 +40,4 @@ set(Python_ADDITIONAL_VERSIONS 3.4)
 #set(CMAKE_INSTALL_PREFIX  $ENV{HOME}/opt/stride-${STRIDE_GIT_LABEL})
 set(CMAKE_INSTALL_PREFIX  $ENV{HOME}/opt/stride)
 
-#============================================================================
-# Boost.
-#============================================================================
-if(LINUX)
-    set(STRIDE_BOOST_ROOT "/opt/boost/gcc/boost_1_66_0/")
-    set(STRIDE_BOOST_NO_SYSTEM_PATHS ON)
-endif()
-#
-if(APPLE)
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR STRIDE_COMPILER_ID STREQUAL "GNU")
-        set(STRIDE_FORCE_NO_BOOST ON)
-        set(BOOST_NO_SYSTEM_PATHS ON)
-    else()
-        set(BOOST_ROOT /opt/local)
-        set(BOOST_NO_SYSTEM_PATHS ON)
-    endif()
-endif()
-
 #############################################################################

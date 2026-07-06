@@ -22,8 +22,8 @@
 
 #include "contact/ContactPool.h"
 
-#include <boost/property_tree/ptree_fwd.hpp>
-#include <boost/date_time/gregorian/gregorian.hpp>
+#include "util/Date.h"
+#include "util/Ptree.h"
 
 #include <algorithm>
 #include <cstdlib>
@@ -41,7 +41,7 @@ class Calendar
 {
 public:
         /// Constructor
-        explicit Calendar(const boost::property_tree::ptree& configPt,unsigned int num_days);
+        explicit Calendar(const stride::util::ptree& configPt,unsigned int num_days);
 
         /// Advance the simulated calendar by one day.
         void AdvanceDay();
@@ -166,17 +166,17 @@ public:
 
 private:
 
-		unsigned short int GetDayIndex(boost::gregorian::date date) const;
+		unsigned short int GetDayIndex(util::Date date) const;
 		unsigned short int GetDayIndex(std::string date) const;
 
-		bool IsDatePartOfSimulation(boost::gregorian::date date) const
+		bool IsDatePartOfSimulation(util::Date date) const
 		{
 			return m_date_start <= date && date < m_date_end;
 		}
 
 		bool IsDatePartOfSimulation(std::string date) const
 		{
-			return IsDatePartOfSimulation(boost::gregorian::from_simple_string(date));
+			return IsDatePartOfSimulation(util::Date::FromString(date));
 		}
 
 		/// Check if it's a public holiday.
@@ -194,11 +194,11 @@ private:
 
 
 		/// Initialize the calendar (csv)
-        void Initialize_csv(const boost::property_tree::ptree& configPt);
+        void Initialize_csv(const stride::util::ptree& configPt);
 
-        boost::gregorian::date              m_date;                       ///< Current simulated date.
-        boost::gregorian::date              m_date_start;                 ///< Start simulation.
-        boost::gregorian::date              m_date_end;                   ///< End simulation.
+        util::Date              m_date;                       ///< Current simulated date.
+        util::Date              m_date_start;                 ///< Start simulation.
+        util::Date              m_date_end;                   ///< End simulation.
         std::vector<bool>   m_public_holidays;          ///< Vector of public holidays
         std::vector<double> m_workplace_distancing;     ///< Vector with daily social distancing level enforcement at workplaces
         std::vector<double> m_community_distancing;     ///< Vector with daily social distancing level enforcement in the community

@@ -7,7 +7,6 @@
 #include "util/FileSys.h"
 #include "util/RnMan.h"
 
-#include <boost/property_tree/ptree.hpp>
 #include <cassert>
 #include <random>
 #include <vector>
@@ -15,7 +14,6 @@
 #include <iostream>
 #include <functional>
 
-using namespace boost::property_tree;
 using namespace stride::util;
 using namespace std;
 
@@ -23,7 +21,7 @@ namespace stride {
 
 using namespace ContactType;
 
-ContactDivider::ContactDivider(const ptree& config, std::shared_ptr<util::RnMan> rnMan) : m_config(config), m_rn_man(rnMan) {}
+ContactDivider::ContactDivider(std::shared_ptr<util::RnMan> rnMan) : m_rn_man(rnMan) {}
 
 shared_ptr<Population> ContactDivider::Divide(shared_ptr<Population> pop, const AgeContactProfiles& ageContactProfiles)
 {

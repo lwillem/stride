@@ -29,11 +29,10 @@
 #include "util/SegmentedVector.h"
 #include "util/StringUtils.h"
 
-#include <boost/property_tree/ptree.hpp>
+#include "util/Ptree.h"
 #include <utility>
 #include "PopBuilder.h"
 
-using namespace boost::property_tree;
 using namespace std;
 using namespace stride::util;
 using namespace stride::ContactType;
@@ -42,7 +41,7 @@ namespace stride {
 
 Population::Population() : m_pool_sys(), m_event_logger() {}
 
-std::shared_ptr<Population> Population::Create(const boost::property_tree::ptree& config,
+std::shared_ptr<Population> Population::Create(const stride::util::ptree& config,
                                                std::shared_ptr<spdlog::logger> strideLogger)
 {
         if (!strideLogger) {
