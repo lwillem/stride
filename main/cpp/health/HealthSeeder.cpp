@@ -142,8 +142,8 @@ void HealthSeeder::Seed(const std::shared_ptr<stride::Population>& pop, const Tr
 
 
                         const bool isSymptomatic = rnMan->at(thread_num).SampleUniform01() <= m_probability_symptomatic[population[i].GetAge()];
-                        boost::optional<unsigned short int> daysToHospitalisation = {};
-                        boost::optional<unsigned short int> daysToLeaveHospital = {};
+                        std::optional<unsigned short int> daysToHospitalisation = {};
+                        std::optional<unsigned short int> daysToLeaveHospital = {};
                         if(!isSymptomatic){
                         	timeSymptomatic = 0;
                         } else if(GetHospitalProbability(population[i].GetAge()) > 0) {

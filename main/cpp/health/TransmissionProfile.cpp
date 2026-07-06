@@ -40,8 +40,8 @@ void TransmissionProfile::Initialize(const ptree& configPt, const ptree& disease
 
     // 2. setup transmission probability: with a given R0 or a given mean transmission probability
     // Use boost:optional to check which parameters are available in the config file
-    boost::optional<double> transmission_probability_as_input = configPt.get_optional<double>("run.transmission_probability");
-    boost::optional<double> r0_as_input = configPt.get_optional<double>("run.r0");
+    std::optional<double> transmission_probability_as_input = configPt.get_optional<double>("run.transmission_probability");
+    std::optional<double> r0_as_input = configPt.get_optional<double>("run.r0");
 
     // If available, use mean transmission probability as input (dominates an input value for R0)
     if (transmission_probability_as_input) {
@@ -83,8 +83,8 @@ void TransmissionProfile::Initialize(const ptree& configPt, const ptree& disease
 
     // Check if age-dependent susceptibility vector is available
     // Otherwise, susceptibility adjustment factor for all ages is 1.
-    boost::optional<std::string> susceptibility_by_age_as_input = configPt.get_optional<std::string>("run.disease_susceptibility_age");
-    boost::optional<std::string> susceptibility_agecat_as_input = configPt.get_optional<std::string>("run.disease_susceptibility_agecat");
+    std::optional<std::string> susceptibility_by_age_as_input = configPt.get_optional<std::string>("run.disease_susceptibility_age");
+    std::optional<std::string> susceptibility_agecat_as_input = configPt.get_optional<std::string>("run.disease_susceptibility_agecat");
     if (susceptibility_by_age_as_input && susceptibility_agecat_as_input) {
 
     		auto susceptibility_string = Split(*susceptibility_by_age_as_input, ",");
@@ -111,7 +111,7 @@ void TransmissionProfile::Initialize(const ptree& configPt, const ptree& disease
     }
 
     // Check whether transmission probability follows a distribution (otherwise it remains constant / age)
-    boost::optional<string> t_prob_distribution = configPt.get_optional<string>("run.transmission_probability_distribution");
+    std::optional<string> t_prob_distribution = configPt.get_optional<string>("run.transmission_probability_distribution");
     if (t_prob_distribution) {
     		m_transmission_probability_distribution = *t_prob_distribution;
     		// Get target overdispersion
@@ -119,7 +119,7 @@ void TransmissionProfile::Initialize(const ptree& configPt, const ptree& disease
     }
 
 	// Check whether susceptibility probability follows a distribution (otherwise it remains constant / age)
-    boost::optional<string> t_prob_susceptibility_distribution = configPt.get_optional<string>("run.susceptibility_probability_distribution");
+    std::optional<string> t_prob_susceptibility_distribution = configPt.get_optional<string>("run.susceptibility_probability_distribution");
     if (t_prob_susceptibility_distribution) {
     		m_susceptibility_probability_distribution = *t_prob_susceptibility_distribution;
     		// Get target overdispersion

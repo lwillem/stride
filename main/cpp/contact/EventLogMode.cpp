@@ -19,7 +19,8 @@
  * Implementation of ContactLogMode.
  */
 
-#include <boost/algorithm/string.hpp>
+#include <algorithm>
+#include <cctype>
 #include <map>
 #include "EventLogMode.h"
 
@@ -27,7 +28,15 @@ namespace stride {
 namespace EventLogMode {
 
 using namespace std;
-using boost::to_upper;
+
+namespace {
+
+void to_upper(string& s)
+{
+        std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
+}
+
+} // namespace
 
 string ToString(Id l)
 {

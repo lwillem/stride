@@ -21,12 +21,11 @@
 #pragma once
 
 #include "util/Ptree.h"
+#include <filesystem>
 #include <functional>
 #include <string>
 
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/path.hpp>
-namespace filesys = boost::filesystem;
+namespace filesys = std::filesystem;
 
 namespace stride {
 namespace util {

@@ -44,7 +44,7 @@ shared_ptr<Population> ContactHeterogeneitySeeder::Seed(shared_ptr<Population> p
 	const EventLogMode::Id log_level   = EventLogMode::ToMode(m_config.get<string>("run.event_log_level", "None"));
 	auto& logger = population.RefEventLogger();
 
-	boost::optional<string> contact_distribution = m_config.get_optional<string>("run.contact_distribution");
+	std::optional<string> contact_distribution = m_config.get_optional<string>("run.contact_distribution");
 
 	if (contact_distribution) {
 

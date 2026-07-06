@@ -26,10 +26,9 @@
 
 #include <pugixml.hpp>
 
-#include <boost/optional.hpp>
-
 #include <algorithm>
 #include <cctype>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -87,16 +86,16 @@ public:
         /// Get the value at path, converted to T, or an empty optional if path is not found
         /// or cannot be converted to T.
         template <typename T>
-        boost::optional<T> get_optional(const std::string& path) const
+        std::optional<T> get_optional(const std::string& path) const
         {
                 const pugi::xml_node node = FindNode(path);
                 if (!node) {
-                        return boost::none;
+                        return std::nullopt;
                 }
                 try {
                         return Convert<T>(node.text().as_string());
                 } catch (const std::exception&) {
-                        return boost::none;
+                        return std::nullopt;
                 }
         }
 

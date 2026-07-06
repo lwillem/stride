@@ -24,6 +24,7 @@
 #include "util/StringUtils.h"
 
 #include "util/Ptree.h"
+#include <fstream>
 
 namespace stride {
 

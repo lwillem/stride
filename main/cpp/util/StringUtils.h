@@ -20,12 +20,11 @@
 
 #pragma once
 
-#include <boost/algorithm/string.hpp>
-#include <boost/lexical_cast.hpp>
 #include <algorithm>
 #include <cctype>
 #include <iomanip>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <regex>
 
@@ -57,16 +56,43 @@ inline T FromString(const std::string& s)
 }
 
 /// Split a string (in order of occurence) by splitting it on the given delimiters.
+/// Consecutive delimiters produce empty tokens (not compressed/skipped).
 inline std::vector<std::string> Split(const std::string& s, const std::string& delimiters)
 {
         std::vector<std::string> tokens;
-        boost::algorithm::split(tokens, s, boost::is_any_of(delimiters));
+        std::string::size_type   start = 0;
+        std::string::size_type   pos;
+        while ((pos = s.find_first_of(delimiters, start)) != std::string::npos) {
+                tokens.push_back(s.substr(start, pos - start));
+                start = pos + 1;
+        }
+        tokens.push_back(s.substr(start));
         return tokens;
+}
+
+/// Convert a string to T, throwing std::invalid_argument if the whole string
+/// can't be consumed as a valid T.
+template <typename T>
+inline T LexicalCast(const std::string& s)
+{
+        std::istringstream iss(s);
+        T                  value{};
+        iss >> value;
+        if (iss.fail() || !iss.eof()) {
+                throw std::invalid_argument("stride::util::LexicalCast> cannot convert '" + s + "' to requested type");
+        }
+        return value;
+}
+
+template <>
+inline std::string LexicalCast<std::string>(const std::string& s)
+{
+        return s;
 }
 
 /// Tokenize a string (in order of occurence) with the given delimiters.
 /// Multiple consecutive delimiters do NOT define "empty" tokens; they are skipped.
-/// @throws bad_lexical_cast if the token val can't be converted to T
+/// @throws std::invalid_argument if the token val can't be converted to T
 template <typename T>
 inline std::vector<T> Tokenize(const std::string& str, const std::string& delimiters)
 {
@@ -79,7 +105,7 @@ inline std::vector<T> Tokenize(const std::string& str, const std::string& delimi
 
         while (std::string::npos != pos || std::string::npos != lastPos) {
                 // Found a token, add it to the vector.
-                tokens.push_back(boost::lexical_cast<T>(str.substr(lastPos, pos - lastPos)));
+                tokens.push_back(LexicalCast<T>(str.substr(lastPos, pos - lastPos)));
                 // Skip delimiters.
                 lastPos = str.find_first_not_of(delimiters, pos);
                 // Find next non-delimiter.
@@ -196,7 +222,14 @@ inline std::string intToDottedString(const T& value)
 
 inline void Replace(std::string& s, const std::string& pattern, const std::string& replace)
 {
-    boost::replace_all(s, pattern, replace);
+        if (pattern.empty()) {
+                return;
+        }
+        std::string::size_type pos = 0;
+        while ((pos = s.find(pattern, pos)) != std::string::npos) {
+                s.replace(pos, pattern.length(), replace);
+                pos += replace.length();
+        }
 }
 
 inline bool IsSubstring(std::string& s, std::string& pattern){
