@@ -54,6 +54,7 @@ set(STRIDE_SRC
     util/ConfigInfo.cpp
     util/Date.cpp
     util/FileSys.cpp
+    util/GammaDistribution.cpp
     util/LogUtils.cpp
     util/Ptree.cpp
     util/RunConfigManager.cpp

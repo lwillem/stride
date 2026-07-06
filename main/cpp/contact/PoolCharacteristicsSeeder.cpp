@@ -30,7 +30,6 @@
 #include "util/Ptree.h"
 #include <cassert>
 #include <cmath>
-#include <boost/math/distributions/gamma.hpp>
 
 using namespace stride::util;
 using namespace std;

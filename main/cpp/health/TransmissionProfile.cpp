@@ -20,10 +20,10 @@
 
 #include "TransmissionProfile.h"
 
+#include "util/GammaDistribution.h"
 #include "util/StringUtils.h"
 
 #include <cmath>
-#include <boost/math/distributions/gamma.hpp>
 
 namespace stride {
 
@@ -39,7 +39,7 @@ void TransmissionProfile::Initialize(const ptree& configPt, const ptree& disease
     m_linking_hazard_virus     = diseasePt.get<double>("disease.delta", 0.226);
 
     // 2. setup transmission probability: with a given R0 or a given mean transmission probability
-    // Use boost:optional to check which parameters are available in the config file
+    // Use std::optional to check which parameters are available in the config file
     std::optional<double> transmission_probability_as_input = configPt.get_optional<double>("run.transmission_probability");
     std::optional<double> r0_as_input = configPt.get_optional<double>("run.r0");
 
@@ -153,12 +153,10 @@ double TransmissionProfile::GetIndividualSusceptibility(Rn& rn,unsigned int age)
 		double shape = m_susceptibility_probability_distribution_overdispersion;
 		double scale = susceptibility_probability / shape;
 
-		boost::math::gamma_distribution<double> gamma_dist = boost::math::gamma_distribution<double>(shape, scale); // FIXME: Be consistent in which implementation of Gamma distribution to use
+		double cdf1 = GammaCdf(0.0, shape, scale);
+		double cdf2 = GammaCdf(1.0, shape, scale);
 
-		double cdf1 = cdf(gamma_dist, 0.0);
-		double cdf2 = cdf(gamma_dist, 1.0);
-
-		double individual_probability = quantile(gamma_dist, cdf1 + rn.SampleUniform01() * (cdf2 - cdf1));
+		double individual_probability = GammaQuantile(cdf1 + rn.SampleUniform01() * (cdf2 - cdf1), shape, scale);
 
 		return individual_probability;
 
@@ -227,12 +225,10 @@ double TransmissionProfile::GetIndividualInfectiousness(Rn& rn) const {
 		double shape = m_transmission_probability_distribution_overdispersion;
 		double scale = m_transmission_probability / shape;
 
-		boost::math::gamma_distribution<double> gamma_dist = boost::math::gamma_distribution<double>(shape, scale); // FIXME: Be consistent in which implementation of Gamma distribution to use
+		double cdf1 = GammaCdf(0.0, shape, scale);
+		double cdf2 = GammaCdf(1.0, shape, scale);
 
-		double cdf1 = cdf(gamma_dist, 0.0);
-		double cdf2 = cdf(gamma_dist, 1.0);
-
-		double individual_probability = quantile(gamma_dist, cdf1 + rn.SampleUniform01() * (cdf2 - cdf1));
+		double individual_probability = GammaQuantile(cdf1 + rn.SampleUniform01() * (cdf2 - cdf1), shape, scale);
 
 		return individual_probability;
 
