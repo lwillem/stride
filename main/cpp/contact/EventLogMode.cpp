@@ -19,31 +19,23 @@
  * Implementation of ContactLogMode.
  */
 
-#include <algorithm>
-#include <cctype>
-#include <map>
 #include "EventLogMode.h"
+
+#include "util/StringUtils.h"
+
+#include <map>
 
 namespace stride {
 namespace EventLogMode {
 
 using namespace std;
 
-namespace {
-
-void to_upper(string& s)
-{
-        std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
-}
-
-} // namespace
-
 string ToString(Id l)
 {
         static map<Id, string> names{make_pair(Id::None, "None"),
         							 	 make_pair(Id::Incidence, "Incidence"),
 										 make_pair(Id::Transmissions, "Transmissions"),
-										 make_pair(Id::Transmissions, "Participants"),
+										 make_pair(Id::Participants, "Participants"),
 										 make_pair(Id::All, "All")};
         return names.at(l);
 }
@@ -56,8 +48,7 @@ Id ToMode(const string& s)
 									 make_pair("CONTACTTRACING", Id::Transmissions), // use Transmission logging by default
 									 make_pair("PARTICIPANTS", Id::Participants),
                                      make_pair("ALL", Id::All)};
-        std::string            t{s};
-        to_upper(t);
+        const std::string      t = util::ToUpper(s);
         return modes.at(t);
 }
 

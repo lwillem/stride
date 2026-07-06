@@ -22,6 +22,8 @@
 
 #include "ContactType.h"
 
+#include "util/StringUtils.h"
+
 #include <map>
 #include <cctype>     // voor std::isspace
 #include <algorithm>  // voor std::transform en std::find_if
@@ -30,15 +32,6 @@ namespace stride {
 namespace ContactType {
 
 using namespace std;
-
-namespace {
-
-void to_upper(string& s)
-{
-        std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
-}
-
-} // namespace
 
 bool IsId(const string& s)
 {
@@ -57,8 +50,7 @@ bool IsId(const string& s)
             make_pair("Transport", Id::Transport)
 
         };
-        string t{s};
-        to_upper(t);
+        string t = util::ToUpper(s);
         return (ids.count(t) == 1);
 }
 
