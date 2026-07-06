@@ -96,7 +96,7 @@ shared_ptr<Population> PoolCharacteristicsSeeder::Seed(shared_ptr<Population> po
 		if (typ != Id::Household && typ != Id::CommunityWeekend && typ != Id::CommunityWeekday && typ != Id::HouseholdCluster) {
 			std::string typString = ToString(typ);
 			if (typ == Id::School){
-				unsigned int maxAge = 13; 
+				unsigned int maxAge = population.GetMaxAge();
 				for (unsigned int index_age = 0; index_age <= maxAge; index_age++) {
 					double input_average_area_per_person = poolCharacteristicsPt.get<double>("pool_characteristics.average_area_per_person." + typString + ".age" + std::to_string(index_age), 1.0);
 					double input_variability_area = poolCharacteristicsPt.get<double>("pool_characteristics.variability_area." + typString + ".age" + std::to_string(index_age), 1.0);
@@ -129,14 +129,14 @@ shared_ptr<Population> PoolCharacteristicsSeeder::Seed(shared_ptr<Population> po
 				const auto& pMembers = pool.m_members;
 				const auto  pSize    = pMembers.size();
 			
-				if (typ == Id::School){
+				if (typ == Id::School && pSize > 0){
 					float age = pMembers[0]->GetAge();
 					average_area_per_person = average_area_per_person_vector[age];
 					variability_area = variability_area_vector[age];
 					minimum_area = minimum_area_vector[age];
 					pool_duration = pool_duration_vector[age];			
 				}
-				else if (typ == Id::Workplace){
+				else if (typ == Id::Workplace && pSize > 0){
 					unsigned int poolTypeSpecification =  pool[0]->GetProfession();
 					ceiling_height = ceiling_height_vector[poolTypeSpecification];
 				}
