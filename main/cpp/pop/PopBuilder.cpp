@@ -31,6 +31,7 @@
 
 #include "util/Ptree.h"
 #include <fstream>
+#include <map>
 #include "PopBuilder.h"
 #include "../contact/EventLogMode.h"
 

@@ -103,9 +103,10 @@ include_directories(SYSTEM ${CMAKE_HOME_DIRECTORY}/main/resources/lib/tclap/incl
 #----------------------------------------------------------------------------
 set(Boost_USE_MULTITHREADED TRUE)     # prevent issues with threaded and unthreaded boost libraries.
 set(Boost_NO_BOOST_CMAKE ON)          # to tell FindBoost not to defer to BoostConfig.cmake.
-# Boost.Filesystem was replaced by std::filesystem; only date_time (boost::gregorian,
-# used by Calendar) and the header-only math (boost::math::gamma_distribution) remain.
-find_package(Boost COMPONENTS date_time)
+# Boost.Filesystem was replaced by std::filesystem and Boost.DateTime by a hand-rolled
+# util::Date; only the header-only math (boost::math::gamma_distribution) remains, so no
+# components need linking -- just the headers.
+find_package(Boost)
 if (Boost_FOUND)
     include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
     add_compile_definitions(BOOST_FOUND)
