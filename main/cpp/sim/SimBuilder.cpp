@@ -151,7 +151,7 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         //---------------------------------------------------------------
         if (sim->m_subpools_community){
         	std::cout << "Calculate contacts based on age contact profile and duration in location" << std::endl;
-        	ContactDivider(m_config, sim->m_rn_man_ptr).Divide(sim->m_population, sim->m_contact_profiles);
+        	ContactDivider(sim->m_rn_man_ptr).Divide(sim->m_population, sim->m_contact_profiles);
         };
 
         // --------------------------------------------------------------

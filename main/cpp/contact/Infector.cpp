@@ -308,7 +308,9 @@ Person* determineInfectorResponsible(util::Rn& rn, const std::list<std::pair<dou
                         return pair.second;
                 }
         }
-        //TODO: add dummy return, to cover all options
+        // Floating-point rounding can leave cumulative_chance just short of 1.0,
+        // so fall back to the last contributor if none matched above.
+        return virusContributors.back().second;
 }
 
 }
