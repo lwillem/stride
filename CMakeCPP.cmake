@@ -99,21 +99,6 @@ include_directories(SYSTEM ${CMAKE_HOME_DIRECTORY}/main/resources/lib/tclap/incl
 
 
 #----------------------------------------------------------------------------
-# Boost
-#----------------------------------------------------------------------------
-set(Boost_USE_MULTITHREADED TRUE)     # prevent issues with threaded and unthreaded boost libraries.
-set(Boost_NO_BOOST_CMAKE ON)          # to tell FindBoost not to defer to BoostConfig.cmake.
-# Boost.Filesystem was replaced by std::filesystem and Boost.DateTime by a hand-rolled
-# util::Date; only the header-only math (boost::math::gamma_distribution) remains, so no
-# components need linking -- just the headers.
-find_package(Boost)
-if (Boost_FOUND)
-    include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
-    add_compile_definitions(BOOST_FOUND)
-    set(LIBS   ${LIBS} ${Boost_LIBRARIES})
-endif()
-
-#----------------------------------------------------------------------------
 # OpenMP
 #----------------------------------------------------------------------------
 if(NOT STRIDE_FORCE_NO_OPENMP)
