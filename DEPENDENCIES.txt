@@ -15,24 +15,9 @@
 #  Copyright 2024
 #############################################################################
 
-The project depends on a number of resources. Non-included dependencies need
-to be installed on your system. They are very common libraries and most likely
-already present on your system. If not, they can in most cases be installed
-using binary distributions available on the internet. For linux systems the
-operating system's package installer will guide you, for MacOS X systems
-you should look at MacPorts (www.macports.org).
-
-#############################################################################
-#     Non-included dependencies:
-#############################################################################
-
------------------------------------------------------------------------------
-    BOOST:
------------------------------------------------------------------------------
-Boost headers are REQUIRED, as are libraries filesystem, thread, date_time,
-and system.
-See www.boost.org.
-
+The project depends on a number of resources, all of which are vendored
+(included) in the source tree; there are no non-included dependencies to
+install separately.
 
 #############################################################################
 #     Included dependencies:
@@ -52,6 +37,12 @@ See https://github.com/chipbuster/libdomp
 A C++ asynchronous an multi-threaded logging library, in header only format
 developed by Gabi Melman.
 See https://github.com/gabime/spdlog
+
+-----------------------------------------------------------------------------
+    PUGIXML: see src/main/resources/lib/pugixml
+-----------------------------------------------------------------------------
+A light-weight C++ XML processing library developed by Arseny Kapoulkine,
+used for run configuration parsing/writing. Available at https://pugixml.org/
 
 -----------------------------------------------------------------------------
     TCLAP: see src/main/resources/lib/tclap

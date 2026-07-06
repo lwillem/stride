@@ -4,14 +4,12 @@ dist: xenial
 cache:
   directories:
     - $HOME/.ccache
-    - $HOME/deps
 
 addons:
   apt:
     update: true
     sources: &default_sources
       - ubuntu-toolchain-r-test
-      - boost-latest
     packages: &default_packages
       # - libhdf5-dev
       - doxygen
@@ -77,33 +75,6 @@ before_install:
   - |
     if [[ "$TRAVIS_OS_NAME" == "linux" ]] && [[ "$CC" == "clang" ]]; then
       export LD_LIBRARY_PATH="/usr/local/clang/lib:$LD_LIBRARY_PATH"
-    fi
-
-install:
-    #--------- All platforms
-  - |
-    #           STRIDE_FORCE_NO_BOOST: do not use bjam to build boost (mac+gcc problems)
-    #			STRIDE_BOOST_ROOT: specify where the correct version of boost can be found
-    #			STRIDE_BOOST_NO_SYSTEM_PATHS: should be ON to prevent mixing different versions of boost
-    if [[ "$TRAVIS_OS_NAME" == "osx" ]] && [[ "$CXX_ID" == "gcc" ]]; then
-      export STRIDE_FORCE_NO_BOOST=ON
-      export STRIDE_BOOST_NO_SYSTEM_PATHS=ON
-    else
-      export BOOST_ROOT=$HOME/deps/boost_1_69_0
-      if [[ -z "$(ls -A $BOOST_ROOT)" ]]; then
-        cd /tmp/
-        wget https://dl.bintray.com/boostorg/release/1.69.0/source/boost_1_69_0.tar.gz -q
-        tar xf boost_1_69_0.tar.gz > /dev/null 2>&1
-        cd boost_1_69_0/
-        ./bootstrap.sh --prefix=$BOOST_ROOT --with-libraries=chrono,date_time,filesystem,iostreams,locale,regex,system,thread
-        ./b2 -q -a -j2 -d0 --disable-filesystem2 cxxflags="-v -std=c++11" threading=multi install
-        cd $TRAVIS_BUILD_DIR;
-      else
-        echo "Already have boost cache"
-      fi
-      export LD_LIBRARY_PATH=$BOOST_ROOT/lib:$LD_LIBRARY_PATH
-      sudo rm -f /usr/local/lib/libboost*.dylib*
-      sudo ln -s $BOOST_ROOT/lib/*.{so,dylib}* /usr/local/lib
     fi
 
 script:
