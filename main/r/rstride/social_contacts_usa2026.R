@@ -42,19 +42,29 @@ suppressPackageStartupMessages(library('contactdata'))
 # select country with ISO2 code
 sel_country <- 'US'
 
+# set state and county
+state <- "MN"
+county <- "Hennepin"
+
 # select population file
-pop_file <- 'data/pop_US-WI-MKE_c1000.csv'
+# pop_file <- 'data/pop_US-WI-MKE_c1000.csv'
 
-## Load population data
+# create run tag using the current time if use_date_prefix == TRUE
+run_tag <- format(Sys.time(), format="%Y%m%d_%H%M%S")
 
-
+# add dir_postfix
+# run_tag <- paste0(run_tag,dir_postfix)
 
 # set output tag
 cdata_tag    <- paste0('contact_matrix_usa_conditional')
 
 # set output directory
 output_dir <- smd_file_path('sim_output')
-file_name  <- file.path(output_dir,cdata_tag)
+folder_name <- file.path(output_dir, paste0(run_tag, "_", state, "-", county, "_conditional_social_contacts"))
+if(!dir.exists(folder_name)) {
+  dir.create(folder_name, recursive = TRUE)
+}
+file_name  <- file.path(folder_name,cdata_tag)
 
 # define help function to load social data from Prem et al. by location
 get_cnt_data <- function(location, country) {
@@ -100,7 +110,7 @@ cnt_additional <- cnt_all * 0
 
 # demography data ----
 # load file
-pop_usa <- read.csv(pop_file,header = T, sep = ',')
+pop_usa <- getFREDdata(state = state, county = county, export = FALSE) #read.csv(pop_file,header = T, sep = ',')
 
 # rename work_id to workplace_id
 names(pop_usa) <- gsub('work','workplace',names(pop_usa))
@@ -190,7 +200,8 @@ cnt_other_adj <- cnt_other + cnt_additional
 
 # explore ----
 # define function to explore (un)conditional contact rates
-plot_conditional_contacts <- function(cnt_orig, cnt_conditional, pop_fraction, plot_main, xlim = c(0,95)){
+plot_conditional_contacts <- function(cnt_orig, cnt_conditional, pop_fraction, plot_main, 
+                                      state = "", county = "", xlim = c(0,95)){
   
   # define y_limit
   ylim <- c(0, max(c(cnt_orig,cnt_conditional)) * (4/3))
@@ -201,7 +212,7 @@ plot_conditional_contacts <- function(cnt_orig, cnt_conditional, pop_fraction, p
   # plot (un)conditional contact rates
   plot(cnt_conditional,xlim=xlim, 
        ylim = ylim,
-       main = plot_main, 
+       main = paste0(plot_main, " - ", state, ", ", county), 
        xlab = "age", 
        ylab="mean number of contacts")
   points(cnt_orig,col=2)
@@ -218,12 +229,26 @@ plot_conditional_contacts <- function(cnt_orig, cnt_conditional, pop_fraction, p
 }
 
 # explore school contacts: conditional and unconditional
-plot_conditional_contacts(cnt_school, cnt_school_conditional, age_distr_school, 'school', xlim = c(0,22))
-plot_conditional_contacts(cnt_workplace, cnt_workplace_conditional, age_distr_workplace, 'workplace')
-plot_conditional_contacts(cnt_home, cnt_home_fully_connected, NA, 'household')
-plot_conditional_contacts(cnt_other, cnt_other_adj, NA, 'other')
-plot_conditional_contacts(cnt_all, cnt_all, NA, 'total')
 
+# get file name with path
+file_name_path <- file.path(folder_name, paste0(run_tag, "_social_contacts_", state, "-", county, "_plots.pdf"))
+
+# check extension and add if not present
+if(!grepl('.pdf',file_name_path)){
+  file_name_path <- paste0(file_name_path,'.pdf')
+}
+
+# open pdf stream
+pdf(file_name_path)
+
+plot_conditional_contacts(cnt_school, cnt_school_conditional, age_distr_school, 'school', state = state, county = county, xlim = c(0,22))
+plot_conditional_contacts(cnt_workplace, cnt_workplace_conditional, age_distr_workplace, 'workplace', state = state, county = county)
+plot_conditional_contacts(cnt_home, cnt_home_fully_connected, NA, 'household', state = state, county = county)
+plot_conditional_contacts(cnt_other, cnt_other_adj, NA, 'other', state = state, county = county)
+plot_conditional_contacts(cnt_all, cnt_all, NA, 'total', state = state, county = county)
+
+# close pdf stream
+dev.off()
 
 ###############################
 # STORE AS LIST FOR R ####
