@@ -22,7 +22,7 @@ library(XML)
 # library(tigris)
 library(usmap)
 
-source("bin/rstride/factories/generate-population-community.R")
+source("~/Documents/Repositories/stride/main/r/rstride/factories/generate-population-community.R")
 options(scipen=999)    # turn off scientific notation
 # options(scipen=0)      # turn on scientific notation
 
@@ -36,7 +36,7 @@ options(scipen=999)    # turn off scientific notation
 
 getFREDdata <- function(state = "WI", county = "Milwaukee", export = FALSE){
   
-  warning("FRED population files for the desired county must be manually downloaded from 'https://fred.publichealth.pitt.edu/syn_pops'
+  print("FRED population files for the desired county must be manually downloaded from 'https://fred.publichealth.pitt.edu/syn_pops'
   and stored in the 'data/population_usa/' folder before running this script.")
   
   folder <- fips(state, county = county)
@@ -130,22 +130,11 @@ getFREDdata <- function(state = "WI", county = "Milwaukee", export = FALSE){
   return(pop_data)
 }
 
-dane <- getFREDdata(state = "WI", county = "Dane")
-mke <- getFREDdata(state = "WI", county = "Milwaukee")
-cook <- getFREDdata(state = "IL", county = "Cook", export = FALSE)
-hennepin <- getFREDdata(state = "MN", county = "Hennepin")
+# dane <- getFREDdata(state = "WI", county = "Dane")
+# mke <- getFREDdata(state = "WI", county = "Milwaukee")
+# cook <- getFREDdata(state = "IL", county = "Cook", export = FALSE)
+# hennepin <- getFREDdata(state = "MN", county = "Hennepin")
 
 ##########################################################################################
-
-
-## By Block Group
-
-
-
-# SETTINGS
-  
-
-tmp_wp <- generate_population_community(pop_data,pop_settings,region)
-
 
 

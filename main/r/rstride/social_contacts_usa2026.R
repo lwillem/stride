@@ -39,12 +39,15 @@ suppressPackageStartupMessages(library('contactdata'))
 # # update description file, if required
 # smd_update_description_file()
 
+# load FRED population builder
+source("~/Documents/Repositories/stride/main/r/rstride/USA_PopulationBuilder.R")
+
 # select country with ISO2 code
 sel_country <- 'US'
 
 # set state and county
-state <- "MN"
-county <- "Hennepin"
+state <- "IL"
+county <- "Cook"
 
 # select population file
 # pop_file <- 'data/pop_US-WI-MKE_c1000.csv'
