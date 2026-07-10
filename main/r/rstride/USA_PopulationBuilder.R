@@ -60,6 +60,10 @@ getFREDdata <- function(state = "WI", county = "Milwaukee", export = FALSE){
     # assign(paste(f, folder, sep = "_"), tmp)
     assign(f, tmp)
   }
+
+  if(min(nchar(households$stcotrbg)) != 12){
+    households$stcotrbg <- sprintf("%012.0f", households$stcotrbg)
+  }  
   
   # return(list(
   #   gq_people = gq_people,
