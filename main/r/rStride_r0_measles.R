@@ -57,16 +57,16 @@ num_seeds  <- 5
 #                           holidays_file                 = "holidays_none.csv",
 #                           stringsAsFactors = F)
 
-exp_design <- expand.grid(r0                            = seq(0,33,3),
-                          num_days                      = c(30),
+exp_design <- expand.grid(r0                            = seq(0,24,3),
+                          num_days                      = c(20),
                           rng_seed                      = seq(num_seeds),
                           start_date                    = c('2023-01-01'),
                           num_infected_seeds            = 20,
                           seeding_age_min               = 1,
                           seeding_age_max               = 99,
                           disease_config_file           = "data/disease_measles.xml",
-                          population_file               = "data/pop_US-WI-Dane_c1000.csv",
-                          age_contact_matrix_file       = "data/contacts_usa/contact_matrix_usa_20260622.xml",
+                          population_file               = "sim_output/20260710_111118_WI-Dane_conditional_social_contacts/20260710_111118_population_WI-Dane.csv",
+                          age_contact_matrix_file       = "sim_output/20260710_111118_WI-Dane_conditional_social_contacts/contact_matrix_usa_conditional.xml",
                           holidays_file                 = "data/holidays_none.csv",
                           stringsAsFactors = F)
 
@@ -93,7 +93,6 @@ inspect_participant_data(project_dir)
 # inspect_incidence_data(project_dir)
 # inspect_prevalence_data(project_dir)
 inspect_transmission_dynamics(project_dir)
-
 
 ##################################
 ## REPRODUCTION NUMBER          ##
