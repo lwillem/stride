@@ -46,8 +46,9 @@ source("~/Documents/Repositories/stride/main/r/rstride/USA_PopulationBuilder.R")
 sel_country <- 'US'
 
 # set state and county
-state <- "IL"
-county <- "Cook"
+state <- "WI"
+county <- "Dane"
+export <- TRUE
 
 # select population file
 # pop_file <- 'data/pop_US-WI-MKE_c1000.csv'
@@ -64,7 +65,7 @@ cdata_tag    <- paste0('contact_matrix_usa_conditional')
 # set output directory
 output_dir <- smd_file_path('sim_output')
 folder_name <- file.path(output_dir, paste0(run_tag, "_", state, "-", county, "_conditional_social_contacts"))
-if(!dir.exists(folder_name)) {
+if(!dir.exists(folder_name) & export == TRUE) {
   dir.create(folder_name, recursive = TRUE)
 }
 file_name  <- file.path(folder_name,cdata_tag)
@@ -115,6 +116,11 @@ cnt_additional <- cnt_all * 0
 # load file
 pop_usa <- getFREDdata(state = state, county = county, export = FALSE) #read.csv(pop_file,header = T, sep = ',')
 
+if(export == TRUE){
+  write.table(pop_usa, file.path(folder_name, paste0(run_tag, "_population_", state, "-", county, ".csv")),
+              sep = ",", col.names = TRUE, row.names = FALSE, quote = FALSE)
+}
+
 # rename work_id to workplace_id
 names(pop_usa) <- gsub('work','workplace',names(pop_usa))
 
@@ -161,6 +167,10 @@ cnt_workplace_conditional <- cnt_workplace_conditional / mean(age_distr_workplac
 
 # optional: increase rates to account for small workplaces (n < mean number of contacts)?
 workplace_size_count <- table(table(pop_usa$workplace_id))
+
+small_workplace_ids <- names(workplace_size_count[workplace_size_count <= 10])
+in_small_wp <- pop_usa[pop_usa$workplace_id %in% small_workplace_ids, ]
+
 # number of people in workplaces with ≤7 people
 num_people_workplace_leq7 <- sum(workplace_size_count[1:7] *  1:7)
 # proportional to number of workers
@@ -192,7 +202,8 @@ cnt_home_fully_connected <- rowSums(hh_cnt_size) / num_age
 # impute/approximate missing ages
 cnt_home_fully_connected <- approx(names(cnt_home_fully_connected),
                                    cnt_home_fully_connected,
-                                   0:(length(cnt_home)-1))$y
+                                   0:(length(cnt_home)-1), 
+                                   rule = 2)$y  ## For ages > the age group available in population data, copy value from previous age
 
 # set contacts with non-household-members as "additional"
 cnt_additional <- cnt_additional +  (cnt_home - cnt_home_fully_connected)
@@ -342,3 +353,4 @@ xml_prefix <- paste0(' This file is part of the Stride software [', format(Sys.t
 # fix: http://r.789695.n4.nabble.com/saveXML-prefix-argument-td4678407.html
 cat(saveXML(xml_doc, indent = TRUE, prefix = newXMLCommentNode(xml_prefix)),  file = out_filename)
 print(out_filename)
+
