@@ -48,7 +48,7 @@ sel_country <- 'US'
 # set state and county
 state <- "WI"
 county <- "Dane"
-export <- TRUE
+export <- FALSE
 
 # select population file
 # pop_file <- 'data/pop_US-WI-MKE_c1000.csv'
@@ -92,7 +92,8 @@ get_cnt_data <- function(location, country) {
 # get data by location ----
 cnt_all    <- get_cnt_data("all", country = sel_country)
 cnt_home   <- get_cnt_data("home", country = sel_country)
-cnt_workplace   <- get_cnt_data("work", country = sel_country)
+cnt_workplace   <- get_cnt_data("work", country = sel_country)#*1.2
+cnt_sm_workplace   <- get_cnt_data("work", country = sel_country)*1.2
 cnt_school <- get_cnt_data("school", country = sel_country)
 cnt_other  <- get_cnt_data("other", country = sel_country)
 
@@ -155,6 +156,27 @@ age_counts_workplace <- hist(pop_usa$age[!is.na(pop_usa$workplace_id)], breaks =
 age_distr_workplace <- age_counts_workplace / age_counts
 age_distr_workplace[is.na(age_distr_workplace)] <- 0
 
+################################################
+######## Account for small workplaces
+
+tmp <- pop_usa %>% group_by(workplace_id) %>% summarize(n= n()) %>% subset(n <= 7)
+age_counts_sm_workplace <- hist(pop_usa$age[pop_usa$workplace_id %in% tmp$workplace_id], breaks = breaks_ages, plot = FALSE)$counts
+
+age_distr_workplace_avg <- (age_counts_workplace-age_counts_sm_workplace) / age_counts
+age_distr_workplace_avg[is.na(age_distr_workplace_avg)] <- 0
+age_distr_workplace_sm <- age_counts_sm_workplace / age_counts
+age_distr_workplace_sm[is.na(age_distr_workplace_sm)] <- 0
+
+workplace_ages <- 18:69
+workplace_ages_select <- 30:49
+cnt_sm_workplace_conditional <- cnt_sm_workplace * 0 # start with zero's
+cnt_sm_workplace_conditional[workplace_ages + 1]  <- mean(cnt_sm_workplace[workplace_ages_select + 1]) # index = age + 1
+# calculate number of contacts conditional on being at work
+cnt_sm_workplace_conditional <- cnt_sm_workplace_conditional * (7/5)  # account for working 5 days out of 7
+cnt_sm_workplace_conditional <- cnt_sm_workplace_conditional  / mean(age_distr_workplace[workplace_ages_select+1]) # account for employment rate
+
+################################################################################
+
 # define conditional number of contacts for all ages as the average of a selection of the the (most) active population
 workplace_ages <- 18:69
 workplace_ages_select <- 30:49
@@ -163,14 +185,11 @@ cnt_workplace_conditional[workplace_ages + 1]  <- mean(cnt_workplace[workplace_a
 
 # calculate number of contacts conditional on being at work
 cnt_workplace_conditional <- cnt_workplace_conditional * (7/5)  # account for working 5 days out of 7
+
 cnt_workplace_conditional <- cnt_workplace_conditional / mean(age_distr_workplace[workplace_ages_select+1]) # account for employment rate
 
 # optional: increase rates to account for small workplaces (n < mean number of contacts)?
 workplace_size_count <- table(table(pop_usa$workplace_id))
-
-small_workplace_ids <- names(workplace_size_count[workplace_size_count <= 10])
-in_small_wp <- pop_usa[pop_usa$workplace_id %in% small_workplace_ids, ]
-
 # number of people in workplaces with ≤7 people
 num_people_workplace_leq7 <- sum(workplace_size_count[1:7] *  1:7)
 # proportional to number of workers
