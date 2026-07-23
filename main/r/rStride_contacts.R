@@ -70,8 +70,8 @@ exp_param_list$population_file <- 'data/pop_belgium600k_c500_teachers_censushh.c
 # change parameters for USA
 exp_param_list$start_date              <- c('2020-02-10', # Monday
                                             '2020-02-16') # Sunday
-exp_param_list$population_file         <- 'data/pop_usa_wisconsin_dane474k_c1000.csv'
-exp_param_list$age_contact_matrix_file <- 'data/contact_matrix_usa_conditional.xml'
+exp_param_list$population_file         <- 'sim_output/20260710_154108_WI-Dane_conditional_social_contacts/20260710_154108_population_WI-Dane.csv'
+exp_param_list$age_contact_matrix_file <- 'sim_output/20260710_154108_WI-Dane_conditional_social_contacts/contact_matrix_usa_conditional.xml'
 exp_param_list$holidays_file           <- 'data/holidays_none.csv'
 
 ################################################ #
