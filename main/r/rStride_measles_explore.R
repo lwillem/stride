@@ -68,12 +68,12 @@ num_seeds<- 5
 exp_design <- expand.grid(r0                            = seq(12,14,2),
                           num_days                      = c(40,50),
                           rng_seed                      = seq(num_seeds),
-                          age_contact_matrix_file       = "data/contacts_usa/contact_matrix_usa.xml",
+                          age_contact_matrix_file       = "sim_output/20260710_111118_WI-Dane_conditional_social_contacts/contact_matrix_usa_conditional.xml",
                           disease_config_file           = "data/disease_measles.xml",
-                          # holidays_file                 = "data/calendar_USA_2023_2026_measles.csv",
+                          holidays_file                 = "data/calendar_USA_2023_2026_measles.csv",
                           # immunity_rate                 = 0.8,
                           # num_participants_survey       = 5000,
-                          population_file               = "data/pop_US-WI-Dane_c500.csv",
+                          population_file               = "sim_output/20260710_111118_WI-Dane_conditional_social_contacts/20260710_111118_population_WI-Dane.csv",
                           seeding_age_max               = 99,
                           seeding_age_min               = 1,
                           seeding_rate                  = 0.00002,
@@ -84,7 +84,6 @@ exp_design <- expand.grid(r0                            = seq(12,14,2),
                           stride_log_level              = "true",
                           adaptive_symptomatic_behavior = 'true',
                           stringsAsFactors = F)
-
 
 dim(exp_design)
 
