@@ -58,7 +58,7 @@ num_seeds  <- 5
 #                           stringsAsFactors = F)
 
 exp_design <- expand.grid(r0                            = seq(0,24,3),
-                          num_days                      = c(20),
+                          num_days                      = c(40),
                           rng_seed                      = seq(num_seeds),
                           start_date                    = c('2023-01-01'),
                           num_infected_seeds            = 20,
@@ -67,7 +67,7 @@ exp_design <- expand.grid(r0                            = seq(0,24,3),
                           disease_config_file           = "data/disease_measles.xml",
                           population_file               = "sim_output/20260710_111118_WI-Dane_conditional_social_contacts/20260710_111118_population_WI-Dane.csv",
                           age_contact_matrix_file       = "sim_output/20260710_111118_WI-Dane_conditional_social_contacts/contact_matrix_usa_conditional.xml",
-                          holidays_file                 = "data/holidays_none.csv",
+                          holidays_file                 = "data/calendar_dane_2023_2026_measles.csv",
                           stringsAsFactors = F)
 
 # add a unique seed for each run
