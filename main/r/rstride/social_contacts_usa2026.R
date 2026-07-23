@@ -93,7 +93,7 @@ get_cnt_data <- function(location, country) {
 cnt_all    <- get_cnt_data("all", country = sel_country)
 cnt_home   <- get_cnt_data("home", country = sel_country)
 cnt_workplace   <- get_cnt_data("work", country = sel_country)#*1.2
-cnt_sm_workplace   <- get_cnt_data("work", country = sel_country)*1.2
+# cnt_sm_workplace   <- get_cnt_data("work", country = sel_country)*1.2
 cnt_school <- get_cnt_data("school", country = sel_country)
 cnt_other  <- get_cnt_data("other", country = sel_country)
 
@@ -159,21 +159,21 @@ age_distr_workplace[is.na(age_distr_workplace)] <- 0
 ################################################
 ######## Account for small workplaces
 
-tmp <- pop_usa %>% group_by(workplace_id) %>% summarize(n= n()) %>% subset(n <= 7)
-age_counts_sm_workplace <- hist(pop_usa$age[pop_usa$workplace_id %in% tmp$workplace_id], breaks = breaks_ages, plot = FALSE)$counts
-
-age_distr_workplace_avg <- (age_counts_workplace-age_counts_sm_workplace) / age_counts
-age_distr_workplace_avg[is.na(age_distr_workplace_avg)] <- 0
-age_distr_workplace_sm <- age_counts_sm_workplace / age_counts
-age_distr_workplace_sm[is.na(age_distr_workplace_sm)] <- 0
-
-workplace_ages <- 18:69
-workplace_ages_select <- 30:49
-cnt_sm_workplace_conditional <- cnt_sm_workplace * 0 # start with zero's
-cnt_sm_workplace_conditional[workplace_ages + 1]  <- mean(cnt_sm_workplace[workplace_ages_select + 1]) # index = age + 1
-# calculate number of contacts conditional on being at work
-cnt_sm_workplace_conditional <- cnt_sm_workplace_conditional * (7/5)  # account for working 5 days out of 7
-cnt_sm_workplace_conditional <- cnt_sm_workplace_conditional  / mean(age_distr_workplace[workplace_ages_select+1]) # account for employment rate
+# tmp <- pop_usa %>% group_by(workplace_id) %>% summarize(n= n()) %>% subset(n <= 7)
+# age_counts_sm_workplace <- hist(pop_usa$age[pop_usa$workplace_id %in% tmp$workplace_id], breaks = breaks_ages, plot = FALSE)$counts
+# 
+# age_distr_workplace_avg <- (age_counts_workplace-age_counts_sm_workplace) / age_counts
+# age_distr_workplace_avg[is.na(age_distr_workplace_avg)] <- 0
+# age_distr_workplace_sm <- age_counts_sm_workplace / age_counts
+# age_distr_workplace_sm[is.na(age_distr_workplace_sm)] <- 0
+# 
+# workplace_ages <- 18:69
+# workplace_ages_select <- 30:49
+# cnt_sm_workplace_conditional <- cnt_sm_workplace * 0 # start with zero's
+# cnt_sm_workplace_conditional[workplace_ages + 1]  <- mean(cnt_sm_workplace[workplace_ages_select + 1]) # index = age + 1
+# # calculate number of contacts conditional on being at work
+# cnt_sm_workplace_conditional <- cnt_sm_workplace_conditional * (7/5)  # account for working 5 days out of 7
+# cnt_sm_workplace_conditional <- cnt_sm_workplace_conditional  / mean(age_distr_workplace[workplace_ages_select+1]) # account for employment rate
 
 ################################################################################
 
@@ -185,7 +185,6 @@ cnt_workplace_conditional[workplace_ages + 1]  <- mean(cnt_workplace[workplace_a
 
 # calculate number of contacts conditional on being at work
 cnt_workplace_conditional <- cnt_workplace_conditional * (7/5)  # account for working 5 days out of 7
-
 cnt_workplace_conditional <- cnt_workplace_conditional / mean(age_distr_workplace[workplace_ages_select+1]) # account for employment rate
 
 # optional: increase rates to account for small workplaces (n < mean number of contacts)?
@@ -230,6 +229,9 @@ cnt_additional <- cnt_additional +  (cnt_home - cnt_home_fully_connected)
 # community
 # start from cnt_other and add "additional"
 cnt_other_adj <- cnt_other + cnt_additional
+
+# all
+cnt_all_conditional <- cnt_school_conditional + cnt_workplace_conditional + cnt_home_fully_connected + cnt_other_adj
 
 # explore ----
 # define function to explore (un)conditional contact rates
