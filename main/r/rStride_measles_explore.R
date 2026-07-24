@@ -78,6 +78,14 @@ exp_param_list$event_log_level <- "Transmissions"
 exp_param_list$reference_hospital_data_file <- NA
 exp_param_list$reference_serology_data_file <- NA
 
+# # immunity profile = starting condition (time consuming!)
+ exp_param_list$immunity_profile <- "AgeDependent"
+ exp_param_list$immunity_distribution_file <- "data/immunity_measles_belgium_dummy.xml" # "data/immunity_measles_belgium.xml" #c("data/immunity_measles_belgium.xml","data/immunity_measles_belgium_dummy.xml")
+ exp_param_list$immunity_link_probability <- 0 # immunity is distributed by household, this is the chance of continuing to immunize the next shuffled household member instead of jumping to a new random household
+
+# virtual survey for immunity levels
+exp_param_list$num_participants_survey
+exp_param_list$contact_survey_dates <- exp_param_list$start_date # if log level is not "Contacts", only health data is obtained
 
 ################################################ #
 ## GENERATE DESIGN OF EXPERIMENT GRID         ####
@@ -87,6 +95,11 @@ exp_param_list$reference_serology_data_file <- NA
 exp_design <- .rstride$get_full_grid_exp_design(exp_param_list = exp_param_list,
                                                 num_rng_seeds  = exp_param_list$num_rng_seeds)
 dim(exp_design)
+
+# tmp fix:
+if(any(is.na(exp_param_list$immunity_distribution_file))){
+  exp_param_list$immunity_distribution_file <- NULL
+}
 
 ##################################
 ## RUN rSTRIDE                  ##
@@ -124,3 +137,7 @@ inspect_incidence_data(project_dir)
 ## PREVALENCE              ####
 ############################# #
 inspect_prevalence_data(project_dir)
+
+
+
+

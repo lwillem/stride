@@ -179,6 +179,14 @@ get_default_param_definitions <- function(){
    out$reference_serology_data_file <- list(value = 'data/covid19_serology_BE_reference.csv',
                                             description = "File name for observed serology levels by age over time")
    
+   # population immunity settings
+   out$immunity_profile <- list(value = NA,
+                                description = "Options: Random, Cocoon, AgeDependent (which uses the immunity_distribution_file)") 
+   out$immunity_distribution_file <- list(value = NA,
+                                          description = "File name to set an initial immunity distribution by age")
+   out$immunity_link_probability <- list(value = NA,
+                                         description = "The chance of continuing to immunize the next shuffled household member instead of jumping to a new random household")
+   
    # return parameter definitions (value + description)
    return(out)
 }

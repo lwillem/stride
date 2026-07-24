@@ -35,7 +35,7 @@ inspect_participant_data <- function(project_dir, save_pdf = TRUE)
     return(.rstride$no_return_value())
   }
   
-  # get all transmission output
+  # get all participant output
   data_participants_all      <- .rstride$load_aggregated_output(project_dir,'data_participants')
   if(all(is.na(data_participants_all))){
     # command line message
@@ -155,23 +155,24 @@ inspect_participant_data <- function(project_dir, save_pdf = TRUE)
     
     # ## POPULATION
     population_age <- as.data.frame(table(part_age = data_part$part_age))
-    # 
-    # ## POPULATION IMMUNITY
-    # data_part$is_immune   <- data_part$is_immune == "TRUE"
-    # 
-    # immune_age <- data.frame(table(is_immune = data_part$is_immune, part_age = data_part$part_age),stringsAsFactors = F)
-    # immune_age$part_age <- as.numeric(levels(immune_age$part_age)[(immune_age$part_age)])
-    # names(immune_age)  
-    # flag <- immune_age$is_immune == FALSE
-    # plot(immune_age$part_age[flag],
-    #      immune_age$Freq[flag]/population_age$Freq,
-    #      xlab='age',
-    #      ylab='fraction susceptible',
-    #      main='population susceptibility',
-    #      pch=19, lwd=3, ylim=0:1
-    # )
-    # 
-    # names(data_part)
+
+    ## POPULATION IMMUNITY (exclude initial cases)
+    data_part_survey <- data_part[data_part$survey_type != 'infection',]
+    data_part_survey$is_immune   <- data_part_survey$is_immune == "TRUE" 
+
+    immune_age <- data.frame(table(is_immune = data_part_survey$is_immune, part_age = data_part_survey$part_age),stringsAsFactors = F)
+    immune_age$part_age <- as.numeric(levels(immune_age$part_age)[(immune_age$part_age)])
+    names(immune_age)
+    flag <- immune_age$is_immune == FALSE
+    plot(immune_age$part_age[flag],
+         immune_age$Freq[flag]/population_age$Freq,
+         xlab='age',
+         ylab='fraction susceptible',
+         main='population susceptibility',
+         pch=19, lwd=3, ylim=0:1
+    )
+
+    names(data_part)
     
    
     # ## SCHOOLING ----

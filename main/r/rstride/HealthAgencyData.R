@@ -86,7 +86,7 @@ download_ref_file <- function(cases_ref_url,data_dir = 'data'){
   return(ifelse(exit_status==0,case_ref_file,NA))
 }
 
-load_observed_seroprevalence_data <- function(reference_serology_data_file,
+load_observed_seroprevalence_data <- function(reference_serology_data_file = NA,
                                               ref_period = NA,
                                               analysis = "overall")
 {
@@ -248,7 +248,7 @@ get_population_data <- function(country,year,age_breaks=NA){
 
 
 # function to combine the reported hospital admissions and age-specific proportions over time
-get_hospital_incidence_age <- function(reference_hospital_data_file, age_breaks_str = NA){
+get_hospital_incidence_age <- function(reference_hospital_data_file = NA, age_breaks_str = NA){
 
   # if function argument is NA => use 10-year age groups from 0 up to 90+
   age_breaks_str <- ifelse(is.na(age_breaks_str),paste(seq(0,90,10),collapse=','),age_breaks_str)
