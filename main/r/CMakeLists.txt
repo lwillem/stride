@@ -32,6 +32,7 @@ INSTALL( FILES
             rStride_contacts.R
             rStride_covid19_default_param.R	 	
             rStride_explore.R
+            rStride_measles_explore.R
             rStride_epiql.R
             rStride_gtester_covid19.R
             rStride_r0.R 	

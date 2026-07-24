@@ -80,7 +80,7 @@ exp_param_list$reference_serology_data_file <- NA
 
 # # immunity profile = starting condition (time consuming!)
  exp_param_list$immunity_profile <- "AgeDependent"
- exp_param_list$immunity_distribution_file <- "data/immunity_measles_belgium_dummy.xml" # "data/immunity_measles_belgium.xml" #c("data/immunity_measles_belgium.xml","data/immunity_measles_belgium_dummy.xml")
+ exp_param_list$immunity_distribution_file <- "data/immunity_measles_dummy.xml" # "data/immunity_measles_belgium.xml" #c("data/immunity_measles_belgium.xml","data/immunity_measles_belgium_dummy.xml")
  exp_param_list$immunity_link_probability <- 0 # immunity is distributed by household, this is the chance of continuing to immunize the next shuffled household member instead of jumping to a new random household
 
 # virtual survey for immunity levels
@@ -139,5 +139,7 @@ inspect_incidence_data(project_dir)
 inspect_prevalence_data(project_dir)
 
 
-
+# TMP: explore burden of disease
+project_summary    <- .rstride$load_project_summary(project_dir)
+data_incidence_all <- .rstride$load_aggregated_output(project_dir,'data_incidence')
 
