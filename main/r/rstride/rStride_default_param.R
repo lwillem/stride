@@ -85,15 +85,13 @@ get_default_param_definitions <- function(){
 
       # log level
       event_log_level = list(value = "Transmissions",
-                description = "Level of detail for the STRIDE event log: None, Transmissions, Participants"),
+                description = "Level of detail for the STRIDE event log: None, Incidence, Transmissions, Participants"),
 
       # factor for parameter estimation and fitting
-      hosp_probability_factor = list(value = 0,
+      hosp_probability_factor = list(value = 1,
                 description = "Scaling factor applied to the age-specific hospitalization probabilities, used for calibration/fitting"),
 
       # hospital admissions (relative proportions)
-      # reference: hospital survey data by age (Faes et al)
-      # update on 19/10 : hospital admissions in week 11-13 / simulated sympt cases by age in R0 calibration 2020-09-17
       hospital_category_age = list(value = paste(c(seq(0,80,10)),collapse=','),
                 description = "Age breakpoints (comma-separated) defining the age categories used for hospitalization probability/delay"),
       hospital_probability_age = list(value = paste(c(0.091,0.009,0.044,0.033,0.057,0.075,0.143,0.373,1.000),collapse=','),
@@ -175,6 +173,12 @@ get_default_param_definitions <- function(){
    out$num_parallel_workers <- list(value = 8,
              description = "Number of parallel worker processes to use when running the design of experiments")
 
+   # reference data, used in HealthAgencyData.R
+   out$reference_hospital_data_file <- list(value = 'data/covid19_hospital_age_2020_full.csv',
+                                            description = "File name for observed hospital admissions by age over time")
+   out$reference_serology_data_file <- list(value = 'data/covid19_serology_BE_reference.csv',
+                                            description = "File name for observed serology levels by age over time")
+   
    # return parameter definitions (value + description)
    return(out)
 }

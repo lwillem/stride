@@ -86,12 +86,41 @@ download_ref_file <- function(cases_ref_url,data_dir = 'data'){
   return(ifelse(exit_status==0,case_ref_file,NA))
 }
 
-load_observed_seroprevalence_data <- function(ref_period = NA,
+load_observed_seroprevalence_data <- function(reference_serology_data_file,
+                                              ref_period = NA,
                                               analysis = "overall")
 {
   
+  # derive file name
+  reference_serology_data_file <- unique(reference_serology_data_file)
+  
+  # if no file, or multiple, return empty table
+  if(all(is.na(reference_serology_data_file) | reference_serology_data_file == "NA") |
+     length(reference_serology_data_file) > 1){
+    
+    # get empty table
+    prevalence_ref <- data.frame(collection_period = NA,
+                                 analysis = NA,
+                                 level = NA, 
+                                 seroprevalence_weighted = NA,
+                                 seroprevalence_2p5 = NA, 
+                                 seroprevalence_97p5 = NA,
+                                 age_min = NA,
+                                 age_max = NA,                
+                                 collection_date_start = NA,
+                                 collection_date_end = NA,
+                                 days_seroconversion = NA,
+                                 reference = NA,              
+                                 collection_days = NA,
+                                 seroprevalence_date = NA,
+                                 point_incidence_mean = NA,
+                                 point_incidence_low = NA,   
+                                 point_incidence_high = NA)
+    return(prevalence_ref)
+  }
+   
   ## sero-prevalence data ----
-  prevalence_ref <- read.table('./data/covid19_serology_BE_reference.csv',sep=',',header=T)
+  prevalence_ref <- read.table(reference_serology_data_file,sep=',',header=T)
   
   # reformat
   prevalence_ref$collection_date_start <- as.Date(prevalence_ref$collection_date_start,format='%d/%m/%Y')
@@ -219,15 +248,39 @@ get_population_data <- function(country,year,age_breaks=NA){
 
 
 # function to combine the reported hospital admissions and age-specific proportions over time
-get_hospital_incidence_age <- function(age_breaks_str = NA){
+get_hospital_incidence_age <- function(reference_hospital_data_file, age_breaks_str = NA){
 
   # if function argument is NA => use 10-year age groups from 0 up to 90+
   age_breaks_str <- ifelse(is.na(age_breaks_str),paste(seq(0,90,10),collapse=','),age_breaks_str)
 
+  # derive file name
+  reference_hospital_data_file <- unique(reference_hospital_data_file)
+  
+  # if no file, or multiple, return empty table
+  if(all(is.na(reference_hospital_data_file) | reference_hospital_data_file == "NA") |
+     length(reference_hospital_data_file) > 1){
+    
+    # set age categories
+    age_min <- as.numeric(unlist(strsplit(age_breaks_str,",")))
+    age_cat <- paste(age_min,c(age_min[-1],'110'),sep='_')
+    
+    # get empty table
+    hosp_incidence <- data.frame(sim_date = NA,
+                                 hospital_admissions = NA,
+                                 hospital_load = NA,
+                                 cumulative_hospital_admissions = NA)
+    hosp_incidence[paste0('cases_',age_cat)] <- NA
+    hosp_incidence['cases'] <- NA
+    hosp_incidence['covid19_tests'] <- NA
+    hosp_incidence[paste0('hospital_admissions_',age_cat)] <- NA
+    
+    return(hosp_incidence)
+  }
+  
   ## hospital admissions by age----
   # note: we cannot include this data in the public repository (yet)
   # solution: use local version of real data or "dummy" backup to prevent fatal errors
-  ref_data_file_name <- smd_file_path('data',paste0('covid19_hospital_age_2020_full.csv'))      
+  ref_data_file_name <- reference_hospital_data_file    
   backup_file        <- smd_file_path('data',paste0('covid19_hospital_age_dummy.csv'))
   
   if(file.exists(ref_data_file_name)){
