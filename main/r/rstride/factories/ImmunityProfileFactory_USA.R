@@ -43,23 +43,15 @@ get_immunity_usa <- function(state_abbr, max_age = 100){
   
   # expand age groups to max age
   state_imm_exp <- c()
-  for (nm in names(state_imm)) {
+  for(nm in names(state_imm)) {
     nums <- as.integer(unlist(regmatches(nm, gregexpr("\\d+", nm))))
-    ages <- if (grepl("^86", nm)) (nums[1]):max_age  # open-ended oldest group
-    else if (length(nums) == 1) nums[1]       # single age (13_months, 1_year, etc.)
-    else nums[1]:nums[2]                       # age range
+    ages <- if(length(nums) == 1) nums[1] else nums[1]:nums[2]  
     state_imm_exp <- c(state_imm_exp, rep(state_imm[[nm]], length(ages)))
   }
   
-  state_imm_exp
+  num_age <- max_age+1
+  state_imm_exp <- c(state_imm_exp,rep(last(state_imm_exp),num_age-length(state_imm_exp)))
   
-  # expand age groups to max age
-  state_imm_exp <- c()
-  for (nm in names(state_imm)) {
-    nums <- as.integer(unlist(regmatches(nm, gregexpr("\\d+", nm))))
-    ages <- if (length(nums) == 1) (nums[1]+1):(max_age) else nums[1]:nums[2]
-    state_imm_exp <- c(state_imm_exp, rep(state_imm[[nm]], length(ages)))
-  }
   state_imm_exp
 
   # convert to ratio
@@ -68,7 +60,7 @@ get_immunity_usa <- function(state_abbr, max_age = 100){
   # adjust infant immunity
   # children 6mons+ are eligible for 1 dose vaccine; 
   # children < 6mos are expected to have immunity from mother
-  immunity_profile[1] <- 1/2
+  # immunity_profile[1] <- 1/2
   
   # get suscetibility =  1 - immunity
   susceptiblilty_profile <- 1-immunity_profile
@@ -76,39 +68,19 @@ get_immunity_usa <- function(state_abbr, max_age = 100){
   # explore
   plot(susceptiblilty_profile,ylim=0:1,type='l',lwd=7,ylab='susceptibility',xlab='age')
   plot(immunity_profile,ylim=0:1,type='l',lwd=7,ylab='immunity',xlab='age')
-}
-
-
-# Helper to parse column names like "X0.4", "X10.14", "X85." into age ranges
-parse_age_cols <- function(col_names) {
-  age_cols <- col_names[grepl("^X\\d", col_names)]
-  lapply(age_cols, function(nm) {
-    nums <- as.integer(unlist(regmatches(nm, gregexpr("\\d+", nm))))
-    if (length(nums) == 1) {
-      # Open-ended like "X85." — expand to e.g. 85:89 (or adjust ceiling as needed)
-      list(col = nm, ages = nums[1]:(nums[1] + 4))
-    } else {
-      list(col = nm, ages = nums[1]:nums[2])
-    }
-  })
-}
-
-expand_age_bands <- function(df) {
-  non_age_cols <- df %>% select(!matches("^X\\d"))
-  age_col_names <- names(df)[grepl("^X\\d", names(df))]
   
-  parsed <- parse_age_cols(age_col_names)
+  ############################################
+  ## SAVE AS XML  	 	                      ##
+  ############################################
   
-  expanded <- lapply(parsed, function(p) {
-    vals <- df[[p$col]]
-    new_cols <- setNames(
-      as.data.frame(matrix(rep(vals, length(p$ages)), ncol = length(p$ages))),
-      paste0("X", p$ages)
-    )
-    new_cols
-  })
+  # add age group as column names
+  names(immunity_profile) <- paste0('age',0:max_age)
   
-  bind_cols(non_age_cols, do.call(bind_cols, expanded))
+  # add info on data source and manipulation
+  immunity_data <- unlist(list(data_source = 'Kiang_ChildVaxView_Immunity_Combined_clean.txt',
+                               data_manipulation = "mean by age",
+                               round(immunity_profile,digits=4)))
+  
+  # save as xml
+  .rstride$save_config_xml(immunity_data,'immunity',paste0('immunity_measles_', state_abbr, ".xml"))
 }
-
-df_expanded <- expand_age_bands(us_imm)
