@@ -29,6 +29,7 @@
 
 #include "util/Ptree.h"
 #include <numeric>
+#include <unordered_set>
 #include <vector>
 
 namespace stride {
@@ -62,6 +63,12 @@ void ImmunitySeeder::Vaccinate(const std::string& immunityType, const std::strin
 {
         std::vector<double> immunityDistribution;
         double              linkProbability = 0;
+        bool                log_immunity    = false;
+
+        // Selection of pools to use; only populated (and used) for Random/Cocoon, since
+        // AgeDependent operates on the full, unfiltered immunityPools.
+        SegmentedVector<ContactPool> immunityPools_selection;
+        const SegmentedVector<ContactPool>* immunityPoolsToUse = &immunityPools;
 
         // retrieve the maximum age in the population
         unsigned int maxAge = pop->GetMaxAge();
@@ -76,12 +83,8 @@ void ImmunitySeeder::Vaccinate(const std::string& immunityType, const std::strin
                                 auto immunityRate = immunity_pt.get<double>("immunity.age" + std::to_string(index_age));
                                 immunityDistribution.push_back(immunityRate);
                         }
-                        Random(immunityPools, immunityDistribution, linkProbability, pop, false);
 
 		} else if(immunizationProfile == "Random" || immunizationProfile == "Cocoon") {
-
-			// Initialize new ContactPool vector
-			SegmentedVector<ContactPool> immunityPools_selection;
 
 			// immunizationProfile == Random: copy all contact pools
 			// immunizationProfile == Cocoon: copy all contact pools with an infant
@@ -90,13 +93,14 @@ void ImmunitySeeder::Vaccinate(const std::string& immunityType, const std::strin
 					immunityPools_selection.push_back(c);
 				}
 			}
+			immunityPoolsToUse = &immunityPools_selection;
 
 			// get immunity rate and
 			const auto immunityRate     = m_config.get<double>("run." + ToLower(immunityType) + "_rate");
 			const auto immunity_min_age = m_config.get<double>("run." + ToLower(immunityType) + "_min_age",0);
 			const auto immunity_max_age = m_config.get<double>("run." + ToLower(immunityType) + "_max_age",maxAge);
 
-			// Initialize a vector to store the immunity rate per age class [0-maxAge].
+			// Initialize a vector to store the immunity rate per age class [0;maxAge].
 			for (unsigned int index_age = 0; index_age <= maxAge; index_age++) {
 					if(index_age >= immunity_min_age && index_age <= immunity_max_age){
 						immunityDistribution.push_back(immunityRate);
@@ -104,9 +108,21 @@ void ImmunitySeeder::Vaccinate(const std::string& immunityType, const std::strin
 						immunityDistribution.push_back(0);
 					}
 			}
+			log_immunity = true;
 
-			Random(immunityPools_selection, immunityDistribution, linkProbability, pop, true);
+		} else {
+			return;
+		}
 
+		// When the average target rate is high, sampling who stays susceptible (the minority)
+		// is much cheaper than sampling who becomes immune (the majority).
+		const double averageImmunity = std::accumulate(immunityDistribution.begin(), immunityDistribution.end(), 0.0)
+		                                / immunityDistribution.size();
+
+		if (averageImmunity > 0.5) {
+			RandomInverse(*immunityPoolsToUse, immunityDistribution, linkProbability, pop, log_immunity);
+		} else {
+			Random(*immunityPoolsToUse, immunityDistribution, linkProbability, pop, log_immunity);
 		}
 }
 
@@ -176,6 +192,84 @@ void ImmunitySeeder::Random(const SegmentedVector<ContactPool>& pools, vector<do
                         // random draw to continue in this pool or to sample a new one
                         if (m_rn_man->at(0).SampleUniform01() < (1 - immunityLinkProbability)) {
                                 break;
+                        }
+                }
+        }
+}
+
+void ImmunitySeeder::RandomInverse(const SegmentedVector<ContactPool>& pools, vector<double>& immunityDistribution,
+                       double immunityLinkProbability,std::shared_ptr<Population> pop, const bool log_immunity)
+{
+
+		// retrieve the maximum age in the population
+		unsigned int maxAge = pop->GetMaxAge();
+
+		// Initialize a vector to count the population per age class [0-100].
+        vector<double> populationBrackets(maxAge+1, 0.0);
+
+        // Sampler for int in [0, pools.size()) and for double in [0.0, 1.0).
+        const auto poolsSize          = static_cast<int>(pools.size());
+        auto       intGenerator       = m_rn_man->at(0U).GetUniformIntGenerator(0, poolsSize);
+        auto&      logger             = pop->RefEventLogger();
+
+        // Count unvaccinated individuals per age class
+        for (auto& c : pools) {
+                for (const auto& p : c.GetPool()) {
+                        if (!p->IsVaccinated()) {
+                                populationBrackets[p->GetAge()]++;
+                        }
+                }
+        }
+
+        // Calculate the number of individuals per age class that should remain susceptible
+        // (the complement of the target immunity rate).
+        unsigned int numSusceptible = 0;
+        for (unsigned int age = 0; age <= maxAge; age++) {
+                populationBrackets[age] = floor(populationBrackets[age] * (1.0 - immunityDistribution[age]));
+                numSusceptible += static_cast<unsigned int>(populationBrackets[age]);
+        }
+
+        // Individuals sampled to stay susceptible.
+        std::unordered_set<Person*> staySusceptible;
+
+        // Sample who stays susceptible, until all age-dependent quota are reached.
+        while (numSusceptible > 0) {
+                // random pool, random order of members
+                const ContactPool&   p_pool = pools[intGenerator()];
+                const auto           size   = static_cast<unsigned int>(p_pool.GetPool().size());
+                vector<unsigned int> indices(size);
+                iota(indices.begin(), indices.end(), 0U);
+                m_rn_man->at(0U).Shuffle(indices);
+
+                // loop over members, in random order
+                for (unsigned int i_p = 0; i_p < size && numSusceptible > 0; i_p++) {
+                        Person& p = *p_pool[indices[i_p]];
+                        // if p is susceptible and his/her age class has not reached the quota => stays susceptible
+                        if (!p.IsVaccinated() && populationBrackets[p.GetAge()] > 0 && staySusceptible.insert(&p).second) {
+                                populationBrackets[p.GetAge()]--;
+                                numSusceptible--;
+                        }
+                        // random draw to continue in this pool or to sample a new one
+                        if (m_rn_man->at(0).SampleUniform01() < (1 - immunityLinkProbability)) {
+                                break;
+                        }
+                }
+        }
+
+        //Simple vaccine immunity
+        shared_ptr<ConstantVaccine::Properties> properties(new ConstantVaccine::Properties{"immunity", 1.0,1.0,1.0});
+
+        // Immunize everyone else: single linear pass, no rejection sampling needed.
+        for (auto& c : pools) {
+                for (auto* p : c.GetPool()) {
+                        if (!p->IsVaccinated() && staySusceptible.find(p) == staySusceptible.end()) {
+                                auto vaccine = std::unique_ptr<Vaccine>(new ConstantVaccine(properties));
+                                p->SetVaccine(vaccine);
+                                // TODO: check log_level
+                                if(log_immunity){
+                                	logger->info("[VACC] {} {} {} {} {} {}",
+                                				 p->GetId(), p->GetAge(),ToString(c.GetType()), c.GetId(), c.HasInfant(),0);
+                                }
                         }
                 }
         }

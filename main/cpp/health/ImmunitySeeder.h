@@ -51,6 +51,12 @@ private:
 		void Random(const util::SegmentedVector<ContactPool>& pools, std::vector<double>& immunityDistribution,
 					double immunityLinkProbability, std::shared_ptr<Population> pop, const bool log_immunity);
 
+        /// Random immunization, sampling who stays susceptible instead of who becomes immune.
+        /// Cheaper than Random() when the target immunity rate is high, since the susceptible
+        /// group being sampled is then the minority (fewer rejected draws near completion).
+		void RandomInverse(const util::SegmentedVector<ContactPool>& pools, std::vector<double>& immunityDistribution,
+					double immunityLinkProbability, std::shared_ptr<Population> pop, const bool log_immunity);
+
 
 private:
 		const stride::util::ptree& m_config; ///< Run config.
