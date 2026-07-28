@@ -68,6 +68,8 @@ exp_design <- expand.grid(r0                            = seq(0,24,3),
                           population_file               = "sim_output/20260710_111118_WI-Dane_conditional_social_contacts/20260710_111118_population_WI-Dane.csv",
                           age_contact_matrix_file       = "sim_output/20260710_111118_WI-Dane_conditional_social_contacts/contact_matrix_usa_conditional.xml",
                           holidays_file                 = "data/calendar_dane_2023_2026_measles.csv",
+                          # immunity_profiles             = "AgeDependent",
+                          # immunity_distribution_file    = "data/immunity_measles_WI.xml", 
                           stringsAsFactors = F)
 
 # add a unique seed for each run
