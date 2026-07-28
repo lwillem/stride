@@ -21,17 +21,17 @@
     <immunity_rate>0</immunity_rate>
     <num_threads>1</num_threads>
     <start_date>2020-02-01</start_date>
-    <age_contact_matrix_file>data/contact_matrix_usa_conditional.xml</age_contact_matrix_file>
+    <age_contact_matrix_file>sim_output/20260710_111118_WI-Dane_conditional_social_contacts/contact_matrix_usa_conditional.xml</age_contact_matrix_file>
     <num_participants_survey>10</num_participants_survey>
     <disease_config_file>data/disease_measles_usa.xml</disease_config_file>
     <event_log_level>Transmissions</event_log_level>
     <event_output_file>true</event_output_file>
-    <holidays_file>calendar_belgium_covid19_v1_1_param.csv</holidays_file>
+    <holidays_file>None</holidays_file>
     <immunity_profile>None</immunity_profile>
     <output_cases>true</output_cases>
     <output_persons>false</output_persons>
     <output_summary>true</output_summary>
-    <pool_characteristics_file>pool_characteristics.xml</pool_characteristics_file>
+    <pool_characteristics_file>None</pool_characteristics_file>
     <seeding_age_max>99</seeding_age_max>
     <seeding_age_min>1</seeding_age_min>
     <num_infected_seeds>20</num_infected_seeds>
