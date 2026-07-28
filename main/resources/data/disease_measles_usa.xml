@@ -3,24 +3,28 @@
   <label>
     <pathogen>measles</pathogen>
     <num_infected_seeds>20</num_infected_seeds>
-    <total_num_index_cases>300</total_num_index_cases>
-    <num_rng_seeds>15</num_rng_seeds>
-    <dim_exp_design>25</dim_exp_design>
-    <num_realisations>3</num_realisations>
-    <fit_r0_limit>21</fit_r0_limit>
-    <fit_r0_range>1-20</fit_r0_range>
-    <population_file>data/pop_usa_wisconsin_dane474k_c1000.csv</population_file>
-    <num_days>20</num_days>
+    <total_num_index_cases>900</total_num_index_cases>
+    <num_rng_seeds>45</num_rng_seeds>
+    <dim_exp_design>81</dim_exp_design>
+    <num_realisations>5</num_realisations>
+    <fit_r0_limit>17.4</fit_r0_limit>
+    <fit_r0_range>0-24</fit_r0_range>
+    <population_file>sim_output/20260710_111118_WI-Dane_conditional_social_contacts/20260710_111118_population_WI-Dane.csv</population_file>
+    <num_days>40</num_days>
     <population_size>473566</population_size>
     <initially_infected>20</initially_infected>
-    <r01>1</r01>
-    <r02>5.75</r02>
-    <r03>10.5</r03>
-    <r04>15.25</r04>
-    <r05>20</r05>
+    <r01>0</r01>
+    <r02>3</r02>
+    <r03>6</r03>
+    <r04>9</r04>
+    <r05>12</r05>
+    <r06>15</r06>
+    <r07>18</r07>
+    <r08>21</r08>
+    <r09>24</r09>
     <immunity_rate>0</immunity_rate>
     <num_threads>1</num_threads>
-    <start_date>2020-02-01</start_date>
+    <start_date>2023-01-01</start_date>
     <age_contact_matrix_file>sim_output/20260710_111118_WI-Dane_conditional_social_contacts/contact_matrix_usa_conditional.xml</age_contact_matrix_file>
     <num_participants_survey>10</num_participants_survey>
     <disease_config_file>data/disease_measles_usa.xml</disease_config_file>
@@ -44,7 +48,7 @@
     <hospital_category_age>0,19,60,80</hospital_category_age>
     <hospital_probability_age>0.049,0.03024,0.1197,0.5922</hospital_probability_age>
     <hospital_mean_delay_age>3,7,7,6</hospital_mean_delay_age>
-    <run_tag>20260629_125419_r0</run_tag>
+    <run_tag>20260727_171147_r0</run_tag>
     <num_cea_samples>10000</num_cea_samples>
     <hosp_probability_factor>1</hosp_probability_factor>
   </label>
@@ -97,8 +101,8 @@
     <probability>1</probability>
   </time_symptomatic>
   <transmission>
-    <b0>0.539845655861771</b0>
-    <b1>20.8998420026417</b1>
+    <b0>0.820990685751851</b0>
+    <b1>18.91204185976</b1>
     <b2>0</b2>
   </transmission>
 </disease>
