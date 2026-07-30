@@ -79,9 +79,15 @@ exp_param_list$reference_hospital_data_file <- NA
 exp_param_list$reference_serology_data_file <- NA
 
 # # immunity profile = starting condition (time consuming!)
+<<<<<<< HEAD
  exp_param_list$immunity_profile <- "AgeDependent"
  exp_param_list$immunity_distribution_file <- "data/immunity_measles_dummy.xml" # "data/immunity_measles_belgium.xml" #c("data/immunity_measles_belgium.xml","data/immunity_measles_belgium_dummy.xml")
  exp_param_list$immunity_link_probability <- 0 # immunity is distributed by household, this is the chance of continuing to immunize the next shuffled household member instead of jumping to a new random household
+=======
+exp_param_list$immunity_profile <- "AgeDependent"
+exp_param_list$immunity_distribution_file <- "data/immunity_measles_dummy.xml" # "data/immunity_measles_belgium.xml" #c("data/immunity_measles_belgium.xml","data/immunity_measles_belgium_dummy.xml")
+exp_param_list$immunity_link_probability <- 0 # immunity is distributed by household, this is the chance of continuing to immunize the next shuffled household member instead of jumping to a new random household
+>>>>>>> reconcile rstride_measles_explore.R with LW updates to include immunity
 
 # virtual survey for immunity levels
 exp_param_list$num_participants_survey
@@ -91,29 +97,9 @@ exp_param_list$contact_survey_dates <- exp_param_list$start_date # if log level 
 ## GENERATE DESIGN OF EXPERIMENT GRID         ####
 ################################################ #
 
-# add parameters and values to combine in a full-factorial grid
-exp_design <- expand.grid(r0                            = seq(12,14,2),
-                          num_days                      = c(40,50),
-                          rng_seed                      = seq(num_seeds),
-                          age_contact_matrix_file       = "sim_output/20260710_111118_WI-Dane_conditional_social_contacts/contact_matrix_usa_conditional.xml",
-                          disease_config_file           = "data/disease_measles.xml",
-                          holidays_file                 = "data/calendar_dane_2023_2026_measles.csv",
-                          immunity_profiles             = "AgeDependent",
-                          immunity_distribution_file    = "data/immunity_measles_WI.xml", 
-                          # immunity_rate                 = 0.8,
-                          # num_participants_survey       = 5000,
-                          population_file               = "sim_output/20260710_111118_WI-Dane_conditional_social_contacts/20260710_111118_population_WI-Dane.csv",
-                          seeding_age_max               = 99,
-                          seeding_age_min               = 1,
-                          seeding_rate                  = 0.00002,
-                          num_infected_seeds            = 9,
-                          start_date                    = "2023-02-01",
-                          track_index_case              = 'false',
-                          event_log_level               = "Transmissions",
-                          stride_log_level              = "true",
-                          adaptive_symptomatic_behavior = 'true',
-                          stringsAsFactors = F)
-
+# get grid-based design of experiments
+exp_design <- .rstride$get_full_grid_exp_design(exp_param_list = exp_param_list,
+                                                num_rng_seeds  = exp_param_list$num_rng_seeds)
 dim(exp_design)
 
 # tmp fix:
