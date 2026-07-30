@@ -20,7 +20,7 @@
 #
 ############################################################################# #
 
-#.rstride$set_wd()  #DEVELOPMENT: to set the work directory as the latest stride install dir 
+#.rstride$set_wd()  #DEVELOPMENT: to set the work directory as the latest stride install dir
 #.rstride$load_pd() #DEVELOPMENT: to retrieve the latest project directory (project_dir)
 
 # load required R package
