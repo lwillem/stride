@@ -53,11 +53,12 @@ smd_load_packages(c('XML',           # to parse and write XML files
 source('./bin/rstride/Misc.R')
 
 # load rStride files (excluding this file)
-rStride_files <- dir('./bin/rstride',recursive = F,pattern = '\\.R',full.names = T)
+rStride_files <- dir('./bin/rstride',recursive = T,pattern = '\\.R',full.names = T)
 rStride_files <- rStride_files[rStride_files != "./bin/rstride/rStride.R"]
 rStride_files <- rStride_files[! grepl('\\.Rmd',rStride_files)]
 to_remove <- c("./bin/rstride/TransmissionInspector_old.R", 
                "./bin/rstride/factories/CalendarFactory_testing.R",
+               "./bin/rstride/factories/CalendarFactory_USA.R",
                "./bin/rstride/factories/generate-population-community.R",
                "./bin/rstride/social_contacts_usa2026.R",
                "./bin/rstride/USA_PopulationBuilder.R")
