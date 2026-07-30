@@ -58,6 +58,7 @@ rStride_files <- rStride_files[rStride_files != "./bin/rstride/rStride.R"]
 rStride_files <- rStride_files[! grepl('\\.Rmd',rStride_files)]
 to_remove <- c("./bin/rstride/TransmissionInspector_old.R", 
                "./bin/rstride/factories/CalendarFactory_testing.R",
+               "./bin/rstride/factories/CalendarFactory_USA.R",
                "./bin/rstride/factories/generate-population-community.R",
                "./bin/rstride/social_contacts_usa2026.R",
                "./bin/rstride/USA_PopulationBuilder.R")
