@@ -112,6 +112,7 @@ void Person::UpdatePresence(bool isIsolatedFromHousehold,
         } else {
         	   // by default: a person intents to be present at each location
         	   m_in_pools[Id::Household]          = true;
+			   m_in_pools[Id::School]             = true;
         	   m_in_pools[Id::Collectivity]       = true;
         	   m_in_pools[Id::HouseholdCluster]   = true;
       		   m_in_pools[Id::Workplace]          = true;
