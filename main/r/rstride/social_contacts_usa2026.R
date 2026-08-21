@@ -48,7 +48,7 @@ sel_country <- 'US'
 # set state and county
 state <- "WI"
 county <- "Dane"
-export <- FALSE
+export <- TRUE
 
 # select population file
 # pop_file <- 'data/pop_US-WI-MKE_c1000.csv'
@@ -117,11 +117,6 @@ cnt_additional <- cnt_all * 0
 # load file
 pop_usa <- getFREDdata(state = state, county = county, export = FALSE) #read.csv(pop_file,header = T, sep = ',')
 
-if(export == TRUE){
-  write.table(pop_usa, file.path(folder_name, paste0(run_tag, "_population_", state, "-", county, ".csv")),
-              sep = ",", col.names = TRUE, row.names = FALSE, quote = FALSE)
-}
-
 # rename work_id to workplace_id
 names(pop_usa) <- gsub('work','workplace',names(pop_usa))
 
@@ -156,27 +151,6 @@ age_counts_workplace <- hist(pop_usa$age[!is.na(pop_usa$workplace_id)], breaks =
 age_distr_workplace <- age_counts_workplace / age_counts
 age_distr_workplace[is.na(age_distr_workplace)] <- 0
 
-################################################
-######## Account for small workplaces
-
-# tmp <- pop_usa %>% group_by(workplace_id) %>% summarize(n= n()) %>% subset(n <= 7)
-# age_counts_sm_workplace <- hist(pop_usa$age[pop_usa$workplace_id %in% tmp$workplace_id], breaks = breaks_ages, plot = FALSE)$counts
-# 
-# age_distr_workplace_avg <- (age_counts_workplace-age_counts_sm_workplace) / age_counts
-# age_distr_workplace_avg[is.na(age_distr_workplace_avg)] <- 0
-# age_distr_workplace_sm <- age_counts_sm_workplace / age_counts
-# age_distr_workplace_sm[is.na(age_distr_workplace_sm)] <- 0
-# 
-# workplace_ages <- 18:69
-# workplace_ages_select <- 30:49
-# cnt_sm_workplace_conditional <- cnt_sm_workplace * 0 # start with zero's
-# cnt_sm_workplace_conditional[workplace_ages + 1]  <- mean(cnt_sm_workplace[workplace_ages_select + 1]) # index = age + 1
-# # calculate number of contacts conditional on being at work
-# cnt_sm_workplace_conditional <- cnt_sm_workplace_conditional * (7/5)  # account for working 5 days out of 7
-# cnt_sm_workplace_conditional <- cnt_sm_workplace_conditional  / mean(age_distr_workplace[workplace_ages_select+1]) # account for employment rate
-
-################################################################################
-
 # define conditional number of contacts for all ages as the average of a selection of the the (most) active population
 workplace_ages <- 18:69
 workplace_ages_select <- 30:49
@@ -187,12 +161,30 @@ cnt_workplace_conditional[workplace_ages + 1]  <- mean(cnt_workplace[workplace_a
 cnt_workplace_conditional <- cnt_workplace_conditional * (7/5)  # account for working 5 days out of 7
 cnt_workplace_conditional <- cnt_workplace_conditional / mean(age_distr_workplace[workplace_ages_select+1]) # account for employment rate
 
+# use average conditional contacts among active ages as exclusion threshold
+workplace_threshold <- round(mean(cnt_workplace_conditional[workplace_ages_select + 1]))
+
 # optional: increase rates to account for small workplaces (n < mean number of contacts)?
 workplace_size_count <- table(table(pop_usa$workplace_id))
 # number of people in workplaces with ≤7 people
 num_people_workplace_leq7 <- sum(workplace_size_count[1:7] *  1:7)
 # proportional to number of workers
 num_people_workplace_leq7 / sum(!is.na(pop_usa$workplace_id)) 
+
+##### Remove workplaces with less people than number of average contacts
+workplace_id_freq <- table(pop_usa$workplace_id)
+small_workplace_id <- names(workplace_id_freq[workplace_id_freq <= 7])
+pop_usa$workplace_id <- ifelse(pop_usa$workplace_id %in% small_workplace_id, NA, pop_usa$workplace_id)
+
+# recalculate conditional contacts after exclusion
+age_counts_workplace <- hist(pop_usa$age[!is.na(pop_usa$workplace_id)], breaks = breaks_ages, plot = FALSE)$counts
+age_distr_workplace <- age_counts_workplace / age_counts
+age_distr_workplace[is.na(age_distr_workplace)] <- 0
+
+cnt_workplace_conditional <- cnt_workplace * 0
+cnt_workplace_conditional[workplace_ages + 1] <- mean(cnt_workplace[workplace_ages_select + 1])
+cnt_workplace_conditional <- cnt_workplace_conditional * (7/5)
+cnt_workplace_conditional <- cnt_workplace_conditional / mean(age_distr_workplace[workplace_ages_select + 1])
 
 # household contacts ----
 # define household sizes
@@ -375,3 +367,12 @@ xml_prefix <- paste0(' This file is part of the Stride software [', format(Sys.t
 cat(saveXML(xml_doc, indent = TRUE, prefix = newXMLCommentNode(xml_prefix)),  file = out_filename)
 print(out_filename)
 
+#######################################
+## EXPORT POPULATION FILE FOR STRIDE ##
+#######################################
+
+if(export == TRUE){
+  write.table(pop_usa, file.path(folder_name, paste0(run_tag, "_population_", state, "-", county, ".csv")),
+              sep = ",", col.names = TRUE, row.names = FALSE, quote = FALSE)
+}
+###############
