@@ -8,43 +8,28 @@
 if(0==1){
   dane <- getFREDdata(state = "WI", county = "Dane")
   mke  <- getFREDdata(state = "WI", county = "Milwaukee")
-  cook <- getFREDdata(state = "IL", county = "Cook", export = FALSE)
+  cook <- getFREDdata(state = "IL", county = "Cook")
   hennepin <- getFREDdata(state = "MN", county = "Hennepin")
   
   # or set function parameters
-  state = "WI"; county = "Dane"; export = TRUE;
+  state = "WI"; county = "Dane"
 }
-
-## Load packages
-library(haven)        # note: not part of rStride package
-library(data.table)
-library(dplyr)
-library(tidyr)
-library(ggplot2)
-library(VGAM)         # note: not part of rStride package
-library(mgcv)
-library(arrow)
-library(XML)
-library(sf)           # note: not part of rStride package
-# library(sfarrow)        
-library(tigris)       # note: not part of rStride package
-library(usmap)        # note: not part of rStride package
 
 options(scipen=999)    # turn off scientific notation
 # options(scipen=0)      # turn on scientific notation
 
 ############################### Synthetic FRED Population ################################
 
-## Manually download data from FRED: https://fred.publichealth.pitt.edu/syn_pops
+## Manually download data from FRED: https://fred.publichealth.pitt.edu/syn_pops to '~/opt/FRED_population_usa/'
 
 # MN - Hennepin
 # MKE - Milwaukee
 # IL - Cook
 
-getFREDdata <- function(state = "WI", county = "Milwaukee", export = FALSE){
+getFREDdata <- function(state = "WI", county = "Milwaukee"){
   
   print("FRED population files for the desired county must be manually downloaded from 'https://fred.publichealth.pitt.edu/syn_pops'
-  and stored in the 'data/population_usa/' folder before running this script.")
+  and stored in the '~/opt/FRED_population_usa/' folder before running this script.")
   
   folder <- fips(state, county = county)
   state_name_full <- fips_info(folder)$full
@@ -120,12 +105,6 @@ getFREDdata <- function(state = "WI", county = "Milwaukee", export = FALSE){
     ) %>%
     select(c("age","household_id","school_id","work_id","primary_community","secondary_community"))
   comm_data <- tmp_wp[[2]]
-  
-  if(export == TRUE){
-    write.table(pop_data,
-                paste0("sim_output/pop_US-", state, "-", county, "_c", pop_settings$com_target_size, ".csv"),
-                sep = ",", col.names = TRUE, row.names = FALSE, quote = FALSE)
-  }
   
   return(pop_data)
 }

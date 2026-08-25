@@ -46,7 +46,13 @@ smd_load_packages(c('XML',           # to parse and write XML files
                     'corrplot',      # to visualise the parameter correlations in the paretor front selection
                     'wpp2019',       # to derive population data
                     'dplyr',         # to join data.frames and data.tables
-                    'useful'         # to use compare.list
+                    'useful',        # to use compare.list
+                    
+                    'haven',        # to compile USA population file(s)
+                    'VGAM',         # to compile USA population file(s)
+                    'sf',           # to compile USA population file(s)
+                    'tigris',       # to compile USA population file(s)
+                    'usmap'         # to compile USA population file(s)
                     ))
 
 # load general help functions
