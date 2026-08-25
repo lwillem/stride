@@ -48,7 +48,7 @@ exp_param_list <- get_default_param()
 exp_param_list$num_rng_seeds <- 2
 
 # simulation horizon and start
-exp_param_list$num_days   <- 40
+exp_param_list$num_days   <- 60
 exp_param_list$start_date <- "2023-01-01"
 
 # case study for measles
@@ -62,9 +62,9 @@ exp_param_list$hospital_probability_age       #TODO: set age-specific adjustment
 exp_param_list$hospital_category_age          #FYI: age categories for 'hosp_probability_factor' adjustments
 
 # USA population
-exp_param_list$age_contact_matrix_file <- "data/contact_matrix_usa_conditional.xml"
+exp_param_list$age_contact_matrix_file <- "sim_output/20260710_111118_WI-Dane_conditional_social_contacts/contact_matrix_usa_conditional.xml"
 exp_param_list$holidays_file           <- "data/calendar_dane_2023_2026_measles.csv"
-exp_param_list$population_file         <- "data/pop_usa_wisconsin_dane474k_c1000.csv"
+exp_param_list$population_file         <- "sim_output/20260710_111118_WI-Dane_conditional_social_contacts/20260710_111118_population_WI-Dane.csv"
 
 # initial conditions
 exp_param_list$num_infected_seeds <- 20
@@ -78,20 +78,21 @@ exp_param_list$event_log_level <- "Transmissions"
 exp_param_list$reference_hospital_data_file <- NA
 exp_param_list$reference_serology_data_file <- NA
 
-# # immunity profile = starting condition (time consuming!)
-<<<<<<< HEAD
- exp_param_list$immunity_profile <- "AgeDependent"
- exp_param_list$immunity_distribution_file <- "data/immunity_measles_dummy.xml" # "data/immunity_measles_belgium.xml" #c("data/immunity_measles_belgium.xml","data/immunity_measles_belgium_dummy.xml")
- exp_param_list$immunity_link_probability <- 0 # immunity is distributed by household, this is the chance of continuing to immunize the next shuffled household member instead of jumping to a new random household
-=======
+# immunity profile = starting condition (time consuming!)
 exp_param_list$immunity_profile <- "AgeDependent"
-exp_param_list$immunity_distribution_file <- "data/immunity_measles_dummy.xml" # "data/immunity_measles_belgium.xml" #c("data/immunity_measles_belgium.xml","data/immunity_measles_belgium_dummy.xml")
+exp_param_list$immunity_distribution_file <- c("data/immunity_measles_dummy.xml", "data/immunity_measles_WI.xml") #c("data/immunity_measles_belgium.xml","data/immunity_measles_belgium_dummy.xml")
 exp_param_list$immunity_link_probability <- 0 # immunity is distributed by household, this is the chance of continuing to immunize the next shuffled household member instead of jumping to a new random household
->>>>>>> reconcile rstride_measles_explore.R with LW updates to include immunity
 
 # virtual survey for immunity levels
 exp_param_list$num_participants_survey
 exp_param_list$contact_survey_dates <- exp_param_list$start_date # if log level is not "Contacts", only health data is obtained
+
+# vaccine rate
+# exp_param_list$vaccine_link_probability <- 0
+# exp_param_list$vaccine_profile <- "Random"
+# exp_param_list$vaccine_rate <- c(0.8)
+# exp_param_list$vaccine_min_age <- 0
+# exp_param_list$vaccine_max_age <- 17
 
 ################################################ #
 ## GENERATE DESIGN OF EXPERIMENT GRID         ####
@@ -112,8 +113,12 @@ if(any(is.na(exp_param_list$immunity_distribution_file))){
 ##################################
 project_dir <- run_rStride(exp_design,
                            dir_postfix,
-                           remove_run_output = FALSE)
+                           remove_run_output = FALSE,
+                           num_parallel_workers = 2)
 
+
+## load existing project
+# project_dir <- smd_file_path('sim_output','20260817_172151_expl_measles')
 
 #####################################
 ## EXPLORE INPUT-OUTPUT BEHAVIOR   ##
