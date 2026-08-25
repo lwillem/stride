@@ -37,19 +37,18 @@ county <- "Gaines"
 com_target_size <- 1000
 rng_seed  <- 1234
 
-# create run tag using the current time if use_date_prefix == TRUE
-run_tag <- format(Sys.time(), format="%Y%m%d_%H%M%S")
+# create run tag 
+run_tag <- tolower(paste0("pop_usa_", state, "_", county, "_c", com_target_size))
 
-# set output tag
-cdata_tag    <- paste0('contact_matrix_usa_conditional')
-
-# set output directory
+# set date tag
+date_tag <- format(Sys.time(), format="%Y%m%d_%H%M%S_")
+                   
+# set output directory using the current time
 output_dir <- smd_file_path('sim_output')
-folder_name <- file.path(output_dir, paste0(run_tag, "_demo_USA_", state, "_", county))
+folder_name <- tolower(file.path(output_dir, paste0(date_tag, run_tag)))
 if(!dir.exists(folder_name)) {
   dir.create(folder_name, recursive = TRUE)
 }
-file_name  <- file.path(folder_name,cdata_tag)
 
 # define help function to load social data from Prem et al. by location
 get_cnt_data <- function(location, country) {
@@ -95,7 +94,7 @@ cnt_all[76] # note: index 1 is age age 0
 cnt_additional <- cnt_all * 0
 
 # demography data ----
-pop_file_name <- file.path(folder_name,paste0("pop_USA_", state, "_", county, "_c", com_target_size))
+pop_file_name <- file.path(folder_name,run_tag)
 
 # generate population (and store plots in pdf)
 pdf(paste0(pop_file_name,'.pdf')) # open pdf stream
@@ -239,15 +238,10 @@ plot_conditional_contacts <- function(cnt_orig, cnt_conditional, pop_fraction, p
 # explore school contacts: conditional and unconditional
 
 # get file name with path
-file_name_path <- file.path(folder_name, paste0("social_contacts_", state, "-", county, "_plots.pdf"))
-
-# check extension and add if not present
-if(!grepl('.pdf',file_name_path)){
-  file_name_path <- paste0(file_name_path,'.pdf')
-}
+cnt_file_name <- gsub('/pop_','/social_contacts_',pop_file_name)
 
 # open pdf stream
-pdf(file_name_path)
+pdf(paste0(cnt_file_name,'.pdf'))
 
 plot_conditional_contacts(cnt_school, cnt_school_conditional, age_distr_school, 'school', state = state, county = county, xlim = c(0,22))
 plot_conditional_contacts(cnt_workplace, cnt_workplace_conditional, age_distr_workplace, 'workplace', state = state, county = county)
@@ -279,7 +273,7 @@ social_cnt_data$workplace           <- cnt_workplace_conditional
 social_cnt_data$community_weekday   <- cnt_other_adj
 social_cnt_data$community_weekend   <- cnt_other_adj
 
-save(social_cnt_data,file=paste0(file_name,'.RData'))
+save(social_cnt_data, file = paste0(cnt_file_name,'.RData'))
 
 ###############################
 ## STORE AS XML FOR STRIDE   ##
@@ -337,7 +331,7 @@ for(i_context in 1:length(cnt_matrices_lib))
 }
 
 # create filename for xml output
-out_filename <- paste0(file_name,'.xml')
+out_filename <- paste0(cnt_file_name,'.xml')
 
 # xml prefix
 xml_prefix <- paste0(' This file is part of the Stride software [', format(Sys.time()), ']')
@@ -354,4 +348,19 @@ print(out_filename)
 
 write.table(pop_usa, paste0(pop_file_name,'.csv'),
             sep = ",", col.names = TRUE, row.names = FALSE, quote = FALSE)
+
+# write METADATA 
+lines <- c(
+  "Title: STRIDE USA-population project",
+  "Version: 0.1",
+  "Description: This project aims to create synthetic populations that are statistically realistic representations of the actual populations based on Public Use Microdata (PUMS) data and Census aggregated data.",
+  "Core data: Wheaton, W.D., U.S. Synthetic Population 2010 Version 1.0 Quick Start Guide, RTI International, May 2014.",
+  "License: GPL-3",
+  paste("Date:", format(as.POSIXct(date_tag, format="%Y%m%d_%H%M%S"),format = "%Y/%m/%d %H:%M:%S")),
+  paste("rng_seed:", rng_seed),
+  paste("target community size:", com_target_size)
+) 
+#TODO: extend
+
+writeLines(lines, paste0(pop_file_name,'_METADATA.txt'))
 
