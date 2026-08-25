@@ -22,25 +22,11 @@
 #clear workspace
 rm(list=ls())
 
-## set working director (or open RStudio with this script)
-# setwd("C:/User/path/to/the/r-project/folder") ## WINDOWS
-# setwd("/Users/path/to/the/r-project/folder")        ## MAC
-# library(here); setwd(here())                     ## set the wd at the location of the 'project-file'
-
 # load 'contactdata' package
 suppressPackageStartupMessages(library('contactdata'))
 
-# # load simid.rtools package
-# require(devtools)
-# devtools::install_github("lwillem/simid_rtools",force=F,quiet=T)
-# #devtools::uninstall(simid.rtools)
-# library('simid.rtools')
-# 
-# # update description file, if required
-# smd_update_description_file()
-
-# load FRED population builder
-source("~/Documents/Repositories/stride/main/r/rstride/USA_PopulationBuilder.R")
+# load FRED-based population builder
+source("bin/rstride/factories/PopulationFactory_USA.R")
 
 # select country with ISO2 code
 sel_country <- 'US'
@@ -49,9 +35,6 @@ sel_country <- 'US'
 state <- "TX"
 county <- "Gaines"
 export <- TRUE
-
-# select population file
-# pop_file <- 'data/pop_US-WI-MKE_c1000.csv'
 
 # create run tag using the current time if use_date_prefix == TRUE
 run_tag <- format(Sys.time(), format="%Y%m%d_%H%M%S")
@@ -354,7 +337,7 @@ out_filename <- paste0(file_name,'.xml')
 xml_prefix <- paste0(' This file is part of the Stride software [', format(Sys.time()), ']')
 
 # save as XML,
-# note: if we use an XMLdoc to include prefix, the line break dissapears...
+# note: if we use an XMLdoc to include prefix, the line break disapears...
 # fix: http://r.789695.n4.nabble.com/saveXML-prefix-argument-td4678407.html
 cat(saveXML(xml_doc, indent = TRUE, prefix = newXMLCommentNode(xml_prefix)),  file = out_filename)
 print(out_filename)
