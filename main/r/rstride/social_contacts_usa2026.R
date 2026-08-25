@@ -34,21 +34,17 @@ sel_country <- 'US'
 # set state and county
 state <- "TX"
 county <- "Gaines"
-export <- TRUE
 
 # create run tag using the current time if use_date_prefix == TRUE
 run_tag <- format(Sys.time(), format="%Y%m%d_%H%M%S")
-
-# add dir_postfix
-# run_tag <- paste0(run_tag,dir_postfix)
 
 # set output tag
 cdata_tag    <- paste0('contact_matrix_usa_conditional')
 
 # set output directory
 output_dir <- smd_file_path('sim_output')
-folder_name <- file.path(output_dir, paste0(run_tag, "_", state, "-", county, "_conditional_social_contacts"))
-if(!dir.exists(folder_name) & export == TRUE) {
+folder_name <- file.path(output_dir, paste0(run_tag, "_demo_", state, "-", county))
+if(!dir.exists(folder_name)) {
   dir.create(folder_name, recursive = TRUE)
 }
 file_name  <- file.path(folder_name,cdata_tag)
@@ -98,7 +94,7 @@ cnt_additional <- cnt_all * 0
 
 # demography data ----
 # load file
-pop_usa <- getFREDdata(state = state, county = county, export = FALSE) #read.csv(pop_file,header = T, sep = ',')
+pop_usa <- getFREDdata(state = state, county = county) #read.csv(pop_file,header = T, sep = ',')
 
 # rename work_id to workplace_id
 names(pop_usa) <- gsub('work','workplace',names(pop_usa))
@@ -346,9 +342,8 @@ print(out_filename)
 ## EXPORT POPULATION FILE FOR STRIDE ##
 #######################################
 
-if(export == TRUE){
-  write.table(pop_usa, file.path(folder_name, paste0(run_tag, "_population_", state, "-", county, ".csv")),
-              sep = ",", col.names = TRUE, row.names = FALSE, quote = FALSE)
-}
-###############
+write.table(pop_usa, file.path(folder_name, paste0(run_tag, "_population_", state, "-", county, ".csv")),
+            sep = ",", col.names = TRUE, row.names = FALSE, quote = FALSE)
+
+
 
