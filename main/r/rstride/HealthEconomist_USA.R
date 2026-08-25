@@ -70,13 +70,14 @@ get_cea_param <- function(num_samples = 1)
   data_cea_sample <- data.frame(cea_id = 1:num_samples)
   
   # outpatient cost
-  cost_GP_visit        = sample(c(22.32, 24.38), 1, replace = TRUE, prob = c(0.19, 0.81)) # ref: https://www.cms.gov/medicare/physician-fee-schedule/search?Y=1&T=0&HT=1&CT=0&H1=90460&H2=90461&M=5
+  cost_GP_visit        = 408.08 # $324.54 (Pike et al., 2022: outpatient cost $22,718 ÷ 70 cases, 2019 Q1$) - adjusted for inflation 2025
   outpatient_cost_mean = cost_GP_visit
   outpatient_cost_se   = 0
   data_cea_sample$outpatient_unit_cost <- rnorm(num_samples,outpatient_cost_mean,outpatient_cost_se)
   
   # inpatient cost
-  # ref: Average hospital cost, Italy, 2002, Filia et al, BMC Public Health, 2007
+  # ref: KFF hospital expense per inpatient day
+  ## How to make age specific?
   inpatient_cost_mean = 1700 # euro 
   inpatient_cost_se   = 0
   data_cea_sample$inpatient_unit_cost <- rnorm(num_samples,inpatient_cost_mean,inpatient_cost_se)
@@ -342,7 +343,7 @@ calculate_cost_effectiveness <- function(project_dir){
 }
 
 
-# intervention_ref_name = 'vaccine_rate'; intervention_ref_value = 0
+# intervention_ref_name = 'vaccine_rate'; intervention_ref_value = 0.7
 get_average_burden_averted <- function(project_dir,
                                        intervention_ref_name  = 'vaccine_rate',
                                        intervention_ref_value = 0){
@@ -391,6 +392,7 @@ get_average_burden_averted <- function(project_dir,
   # add 'current' strategy and create intervention tags
   flag_c                                   <- project_summary$intervention_value == intervention_ref_value
   project_summary$intervention_tag[flag_c] <- 'current'
+  
   
   # get unique levels, and sort (with "current" first)
   intervention_levels                      <- unique(project_summary$intervention_tag)
