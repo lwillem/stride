@@ -26,7 +26,10 @@ options(scipen=999)    # turn off scientific notation
 # MKE - Milwaukee
 # IL - Cook
 
-getFREDdata <- function(state = "WI", county = "Milwaukee"){
+getFREDdata <- function(state = "WI", county = "Milwaukee", com_target_size = 1000, rng_seed = 1234){
+  
+  # set rng seed
+  set.seed(rng_seed)
   
   print("FRED population files for the desired county must be manually downloaded from 'https://fred.publichealth.pitt.edu/syn_pops'
   and stored in the '~/opt/FRED_population_usa/' folder before running this script.")
@@ -82,7 +85,7 @@ getFREDdata <- function(state = "WI", county = "Milwaukee"){
                              bool_teachers        = FALSE,               # boolean to enable "teaching workplaces"
                              bool_census_hh       = FALSE,               # boolean to use the census households, instead of survey data
                              bool_collectivity    = FALSE,               # boolean to generate syntetic nursing homes
-                             com_target_size      = 1000,                # target size of the community
+                             com_target_size      = com_target_size,     # target size of the community
                              postfix              = '',                  # to add a tag to the file names
                              # max_age_student      = 23,                # age threshold to participant in school
                              # max_age_teacher      = 60,                # age threshold to be a school teacher

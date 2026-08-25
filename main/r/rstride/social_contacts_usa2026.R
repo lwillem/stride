@@ -31,9 +31,11 @@ source("bin/rstride/factories/PopulationFactory_USA.R")
 # select country with ISO2 code
 sel_country <- 'US'
 
-# set state and county
+# set state, county, community size and rng seed
 state <- "TX"
 county <- "Gaines"
+com_target_size <- 1000
+rng_seed  <- 1234
 
 # create run tag using the current time if use_date_prefix == TRUE
 run_tag <- format(Sys.time(), format="%Y%m%d_%H%M%S")
@@ -43,7 +45,7 @@ cdata_tag    <- paste0('contact_matrix_usa_conditional')
 
 # set output directory
 output_dir <- smd_file_path('sim_output')
-folder_name <- file.path(output_dir, paste0(run_tag, "_demo_", state, "-", county))
+folder_name <- file.path(output_dir, paste0(run_tag, "_demo_USA_", state, "_", county))
 if(!dir.exists(folder_name)) {
   dir.create(folder_name, recursive = TRUE)
 }
@@ -93,8 +95,16 @@ cnt_all[76] # note: index 1 is age age 0
 cnt_additional <- cnt_all * 0
 
 # demography data ----
-# load file
-pop_usa <- getFREDdata(state = state, county = county) #read.csv(pop_file,header = T, sep = ',')
+pop_file_name <- file.path(folder_name,paste0("pop_USA_", state, "_", county, "_c", com_target_size))
+
+# generate population (and store plots in pdf)
+pdf(paste0(pop_file_name,'.pdf')) # open pdf stream
+pop_usa <- getFREDdata(state = state, 
+                       county = county, 
+                       com_target_size = com_target_size, 
+                       rng_seed = rng_seed)
+dev.off() # close pdf stream
+dim(pop_usa)
 
 # rename work_id to workplace_id
 names(pop_usa) <- gsub('work','workplace',names(pop_usa))
@@ -128,13 +138,13 @@ cnt_additional[20] <- cnt_additional[21] # adjust artefact for age 19 (not enrol
 # employment ----
 
 # Remove workplaces with 1 person
-workplace_id_freq <- table(pop_usa$workplace_id)
-small_workplace_id <- names(workplace_id_freq[workplace_id_freq <= 1])
+workplace_id_freq    <- table(pop_usa$workplace_id)
+small_workplace_id   <- names(workplace_id_freq[workplace_id_freq <= 1])
 pop_usa$workplace_id <- ifelse(pop_usa$workplace_id %in% small_workplace_id, NA, pop_usa$workplace_id)
 
 # Get number of workers by age
 age_counts_workplace <- hist(pop_usa$age[!is.na(pop_usa$workplace_id)], breaks = breaks_ages, plot = FALSE)$counts
-age_distr_workplace <- age_counts_workplace / age_counts
+age_distr_workplace  <- age_counts_workplace / age_counts
 age_distr_workplace[is.na(age_distr_workplace)] <- 0
 
 # define conditional number of contacts for all ages as the average of a selection of the the (most) active population
@@ -229,7 +239,7 @@ plot_conditional_contacts <- function(cnt_orig, cnt_conditional, pop_fraction, p
 # explore school contacts: conditional and unconditional
 
 # get file name with path
-file_name_path <- file.path(folder_name, paste0(run_tag, "_social_contacts_", state, "-", county, "_plots.pdf"))
+file_name_path <- file.path(folder_name, paste0("social_contacts_", state, "-", county, "_plots.pdf"))
 
 # check extension and add if not present
 if(!grepl('.pdf',file_name_path)){
@@ -342,8 +352,6 @@ print(out_filename)
 ## EXPORT POPULATION FILE FOR STRIDE ##
 #######################################
 
-write.table(pop_usa, file.path(folder_name, paste0(run_tag, "_population_", state, "-", county, ".csv")),
+write.table(pop_usa, paste0(pop_file_name,'.csv'),
             sep = ",", col.names = TRUE, row.names = FALSE, quote = FALSE)
-
-
 
