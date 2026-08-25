@@ -46,8 +46,8 @@ source("~/Documents/Repositories/stride/main/r/rstride/USA_PopulationBuilder.R")
 sel_country <- 'US'
 
 # set state and county
-state <- "WI"
-county <- "Dane"
+state <- "TX"
+county <- "Gaines"
 export <- TRUE
 
 # select population file
@@ -147,6 +147,13 @@ cnt_additional     <- cnt_school * (age_distr_school == 0)
 cnt_additional[20] <- cnt_additional[21] # adjust artefact for age 19 (not enrolled in US data, but high number of contacts observed)
 
 # employment ----
+
+# Remove workplaces with 1 person
+workplace_id_freq <- table(pop_usa$workplace_id)
+small_workplace_id <- names(workplace_id_freq[workplace_id_freq <= 1])
+pop_usa$workplace_id <- ifelse(pop_usa$workplace_id %in% small_workplace_id, NA, pop_usa$workplace_id)
+
+# Get number of workers by age
 age_counts_workplace <- hist(pop_usa$age[!is.na(pop_usa$workplace_id)], breaks = breaks_ages, plot = FALSE)$counts
 age_distr_workplace <- age_counts_workplace / age_counts
 age_distr_workplace[is.na(age_distr_workplace)] <- 0
@@ -170,21 +177,6 @@ workplace_size_count <- table(table(pop_usa$workplace_id))
 num_people_workplace_leq7 <- sum(workplace_size_count[1:7] *  1:7)
 # proportional to number of workers
 num_people_workplace_leq7 / sum(!is.na(pop_usa$workplace_id)) 
-
-##### Remove workplaces with less people than number of average contacts
-workplace_id_freq <- table(pop_usa$workplace_id)
-small_workplace_id <- names(workplace_id_freq[workplace_id_freq <= 7])
-pop_usa$workplace_id <- ifelse(pop_usa$workplace_id %in% small_workplace_id, NA, pop_usa$workplace_id)
-
-# recalculate conditional contacts after exclusion
-age_counts_workplace <- hist(pop_usa$age[!is.na(pop_usa$workplace_id)], breaks = breaks_ages, plot = FALSE)$counts
-age_distr_workplace <- age_counts_workplace / age_counts
-age_distr_workplace[is.na(age_distr_workplace)] <- 0
-
-cnt_workplace_conditional <- cnt_workplace * 0
-cnt_workplace_conditional[workplace_ages + 1] <- mean(cnt_workplace[workplace_ages_select + 1])
-cnt_workplace_conditional <- cnt_workplace_conditional * (7/5)
-cnt_workplace_conditional <- cnt_workplace_conditional / mean(age_distr_workplace[workplace_ages_select + 1])
 
 # household contacts ----
 # define household sizes
@@ -376,3 +368,4 @@ if(export == TRUE){
               sep = ",", col.names = TRUE, row.names = FALSE, quote = FALSE)
 }
 ###############
+
