@@ -48,7 +48,15 @@ AgeContactProfile::AgeContactProfile(Id poolType, const ptree& contactPt) : std:
          		typeKey = "collectivity";
         }
 
-        // construct XML key
+        // allow to provide an adjustment factor for the contact rates
+        double contactRateAdjustment = 1.0;
+        const string key_adj{string("matrices.adjustment_factor.").append(typeKey).append(".value")};
+        if (const auto val = contactPt.get_optional<double>(key_adj)) {
+                contactRateAdjustment = *val;
+                cerr << "UPDATE: the contact adjustment factor for " << key_adj << ": " << contactRateAdjustment << endl;
+        }
+
+        // construct XML key for contact rates
         const string key{string("matrices.").append(typeKey)};
 
         // if the XML key is present, parse ptree and store data
@@ -59,12 +67,12 @@ AgeContactProfile::AgeContactProfile(Id poolType, const ptree& contactPt) : std:
 					for (const auto& contact : participant.second.get_child("contacts")) {
 							totalContacts += contact.second.get<double>("rate");
 					}
-					(*this)[i++] = totalContacts;
+					(*this)[i++] = totalContacts * contactRateAdjustment;
 			}
 
-            } else {
-//            	cerr << "WARNING: the contact data does not contain '" << key << "', assume contact probability == 0" << endl;
-            }
+        } else {
+                cerr << "WARNING: the contact data does not contain '" << key << "', assuming contact rate == 0" << endl;
+        }
 }
 
 } // namespace stride

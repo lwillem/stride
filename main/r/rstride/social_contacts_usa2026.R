@@ -26,6 +26,7 @@ rm(list=ls())
 suppressPackageStartupMessages(library('contactdata'))
 
 # load FRED-based population builder
+source("bin/rstride/rStride.R")
 source("bin/rstride/factories/PopulationFactory_USA.R")
 
 # select country with ISO2 code
@@ -52,7 +53,7 @@ if(!dir.exists(folder_name)) {
 
 # define help function to load social data from Prem et al. by location
 get_cnt_data <- function(location, country) {
-   cnt_matrix <- contact_matrix(country = country,
+   cnt_matrix <- contactdata::contact_matrix(country = country,
                                    location = location,
                                    #geographic_setting = c("all"),
                                    data_source = c("2020"))
@@ -136,10 +137,10 @@ cnt_additional[20] <- cnt_additional[21] # adjust artefact for age 19 (not enrol
 
 # employment ----
 
-# Remove workplaces with 1 person
-workplace_id_freq    <- table(pop_usa$workplace_id)
-small_workplace_id   <- names(workplace_id_freq[workplace_id_freq <= 1])
-pop_usa$workplace_id <- ifelse(pop_usa$workplace_id %in% small_workplace_id, NA, pop_usa$workplace_id)
+# # Remove workplaces with 1 person
+# workplace_id_freq    <- table(pop_usa$workplace_id)
+# small_workplace_id   <- names(workplace_id_freq[workplace_id_freq <= 1])
+# pop_usa$workplace_id <- ifelse(pop_usa$workplace_id %in% small_workplace_id, NA, pop_usa$workplace_id)
 
 # Get number of workers by age
 age_counts_workplace <- hist(pop_usa$age[!is.na(pop_usa$workplace_id)], breaks = breaks_ages, plot = FALSE)$counts
@@ -159,12 +160,40 @@ cnt_workplace_conditional <- cnt_workplace_conditional / mean(age_distr_workplac
 # use average conditional contacts among active ages as exclusion threshold
 workplace_threshold <- round(mean(cnt_workplace_conditional[workplace_ages_select + 1]))
 
-# optional: increase rates to account for small workplaces (n < mean number of contacts)?
-workplace_size_count <- table(table(pop_usa$workplace_id))
-# number of people in workplaces with ≤7 people
-num_people_workplace_leq7 <- sum(workplace_size_count[1:7] *  1:7)
-# proportional to number of workers
-num_people_workplace_leq7 / sum(!is.na(pop_usa$workplace_id)) 
+# define adjustment factor to account for small workplace sizes
+target_contact_rate <- mean(cnt_workplace_conditional[workplace_ages + 1])
+
+# get data.frame with workplace size distribution
+workplace_sizes <- as.integer(table(pop_usa$workplace_id))
+size_dist <- as.data.frame(table(workplace_sizes))
+size_dist$workplace_sizes <- as.integer(as.character(size_dist$workplace_sizes))
+names(size_dist) <- c("size", "count")
+size_dist$population <- size_dist$size * size_dist$count
+head(size_dist)
+
+# define the maximum number of contacts for each workplace size
+size_dist$num_cnt <- size_dist$size - 1
+
+# restrict to target contact rate
+size_dist$num_cnt[size_dist$num_cnt > target_contact_rate] <- target_contact_rate
+size_dist$num_cnt
+
+# explore population-based average of workplace conctacts
+size_dist$num_cnt_pop <- size_dist$population * size_dist$num_cnt
+size_dist$num_cnt_pop_cum <- cumsum(size_dist$num_cnt_pop)
+size_dist$num_cnt_pop_cum_pc <- size_dist$num_cnt_pop_cum / max(size_dist$num_cnt_pop_cum)
+
+head(size_dist, 10)
+sum(size_dist$num_cnt_pop) / sum(size_dist$population) # weighted
+
+# we need an adjustment factor for the larger workplaces, to compensate for the smaller workplaces
+adj_fctr <- 1.65
+size_dist$num_cnt_adj <- size_dist$num_cnt * adj_fctr
+size_dist$num_cnt_adj[(size_dist$size - 1) < size_dist$num_cnt_adj] <- size_dist$size[(size_dist$size-1) < size_dist$num_cnt_adj] - 1 
+size_dist$num_cnt_pop_adj <- size_dist$num_cnt_adj * size_dist$population
+sum(size_dist$num_cnt_pop_adj) / sum(size_dist$population) # weighted
+head(size_dist, 15)
+
 
 # household contacts ----
 # define household sizes
@@ -238,7 +267,7 @@ plot_conditional_contacts <- function(cnt_orig, cnt_conditional, pop_fraction, p
 # explore school contacts: conditional and unconditional
 
 # get file name with path
-cnt_file_name <- gsub('/pop_','/social_contacts_',pop_file_name)
+cnt_file_name <- gsub('/pop_','/contact_matrix_',pop_file_name)
 
 # open pdf stream
 pdf(paste0(cnt_file_name,'.pdf'))
@@ -252,9 +281,9 @@ plot_conditional_contacts(cnt_all, cnt_all, NA, 'total', state = state, county =
 # close pdf stream
 dev.off()
 
-###############################
+############################## #
 # STORE AS LIST FOR R ####
-###############################
+############################## #
 
 # start with info on data and methods
 cnt_data_meta <- list(data_source = 'USA social contact based on Prem et al (2017)',
@@ -275,9 +304,9 @@ social_cnt_data$community_weekend   <- cnt_other_adj
 
 save(social_cnt_data, file = paste0(cnt_file_name,'.RData'))
 
-###############################
+############################## #
 ## STORE AS XML FOR STRIDE   ##
-###############################
+############################## #
 library('XML')
 
 # create xml prefix
@@ -298,6 +327,11 @@ xml_doc = newXMLDoc()
 cnt_matrix_xml  <- newXMLNode("matrices", doc = xml_doc)
 cnt_matrix_meta <- newXMLNode("metadata", parent = cnt_matrix_xml)
 smd_listToXML(cnt_matrix_meta,cnt_data_meta)
+
+cnt_adj_factor      <- newXMLNode("adjustment_factor", parent = cnt_matrix_xml)
+cnt_adj_workplace   <- newXMLNode("workplace", parent = cnt_adj_factor)
+cnt_adj_value       <- newXMLNode("value", parent = cnt_adj_workplace)
+xmlValue(cnt_adj_value) <- paste(adj_fctr)
 
 i_context <- 1
 for(i_context in 1:length(cnt_matrices_lib))
@@ -342,9 +376,9 @@ xml_prefix <- paste0(' This file is part of the Stride software [', format(Sys.t
 cat(saveXML(xml_doc, indent = TRUE, prefix = newXMLCommentNode(xml_prefix)),  file = out_filename)
 print(out_filename)
 
-#######################################
+###################################### #
 ## EXPORT POPULATION FILE FOR STRIDE ##
-#######################################
+###################################### #
 
 write.table(pop_usa, paste0(pop_file_name,'.csv'),
             sep = ",", col.names = TRUE, row.names = FALSE, quote = FALSE)
