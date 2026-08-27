@@ -186,12 +186,19 @@ size_dist$num_cnt_pop_cum_pc <- size_dist$num_cnt_pop_cum / max(size_dist$num_cn
 head(size_dist, 10)
 sum(size_dist$num_cnt_pop) / sum(size_dist$population) # weighted
 
-# we need an adjustment factor for the larger workplaces, to compensate for the smaller workplaces
-adj_fctr <- 1.65
-size_dist$num_cnt_adj <- size_dist$num_cnt * adj_fctr
-size_dist$num_cnt_adj[(size_dist$size - 1) < size_dist$num_cnt_adj] <- size_dist$size[(size_dist$size-1) < size_dist$num_cnt_adj] - 1 
+# estimate adj_fctr so the population-weighted mean of adjusted contacts equals target_contact_rate
+# larger workplaces are adjusted upward to compensate for smaller workplaces that cannot reach the target
+f_obj <- function(adj_fctr) {
+  num_cnt_adj <- pmin(size_dist$num_cnt * adj_fctr, size_dist$size - 1)
+  weighted.mean(num_cnt_adj, size_dist$population) - target_contact_rate
+}
+adj_fctr <- uniroot(f_obj, interval = c(1, 10))$root
+cat("Estimated adjustment factor:", round(adj_fctr, 4), "\n")
+
+size_dist$num_cnt_adj     <- pmin(size_dist$num_cnt * adj_fctr, size_dist$size - 1)
 size_dist$num_cnt_pop_adj <- size_dist$num_cnt_adj * size_dist$population
-sum(size_dist$num_cnt_pop_adj) / sum(size_dist$population) # weighted
+cat("Weighted mean contacts (adjusted):", sum(size_dist$num_cnt_pop_adj) / sum(size_dist$population), "\n")
+cat("Target contact rate:              ", target_contact_rate, "\n")
 head(size_dist, 15)
 
 
