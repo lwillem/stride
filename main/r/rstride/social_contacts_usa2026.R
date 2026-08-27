@@ -135,6 +135,37 @@ cnt_school_conditional[age_distr_school == 0] <- 0
 cnt_additional     <- cnt_school * (age_distr_school == 0)
 cnt_additional[20] <- cnt_additional[21] # adjust artefact for age 19 (not enrolled in US data, but high number of contacts observed)
 
+# school class size adjustment ----
+# target contact rate for school (average over enrolled ages only)
+target_contact_rate_school <- mean(cnt_school_conditional[age_distr_school > 0])
+
+# get data.frame with school size distribution (enrolled individuals only)
+school_sizes <- as.integer(table(pop_usa$school_id[!is.na(pop_usa$school_id)]))
+size_dist_school <- as.data.frame(table(school_sizes))
+size_dist_school$school_sizes <- as.integer(as.character(size_dist_school$school_sizes))
+names(size_dist_school) <- c("size", "count")
+size_dist_school$population <- size_dist_school$size * size_dist_school$count
+
+# define max contacts per school size, capped at target
+size_dist_school$num_cnt <- pmin(size_dist_school$size - 1, target_contact_rate_school)
+
+# estimate adj_fctr_school so the population-weighted mean equals the target
+if (weighted.mean(size_dist_school$num_cnt, size_dist_school$population) < target_contact_rate_school) {
+  f_obj_school <- function(adj_fctr) {
+    num_cnt_adj <- pmin(size_dist_school$num_cnt * adj_fctr, size_dist_school$size - 1)
+    weighted.mean(num_cnt_adj, size_dist_school$population) - target_contact_rate_school
+  }
+  adj_fctr_school <- uniroot(f_obj_school, interval = c(1, 10))$root
+} else {
+  adj_fctr_school <- 1
+}
+cat("Estimated school adjustment factor:", round(adj_fctr_school, 4), "\n")
+
+size_dist_school$num_cnt_adj     <- pmin(size_dist_school$num_cnt * adj_fctr_school, size_dist_school$size - 1)
+size_dist_school$num_cnt_pop_adj <- size_dist_school$num_cnt_adj * size_dist_school$population
+cat("Weighted mean contacts (adjusted):", sum(size_dist_school$num_cnt_pop_adj) / sum(size_dist_school$population), "\n")
+cat("Target contact rate:              ", target_contact_rate_school, "\n")
+
 # employment ----
 
 # # Remove workplaces with 1 person
@@ -339,6 +370,9 @@ cnt_adj_factor      <- newXMLNode("adjustment_factor", parent = cnt_matrix_xml)
 cnt_adj_workplace   <- newXMLNode("workplace", parent = cnt_adj_factor)
 cnt_adj_value       <- newXMLNode("value", parent = cnt_adj_workplace)
 xmlValue(cnt_adj_value) <- paste(adj_fctr)
+cnt_adj_school      <- newXMLNode("school", parent = cnt_adj_factor)
+cnt_adj_school_val  <- newXMLNode("value", parent = cnt_adj_school)
+xmlValue(cnt_adj_school_val) <- paste(adj_fctr_school)
 
 i_context <- 1
 for(i_context in 1:length(cnt_matrices_lib))
