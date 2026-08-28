@@ -39,10 +39,16 @@ getFREDdata <- function(state = "WI", county = "Milwaukee", export = FALSE){
   print("FRED population files for the desired county must be manually downloaded from 'https://fred.publichealth.pitt.edu/syn_pops'
   and stored in the 'data/population_usa/' folder before running this script.")
   
-  folder <- fips(state, county = county)
-  state_name_full <- fips_info(folder)$full
-  cty_name_full <- fips_info(folder)$county
-  
+  if(state == "CT") {       ## Use old data to access old county names for CT
+    folder <- fips(state, county = county, data_year = 2021)
+    state_name_full <- fips_info(folder, data_year = 2021)$full
+    cty_name_full <- fips_info(folder, data_year = 2021)$county
+  } else {
+    folder <- fips(state, county = county)
+    state_name_full <- fips_info(folder)$full
+    cty_name_full <- fips_info(folder)$county
+  }
+
   dir <- grep(folder, list.dirs(paste0("data/population_usa/", state)), value = TRUE)
   
   if(length(dir) == 0){
