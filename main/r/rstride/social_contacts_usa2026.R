@@ -46,8 +46,8 @@ source("~/Documents/Repositories/stride/main/r/rstride/USA_PopulationBuilder.R")
 sel_country <- 'US'
 
 # set state and county
-state <- "TX"
-county <- "Gaines"
+state <- "CT"
+county <- "Fairfield"
 export <- TRUE
 
 # select population file
@@ -71,13 +71,13 @@ if(!dir.exists(folder_name) & export == TRUE) {
 file_name  <- file.path(folder_name,cdata_tag)
 
 # define help function to load social data from Prem et al. by location
-get_cnt_data <- function(location, country) {
+get_cnt_data <- function(location, country, max_age = 94) {
    cnt_matrix <- contact_matrix(country = country,
                                    location = location,
                                    #geographic_setting = c("all"),
                                    data_source = c("2020"))
     cnt_count <- rowSums(cnt_matrix)
-    all_ages <- 0:94        # convert matrix to vector                     
+    all_ages <- 0:max_age        # convert matrix to vector                     
     approx(x = seq(0,75,5), # expand matrix age groups using linear interpolation
            y = cnt_count,
            xout = all_ages,
@@ -89,13 +89,16 @@ get_cnt_data <- function(location, country) {
 # LOAD AND PROCESS DATA ####
 ############################## #
 
-# get data by location ----
-cnt_all    <- get_cnt_data("all", country = sel_country)
-cnt_home   <- get_cnt_data("home", country = sel_country)
-cnt_workplace   <- get_cnt_data("work", country = sel_country)#*1.2
+# load population file
+pop_usa <- getFREDdata(state = state, county = county, export = FALSE) #read.csv(pop_file,header = T, sep = ',')
+
+# get contact data by location ----
+cnt_all    <- get_cnt_data("all", country = sel_country, max_age = max(pop_usa$age))
+cnt_home   <- get_cnt_data("home", country = sel_country, max_age = max(pop_usa$age))
+cnt_workplace   <- get_cnt_data("work", country = sel_country, max_age = max(pop_usa$age))#*1.2
 # cnt_sm_workplace   <- get_cnt_data("work", country = sel_country)*1.2
-cnt_school <- get_cnt_data("school", country = sel_country)
-cnt_other  <- get_cnt_data("other", country = sel_country)
+cnt_school <- get_cnt_data("school", country = sel_country, max_age = max(pop_usa$age))
+cnt_other  <- get_cnt_data("other", country = sel_country, max_age = max(pop_usa$age))
 
 # check
 cnt_all_list <- contact_df_countries(countries = sel_country,
@@ -114,9 +117,6 @@ cnt_all[76] # note: index 1 is age age 0
 cnt_additional <- cnt_all * 0
 
 # demography data ----
-# load file
-pop_usa <- getFREDdata(state = state, county = county, export = FALSE) #read.csv(pop_file,header = T, sep = ',')
-
 # rename work_id to workplace_id
 names(pop_usa) <- gsub('work','workplace',names(pop_usa))
 
@@ -125,7 +125,8 @@ pop_usa$school_id[pop_usa$school_id == 0] <- NA
 pop_usa$workplace_id[pop_usa$workplace_id == 0] <- NA
 
 # define age breaks for the age distribution
-breaks_ages <- (0:95) -0.5
+# breaks_ages <- (0:95) -0.5
+breaks_ages <- seq(-0.5, 95.5, by = 1)
 
 # age distribution
 age_counts <- hist(pop_usa$age, breaks = breaks_ages, plot = FALSE)$counts
