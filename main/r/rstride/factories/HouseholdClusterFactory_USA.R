@@ -19,7 +19,7 @@
 if(0==1){
   
   # set filename
-  pop_file_name <- '20260828_160053_population_CT-Fairfield.csv'
+  pop_file_name <- '20260828_153828_population_ME-Piscataquis.csv'
   
   # set maximum age difference between household seniors.
   max_age_diff <- 3
@@ -28,7 +28,7 @@ if(0==1){
   household_cluster_size <- 10
   
   # percent clustering
-  pct_households_clustered <- 0.0499
+  pct_households_clustered <- 0.105
   
   # set seed
   seed <- 1234567
@@ -236,6 +236,9 @@ extend_population_data <- function(pop_file_name, max_age_diff, household_cluste
     # pop_data[pop_data$household_cluster_id == '75689',]
   } # end if-else cluster-size is 1
   
+  # Diagnostics
+  cluster_diagnostics(pop_data, pop_file_name_out)
+  
   # STORE CSV FILE  ####
   #################### #
   write.table(pop_data,file = pop_file_name_out,sep=',',row.names=F)
@@ -251,34 +254,31 @@ extend_population_data <- function(pop_file_name, max_age_diff, household_cluste
   
 } # end function
 
+##  CLUSTER AGE DIAGNOSTICS
+cluster_diagnostics <- function(pop_data, pop_file_name_out){
 
-if(0 == 1){
-  ########################################### #
-  ##  CLUSTER AGE DIAGNOSTICS ----
-  ########################################### #
-  
   clustered_pop <- pop_data[pop_data$household_cluster_id != 0, ]
-  
+
   if(nrow(clustered_pop) > 0){
-    
+
     # per-cluster: oldest / youngest individual, num households, num members,
     # presence of children (age < 18), num households with at least one child
-    
+
     cluster_age_summary <- aggregate(age ~ household_cluster_id, data = clustered_pop,
                                      FUN = function(x) c(min = min(x), max = max(x)))
     cluster_age_summary <- do.call(data.frame, cluster_age_summary)
     names(cluster_age_summary) <- c('household_cluster_id', 'youngest_member_age', 'oldest_member_age')
-    
+
     # number of unique households per cluster
     hh_count <- aggregate(household_id ~ household_cluster_id, data = clustered_pop,
                           FUN = function(x) length(unique(x)))
     names(hh_count) <- c('household_cluster_id', 'num_households')
-    
+
     # total individuals per cluster
     member_count <- aggregate(household_id ~ household_cluster_id, data = clustered_pop,
                               FUN = length)
     names(member_count) <- c('household_cluster_id', 'num_individuals')
-    
+
     # households with at least one child (age < 18) per cluster
     clustered_pop$is_child <- clustered_pop$age < 18
     hh_child_flag <- aggregate(is_child ~ household_id + household_cluster_id, data = clustered_pop,
@@ -286,39 +286,39 @@ if(0 == 1){
     hh_with_children <- aggregate(is_child ~ household_cluster_id, data = hh_child_flag,
                                   FUN = sum)
     names(hh_with_children) <- c('household_cluster_id', 'num_households_with_children')
-    
+
     # age range spread of household-senior ages within the cluster
     # (reflects how well max_age_diff constraint held; senior age = per household max age)
     hh_senior_ages <- aggregate(age ~ household_id + household_cluster_id, data = clustered_pop, FUN = max)
     senior_age_range <- aggregate(age ~ household_cluster_id, data = hh_senior_ages,
                                   FUN = function(x) max(x) - min(x))
     names(senior_age_range) <- c('household_cluster_id', 'senior_age_range')
-    
+
     # combine all diagnostics into one table
     cluster_diagnostics <- Reduce(function(x,y) merge(x,y,by='household_cluster_id'),
                                   list(cluster_age_summary, hh_count, member_count,
                                        hh_with_children, senior_age_range))
     cluster_diagnostics$pct_households_with_children <- round(100 * cluster_diagnostics$num_households_with_children /
                                                                 cluster_diagnostics$num_households, 1)
-    
+
     smd_print("CLUSTER AGE DIAGNOSTICS (first rows):")
     print(head(cluster_diagnostics))
-    
+
     smd_print("Summary across all clusters:")
     print(summary(cluster_diagnostics[, c('youngest_member_age','oldest_member_age',
                                           'num_households','num_individuals',
                                           'senior_age_range','pct_households_with_children')]))
-    
+
     smd_print(sprintf("Clusters exceeding max_age_diff (%d) in senior age range: %d out of %d",
                       max_age_diff,
                       sum(cluster_diagnostics$senior_age_range > max_age_diff),
                       nrow(cluster_diagnostics)))
-    
+
     # save diagnostics alongside population output
     diagnostics_file_out <- gsub('.csv', '_cluster_diagnostics.csv', pop_file_name_out)
     write.table(cluster_diagnostics, file = diagnostics_file_out, sep=',', row.names=F)
     smd_print(paste("Cluster diagnostics saved to:", diagnostics_file_out))
   }
-  
-} # end if-else cluster-size is 1
 
+} # end if-else cluster-size is 1
+# 
