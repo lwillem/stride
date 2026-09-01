@@ -42,8 +42,8 @@ if(0==1){
   
 }
 
-extend_population_data <- function(pop_file_name,max_age_diff,household_cluster_size,
-                                   pct_households_clustered = 1.0, seed = NA){
+extend_population_data <- function(pop_file_name, max_age_diff, household_cluster_size,
+                                   pct_households_clustered, seed = NA){
   
   smd_print("START HOUSEHOLD CLUSTERING")
   
@@ -63,7 +63,7 @@ extend_population_data <- function(pop_file_name,max_age_diff,household_cluster_
   pop_file_name_out <- paste0('data/population_6region/',
                               gsub('.csv',paste0('_extended', max_age_diff,
                                                  '_size', household_cluster_size,
-                                                 '_pct', pct_households_clustered*100,
+                                                 '_pct', round(pct_households_clustered*100,0),
                                                  '.csv'),pop_file_name))
   pop_file_zip_out  <- gsub('.csv','.zip',pop_file_name_out)
   
@@ -105,89 +105,103 @@ extend_population_data <- function(pop_file_name,max_age_diff,household_cluster_
     table(flag_unique)
     hh_data_summary <- hh_data_summary[flag_unique,]
     
-    # select target subset of households to cluster
+    num_households <- nrow(hh_data_summary)
+    
+    # NEW: compute the target household count from the percentage and this
+    # population's actual household count, so pct_households_clustered can
+    # be reused as-is across population files of differing size
+    target_households_clustered <- round(num_households * pct_households_clustered)
+    
+    if(target_households_clustered > num_households){
+      smd_print("TARGET EXCEEDS TOTAL HOUSEHOLDS... STOP")
+      return(NULL)
+    }
+    
     if(!is.na(seed)) set.seed(seed)
     
-    num_households <- nrow(hh_data_summary)
-    num_target_clustered <- round(num_households * pct_households_clustered)
-    
-    hh_data_summary$eligible <- FALSE
-    eligible_ids <- sample(hh_data_summary$household_id, num_target_clustered)
-    hh_data_summary$eligible[hh_data_summary$household_id %in% eligible_ids] <- TRUE
-    
-    smd_print(paste("Target households to cluster:", num_target_clustered,
+    smd_print(paste("Target households to cluster:", target_households_clustered,
                     "out of", num_households,
                     sprintf("(%.1f%%)", pct_households_clustered*100)))
     
-    # select unique primary community ids
-    community_opt <- sort(unique(hh_data_summary$primary_community))
+    # select unique primary community ids, shuffled order
+    community_opt <- sample(unique(hh_data_summary$primary_community))
     length(community_opt)
     
     # create new variable for household_cluster_id
     hh_data_summary$household_cluster_id <- NA
     
-    # start parallel nodes
-    par_nodes_info <- smd_start_cluster()
-    
     tmp_time <- Sys.time()
-    i_community <- community_opt[1]
+    total_clustered <- 0
+    cluster_counter <- 0
+    num_skipped_no_match <- 0   # households that couldn't find an age-window match
     
     # add household cluster, based on the primary community of each household senior
-    foreach(i_community = community_opt,
-            .export = c('smd_print_progress'),
-            .combine = rbind) %dopar%
-      {
-        # print progress        
-        smd_print_progress(i_community,length(community_opt),tmp_time,par_nodes_info)        
+    for(i_community in community_opt){
+      
+      if(total_clustered >= target_households_clustered) break
+      
+      # select population data
+      hh_data_community <- hh_data_summary[hh_data_summary$primary_community == i_community,]
+      dim(hh_data_community)
+      
+      # sort this community's households by age (oldest hh member)
+      ord         <- order(hh_data_community$age)
+      idx_sorted  <- hh_data_community[ord, "household_id"]
+      ages_sorted <- hh_data_community[ord, "age"]
+      n_hh        <- length(idx_sorted)
+      
+      i_hh <- 1 # counter to iterate over num hh in a community (n_hh)
+      # loop over the households... and match
+      while(i_hh <= n_hh && total_clustered < target_households_clustered){
         
-        # select population data
-        hh_data_community <- hh_data_summary[hh_data_summary$primary_community == i_community,]
-        dim(hh_data_community)
+        remaining_needed <- target_households_clustered - total_clustered
         
-        # start with cluster id 1
-        hh_cluster_counter <- 1
+        # get number of households to cluster in community 
+        # if remaining hh not in community < household_cluster_size, then find leftover households 
+        # or get number of household clusters needed to hit target
+        max_chunk_size <- min(household_cluster_size, n_hh - i_hh + 1, remaining_needed)
         
-        i_hh <- 1
-        # loop over the households... and match
-        for(i_hh in 1:nrow(hh_data_community)){
-          
-          # skip households not selected for clustering
-          if(!hh_data_community$eligible[i_hh]) next
-          
-          print(paste(i_hh,hh_cluster_counter))
-          
-          if(is.na(hh_data_community$household_cluster_id[i_hh])){
-            
-            household_id   <- hh_data_community$household_id[i_hh]
-            hh_age_max     <- hh_data_community$age[i_hh]
-            
-            flag_opt <- hh_data_community$age %in% seq(hh_age_max-max_age_diff,hh_age_max+max_age_diff) &
-              hh_data_community$household_id != household_id &
-              is.na(hh_data_community$household_cluster_id) &
-              hh_data_community$eligible
-            table(flag_opt)
-            
-            if(any(flag_opt)){
-              
-              # set cluster size and sample
-              c_size <- min(sum(flag_opt),household_cluster_size-1)
-              household_id_sample <- sample(hh_data_community$household_id[flag_opt],c_size)
-              
-              # select households
-              flag_cluster <- hh_data_community$household_id %in% c(household_id,household_id_sample)
-              hh_data_community$household_cluster_id[flag_cluster] <- paste0(i_community,'-',hh_cluster_counter)
-              
-              # update
-              hh_cluster_counter = hh_cluster_counter + 1
-            } # end if-clause: any in flag_opt
-          } # end if-clause: household is not part a cluster (yet)
-        } # end for-loop: households within one community
-        # return
-        return(hh_data_community)
-      } -> hh_data_summary # end parallel foreach
+        # NEW: shrink chunk to respect max_age_diff. Since the list is sorted
+        # by age, the age range of a chunk is simply (last age - first age)
+        chunk_size <- max_chunk_size
+        while(chunk_size >= 2 &&
+              (ages_sorted[i_hh + chunk_size - 1] - ages_sorted[i_hh]) > max_age_diff){
+          chunk_size <- chunk_size - 1
+        }
+        
+        # skip forming a cluster of size 1 (no partner) unless it's genuinely
+        # the last household needed to hit the target exactly
+        if(chunk_size < 2){
+          if(remaining_needed < 2){
+            break # target basically satisfied, nothing more to add
+          }
+          # this household has no valid age-window partner starting here ->
+          # move on to the next household in this community
+          num_skipped_no_match <- num_skipped_no_match + 1
+          i_hh <- i_hh + 1
+          next
+        }
+        
+        idx_chunk <- idx_sorted[i_hh:(i_hh + chunk_size - 1)]
+        cluster_counter <- cluster_counter + 1
+        hh_data_summary[hh_data_summary$household_id %in% idx_chunk, "household_cluster_id"] <- paste0(i_community, '-', cluster_counter)
+        
+        total_clustered <- total_clustered + chunk_size
+        i_hh <- i_hh + chunk_size
+      }
+    }
     
-    # close parallel nodes
-    smd_stop_cluster()
+    # sanity checks
+    smd_print(sprintf("Target: %d households (%.2f%%) | Actually clustered: %d (%.2f%%)",
+                      target_households_clustered, 100*pct_households_clustered,
+                      total_clustered, 100*total_clustered/num_households))
+    smd_print(sprintf("Households skipped due to max_age_diff constraint: %d", num_skipped_no_match))
+    
+    if(total_clustered < target_households_clustered){
+      smd_print(sprintf("WARNING: could not reach target - ran out of eligible age-matched households. Short by %d.",
+                        target_households_clustered - total_clustered))
+      smd_print("Consider increasing max_age_diff, increasing household_cluster_size, or lowering pct_households_clustered.")
+    }
     
     # reformat household_cluster_id into numeric value
     hh_data_summary$household_cluster_id <- as.numeric(as.factor(hh_data_summary$household_cluster_id))
@@ -202,7 +216,6 @@ extend_population_data <- function(pop_file_name,max_age_diff,household_cluster_
     # check actual clustered % achieved
     pct_actual <- mean(pop_data$household_cluster_id != 0)
     smd_print(sprintf("Actual %% of individuals in a household cluster: %.1f%%", pct_actual*100))
-    table(table(pop_data$household_cluster_id[pop_data$household_cluster_id != 0]))
     
     # check pop_data
     head(pop_data)
@@ -212,6 +225,11 @@ extend_population_data <- function(pop_file_name,max_age_diff,household_cluster_
     # check cluster size
     table(table(pop_data$household_cluster_id))
     hist(table(pop_data$household_cluster_id[pop_data$household_cluster_id!= 0]))
+    
+    # check cluster size (in households)
+    hh_per_cluster <- table(hh_data_summary$household_cluster_id[hh_data_summary$household_cluster_id != 0])
+    smd_print("Distribution of cluster sizes (in households):")
+    print(table(hh_per_cluster))
     
     
     # example
@@ -233,4 +251,74 @@ extend_population_data <- function(pop_file_name,max_age_diff,household_cluster_
   
 } # end function
 
+
+if(0 == 1){
+  ########################################### #
+  ##  CLUSTER AGE DIAGNOSTICS ----
+  ########################################### #
+  
+  clustered_pop <- pop_data[pop_data$household_cluster_id != 0, ]
+  
+  if(nrow(clustered_pop) > 0){
+    
+    # per-cluster: oldest / youngest individual, num households, num members,
+    # presence of children (age < 18), num households with at least one child
+    
+    cluster_age_summary <- aggregate(age ~ household_cluster_id, data = clustered_pop,
+                                     FUN = function(x) c(min = min(x), max = max(x)))
+    cluster_age_summary <- do.call(data.frame, cluster_age_summary)
+    names(cluster_age_summary) <- c('household_cluster_id', 'youngest_member_age', 'oldest_member_age')
+    
+    # number of unique households per cluster
+    hh_count <- aggregate(household_id ~ household_cluster_id, data = clustered_pop,
+                          FUN = function(x) length(unique(x)))
+    names(hh_count) <- c('household_cluster_id', 'num_households')
+    
+    # total individuals per cluster
+    member_count <- aggregate(household_id ~ household_cluster_id, data = clustered_pop,
+                              FUN = length)
+    names(member_count) <- c('household_cluster_id', 'num_individuals')
+    
+    # households with at least one child (age < 18) per cluster
+    clustered_pop$is_child <- clustered_pop$age < 18
+    hh_child_flag <- aggregate(is_child ~ household_id + household_cluster_id, data = clustered_pop,
+                               FUN = any)
+    hh_with_children <- aggregate(is_child ~ household_cluster_id, data = hh_child_flag,
+                                  FUN = sum)
+    names(hh_with_children) <- c('household_cluster_id', 'num_households_with_children')
+    
+    # age range spread of household-senior ages within the cluster
+    # (reflects how well max_age_diff constraint held; senior age = per household max age)
+    hh_senior_ages <- aggregate(age ~ household_id + household_cluster_id, data = clustered_pop, FUN = max)
+    senior_age_range <- aggregate(age ~ household_cluster_id, data = hh_senior_ages,
+                                  FUN = function(x) max(x) - min(x))
+    names(senior_age_range) <- c('household_cluster_id', 'senior_age_range')
+    
+    # combine all diagnostics into one table
+    cluster_diagnostics <- Reduce(function(x,y) merge(x,y,by='household_cluster_id'),
+                                  list(cluster_age_summary, hh_count, member_count,
+                                       hh_with_children, senior_age_range))
+    cluster_diagnostics$pct_households_with_children <- round(100 * cluster_diagnostics$num_households_with_children /
+                                                                cluster_diagnostics$num_households, 1)
+    
+    smd_print("CLUSTER AGE DIAGNOSTICS (first rows):")
+    print(head(cluster_diagnostics))
+    
+    smd_print("Summary across all clusters:")
+    print(summary(cluster_diagnostics[, c('youngest_member_age','oldest_member_age',
+                                          'num_households','num_individuals',
+                                          'senior_age_range','pct_households_with_children')]))
+    
+    smd_print(sprintf("Clusters exceeding max_age_diff (%d) in senior age range: %d out of %d",
+                      max_age_diff,
+                      sum(cluster_diagnostics$senior_age_range > max_age_diff),
+                      nrow(cluster_diagnostics)))
+    
+    # save diagnostics alongside population output
+    diagnostics_file_out <- gsub('.csv', '_cluster_diagnostics.csv', pop_file_name_out)
+    write.table(cluster_diagnostics, file = diagnostics_file_out, sep=',', row.names=F)
+    smd_print(paste("Cluster diagnostics saved to:", diagnostics_file_out))
+  }
+  
+} # end if-else cluster-size is 1
 
