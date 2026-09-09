@@ -101,7 +101,7 @@ get_measles_default_param <- function(){
    # out$num_parallel_workers <- 50
    
    # # household clustering?
-   # out$household_clustering_ratio_ratio <- c_str(4/7)
+   # out$household_clustering_ratio <- c_str(4/7)
    # out$household_clustering_ratio_date  <- c_str(out$start_date)
    # out$household_clustering_ratio_delay <- c_str(0)
    
