@@ -56,6 +56,7 @@ set(STRIDE_SRC
     util/FileSys.cpp
     util/GammaDistribution.cpp
     util/LogUtils.cpp
+    util/PopSnapshotWriter.cpp
     util/Ptree.cpp
     util/RunConfigManager.cpp
     util/SummaryFile.cpp
