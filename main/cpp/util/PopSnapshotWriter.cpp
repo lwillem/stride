@@ -24,10 +24,12 @@
 #include "pop/Age.h"
 #include "pop/Person.h"
 #include "util/FileSys.h"
+#include "util/StringUtils.h"
 
 #include <fstream>
 #include <map>
 #include <sstream>
+#include <stdexcept>
 #include <vector>
 
 namespace stride {
@@ -38,6 +40,7 @@ void PopSnapshotWriter::Write(const stride::util::ptree& config, std::shared_ptr
         const auto outputPrefix = config.get<std::string>("run.output_prefix");
         WriteHouseholdMemberships(outputPrefix, pop);
         WriteSusceptiblesByAge(outputPrefix, pop);
+        WritePopulationSnapshot(config, outputPrefix, pop);
 }
 
 void PopSnapshotWriter::WriteHouseholdMemberships(const std::string& outputPrefix, std::shared_ptr<Population> pop)
@@ -53,7 +56,9 @@ void PopSnapshotWriter::WriteHouseholdMemberships(const std::string& outputPrefi
                 const auto householdId = p.GetPoolId(ContactType::Id::Household);
                 auto&      entry       = households[householdId];
                 entry.ages.push_back(static_cast<int>(p.GetAge()));
-                entry.susceptible.push_back(p.GetHealth().IsSusceptible() ? 1 : 0);
+                // "susceptible" here means "not immune" (natural or vaccine-induced),
+                // per Person::IsImmune() -- see class comment in the header.
+                entry.susceptible.push_back(p.IsImmune() ? 0 : 1);
         }
 
         const auto    path = FileSys::BuildPath(outputPrefix, "households.csv");
@@ -87,17 +92,19 @@ void PopSnapshotWriter::WriteHouseholdMemberships(const std::string& outputPrefi
 
 void PopSnapshotWriter::WriteSusceptiblesByAge(const std::string& outputPrefix, std::shared_ptr<Population> pop)
 {
-        const unsigned int       maxAge = MaximumAge();
+        const unsigned int        maxAge = MaximumAge();
         std::vector<unsigned int> susceptibleCount(maxAge + 1, 0U);
         std::vector<unsigned int> immuneCount(maxAge + 1, 0U);
 
         for (const auto& p : *pop) {
                 const auto age          = static_cast<unsigned int>(p.GetAge());
                 const auto effectiveAge = (age <= maxAge) ? age : maxAge;
-                if (p.GetHealth().IsSusceptible()) {
-                        susceptibleCount[effectiveAge]++;
-                } else {
+                // "susceptible" here means "not immune" (natural or vaccine-induced),
+                // per Person::IsImmune() -- see class comment in the header.
+                if (p.IsImmune()) {
                         immuneCount[effectiveAge]++;
+                } else {
+                        susceptibleCount[effectiveAge]++;
                 }
         }
 
@@ -106,6 +113,79 @@ void PopSnapshotWriter::WriteSusceptiblesByAge(const std::string& outputPrefix, 
         csvFile << "age,susceptible,immune\n";
         for (unsigned int age = 0; age <= maxAge; ++age) {
                 csvFile << age << "," << susceptibleCount[age] << "," << immuneCount[age] << "\n";
+        }
+}
+
+void PopSnapshotWriter::WritePopulationSnapshot(const stride::util::ptree& config, const std::string& outputPrefix,
+                                                std::shared_ptr<Population> pop)
+{
+        // --------------------------------------------------------------
+        // Re-read just the header line of the population input file, using the
+        // same parsing rules as PopBuilder::MakePersons, so our output mirrors
+        // whatever column layout that file actually used (with/without a
+        // profession column, with/without household_cluster_id / collectivity_id).
+        // --------------------------------------------------------------
+        const auto    fileName = config.get<std::string>("run.population_file");
+        std::ifstream popFile(fileName);
+        if (!popFile.is_open()) {
+                throw std::runtime_error(std::string(__func__) + "> Error opening population file " + fileName);
+        }
+        std::string headerLine;
+        std::getline(popFile, headerLine);
+        popFile.close();
+
+        const bool        useSemicolon = headerLine.find(';') != std::string::npos;
+        const std::string sep          = useSemicolon ? ";" : ",";
+        const auto        headers      = Split(headerLine, sep);
+
+        const bool         hasProfession = headers.size() > 2 && Trim(ToString(headers[2]), ToString('"')) == "worker";
+        const unsigned int professionAdj = hasProfession ? 2 : 0;
+        const bool         hasExtraColumn = headers.size() == (7 + professionAdj);
+
+        std::string extraId;
+        if (hasExtraColumn) {
+                extraId = Trim(ToString(headers[6 + professionAdj]), ToString('"'));
+        }
+        const bool hasHouseholdClusterId = extraId == "household_cluster_id";
+        const bool hasCollectivityId     = extraId == "collectivity_id";
+
+        // --------------------------------------------------------------
+        // Write population_snapshot.csv: original columns + immunity_status.
+        // --------------------------------------------------------------
+        const auto    path = FileSys::BuildPath(outputPrefix, "population_snapshot.csv");
+        std::ofstream csvFile(path.string());
+
+        csvFile << "age" << sep;
+        if (hasProfession) {
+                csvFile << "person_id" << sep << "profession" << sep;
+        }
+        csvFile << "household_id" << sep << "school_id" << sep << "workplace_id" << sep << "community_weekend_id"
+                 << sep << "community_weekday_id" << sep;
+        if (hasHouseholdClusterId) {
+                csvFile << "household_cluster_id" << sep;
+        } else if (hasCollectivityId) {
+                csvFile << "collectivity_id" << sep;
+        }
+        csvFile << "immunity_status\n";
+
+        for (const auto& p : *pop) {
+                csvFile << static_cast<int>(p.GetAge()) << sep;
+                if (hasProfession) {
+                        csvFile << p.GetId() << sep << p.GetProfession() << sep;
+                }
+                csvFile << p.GetPoolId(ContactType::Id::Household) << sep
+                         << p.GetPoolId(ContactType::Id::School) << sep
+                         << p.GetPoolId(ContactType::Id::Workplace) << sep
+                         << p.GetPoolId(ContactType::Id::CommunityWeekend) << sep
+                         << p.GetPoolId(ContactType::Id::CommunityWeekday) << sep;
+                if (hasHouseholdClusterId) {
+                        csvFile << p.GetPoolId(ContactType::Id::HouseholdCluster) << sep;
+                } else if (hasCollectivityId) {
+                        csvFile << p.GetPoolId(ContactType::Id::Collectivity) << sep;
+                }
+                // "immune" means Person::IsImmune() -- natural or vaccine-induced immunity
+                // assigned by ImmunitySeeder -- not Health's disease-progression status.
+                csvFile << (p.IsImmune() ? "immune" : "susceptible") << "\n";
         }
 }
 

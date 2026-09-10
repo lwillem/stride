@@ -30,22 +30,33 @@ namespace stride {
 namespace util {
 
 /**
- * Writes a population-wide snapshot (household memberships & susceptibles-by-age)
- * to CSV files. Intended to be called once, at the start of a simulation, to record
- * who is initially infected/susceptible/immunized.
+ * Writes a population-wide snapshot (household memberships, susceptibles-by-age,
+ * and a full per-person listing) to CSV files. Intended to be called once, at the
+ * start of a simulation -- after health and immunity seeding but before the
+ * epidemic starts -- to record who is initially infected/susceptible/immune.
+ *
+ * "Susceptible" vs. "immune" here reflects Person::IsImmune(), i.e. whether natural
+ * or vaccine-induced immunity was assigned by ImmunitySeeder -- not Health's disease
+ * progression status (which only distinguishes Susceptible/Exposed/Infectious/...).
  */
 class PopSnapshotWriter
 {
 public:
-        /// Write both households.csv and susceptibles_by_age.csv to the run's output prefix.
+        /// Write households.csv, susceptibles_by_age.csv, and population_snapshot.csv
+        /// to the run's output prefix.
         static void Write(const stride::util::ptree& config, std::shared_ptr<Population> pop);
 
 private:
-        /// Write households.csv: one row per household, listing member ages & susceptibility.
+        /// Write households.csv: one row per household, listing member ages & immunity status.
         static void WriteHouseholdMemberships(const std::string& outputPrefix, std::shared_ptr<Population> pop);
 
         /// Write susceptibles_by_age.csv: susceptible/immune counts per age.
         static void WriteSusceptiblesByAge(const std::string& outputPrefix, std::shared_ptr<Population> pop);
+
+        /// Write population_snapshot.csv: same columns as the run's population input file
+        /// (as parsed by PopBuilder), plus one appended "immunity_status" column.
+        static void WritePopulationSnapshot(const stride::util::ptree& config, const std::string& outputPrefix,
+                                            std::shared_ptr<Population> pop);
 };
 
 } // namespace util
