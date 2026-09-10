@@ -62,9 +62,9 @@ exp_param_list$hospital_probability_age       #TODO: set age-specific adjustment
 exp_param_list$hospital_category_age          #FYI: age categories for 'hosp_probability_factor' adjustments
 
 # USA population
-exp_param_list$age_contact_matrix_file <- "data/contacts_6region/ME-contact_matrix_usa_conditional.xml"
+exp_param_list$age_contact_matrix_file <- "data/contacts_6region/TX-contact_matrix_usa_conditional.xml"
 exp_param_list$holidays_file           <- "data/calendar_dane_2023_2026_measles.csv"
-exp_param_list$population_file         <- "data/population_6region/20260828_153828_population_ME-Piscataquis_extended3_size10_pct10.csv"
+exp_param_list$population_file         <- "data/population_6region/20260825_094649_population_TX-Gaines_extended3_size10_pct12.csv"
 
 # initial conditions
 exp_param_list$num_infected_seeds <- 20
