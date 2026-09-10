@@ -19,7 +19,7 @@
 if(0==1){
   
   # set filename
-  pop_file_name <- '20260828_153828_population_ME-Piscataquis.csv'
+  pop_file_name <- '20260825_094649_population_TX-Gaines.csv'
   
   # set maximum age difference between household seniors.
   max_age_diff <- 3
@@ -28,8 +28,13 @@ if(0==1){
   household_cluster_size <- 10
   
   # percent clustering
-  pct_households_clustered <- 0.105
-  
+  # pct_households_clustered <- 0.0499   # CT
+  # pct_households_clustered <- 0.105    # ME
+  # pct_households_clustered <- 0.0619     # MN
+  # pct_households_clustered <- 0.1219     # OH
+  # pct_households_clustered <- 0.1443     # SC
+  pct_households_clustered <- 0.1166     # TX
+
   # set seed
   seed <- 1234567
   
