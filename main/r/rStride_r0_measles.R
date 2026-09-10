@@ -57,17 +57,34 @@ num_seeds  <- 5
 #                           holidays_file                 = "holidays_none.csv",
 #                           stringsAsFactors = F)
 
-exp_design <- expand.grid(r0                            = seq(0,24,3),
-                          num_days                      = c(40),
+## With single-person workplaces
+# exp_design <- expand.grid(r0                            = seq(0,24,3),
+#                           num_days                      = c(364),
+#                           rng_seed                      = seq(num_seeds),
+#                           start_date                    = c('2023-01-01'),
+#                           num_infected_seeds            = 20,
+#                           seeding_age_min               = 1,
+#                           seeding_age_max               = 99,
+#                           disease_config_file           = "data/disease_measles.xml",
+#                           population_file               = "sim_output/20260710_111118_WI-Dane_conditional_social_contacts/20260710_111118_population_WI-Dane.csv",
+#                           age_contact_matrix_file       = "sim_output/20260710_111118_WI-Dane_conditional_social_contacts/contact_matrix_usa_conditional.xml",
+#                           holidays_file                 = "data/calendar_dane_2023_2026_measles.csv",
+#                           # immunity_profiles             = "AgeDependent",
+#                           # immunity_distribution_file    = "data/immunity_measles_WI.xml", 
+#                           stringsAsFactors = F)
+
+## Without single-person workplaces
+exp_design <- expand.grid(r0                            = seq(0,21,3), #c(12,18), #
+                          num_days                      = c(50),
                           rng_seed                      = seq(num_seeds),
                           start_date                    = c('2023-01-01'),
                           num_infected_seeds            = 20,
                           seeding_age_min               = 1,
                           seeding_age_max               = 99,
                           disease_config_file           = "data/disease_measles.xml",
-                          population_file               = "sim_output/20260710_111118_WI-Dane_conditional_social_contacts/20260710_111118_population_WI-Dane.csv",
-                          age_contact_matrix_file       = "sim_output/20260710_111118_WI-Dane_conditional_social_contacts/contact_matrix_usa_conditional.xml",
-                          holidays_file                 = "data/calendar_dane_2023_2026_measles.csv",
+                          population_file               = 'sim_output/20260825_094649_TX-Gaines_conditional_social_contacts/20260825_094649_population_TX-Gaines.csv',
+                          age_contact_matrix_file       = 'sim_output/20260825_094649_TX-Gaines_conditional_social_contacts/contact_matrix_usa_conditional.xml',
+                          holidays_file                 = "data/holidays_none.csv",
                           # immunity_profiles             = "AgeDependent",
                           # immunity_distribution_file    = "data/immunity_measles_WI.xml", 
                           stringsAsFactors = F)
@@ -84,7 +101,8 @@ project_dir <- run_rStride(exp_design = exp_design,
                            dir_postfix = dir_postfix,
                            ignore_stdout = T,
                            remove_run_output = T,
-                           get_transmission_rdata = T)
+                           get_transmission_rdata = T,
+                           num_parallel_workers = 3)
 
 
 ############################# #
