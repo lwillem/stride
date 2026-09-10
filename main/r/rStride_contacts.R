@@ -65,14 +65,17 @@ exp_param_list$contact_survey_ages           <- c_str(seq(0,90,10))
 exp_param_list$contact_survey_resample       <- 1
 
 # change parameters for development (BEL)
-exp_param_list$population_file <- 'data/pop_belgium600k_c500_teachers_censushh.csv'
+# exp_param_list$population_file <- 'data/pop_belgium600k_c500_teachers_censushh.csv'
 
 # change parameters for USA
 exp_param_list$start_date              <- c('2020-02-10', # Monday
                                             '2020-02-16') # Sunday
-exp_param_list$population_file         <- 'sim_output/20260710_154108_WI-Dane_conditional_social_contacts/20260710_154108_population_WI-Dane.csv'
-exp_param_list$age_contact_matrix_file <- 'sim_output/20260710_154108_WI-Dane_conditional_social_contacts/contact_matrix_usa_conditional.xml'
+exp_param_list$disease_config_file     <- 'data/disease_measles_usa.xml'
+exp_param_list$population_file         <- 'sim_output/20260828_160053_CT-Fairfield_conditional_social_contacts/20260828_160053_population_CT-Fairfield.csv'
+exp_param_list$age_contact_matrix_file <- 'sim_output/20260828_160053_CT-Fairfield_conditional_social_contacts/contact_matrix_usa_conditional.xml'
 exp_param_list$holidays_file           <- 'data/holidays_none.csv'
+
+# exp_param_list$household_clustering_ratio <- 0.2
 
 ################################################ #
 ## GENERATE DESIGN OF EXPERIMENT GRID         ####
@@ -96,5 +99,6 @@ project_dir <- run_rStride(exp_design  = exp_design,
 ## EXPLORE SOCIAL CONTACT PATTERNS                 ##
 #####################################################
 inspect_contact_data(project_dir)
+
 
 
