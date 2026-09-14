@@ -27,6 +27,7 @@
 
 #include "util/Ptree.h"
 #include <memory>
+#include <unordered_set>
 
 namespace stride {
 
@@ -51,10 +52,14 @@ private:
 		void Random(const util::SegmentedVector<ContactPool>& pools, std::vector<double>& immunityDistribution,
 					double immunityLinkProbability, std::shared_ptr<Population> pop, const bool log_immunity);
 
+        /// Flag a subset of households as vaccine-hesitant; their children are excluded
+        /// from the vaccine pass regardless of the age-specific rate.
+        void MarkHesitantHouseholds(std::shared_ptr<Population> pop);
 
 private:
 		const stride::util::ptree& m_config; ///< Run config.
 		std::shared_ptr<util::RnMan> m_rn_man; ///< Random number manager.
+        std::unordered_set<unsigned int> m_hesitant_households; ///< IDs of households refusing vaccination for their children.
 };
 
 } // namespace stride
