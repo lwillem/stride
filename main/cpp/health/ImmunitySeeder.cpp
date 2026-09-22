@@ -88,7 +88,7 @@ void ImmunitySeeder::Vaccinate(const std::string& immunityType, const std::strin
         // A FIXED COUNT of households is excluded (round(rate * N), sampled without
         // replacement), not an independent per-household coin flip, matching the
         // sampling approach validated in R.
-        SegmentedVector<ContactPool> eligibleImmunityPools = immunityPools;
+		SegmentedVector<ContactPool> eligibleImmunityPools(immunityPools);
         const bool isHouseholdPools = !immunityPools.empty() && immunityPools[0].GetType() == Id::Household;
 
         if (massImmunize && immunityType == "vaccine" && isHouseholdPools) {
@@ -305,11 +305,14 @@ void ImmunitySeeder::RandomIndependent(vector<double>& immunityDistribution,
 				const auto quota = static_cast<unsigned int>(floor(candidates.size() * immunityDistribution[age]));
 				if (quota == 0) continue;
 
-				// Sample without replacement == shuffle, then take the first `quota`.
-				m_rn_man->at(0U).Shuffle(candidates);
+				// Sample without replacement: shuffle indices, take the first `quota`.
+				vector<unsigned int> order(candidates.size());
+				iota(order.begin(), order.end(), 0U);
+				m_rn_man->at(0U).Shuffle(order);
+
 				for (unsigned int i = 0; i < quota; i++) {
 						auto vaccine = std::unique_ptr<Vaccine>(new ConstantVaccine(properties));
-						candidates[i]->SetVaccine(vaccine);
+						candidates[order[i]]->SetVaccine(vaccine);
 				}
 		}
 }
