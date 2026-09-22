@@ -1,5 +1,5 @@
 /*
-*  This is free software: you can redistribute it and/or modify it
+ *  This is free software: you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  any later version.
@@ -30,31 +30,39 @@
 
 namespace stride {
 
-	/**
-	 * Seeds population w.r.t immunity (natural immunity, vaccination, ...)
-	 */
-	class ImmunitySeeder
-	{
-	public:
+/**
+ * Seeds population w.r.t immunity (natural immunity, vaccination, ...)
+ */
+class ImmunitySeeder
+{
+public:
 		/// Initializing ImmunitySeeder.
-		explicit ImmunitySeeder(const stride::util::ptree& config, std::shared_ptr<util::RnMan> rnMan);
+        explicit ImmunitySeeder(const stride::util::ptree& config, std::shared_ptr<util::RnMan> rnMan);
 
-		/// Build the simulator.
-		void Seed(std::shared_ptr<Population> pop);
+        /// Build the simulator.
+        void Seed(std::shared_ptr<Population> pop);
 
-	private:
-		/// Seed for vaccination/natural immunity.
-		void Vaccinate(const std::string& immunityType, const std::string& immunizationProfile,
-					   const util::SegmentedVector<ContactPool>& immunityPools, std::shared_ptr<Population> pop);
+private:
+        /// Seed for vaccination/natural immunity.
+        void Vaccinate(const std::string& immunityType, const std::string& immunizationProfile,
+                       const util::SegmentedVector<ContactPool>& immunityPools, std::shared_ptr<Population> pop);
 
-		/// Random immunization.
+        /// Random immunization, clustered within households via linkProbability.
 		void Random(const util::SegmentedVector<ContactPool>& pools, std::vector<double>& immunityDistribution,
 					double immunityLinkProbability, std::shared_ptr<Population> pop, const bool log_immunity);
 
+        // ============================== CHANGED START ==============================
+        /// Independent (non-clustered) immunization: samples the per-age quota directly
+        /// across the full population, ignoring household structure entirely. Used for
+        /// the natural-immunity pass when "run.mass_immunize" = true; default (unset)
+        /// behaviour still uses Random() for both passes, unchanged from the original.
+        void RandomIndependent(std::vector<double>& immunityDistribution,
+                               const util::SegmentedVector<ContactPool>& pools, std::shared_ptr<Population> pop);
+        // =============================== CHANGED END ================================
 
-	private:
+private:
 		const stride::util::ptree& m_config; ///< Run config.
 		std::shared_ptr<util::RnMan> m_rn_man; ///< Random number manager.
-	};
+};
 
 } // namespace stride
