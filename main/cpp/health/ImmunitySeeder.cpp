@@ -127,8 +127,12 @@ void ImmunitySeeder::Vaccinate(const std::string& immunityType, const std::strin
                         if (massImmunize && immunityType == "immunity") {
                                 RandomIndependent(immunityDistribution, eligibleImmunityPools, pop);
                         } else {
-                                linkProbability = m_config.get<double>("run." + ToLower(immunityType) + "_link_probability");
-                                Random(eligibleImmunityPools, immunityDistribution, linkProbability, pop, false);
+                        	linkProbability = m_config.get<double>("run." + ToLower(immunityType) + "_link_probability");
+                        	if (massImmunize && linkProbability == 0.0) {
+                        		RandomIndependent(immunityDistribution, eligibleImmunityPools, pop);
+                        	} else {
+                        		Random(eligibleImmunityPools, immunityDistribution, linkProbability, pop, false);
+                        	}
                         }
                         // =============================== CHANGED END ================================
 
