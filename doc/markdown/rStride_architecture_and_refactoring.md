@@ -295,9 +295,13 @@ reporting, reference reset, performance tracking. Three problems:
    `contacts`, `out_abc`, `participants` are dated Jul 6; `incidence`, `prevalence`,
    `summary` are dated Aug 25. A partial `rrv()` was run, so different streams encode
    different code states.
-3. **`rrv_repo()` writes to the wrong repository** — it hardcodes
-   `~/.../stride/repo/stride_2023/main/resources/rstride_test`, while current work is in
-   `stride_2026_claude`.
+3. **`rrv_repo()` hardcodes an absolute personal path** —
+   `~/Documents/university/research/stride/repo/stride_2023/main/resources/rstride_test`.
+   The path is correct for the author's own checkout and the function is labelled "local
+   function for LW" in the source, so this is a fragility rather than a defect: the
+   reference-promotion step only works for one person on one machine, and silently writes
+   nothing useful for anyone else. It should derive the repository root rather than
+   assume it.
 
 The comparison engine is also entangled with the 22 scenario definitions in one script,
 so adding a measles suite by the obvious route means copy-pasting ~700 lines — creating
@@ -1072,7 +1076,8 @@ first and removing the flag afterwards would invalidate them again.
 
 ### Phase 4 — Repair and extend the regression harness
 
-8. Fix `rrv_repo()`'s hardcoded `stride_2023` path.
+8. Replace `rrv_repo()`'s hardcoded absolute path with a derived repository root, so
+   reference promotion works for any checkout and any user (F6).
 9. Resolve F8 (min vs average), commit it, then run one clean full `rrv()` so all six
    reference files derive from a single known commit. Record that hash alongside them.
 10. Extract the comparison engine into `rstride/RegressionTester.R`, leaving
