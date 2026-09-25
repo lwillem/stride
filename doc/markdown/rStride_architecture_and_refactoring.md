@@ -3,6 +3,10 @@
 **Date:** 2026-09-25
 **Branch analysed:** `measles_usa` (48 commits ahead of `master`, 1 behind)
 **Scope:** the R workbench (`main/r/`) and its coupling to the C++ kernel build/install flow.
+**Working checkout:** `~/Documents/university/research/stride/repo/stride_2023`. Findings
+below were gathered from an identical checkout at the same commit; everything they rest on
+— the git history, the shared install root `~/opt/stride-<N>`, and the machine's
+toolchain — is common to both.
 
 This document describes how the system **actually works today**, the reasoning
 behind the problems observed, and a proposed refactoring sequence. It complements
@@ -15,7 +19,7 @@ behind the problems observed, and a proposed refactoring sequence. It complement
 ### 1.1 From repository to a runnable workbench
 
 ```
-repo/stride_2026_claude/
+repo/stride_2023/
   main/cpp/          C++ kernel            ──┐
   main/r/*.R         experiment scripts    ──┤
   main/r/rstride/    core R functions      ──┼── make install ──▶  ~/opt/stride-<N>/
