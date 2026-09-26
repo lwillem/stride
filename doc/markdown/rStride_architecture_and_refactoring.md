@@ -327,24 +327,38 @@ a measles gtester would need `rStride_measles_default_param.R`, which does not i
 "edit in the repo, not in the install dir, or your changes are overwritten" workaround —
 confirming the friction is known.
 
-### F8. Uncommitted model change in the working tree
+### F8. The contact-probability rule — RESOLVED: `min` is the baseline
 
-`Infector.cpp:265-271` switches the contact probability from the **minimum** of the two
-age-specific probabilities to their **average**, with the old block commented out:
+`Infector.cpp:265-271` carried an **uncommitted** working-tree change switching the
+contact probability from the **minimum** of the two age-specific probabilities to their
+**average**, with the old block commented out.
 
-```cpp
-// double contact_probability = individual_contact_probability_p1 ;
-// if(individual_contact_probability_p2 < individual_contact_probability_p1){
-//     contact_probability = individual_contact_probability_p2;
-// }
-double contact_probability = (individual_contact_probability_p1 + individual_contact_probability_p2 ) / 2;
-```
+> **Resolved 2026-09-26. The change was discarded; committed `min` stands as the
+> refactoring baseline.** The working tree is clean and the rule is exactly as committed.
 
-This is a substantive change to core transmission. It interacts directly with the
-cluster-size adjustment factors being calibrated in `social_contacts_usa2026.R`
-(averaging raises realised contacts relative to the minimum rule) and it will alter
-every one of the 22 regression scenarios. It must be resolved before any reference
-reset, because a golden master cannot be established against a moving target.
+This was a substantive change to core transmission. It interacts directly with the
+cluster-size adjustment factors calibrated in `social_contacts_usa2026.R` (averaging
+raises realised contacts relative to the minimum rule) and it would alter every one of
+the 22 regression scenarios. The reasoning for discarding it is F10: all ten disease
+files carry an R0 fit produced under `min`, so adopting `mean` invalidates every
+calibration and all 22 regression references at once. Starting from committed `min`
+means the reference `.rds` files describe the code as committed, and the §7.5 rule — a
+refactoring PR must not modify them — is enforceable from the first commit.
+
+> ### ⚠ The switch to `mean` is deferred, not cancelled
+>
+> `mean` remains the intended default. It is reached in **Phase 2b**, which introduces
+> the configurable rule *and* flips the default, once `mean` calibrations exist and have
+> been compared against `min` on the same population. **Nothing about the rule lands
+> before the §6.4 consolidation tag.** Until Phase 2b the simulator has exactly one
+> contact rule and it is `min`.
+
+A prototype of the mechanism was built and compiled cleanly on 2026-09-26 — a
+`ContactProbabilityRule { Min, Mean }` enum in `main/cpp/contact/`, read once in
+`SimBuilder` and threaded through `Infector.h`, `InfectorExec.h`, `Infector.cpp`, `Sim.h`
+and `Sim.cpp` to `GetContactProbability` — then discarded so the baseline would be
+byte-identical to HEAD. It touches six files plus one new pair. Recorded here so Phase 2b
+need not rediscover the shape.
 
 ### F9. Minor items
 
@@ -413,14 +427,20 @@ materialising as a reproducibility failure in a committed artefact.
 | B | Revert to `min` | none | loses whatever motivated the change |
 | C | **Make the rule configurable, default `min`** | small | existing calibrations remain valid; `mean` becomes opt-in |
 
-**Option C is recommended.** It converts a globally-invalidating change into a local,
-opt-in one: existing disease files and regression references stay valid, so the
-refactoring retains its safety net, and the two rules become comparable on the same
-population — which is impossible today, since `min` and `mean` are mutually exclusive
-states of the working tree. Implementation is a configuration value read once and stored
-as a member, branched on in `GetContactProbability`. The branch is loop-invariant; if
-zero overhead is required, `InfectorExec.h` / `InfectorMap.h` already establish a
-compile-time dispatch pattern.
+**Option C is the destination — taken in Phase 2b, not now.** It converts a
+globally-invalidating change into a local, opt-in one: existing disease files and
+regression references stay valid, so the refactoring retains its safety net, and the two
+rules become comparable on the same population — which is impossible today, since `min`
+and `mean` are mutually exclusive states of the working tree. Implementation is a
+configuration value read once and stored as a member, branched on in
+`GetContactProbability`. The branch is loop-invariant; if zero overhead is required,
+`InfectorExec.h` / `InfectorMap.h` already establish a compile-time dispatch pattern.
+
+**It is deliberately not done before the consolidation tag** (decided 2026-09-26, F8).
+The baseline is committed `min`, so the tag, the Phase 4 reference reset and every
+behaviour-preserving phase in between are taken against the code exactly as committed,
+with no new mechanism to account for. The rule switch lands in Phase 2b alongside the
+calibrations that make it usable.
 
 **How refitting actually works.** The fit is produced by `bin/rStride_r0.R`, which runs
 an R0 sweep and calls `analyse_transmission_data_for_r0()`
@@ -456,10 +476,10 @@ Two consequences:
    decision that must be settled *before* any recalibration campaign, independently of
    the min/mean question.
 
-**Ordering.** The *mechanism* must land before the §6.4 consolidation tag, because that
-tag is the baseline against which the whole refactoring is verified, and regression
-references cannot be reset against a moving target. The *recalibration campaign* should
-not precede the refactoring, because refitting depends on
+**Ordering.** The baseline is committed `min` (F8), so nothing about the rule needs to
+land before the §6.4 consolidation tag: the tag is simply the code as committed. Both the
+*mechanism* and the *recalibration campaign* belong to Phase 2b. The campaign in
+particular must not precede the refactoring, because refitting depends on
 `rStride_r0.R` / `rStride_r0_measles.R` -> `TransmissionAnalyst::analyse_transmission_data_for_r0`
 -> `ParameterEstimator`, which is currently among the least reliable code in the
 workbench: `rStride_r0_measles.R` does not install at all (F7); the analysis function is
@@ -909,12 +929,19 @@ ignored archive is excluded.
 
 Ordered so that each phase makes the next one safe. Each phase ends with a working system.
 
-### Phase 0 — Settle the contact-probability rule (blocks everything)
+### Phase 0 — Contact-probability rule: settled, nothing to implement
 
-0. Implement the contact rule as a configuration option defaulting to `min`
-   (F8, F10, option C). Land it before the §6.4 consolidation tag. No disease file is
-   refitted at this stage and no regression reference changes, because the default
-   behaviour is unchanged.
+0. **Settled 2026-09-26.** The uncommitted `mean` change was discarded; the baseline is
+   committed `min` (F8). Nothing lands in this phase, no disease file is refitted and no
+   regression reference changes, so the §6.4 consolidation tag is the code exactly as
+   committed.
+
+   > ⚠ **The switch to `mean` is deferred to Phase 2b, not cancelled.** That phase both
+   > introduces the configurable rule (F10 option C) and flips the default, once `mean`
+   > calibrations exist and have been compared against `min`. **Every phase between here
+   > and Phase 2b runs under `min` and must leave the regression references untouched**
+   > (§7.5). If a phase in between changes results, the cause is that phase — not the
+   > contact rule.
 
 ### Phase 0b — Feature excision
 
@@ -1036,9 +1063,11 @@ own, depending on whether the margins in `ScenarioData.cpp` already absorb the d
 that migration. It is gated on earlier phases rather than optional, and its design is
 specified in §8.
 
+This is the phase the deferred `mean` switch of F8 and Phase 0 lands in. It carries both
+halves: the rule mechanism, and the calibrations that make `mean` usable.
+
 Prerequisites:
 
-- Phase 0 — the rule is configurable, default `min`.
 - Phase 2 — `system()` error handling, so a failed run in a multi-thousand-run fitting
   grid cannot be silently excluded from the fit (F4).
 - F7 install-list repair, so `rStride_r0_measles.R` reaches `bin/`.
@@ -1049,15 +1078,19 @@ Prerequisites:
 
 Steps:
 
-1. Build the calibration infrastructure of §8: separated calibration artefacts,
+1. **Implement the contact rule as a configuration option defaulting to `min`**
+   (F10 option C — the mechanism deferred from Phase 0). Behaviour-preserving: the
+   default is unchanged, so no reference `.rds` file may move. See F8 for the shape of
+   the prototype already proven to compile.
+2. Build the calibration infrastructure of §8: separated calibration artefacts,
    hash-based provenance, `promote_calibration()`, and the validation-gate check.
-2. Refit the disease files under `mean` into new calibration artefacts. Keys differ by
+3. Refit the disease files under `mean` into new calibration artefacts. Keys differ by
    rule, so the existing `min` calibrations are never overwritten.
-3. Compare the two rules on identical populations — possible only once both
+4. Compare the two rules on identical populations — possible only once both
    calibrations coexist.
-4. Flip the default in a single dedicated PR that changes only the default and the
-   regression references, carrying the step-3 comparison as justification (§7.5).
-5. Retain the `min` calibrations in version control as history.
+5. **Flip the default to `mean`** in a single dedicated PR that changes only the default
+   and the regression references, carrying the step-4 comparison as justification (§7.5).
+6. Retain the `min` calibrations in version control as history.
 
 ### Phase 3 — Decouple from the install directory
 
@@ -1082,8 +1115,10 @@ first and removing the flag afterwards would invalidate them again.
 
 8. Replace `rrv_repo()`'s hardcoded absolute path with a derived repository root, so
    reference promotion works for any checkout and any user (F6).
-9. Resolve F8 (min vs average), commit it, then run one clean full `rrv()` so all six
-   reference files derive from a single known commit. Record that hash alongside them.
+9. Run one clean full `rrv()` so all six reference files derive from a single known
+   commit, and record that hash alongside them. F8 no longer blocks this: the rule is
+   settled at `min`, so the references describe the code as committed. They remain valid
+   until Phase 2b step 5 flips the default, which resets them deliberately.
 10. Extract the comparison engine into `rstride/RegressionTester.R`, leaving
     `rStride_gtester_covid19.R` as scenario definitions only.
 11. Add `rStride_gtester_measles.R` on that engine: USA populations, measles config,
@@ -1315,11 +1350,13 @@ Travis-era compiler (F13.3).
 
 ## 5. Open decisions
 
-1. **`Infector.cpp` min vs average (F8, F10)** — **decided.** `mean` is to become the
-   default. It is reached by migration, not cutover: the rule becomes configurable with
-   `min` as the default in Phase 0, and the default is flipped in Phase 2b once `mean`
-   calibrations exist and have been compared against `min`. No open question remains on
-   the destination; the remaining choices are timing and the quadratic term (decision 3).
+1. **`Infector.cpp` min vs average (F8, F10)** — **decided, and the route is fixed.**
+   The uncommitted `mean` edit was discarded on 2026-09-26 and the refactoring starts
+   from committed `min`. `mean` remains the intended default, reached by migration rather
+   than cutover: **Phase 2b** introduces the configurable rule *and* flips the default,
+   once `mean` calibrations exist and have been compared against `min` on the same
+   population. Nothing about the rule lands before the §6.4 tag. The only remaining
+   choice is the quadratic term (decision 3).
 2. **Branch reconciliation** — resolved into a concrete plan; see §6. The remaining
    judgement calls are which of the stale local branches and collaborator remotes
    (`as/`, `ek/`, `ic/`) are live, and who owns each conflict resolution in §6.3.
@@ -1396,6 +1433,10 @@ the merge work.**
 
 ### 6.3 Conflict surface
 
+> The full agenda for resolving this — every modelling decision, merge-mechanics item and
+> process question, with a decision line against each — is kept separately in
+> **`measles_usa_rm_discussion.md`**. Bring that document to the §6.4 step 4 session.
+
 A dry-run merge (`git merge-tree --write-tree measles_usa origin/measles_usa_rm`,
 object-database only) reports **five conflicting files, all R**:
 
@@ -1432,8 +1473,9 @@ gets silently lost; see §7.6.
 
 Notes on step 4: resolve it **jointly with the author of the other branch** — the
 `social_contacts_usa2026.R` conflict requires deciding whose workplace treatment is
-correct, which is a modelling judgement. Resolve F8 (`Infector.cpp` min vs average) in
-the same session, so it does not enter the baseline unreviewed.
+correct, which is a modelling judgement. F8 (`Infector.cpp` min vs average) no longer
+needs settling in that session: it is resolved, the baseline is committed `min`, and the
+switch to `mean` is deferred to Phase 2b.
 
 Note on step 5: per F6 the reference `.rds` files are internally inconsistent, so they
 cannot cleanly validate this merge. Expect diffs, attribute each one deliberately, then
