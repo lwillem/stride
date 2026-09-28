@@ -173,6 +173,56 @@ if(!(exists('.rstride'))){
 
 
 ############################# #
+## STRIDE KERNEL           ####
+############################# #
+
+# Run the stride binary and stop with a clear message if it does not succeed.
+#
+# system() returns the exit status but the workbench used to discard it, so a kernel
+# crash surfaced further down as an unexplained error about a missing summary.csv,
+# raised from inside a parallel worker with no indication of which experiment failed.
+# In a multi-thousand-run fitting grid that is the difference between a fit taken over
+# the runs that survived and a fit that is known to be complete.
+.rstride$run_stride_binary <- function(cmd, exp_id = NA, config_filename = NA, ignore_stdout = TRUE){
+
+  exit_status <- system(cmd, ignore.stdout = ignore_stdout)
+
+  if(exit_status != 0){
+
+    # 127 is the shell's "command not found", which here almost always means the
+    # binary is missing rather than that the simulation failed
+    hint <- if(exit_status == 127) '\n  hint: the stride binary was not found -- is this being run from the install root?' else ''
+
+    stop(paste0('STRIDE FAILED with exit status ', exit_status,
+                if(!is.na(exp_id)) paste0(' on experiment ', exp_id) else '',
+                if(!is.na(config_filename)) paste0('\n  config:  ', config_filename) else '',
+                '\n  command: ', cmd,
+                hint),
+         call. = FALSE)
+  }
+
+  return(invisible(exit_status))
+}
+
+# Read the summary.csv a stride run is expected to have produced.
+#
+# A run can exit 0 and still write no summary, so checking the exit status alone does
+# not remove the opaque failure this is meant to replace.
+.rstride$read_stride_summary <- function(summary_filename, exp_id = NA, config_filename = NA){
+
+  if(!file.exists(summary_filename)){
+    stop(paste0('STRIDE PRODUCED NO SUMMARY FILE',
+                if(!is.na(exp_id)) paste0(' for experiment ', exp_id) else '',
+                '\n  expected: ', summary_filename,
+                if(!is.na(config_filename)) paste0('\n  config:   ', config_filename) else '',
+                '\n  the run reported success, so check output_summary in the configuration'),
+         call. = FALSE)
+  }
+
+  return(read.table(summary_filename, header = TRUE, sep = ','))
+}
+
+############################# #
 ## XML FUNCTIONS           ####
 ############################# #
 

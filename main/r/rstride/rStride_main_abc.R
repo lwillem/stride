@@ -138,11 +138,14 @@ run_rStride_abc <- function(abc_function_param,
    
    # run stride (using the C++ Controller)
    cmd = paste(stride_bin,config_opt, config_exp_filename)
-   system(cmd,ignore.stdout = TRUE)
+   .rstride$run_stride_binary(cmd,
+                              config_filename = config_exp_filename,
+                              ignore_stdout   = TRUE)
 
    # load output summary
    summary_filename <- file.path(output_prefix,'summary.csv')
-   run_summary      <- read.table(summary_filename,header=T,sep=',')
+   run_summary      <- .rstride$read_stride_summary(summary_filename,
+                                                    config_filename = config_exp_filename)
    
    # merge output summary with input param
    # note: do not use "merge" to prevent issues with decimal numbers

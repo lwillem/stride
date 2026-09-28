@@ -383,11 +383,16 @@ run_rStride <- function(exp_design               = exp_design,
                        if(stdout_fn != "") {
                         cmd = paste(cmd, paste0(" > ",out_dir,"/",stdout_fn)) 
                        }
-                       system(cmd,ignore.stdout = ignore_stdout)
+                       .rstride$run_stride_binary(cmd,
+                                                  exp_id          = i_exp,
+                                                  config_filename = config_exp_filename,
+                                                  ignore_stdout   = ignore_stdout)
 
                        # load output summary
                        summary_filename <- file.path(output_prefix,'summary.csv')
-                       run_summary      <- read.table(summary_filename,header=T,sep=',')
+                       run_summary      <- .rstride$read_stride_summary(summary_filename,
+                                                                        exp_id          = i_exp,
+                                                                        config_filename = config_exp_filename)
                        
                        # merge output summary with input param
                        # note: do not use "merge" to prevent issues with decimal numbers
