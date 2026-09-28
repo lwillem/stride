@@ -54,7 +54,7 @@ exp_design <- expand.grid(r0                            = seq(0,16,3),
                           disease_config_file           = "data/disease_measles_usa.xml",
                           population_file               = "data/pop_usa_tx_gaines_c1000.csv",
                           age_contact_matrix_file       = "data/contact_matrix_usa_tx_gaines_c1000.xml",
-                          holidays_file                 = "data/calendar_dane_2023_2026_measles.csv",
+                          holidays_file                 = "data/calendar_USA_2023_2026_measles.csv",
                           stringsAsFactors = F)
 
 

@@ -12,7 +12,7 @@
 #  along with the software. If not, see <http://www.gnu.org/licenses/>.
 #  see http://www.gnu.org/licenses/.
 #
-#  Copyright 2026, Willem L
+#  Copyright 2026, Manansala R, Willem L
 ############################################################################ #
 #
 # PREPARE USA-SPECIFIC SOCIAL CONTACT DATA FOR STRIDE

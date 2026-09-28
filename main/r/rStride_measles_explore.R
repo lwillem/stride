@@ -62,9 +62,12 @@ exp_param_list$hospital_probability_age       #TODO: set age-specific adjustment
 exp_param_list$hospital_category_age          #FYI: age categories for 'hosp_probability_factor' adjustments
 
 # USA population
-exp_param_list$age_contact_matrix_file <- "sim_output/20260710_111118_WI-Dane_conditional_social_contacts/contact_matrix_usa_conditional.xml"
-exp_param_list$holidays_file           <- "data/calendar_dane_2023_2026_measles.csv"
-exp_param_list$population_file         <- "sim_output/20260710_111118_WI-Dane_conditional_social_contacts/20260710_111118_population_WI-Dane.csv"
+exp_param_list$population_file         <- "data/pop_usa_tx_gaines_c1000.csv"
+exp_param_list$age_contact_matrix_file <- "data/contact_matrix_usa_tx_gaines_c1000.xml"
+exp_param_list$holidays_file           <- "data/calendar_USA_2023_2026_measles.csv"
+
+# Combine the two age-specific contact probabilities of a candidate pair by their mean.
+exp_param_list$contact_probability_rule <- "Mean"
 
 # initial conditions
 exp_param_list$num_infected_seeds <- 20
