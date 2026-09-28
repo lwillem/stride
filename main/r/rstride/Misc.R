@@ -538,6 +538,33 @@ if(!(exists('.rstride'))){
   return(TRUE)
 }
 
+# contact probability rule
+# the rule that combines both age-specific contact probabilities of a candidate contact pair.
+# NOTE: this is a calibration dependency -- the <transmission> b0/b1/b2 fit in every disease
+# file is only valid for the rule it was fitted under. The C++ kernel defaults to 'Min',
+# which is the rule all committed calibrations were produced with.
+.rstride$valid_contact_probability_rule <- function(exp_design){
+
+  # the parameter is optional: if it is not part of the design, the kernel default applies
+  if(is.null(exp_design$contact_probability_rule)){
+    return(TRUE)
+  }
+
+  valid_rules <- c('Min','Mean')
+  is_valid    <- exp_design$contact_probability_rule %in% valid_rules
+
+  if(any(!is_valid)){
+    smd_print('INVALID CONTACT PROBABILITY RULE(S):',
+              paste(unique(exp_design$contact_probability_rule[!is_valid]),collapse = ' '),
+              '-- VALID:', paste(valid_rules,collapse = ' '),
+              WARNING=T)
+    return(FALSE)
+  }
+
+  # else => return TRUE
+  return(TRUE)
+}
+
 .rstride$check_population_contact_combination <- function(exp_design){
   
   bool_population <- any(grepl("collectivity",exp_design$population_file))

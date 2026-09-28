@@ -21,6 +21,7 @@
 #pragma once
 
 #include "contact/AgeContactProfiles.h"
+#include "contact/ContactProbabilityRule.h"
 #include "contact/EventLogMode.h"
 #include "contact/InfectorExec.h"
 #include "health/TransmissionProfile.h"
@@ -96,6 +97,8 @@ private:
         std::shared_ptr<util::RnMan>   m_rn_man_ptr; ///< Random number generation management.
 
         TransmissionProfile         m_transmission_profile; ///< Profile of disease.
+
+        ContactProbabilityRule::Id  m_contact_probability_rule; ///< Rule combining both age-specific contact probabilities.
 
         // temporary...
         bool                        m_is_isolated_from_household;

@@ -43,6 +43,7 @@ Sim::Sim()
 	  m_run_simplified(false),
       m_calendar(nullptr), m_contact_profiles(), m_infector_default(),m_infector_tracing(),
       m_population(nullptr), m_rn_man_ptr(), m_transmission_profile(),
+      m_contact_probability_rule(ContactProbabilityRule::Id::Min),
       m_is_isolated_from_household(false), m_subpools_community(false), m_airborne_transmission(false),
 	  m_public_health_agency(), m_survey_manager(nullptr)
 
@@ -149,7 +150,8 @@ void Sim::TimeStep()
 
                             infector(poolSys.RefPools(typ)[i], m_contact_profiles[typ], m_transmission_profile,
 									 m_rn_man_ptr->at(thread_num), simDay, eventLogger,
-									 m_population, cnt_intensity_householdCluster, typ_distancing_factor, dayWeek, m_airborne_transmission, m_subpools_community, ventilation_factor);
+									 m_population, cnt_intensity_householdCluster, typ_distancing_factor, dayWeek, m_airborne_transmission, m_subpools_community, ventilation_factor,
+									 m_contact_probability_rule);
 
 					}
 			}

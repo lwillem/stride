@@ -272,7 +272,8 @@ run_rStride <- function(exp_design               = exp_design,
      .rstride$valid_r0_values(exp_design)  == FALSE ||
      .rstride$valid_immunity_profiles(exp_design)  == FALSE ||
      .rstride$valid_seed_infected(exp_design) == FALSE ||
-     .rstride$valid_cnt_param(exp_design) == FALSE){
+     .rstride$valid_cnt_param(exp_design) == FALSE ||
+     .rstride$valid_contact_probability_rule(exp_design) == FALSE){
     
     .rstride$cli_abort('design of experiment is not valid')
     return(.rstride$no_return_value())

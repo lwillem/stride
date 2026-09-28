@@ -210,7 +210,8 @@ using namespace stride::util;
 
 inline double GetContactProbability(const AgeContactProfile& profile, const Person* p1, const Person* p2,
 		size_t pool_size, const ContactType::Id pType, 
-		std::shared_ptr<Population>& population, double cnt_intensity_householdCluster, double pType_distancing_factor, unsigned short int dayWeek)
+		std::shared_ptr<Population>& population, double cnt_intensity_householdCluster, double pType_distancing_factor, unsigned short int dayWeek,
+		ContactProbabilityRule::Id contact_probability_rule)
 {
 
         // initiate a contact adjustment factor, to account for physical distancing and/or contact intensity
@@ -262,11 +263,18 @@ inline double GetContactProbability(const AgeContactProfile& profile, const Pers
         double individual_contact_probability_p1 = reference_num_contacts_p1 / potential_num_contacts;
         double individual_contact_probability_p2 = reference_num_contacts_p2 / potential_num_contacts;
 
-        // use the minimum of both age-specific probabilities
-        double contact_probability = individual_contact_probability_p1 ;
-		if(individual_contact_probability_p2 < individual_contact_probability_p1){
-			contact_probability = individual_contact_probability_p2;
-		}
+        // combine both age-specific probabilities according to the configured rule
+        double contact_probability;
+        if (contact_probability_rule == ContactProbabilityRule::Id::Mean) {
+                // use the average of both age-specific probabilities
+                contact_probability = (individual_contact_probability_p1 + individual_contact_probability_p2) / 2;
+        } else {
+                // use the minimum of both age-specific probabilities (default)
+                contact_probability = individual_contact_probability_p1;
+                if (individual_contact_probability_p2 < individual_contact_probability_p1) {
+                        contact_probability = individual_contact_probability_p2;
+                }
+        }
 
                 // adjust contact for individual variation in community and workplace contacts
         if(pType == Id::CommunityWeekend || pType == Id::CommunityWeekday || pType == Id::Workplace || pType == Id::RestoCafe || pType == Id::OtherPlace || pType == Id::Transport){
@@ -329,7 +337,8 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
                                  const TransmissionProfile& transProfile, util::Rn& rn,
                                  unsigned short int simDay, shared_ptr<spdlog::logger> eventLogger,
 								 std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster,
-                                 double pType_distancing_factor, unsigned short int dayWeek, bool m_airborne_transmission, bool m_subpools_community, double ventilation_factor)
+                                 double pType_distancing_factor, unsigned short int dayWeek, bool m_airborne_transmission, bool m_subpools_community, double ventilation_factor,
+                                 ContactProbabilityRule::Id contact_probability_rule)
 {
         using LP = LOG_POLICY<LL>;
 
@@ -364,7 +373,8 @@ void Infector<LL, TIC, TO>::Exec(ContactPool& pool, const AgeContactProfile& pro
                         }
                         // check for contact
                         const double cProb = GetContactProbability(profile, p1, p2, pSize, pType, 
-								population,m_cnt_intensity_householdCluster,pType_distancing_factor, dayWeek);
+								population,m_cnt_intensity_householdCluster,pType_distancing_factor, dayWeek,
+								contact_probability_rule);
                         
                         // check for ventilation
                         double vProb;
@@ -503,7 +513,8 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                                    const TransmissionProfile& transProfile, util::Rn& rn,
                                    unsigned short int simDay, shared_ptr<spdlog::logger> eventLogger,
 								   std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster,
-                                   double pType_distancing_factor, unsigned short int dayWeek, bool m_airborne_transmission, bool m_subpools_community, double ventilation_factor)
+                                   double pType_distancing_factor, unsigned short int dayWeek, bool m_airborne_transmission, bool m_subpools_community, double ventilation_factor,
+                                 ContactProbabilityRule::Id contact_probability_rule)
 {
         using LP = LOG_POLICY<LL>;
 
@@ -547,7 +558,8 @@ void Infector<LL, TIC, true>::Exec(ContactPool& pool, const AgeContactProfile& p
                                         continue;
                                 }
                                 const double cProb_p1 = GetContactProbability(profile, p1, p2, pSize, pType,
-															population, m_cnt_intensity_householdCluster, pType_distancing_factor, dayWeek);
+															population, m_cnt_intensity_householdCluster, pType_distancing_factor, dayWeek,
+															contact_probability_rule);
                                 const auto  tProb_p1_p2 = transProfile.GetProbability(p1,p2);
 
                                 double vProb;
