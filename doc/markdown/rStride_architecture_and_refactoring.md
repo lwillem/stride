@@ -346,21 +346,62 @@ The comparison engine is also entangled with the 22 scenario definitions in one 
 so adding a measles suite by the obvious route means copy-pasting ~700 lines — creating
 another twin.
 
-### F7. The install file list has drifted
+### F7. What reaches the install directory is not what you think — RESOLVED for scripts
 
-`main/r/CMakeLists.txt` enumerates experiment scripts by hand. Three have fallen off and
-are absent from `~/opt/stride-820/bin/`:
+`main/r/CMakeLists.txt` enumerated experiment scripts by hand. Three had fallen off and
+were absent from `bin/`:
 
 - `rStride_measles_default_param.R`
 - `rStride_r0_measles.R`
 - `rStride_param.R`
 
 Relevant because `rStride_gtester_covid19.R` sources `./bin/rStride_covid19_default_param.R`;
-a measles gtester would need `rStride_measles_default_param.R`, which does not install.
+a measles gtester would need `rStride_measles_default_param.R`. More immediately,
+`rStride_r0_measles.R` is the R0 fitting entry point, so the measles calibration workflow
+could not be run from an install at all.
 
 `rStride_readme.Rmd` already documents the manual maintenance of this list, and the
 "edit in the repo, not in the install dir, or your changes are overwritten" workaround —
 confirming the friction is known.
+
+> **Resolved 2026-09-28** (commit `bd577ae`). The hand-kept list was replaced by a
+> `CONFIGURE_DEPENDS` glob over `rStride_*.R`, so adding a script is just adding the file.
+> All twelve now install, against nine before. Phase 4 step 11 therefore no longer needs
+> to add the three orphans by hand — only the new gtester, which the glob picks up
+> automatically.
+
+#### F7.1 The same class of defect remains for data, and it is quieter
+
+`main/resources/CMakeLists.txt:26` globs the population archives **without**
+`CONFIGURE_DEPENDS`, and unzips them with `execute_process` — i.e. at *configure* time:
+
+```cmake
+file(GLOB ZIP_FILES "data/*.zip")
+foreach( file_i ${ZIP_FILES} )
+        execute_process(COMMAND ${CMAKE_COMMAND} -E tar xzf ${file_i} ...)
+```
+
+So a population archive added to `main/resources/data/` after a build directory exists is
+**never unpacked by `make install`**. The glob is not re-evaluated, the unzip step does not
+re-run, and the file simply does not appear in `data/`.
+
+Observed on 2026-09-28: `pop_usa_tx_gaines_c1000.zip` was placed in
+`main/resources/data/`, and an existing build directory continued to install without it.
+The resulting failure is a missing `data/pop_usa_tx_gaines_c1000.csv` — which points at
+the data directory, at the experiment script's path, or at the archive itself, but not at
+the stale glob that is actually responsible. Recovery is a full reconfigure, which is not
+discoverable from the symptom.
+
+This is worse than the script case in two respects. The scripts were *listed*, so the
+omission was at least visible by reading the file; a stale glob has nothing to read. And
+population files are large, infrequently added and often the input to a calibration, so
+the failure lands on someone setting up a fitting run — exactly the case in F10 where a
+wrong or missing input must not be silent.
+
+Fix: add `CONFIGURE_DEPENDS` to the archive glob as well, and prefer a build-time custom
+command over configure-time `execute_process` so that re-extraction follows the archive's
+timestamp. The same applies to the `data/*`, `config/*` and `rstride_test/*` globs in that
+file, none of which carry it.
 
 ### F8. The contact-probability rule — RESOLVED: `min` is the baseline
 
@@ -517,7 +558,7 @@ land before the §6.4 consolidation tag: the tag is simply the code as committed
 particular must not precede the refactoring, because refitting depends on
 `rStride_r0.R` / `rStride_r0_measles.R` -> `TransmissionAnalyst::analyse_transmission_data_for_r0`
 -> `ParameterEstimator`, which is currently among the least reliable code in the
-workbench: `rStride_r0_measles.R` does not install at all (F7); the analysis function is
+workbench: `rStride_r0_measles.R` did not install at all until 2026-09-28 (F7); the analysis function is
 310 lines and untestable; `system()` swallows kernel failures (F4), so in a 3,645-run
 fitting grid a subset can die silently and the fit is taken over the survivors; and fit
 provenance points at vanished directories (F1). Refitting under those conditions produces
@@ -1047,7 +1088,13 @@ must not change. Independent of the branch consolidation and safe to do at any t
       target, `target_link_libraries(libstride PUBLIC OpenMP::OpenMP_CXX)` (Phase 7b);
    7. verify with `otool -L ~/opt/stride-*/bin/stride | grep omp`.
 
-7. **Make a failed OpenMP detection loud.** Report it prominently at configure time
+7. **Add `CONFIGURE_DEPENDS` to the resource globs** (F7.1), so a population archive added
+   after a build directory exists is actually unpacked and installed. Consider moving the
+   unzip from a configure-time `execute_process` to a build-time custom command keyed on
+   the archive timestamp. Cheap, and it removes a failure whose symptom points nowhere
+   near its cause.
+
+8. **Make a failed OpenMP detection loud.** Report it prominently at configure time
    instead of silently substituting the `domp` stubs, and drop or narrow
    `-Wno-unknown-pragmas` so dropped pragmas are visible. Document that
    `HAVE_CHECKED_OpenMP` is cached and that recovery requires deleting the build
@@ -1143,7 +1190,9 @@ Prerequisites:
 
 - Phase 2 — `system()` error handling, so a failed run in a multi-thousand-run fitting
   grid cannot be silently excluded from the fit (F4).
-- F7 install-list repair, so `rStride_r0_measles.R` reaches `bin/`.
+- F7 install-list repair, so `rStride_r0_measles.R` reaches `bin/` — **done**
+  (`bd577ae`). F7.1 remains: a population archive added after a build directory exists
+  is silently not unpacked, which bites precisely when setting up a fitting run.
 - Phase 3 step 6 — a durable output location, so refits are not orphaned in a
   superseded install root (F1).
 - A decision on the quadratic term disabled at `TransmissionAnalyst.R:96` (F10,
@@ -1195,8 +1244,9 @@ first and removing the flag afterwards would invalidate them again.
 10. Extract the comparison engine into `rstride/RegressionTester.R`, leaving
     `rStride_gtester_covid19.R` as scenario definitions only.
 11. Add `rStride_gtester_measles.R` on that engine: USA populations, measles config,
-    household clustering, contact adjustment factors. Add it and the three orphans
-    from F7 to `main/r/CMakeLists.txt`.
+    household clustering, contact adjustment factors. No install-list edit is needed —
+    the glob of F7 picks it up — but check F7.1 if it needs a population archive that is
+    not yet in the tree.
 
 Step 10 must precede step 11, otherwise the measles suite is created by copy-paste and
 becomes another twin.
