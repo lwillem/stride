@@ -3,10 +3,9 @@
 **Date:** 2026-09-25
 **Branch analysed:** `measles_usa` (48 commits ahead of `master`, 1 behind)
 **Scope:** the R workbench (`main/r/`) and its coupling to the C++ kernel build/install flow.
-**Working checkout:** `~/Documents/university/research/stride/repo/stride_2023`. Findings
-below were gathered from an identical checkout at the same commit; everything they rest on
-— the git history, the shared install root `~/opt/stride-<N>`, and the machine's
-toolchain — is common to both.
+**Working checkout:** `~/Documents/university/research/stride/repo/stride_2026`. Findings
+below were gathered at the commit named above; they rest on this machine's git history,
+the shared install root `~/opt/stride-<N>`, and its toolchain.
 
 This document describes how the system **actually works today**, the reasoning
 behind the problems observed, and a proposed refactoring sequence. It complements
@@ -19,7 +18,7 @@ behind the problems observed, and a proposed refactoring sequence. It complement
 ### 1.1 From repository to a runnable workbench
 
 ```
-repo/stride_2023/
+repo/stride_2026/
   main/cpp/          C++ kernel            ──┐
   main/r/*.R         experiment scripts    ──┤
   main/r/rstride/    core R functions      ──┼── make install ──▶  ~/opt/stride-<N>/
@@ -336,7 +335,7 @@ reporting, reference reset, performance tracking. Three problems:
    `summary` are dated Aug 25. A partial `rrv()` was run, so different streams encode
    different code states.
 3. **`rrv_repo()` hardcodes an absolute personal path** —
-   `~/Documents/university/research/stride/repo/stride_2023/main/resources/rstride_test`.
+   `~/Documents/university/research/stride/repo/stride_2026/main/resources/rstride_test`.
    The path is correct for the author's own checkout and the function is labelled "local
    function for LW" in the source, so this is a fragility rather than a defect: the
    reference-promotion step only works for one person on one machine, and silently writes

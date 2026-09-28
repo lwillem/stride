@@ -708,7 +708,7 @@ rrv <- function(stride_repo_dir = 'tests'){
 
 # update the repository and local rStride reference values (note: local function for LW)
 rrv_repo <- function(){
-  stride_repo_dir <- '~/Documents/university/research/stride/repo/stride_2023/main/resources/rstride_test'
+  stride_repo_dir <- '~/Documents/university/research/stride/repo/stride_2026/main/resources/rstride_test'
   rrv(stride_repo_dir = stride_repo_dir)
   rrv()
 }
