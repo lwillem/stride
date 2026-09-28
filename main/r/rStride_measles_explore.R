@@ -45,10 +45,10 @@ exp_param_list <- get_default_param()
 ################################################ #
 
 # number of stochastic realisations
-exp_param_list$num_rng_seeds <- 2
+exp_param_list$num_rng_seeds <- 3
 
 # simulation horizon and start
-exp_param_list$num_days   <- 60
+exp_param_list$num_days   <- 365
 exp_param_list$start_date <- "2023-01-01"
 
 # case study for measles
@@ -56,15 +56,16 @@ exp_param_list$r0 <- 12
 exp_param_list$disease_config_file <- "data/disease_measles_6region.xml"
 
 # hospital settings
-exp_param_list$hosp_probability_factor <- 0.1 #TODO: set real value
-exp_param_list$hospital_length_of_stay <- 14  #TODO: set real value  
-exp_param_list$hospital_probability_age       #TODO: set age-specific adjustment of 'hosp_probability_factor'
-exp_param_list$hospital_category_age          #FYI: age categories for 'hosp_probability_factor' adjustments
-
+exp_param_list$hosp_probability_factor  <- 1   #TODO: set real value
+exp_param_list$hospital_length_of_stay  <- 14  #TODO: set real value  
+exp_param_list$hospital_probability_age <- paste(0.18,0.06,0.12,sep=',')   #TODO: set age-specific adjustment of 'hosp_probability_factor'
+exp_param_list$hospital_category_age    <- paste(0,5,20,sep=',')           #FYI: age categories for 'hosp_probability_factor' adjustments
+exp_param_list$hospital_mean_delay_age  <- paste(2,2,5,sep=',')
+                               
 # USA population
-exp_param_list$age_contact_matrix_file <- "data/contacts_6region/TX-contact_matrix_usa_conditional.xml"
+exp_param_list$age_contact_matrix_file <- "data/contacts_6region/SC-contact_matrix_usa_conditional.xml"
 exp_param_list$holidays_file           <- "data/calendar_dane_2023_2026_measles.csv"
-exp_param_list$population_file         <- "data/population_6region/20260825_094649_population_TX-Gaines_extended3_size10_pct12.csv"
+exp_param_list$population_file         <- "data/population_6region/20260828_105128_population_SC-Spartanburg.csv"
 
 # initial conditions
 exp_param_list$num_infected_seeds <- 20
@@ -80,7 +81,7 @@ exp_param_list$reference_serology_data_file <- NA
 
 # immunity profile = starting condition (time consuming!)
 exp_param_list$immunity_profile <- "AgeDependent"
-exp_param_list$immunity_distribution_file <- c("data/immunity_measles_dummy.xml") # "data/immunity_6region/immunity_measles_CT.xml"
+exp_param_list$immunity_distribution_file <- "data/immunity_6region/immunity_measles_adult_SC.xml" # "data/immunity_6region/immunity_measles_CT.xml"
 exp_param_list$immunity_link_probability <- 0 # immunity is distributed by household, this is the chance of continuing to immunize the next shuffled household member instead of jumping to a new random household
 
 # virtual survey for immunity levels
@@ -88,16 +89,19 @@ exp_param_list$num_participants_survey
 exp_param_list$contact_survey_dates <- exp_param_list$start_date # if log level is not "Contacts", only health data is obtained
 
 # vaccine rate
-# exp_param_list$vaccine_link_probability <- 0
-# exp_param_list$vaccine_profile <- "Random" ## MAKE NEW VAC PROF HESITANCY??
+exp_param_list$vaccine_link_probability <- 0
+exp_param_list$vaccine_profile <- "AgeDependent" ## MAKE NEW VAC PROF HESITANCY??
+exp_param_list$vaccine_distribution_file <- "data/immunity_6region/immunity_measles_child_SC.xml"
 # exp_param_list$vaccine_rate <- c(0.8)
-# exp_param_list$vaccine_min_age <- 0
-# exp_param_list$vaccine_max_age <- 17
+exp_param_list$vaccine_min_age <- 0
+exp_param_list$vaccine_max_age <- 17
+exp_param_list$mass_immunize <- TRUE
+exp_param_list$vaccine_hesitancy_rate <- 0.15
 
 # household clustering
-exp_param_list$household_clustering_date <- "2023-01-01"
-exp_param_list$household_clustering_ratio <- 4/7
-exp_param_list$household_clustering_delay <- 0
+# exp_param_list$household_clustering_date <- "2023-01-01"
+# exp_param_list$household_clustering_ratio <- 4/7
+# exp_param_list$household_clustering_delay <- 0
 # exp_param_list$cnt_intensity_householdCluster <- c(0, 1)
 
 ################################################ #
@@ -119,7 +123,7 @@ if(any(is.na(exp_param_list$immunity_distribution_file))){
 ##################################
 project_dir <- run_rStride(exp_design,
                            dir_postfix,
-                           remove_run_output = FALSE,
+                           remove_run_output = FALSE,   ## THIS NEEDS TO STAY 'FALSE' TO GET HOUSEHOLD AGG
                            num_parallel_workers = 2)
 
 
