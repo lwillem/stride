@@ -22,14 +22,19 @@
 set(UNZIP_FOLDER ${CMAKE_BINARY_DIR}/main/resources/data_zip/)
 execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${UNZIP_FOLDER})
 
-# Unzip all ZIP files
-file(GLOB ZIP_FILES "data/*.zip")
+# Unzip all ZIP files.
+# CONFIGURE_DEPENDS so that an archive added to data/ after this build directory was
+# created still gets unpacked: without it the glob is evaluated once, the unzip below
+# never re-runs, and the archive silently never reaches the install (plan F7.1).
+file(GLOB ZIP_FILES CONFIGURE_DEPENDS "data/*.zip")
 foreach( file_i ${ZIP_FILES} )
 	execute_process(COMMAND ${CMAKE_COMMAND} -E tar xzf ${file_i}
                     WORKING_DIRECTORY ${UNZIP_FOLDER})
 endforeach()
 
-# Install unzipped files
+# Install unzipped files.
+# No CONFIGURE_DEPENDS here: this globs the build directory, which the loop above has
+# just populated in this same configure pass, so it is always current by construction.
 file(GLOB DEPLOY_FILES ${UNZIP_FOLDER}*)
 if(NOT STRIDE_INSTALL_POPULATION_PDF)
 	file(GLOB DEPLOY_PDF_FILES ${UNZIP_FOLDER}*.pdf)
@@ -42,10 +47,10 @@ unset(UNZIP_FOLDER)
 #============================================================================
 # Copy all non-zipped files from data/* to ${DATA_INSTALL_LOCATION}
 #============================================================================
-file(GLOB DEPLOY_FILES "data/*")
+file(GLOB DEPLOY_FILES CONFIGURE_DEPENDS "data/*")
 list(REMOVE_ITEM DEPLOY_FILES ${ZIP_FILES})
 if(NOT STRIDE_INSTALL_POPULATION_PDF)
-	file(GLOB DEPLOY_PDF_FILES "data/*.pdf")
+	file(GLOB DEPLOY_PDF_FILES CONFIGURE_DEPENDS "data/*.pdf")
 	list(REMOVE_ITEM DEPLOY_FILES ${DEPLOY_PDF_FILES})
 	unset(DEPLOY_PDF_FILES)
 endif()
@@ -56,14 +61,14 @@ unset(DEPLOY_FILES)
 #============================================================================
 # Copy all files from config/* to ${CONFIG_INSTALL_LOCATION}
 #============================================================================
-file(GLOB DEPLOY_FILES "config/*")
+file(GLOB DEPLOY_FILES CONFIGURE_DEPENDS "config/*")
 INSTALL(FILES ${DEPLOY_FILES} DESTINATION ${CONFIG_INSTALL_LOCATION})
 unset(DEPLOY_FILES)
 
 #============================================================================
 # Copy all files from rstride_test/* to ${TESTS_INSTALL_LOCATION}
 #============================================================================
-file(GLOB DEPLOY_FILES "rstride_test/*")
+file(GLOB DEPLOY_FILES CONFIGURE_DEPENDS "rstride_test/*")
 INSTALL(FILES ${DEPLOY_FILES} DESTINATION ${TESTS_INSTALL_LOCATION})
 unset(DEPLOY_FILES)
 
