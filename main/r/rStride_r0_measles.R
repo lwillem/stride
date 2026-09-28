@@ -14,7 +14,7 @@
 #  see http://www.gnu.org/licenses/.
 #
 #
-#  Copyright 2024, Willem L
+#  Copyright 2024, Manansala R, Willem L
 #############################################################################
 #
 # Call this script from the main project folder (containing bin, config, lib, ...)
@@ -44,20 +44,7 @@ dir_postfix <- '_r0'
 num_seeds  <- 5
 
 # add parameters and values to combine in a full-factorial grid
-# exp_design <- expand.grid(r0                            = sort(c(seq(1,5,length=5))),
-#                           num_days                      = c(20),
-#                           rng_seed                      = seq(num_seeds),
-#                           start_date                    = c('2020-02-01','2020-02-02','2020-02-03','2020-02-04','2020-02-05','2020-02-06','2020-02-07'),
-#                           num_infected_seeds            = 20,
-#                           seeding_age_min               = 1,
-#                           seeding_age_max               = 99,
-#                           disease_config_file           = "disease_covid19_lognorm.xml",
-#                           population_file               = "pop_belgium600k_c500_teachers_censushh.csv",
-#                           age_contact_matrix_file       = "contact_matrix_flanders_conditional_teachers.xml",
-#                           holidays_file                 = "holidays_none.csv",
-#                           stringsAsFactors = F)
-
-exp_design <- expand.grid(r0                            = seq(0,24,3),
+exp_design <- expand.grid(r0                            = seq(0,16,3),
                           num_days                      = c(40),
                           rng_seed                      = seq(num_seeds),
                           start_date                    = c('2023-01-01'),
@@ -65,12 +52,17 @@ exp_design <- expand.grid(r0                            = seq(0,24,3),
                           seeding_age_min               = 1,
                           seeding_age_max               = 99,
                           disease_config_file           = "data/disease_measles_usa.xml",
-                          population_file               = "data/pop_usa_wisconsin_dane474k_c1000.csv",
-                          age_contact_matrix_file       = "data/contact_matrix_usa_conditional.xml",
+                          population_file               = "data/pop_usa_tx_gaines_c1000.csv",
+                          age_contact_matrix_file       = "data/contact_matrix_usa_tx_gaines_c1000.xml",
                           holidays_file                 = "data/calendar_dane_2023_2026_measles.csv",
-                          # immunity_profiles             = "AgeDependent",
-                          # immunity_distribution_file    = "data/immunity_measles_WI.xml", 
                           stringsAsFactors = F)
+
+
+# combine the two age-specific contact probabilities of a candidate pair by
+# their mean rather than their minimum (the kernel default).
+# NOTE: the resulting fit is valid for this rule only. The b0/b1/b2 currently
+# in disease_measles_usa.xml were produced under "Min" and do not apply here.
+exp_design$contact_probability_rule <- "Mean"
 
 # add a unique seed for each run
 set.seed(num_seeds)
