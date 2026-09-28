@@ -187,7 +187,7 @@ roughly 1,200 lines of the totals above are dormant; see F11.
 - 108 public functions defined into the global environment
 - 40 private functions in the `.rstride` environment (40 defined, 40 distinct call sites — no dead weight)
 - 6 total occurrences of `stop()` / `warning()` / `tryCatch()` across the whole R layer
-- 16 `if(0==1){ attach(...) }` interactive-debug blocks
+- 16 `if(0==1){ attach(...) }` interactive-debug blocks (two distinct patterns; see F2.1)
 
 ### 2.3 Longest functions
 
@@ -257,6 +257,42 @@ Consequences:
   regression work needs.
 - **Load order is alphabetical** by `dir()`; any load-time dependency between files
   works only by luck.
+
+#### F2.1 The 16 `if(0==1)` blocks are two different things
+
+They serve a real purpose — making a function's variables available in the workspace so
+the body can be developed interactively — and any removal must preserve that. They divide
+cleanly:
+
+| | Pattern | Example | What it really is |
+|---|---|---|---|
+| **A** | source the library, `set_wd()`, call with example arguments | `factories/CalendarFactory.R:22`, `ContactMatrixFactory.R:22` | a **dev script** |
+| **B** | `attach(list(...))` inside the function body | `rStride.R:237` | an **argument fixture** |
+
+`attach()` is a poor fit for pattern B even on its own terms. It places a **copy** on the
+search path at position 2, not in the function's evaluation environment, so anything the
+body assigns diverges from what is being inspected; `globalenv()` masks it; and it is
+never detached. The argument list is hand-maintained and drifts from the signature —
+`rStride.R:237` already carries a commented-out `# get_burden_rdata`, which is that drift
+becoming visible.
+
+Both patterns also ship inside the installed library, and pattern A is a test in
+disguise: it constructs inputs and calls a function.
+
+#### F2.2 `.rstride` does two jobs, and the package retires both
+
+The private environment (`Misc.R:31`, 40 functions, **207 call sites**) is a faithful
+hand-rolled approximation of a namespace. It is also, less visibly, the mechanism that
+makes the parallel layer work: `rStride.R:498` captures `ls(all.names = TRUE)` — and
+`all.names` is precisely what picks up the dot-prefixed `.rstride` — so all 40 private
+functions travel to every worker as a **single symbol** (F3).
+
+A package namespace replaces job one; `.packages = 'rStride'` replaces job two. The
+environment is not wrong, it is early.
+
+One hazard meanwhile: `if(!(exists('.rstride'))){ .rstride <- new.env() }` means
+**re-sourcing does not reset it**. A renamed or deleted private function persists in the
+session, so code that no longer exists on disk can still run.
 
 ### F3. The parallel layer is load-bearing on a clean global environment
 
@@ -1033,6 +1069,44 @@ own, depending on whether the margins in `ScenarioData.cpp` already absorb the d
    exclusion blacklist in `rStride.R`.
 3. Declare dependencies in `Imports:`, moving `sf`/`tigris`/`usmap`/`haven`/`VGAM` to
    `Suggests:` so only the USA population factory pays for them.
+4. **Retire the 16 `if(0==1)` blocks without losing what they are for** (F2.1). The
+   requirement to preserve is *"make a function's variables available in the workspace so
+   I can develop the body interactively"* — not the `attach()` mechanism.
+
+   - **Pattern A** blocks move to `dev/` scripts, listed in `.Rbuildignore` so they never
+     install. Each is already a test in disguise; promote it to `testthat` as Phase 4
+     gives the suite a home.
+   - **Pattern B** blocks are replaced by a helper that derives the fixture from the
+     signature instead of duplicating it by hand:
+
+     ```r
+     dev_args <- function(f, ...) {
+             fm <- formals(f)
+             fm <- fm[!vapply(fm, is.symbol, logical(1))]   # drop args with no default
+             list2env(c(lapply(fm, eval), list(...)), globalenv())
+     }
+     dev_args(run_rStride, num_parallel_workers = 2)
+     ```
+
+     Same end state as the `attach()` block, but nothing to keep in step with the
+     signature. Where the *actual* call matters more than the defaults,
+     `debugonce(run_rStride)` is strictly better than either: real arguments, real
+     environment, intermediate values, and edits that affect execution.
+
+   Behaviour-preserving — the blocks never execute.
+5. **Keep `.rstride` for now** (F2.2). It costs nothing inside a package, and the job it
+   quietly does for `foreach(.export=)` is retired by `.packages = 'rStride'` in Phase 3
+   step 7, not here. Do fix the `exists()` guard so re-sourcing rebuilds the environment.
+6. Add `testthat`, now available for the first time. This is the prerequisite for
+   Phase 4 step 10.
+
+Flattening `.rstride` into ordinary internal functions is **deliberately not in this
+phase.** Once the package exists the namespace already makes them private, so the
+remaining gain is small against a 207-call-site mechanical diff. Sequence it after
+Phase 4, where the regression references can prove it behaviour-preserving. If the
+call-site marker is worth keeping — `.rstride$f()` says "internal" at a glance, bare
+`f()` does not — keep it as a **naming convention** (`.rs_` prefix or a leading dot)
+rather than an environment: same readability, no indirection.
 
 ### Phase 2 — Make failures visible
 
