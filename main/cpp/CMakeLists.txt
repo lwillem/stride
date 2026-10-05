@@ -72,6 +72,14 @@ add_library(libstride ${STRIDE_SRC})
 target_compile_definitions(libstride PUBLIC "-DSTRIDE_GIT_HASH=${STRIDE_WC_REVISION_HASH}")
 target_compile_definitions(libstride PUBLIC "-DPROCCOUNT=${PROCCOUNT}")
 target_link_libraries(libstride PRIVATE ${LIBS})
+
+# CMakeCPP.cmake adds ${OpenMP_CXX_FLAGS} to the COMPILE flags but never linked the
+# runtime, so a successful detection would still fail at link time. The imported target
+# carries both halves. Guarded, so this is inert whenever OpenMP is not found and the
+# dummy stubs in main/resources/lib/domp are used instead.
+if(OPENMP_FOUND AND TARGET OpenMP::OpenMP_CXX)
+    target_link_libraries(libstride PUBLIC OpenMP::OpenMP_CXX)
+endif()
 set_target_properties(libstride
     PROPERTIES
         POSITION_INDEPENDENT_CODE ON
