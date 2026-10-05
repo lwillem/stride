@@ -663,39 +663,50 @@ if(!(exists('.rstride'))){
 # set most recent stride install directory as work directory 
 #.rstride$set_wd()
 .rstride$set_wd <- function(){
-  
+
+  # The install root is stable: $HOME/opt/stride (see Makefile). It used to be
+  # $HOME/opt/stride-<commit count>, which moved on every commit and stranded sim_output
+  # in the old directory (plan F1). Legacy versioned directories are still honoured, so
+  # an existing checkout keeps working until it is reinstalled.
   stride_dir_tag  <- 'stride-'
-  
+
   # default install directory
-  install_dir              <- system('echo $HOME/opt',intern=T)
-  
-  # if directory does not exists OR contains a 'stride' folder ==>> try VSC SCRATCH directory
-  if(!dir.exists(install_dir) && !any(dir(install_dir,pattern = stride_dir_tag))){
-    install_dir              <- system('echo $VSC_SCRATCH',intern=T)
-  }
-  
-  # if directory does not exists, abort
+  install_dir <- path.expand('~/opt')
+
+  # fall back to the VSC scratch directory on the UA cluster
   if(!dir.exists(install_dir)){
-    
-    smd_print('LATEST STRIDE INSTALLATION COULD NOT BE FOUND')
-  
-  } else {
-    # load directory content (non recursive)
-    stride_dir_tag  <- 'stride-'
+    install_dir <- system('echo $VSC_SCRATCH',intern=T)
+  }
+
+  if(!dir.exists(install_dir)){
+    smd_print('STRIDE INSTALLATION COULD NOT BE FOUND', WARNING = TRUE)
+    return(invisible(NULL))
+  }
+
+  # prefer the stable root
+  target_dir <- file.path(install_dir,'stride')
+
+  # otherwise take the highest-numbered legacy directory, as before
+  if(!dir.exists(target_dir)){
     stride_dirs     <- dir(install_dir,pattern = stride_dir_tag)
     stride_dirs_num <- suppressWarnings(as.numeric(sub(stride_dir_tag,'',stride_dirs)))
-    
-    # select last directory
-    last_stride_dir <- stride_dirs[order(stride_dirs_num,decreasing = T)[1]]
-    
-    # set work directory
-    setwd(file.path(install_dir,last_stride_dir))
-    
-    # terminal message
-    smd_print('NEW WORK DIRECTORY ',file.path(install_dir,last_stride_dir))
+
+    if(length(stride_dirs) == 0 || all(is.na(stride_dirs_num))){
+      smd_print('STRIDE INSTALLATION COULD NOT BE FOUND IN', install_dir, WARNING = TRUE)
+      return(invisible(NULL))
+    }
+
+    target_dir <- file.path(install_dir,
+                            stride_dirs[order(stride_dirs_num,decreasing = T)[1]])
+    smd_print('USING LEGACY VERSIONED INSTALL DIRECTORY:', target_dir,
+              '-- re-run "make install" to move to the stable root', WARNING = TRUE)
   }
-  
-  
+
+  # set work directory
+  setwd(target_dir)
+  smd_print('NEW WORK DIRECTORY ', target_dir)
+
+  return(invisible(target_dir))
 }
 
 .rstride$is_ua_cluster <- function(){

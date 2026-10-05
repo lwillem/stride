@@ -16,24 +16,42 @@ repository composition — lives in the architecture document.
 
 ## 1. Findings and reasoning
 
-### F1. The install directory moves on every commit
+### F1. The install directory moved on every commit — RESOLVED
 
-`LABEL = git rev-list HEAD --count` means one commit changes the install root.
-Because `sim_output/` is created *inside* the install root, every commit strands the
-previous outputs in the old directory.
+`LABEL = git rev-list HEAD --count` meant one commit changed the install root. Because
+`sim_output/` is created *inside* the install root, every commit stranded the previous
+outputs in the old directory. Ten such directories had accumulated on the development
+machine (`stride-745 … stride-885`).
 
-**This is the root cause of several downstream symptoms:**
+This was the root cause of several downstream symptoms:
 
-- Experiment scripts accumulate commented-out absolute-ish paths such as
-  `sim_output/20260827_234016_pop_usa_tx_gaines_c1000/...`, which are valid only in
-  `stride-820` and break on the next commit.
-- Generated artefacts get committed into `main/resources/data/`
-  (e.g. `pop_usa_wisconsin_dane474k_c1000.csv`, `contact_matrix_usa_conditional.xml`)
-  purely so they survive a commit. Large generated data therefore enters git.
-- `.rstride$set_wd()` exists solely to cope with the moving target.
+- Experiment scripts accumulated commented-out paths such as
+  `sim_output/20260827_234016_pop_usa_tx_gaines_c1000/...`, valid only in one install root
+  and broken by the next commit.
+- Generated artefacts were committed into `main/resources/data/` partly so they would
+  survive a commit, which is how large generated data entered git (F14).
+- `.rstride$set_wd()` existed to cope with the moving target.
 
-Secondary risk: `git rev-list --count` is **branch-dependent and not unique**. Two
-branches, or a worktree, can produce the same count and silently share an install root.
+The commit count is also **branch-dependent and not unique**: two branches, or a worktree,
+could produce the same count and silently share an install root.
+
+> **Resolved 2026-10-05.** The prefix is now a stable `$(HOME)/opt/stride`, declared with
+> `?=` so an environment variable or `make` argument still selects a side-by-side install.
+> `sim_output/` therefore no longer moves, and outputs accumulate in one place.
+>
+> `.rstride$set_wd()` prefers the stable root and falls back to the highest-numbered
+> legacy `stride-<N>` directory with a warning, so an un-reinstalled machine keeps working.
+>
+> Verified: `make install` lands in `~/opt/stride`, the C++ gtester passes 22/22 from it,
+> and `set_wd()` resolves to it with ten legacy directories still present. The override was
+> exercised by both `make install CMAKE_INSTALL_PREFIX=…` and the environment variable.
+>
+> **Not covered by this fix:** relocating `sim_output` outside the install root
+> (Phase 3 step 6). That remains worthwhile for a different reason — keeping run output out
+> of a directory that `make install` overwrites — but it is no longer urgent, and it is not
+> free: `rStride_gtester_covid19.R:335/351` and `rStride_abc.R:114/143` do
+> `setwd(project_dir)` followed by `setwd('../..')`, which assumes a two-level *relative*
+> path and would silently land in `$HOME` if the output directory became absolute.
 
 ### F2. rStride is a package that was never allowed to become one
 
@@ -923,7 +941,16 @@ Steps:
 5. Replace hardcoded paths with a single `stride_paths()` object resolved once at
    `run_rStride()` entry.
 6. Relocate `sim_output` outside the install root (`STRIDE_OUTPUT_DIR`, default
-   `~/stride_runs/`). Add a `~/opt/stride-current` symlink.
+   `~/stride_runs/`). **No longer urgent** — F1 is resolved by the stable install prefix,
+   so output no longer moves — but still worth doing, because `make install` overwrites
+   the directory that run output sits in. The `~/opt/stride-current` symlink of the
+   original plan is obsolete: the root itself is now stable.
+
+   Note this step is not free. `rStride_gtester_covid19.R:335/351` and
+   `rStride_abc.R:114/143` do `setwd(project_dir)` then `setwd('../..')`, which assumes a
+   two-level *relative* path; an absolute output directory would silently land them in
+   `$HOME`. Both must be converted to save and restore the working directory explicitly,
+   as `rStride_main_abc.R` already does with `wd_start`.
 7. Flip experiment scripts to `library(rStride)` and drop the R library copy from
    `main/r/CMakeLists.txt`. This also removes the "edits in `bin/rstride/` are destroyed
    on rebuild" trap.

@@ -22,7 +22,7 @@ is cited inline, like this: *(see F12 in the refactoring plan)*.
 repo/stride_2026/
   main/cpp/          C++ kernel            ──┐
   main/r/*.R         experiment scripts    ──┤
-  main/r/rstride/    core R functions      ──┼── make install ──▶  ~/opt/stride-<N>/
+  main/r/rstride/    core R functions      ──┼── make install ──▶  ~/opt/stride/
   main/resources/    data, config          ──┘                        bin/stride      (binary)
                                                                       bin/*.R         (experiment scripts)
                                                                       bin/rstride/    (core R, copied)
@@ -32,15 +32,22 @@ repo/stride_2026/
                                                                       sim_output/     (created at runtime)
 ```
 
-The install prefix is derived in `Makefile:35-36`:
+The install prefix is set in `Makefile`:
 
 ```make
-LABEL = $(shell git rev-list HEAD --count)
-CMAKE_INSTALL_PREFIX = $(HOME)/opt/stride-$(LABEL)
+CMAKE_INSTALL_PREFIX ?= $(HOME)/opt/stride
 ```
 
-**The install root is a function of the commit count.** Every commit produces a new
-install directory. Observed on this machine: `stride-745, 746, 748, 798, 806, 815, 820`.
+**The install root is stable.** `?=` means an environment variable or a `make` argument
+overrides it, so a side-by-side install is still possible:
+
+```sh
+make install CMAKE_INSTALL_PREFIX=$HOME/opt/stride-test
+```
+
+Until 2026-10-05 the prefix was `$(HOME)/opt/stride-$(git rev-list HEAD --count)`, so
+every commit produced a new install directory — ten of them had accumulated on the
+development machine — and each one stranded the previous `sim_output/`. That was F1.
 
 Experiment scripts are installed by an explicit file list in `main/r/CMakeLists.txt`;
 the `rstride/` library is installed wholesale as a directory (excluding `*.Rproj*`
@@ -52,13 +59,14 @@ The user changes directory to the install root and executes a script from there,
 because all internal paths are relative to that root:
 
 ```
-cd ~/opt/stride-820
+cd ~/opt/stride
 ./bin/rStride_contacts.R
 ```
 
-`.rstride$set_wd()` (`Misc.R:588`) automates this: it scans `$HOME/opt`, parses the
-numeric suffix of `stride-<N>`, and `setwd()`s to the highest one. It falls back to
-`$VSC_SCRATCH` on the UA cluster.
+`.rstride$set_wd()` automates this: it `setwd()`s to `$HOME/opt/stride`. If that does not
+exist it falls back to the highest-numbered legacy `stride-<N>` directory, with a warning,
+so a machine that has not been reinstalled since the change keeps working. On the UA
+cluster it falls back to `$VSC_SCRATCH`.
 
 ### 1.3 The R load sequence
 

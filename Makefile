@@ -30,10 +30,15 @@ ifeq ($(PARALLEL_MAKE),)
 endif
 
 #============================================================================
-#   Test related: had to duplicate CMAKE_INSTALL_PREFIX here for gtester
+#   Install location (duplicated here for the gtester target)
 #============================================================================
-LABEL=$(shell git rev-list HEAD --count)
-CMAKE_INSTALL_PREFIX  = $(HOME)/opt/stride-$(LABEL)
+# A STABLE install root. This used to be $(HOME)/opt/stride-$(git rev-list HEAD --count),
+# so every commit produced a new install directory and stranded the previous sim_output/
+# in the old one (plan F1). The commit count is also branch-dependent and not unique, so
+# two branches or a worktree could silently share a root.
+#
+# Override for a side-by-side install:  make install CMAKE_INSTALL_PREFIX=$(HOME)/opt/stride-test
+CMAKE_INSTALL_PREFIX ?= $(HOME)/opt/stride
 
 #============================================================================
 # 	CMake command
