@@ -20,7 +20,7 @@
 #
 ############################################################################# #
 
-#.rstride$set_wd()  #DEVELOPMENT: to set the work directory as the latest stride install dir 
+#.rstride$set_wd()  #DEVELOPMENT: to set the work directory as the latest stride install dir
 #.rstride$load_pd() #DEVELOPMENT: to retrieve the latest project directory (project_dir)
 
 # load required R package
@@ -171,6 +171,56 @@ if(!(exists('.rstride'))){
   return(exp_tag)
 }
 
+
+############################# #
+## STRIDE KERNEL           ####
+############################# #
+
+# Run the stride binary and stop with a clear message if it does not succeed.
+#
+# system() returns the exit status but the workbench used to discard it, so a kernel
+# crash surfaced further down as an unexplained error about a missing summary.csv,
+# raised from inside a parallel worker with no indication of which experiment failed.
+# In a multi-thousand-run fitting grid that is the difference between a fit taken over
+# the runs that survived and a fit that is known to be complete.
+.rstride$run_stride_binary <- function(cmd, exp_id = NA, config_filename = NA, ignore_stdout = TRUE){
+
+  exit_status <- system(cmd, ignore.stdout = ignore_stdout)
+
+  if(exit_status != 0){
+
+    # 127 is the shell's "command not found", which here almost always means the
+    # binary is missing rather than that the simulation failed
+    hint <- if(exit_status == 127) '\n  hint: the stride binary was not found -- is this being run from the install root?' else ''
+
+    stop(paste0('STRIDE FAILED with exit status ', exit_status,
+                if(!is.na(exp_id)) paste0(' on experiment ', exp_id) else '',
+                if(!is.na(config_filename)) paste0('\n  config:  ', config_filename) else '',
+                '\n  command: ', cmd,
+                hint),
+         call. = FALSE)
+  }
+
+  return(invisible(exit_status))
+}
+
+# Read the summary.csv a stride run is expected to have produced.
+#
+# A run can exit 0 and still write no summary, so checking the exit status alone does
+# not remove the opaque failure this is meant to replace.
+.rstride$read_stride_summary <- function(summary_filename, exp_id = NA, config_filename = NA){
+
+  if(!file.exists(summary_filename)){
+    stop(paste0('STRIDE PRODUCED NO SUMMARY FILE',
+                if(!is.na(exp_id)) paste0(' for experiment ', exp_id) else '',
+                '\n  expected: ', summary_filename,
+                if(!is.na(config_filename)) paste0('\n  config:   ', config_filename) else '',
+                '\n  the run reported success, so check output_summary in the configuration'),
+         call. = FALSE)
+  }
+
+  return(read.table(summary_filename, header = TRUE, sep = ','))
+}
 
 ############################# #
 ## XML FUNCTIONS           ####
@@ -535,6 +585,33 @@ if(!(exists('.rstride'))){
     return(false)
   }
   
+  return(TRUE)
+}
+
+# contact probability rule
+# the rule that combines both age-specific contact probabilities of a candidate contact pair.
+# NOTE: this is a calibration dependency -- the <transmission> b0/b1/b2 fit in every disease
+# file is only valid for the rule it was fitted under. The C++ kernel defaults to 'Min',
+# which is the rule all committed calibrations were produced with.
+.rstride$valid_contact_probability_rule <- function(exp_design){
+
+  # the parameter is optional: if it is not part of the design, the kernel default applies
+  if(is.null(exp_design$contact_probability_rule)){
+    return(TRUE)
+  }
+
+  valid_rules <- c('Min','Mean')
+  is_valid    <- exp_design$contact_probability_rule %in% valid_rules
+
+  if(any(!is_valid)){
+    smd_print('INVALID CONTACT PROBABILITY RULE(S):',
+              paste(unique(exp_design$contact_probability_rule[!is_valid]),collapse = ' '),
+              '-- VALID:', paste(valid_rules,collapse = ' '),
+              WARNING=T)
+    return(FALSE)
+  }
+
+  # else => return TRUE
   return(TRUE)
 }
 

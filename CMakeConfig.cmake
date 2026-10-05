@@ -48,6 +48,8 @@ set(STRIDE_FORCE_NO_OPENMP	FALSE
 	CACHE BOOL "Do NOT use OpenMP even if available.")
 set(STRIDE_BUILD_TEST_CASES TRUE
 	CACHE BOOL "Build test binaries.")
+set(STRIDE_INSTALL_POPULATION_PDF FALSE
+	CACHE BOOL "Install population reference PDFs bundled in the data zips.")
 
 #============================================================================
 # Additional CMake modules:

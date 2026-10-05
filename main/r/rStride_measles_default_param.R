@@ -26,22 +26,22 @@
 ################################## #
 
 # get default parameter values to combine in a full-factorial grid
-get_covid19_default_param <- function(){
+get_measles_default_param <- function(){
    
    ## parameters from a20201031_132800_param4_d73_05k_n10_parameter_pareto_incidence_single_hosp
-   out <- list(r0                             = 3.42,
-                num_days                      = 196,
-                num_rng_seeds                 = 10,
-                num_participants_survey       = 30,
-                num_infected_seeds            = 263,
-                disease_config_file           = "data/disease_covid19_lognorm.xml",
-                population_file               = "data/pop_belgium11M_c500_teachers_censushh.csv",
-                age_contact_matrix_file       = "data/contact_matrix_flanders_conditional_teachers.xml",
+   out <- list(r0                             = seq(12,14,2),
+                num_days                      = c(40,50),
+                num_seeds                     = 2,
+                num_participants_survey       = 5000,
+                num_infected_seeds            = 10,
+                disease_config_file           = "data/disease_measles.xml",
+                population_file               = "data/pop_US-WI-Dane_h25k_c500.csv",
+                age_contact_matrix_file       = "data/contacts_usa/contact_matrix_usa.xml",
                
                 # update 2024-01-12: shifted from 17/2 to 16/2 because infected cases are now introduced on day 0 instead of -1 
-                start_date                    = '2020-02-16', 
+                start_date                    = '2023-01-01', ## Start from 2023
                 # holidays_file                 = 'calendar_belgium_2020_covid19_exit_school_adjusted.csv',
-                holidays_file                 = 'data/calendar_belgium_2019_2021.csv',
+                holidays_file                 = 'data/calendar_USA_2023_2026_measles.csv',
                 cnt_intensity_householdCluster = 0,
                
                 # tracing 
@@ -76,32 +76,32 @@ get_covid19_default_param <- function(){
    
    
    # 2020 lock down parameters
-   date_t0                    <- as.Date('2020-03-13')
-   cnt_reduction_workplace    <- 0.86
-   cnt_reduction_school       <- 1
-   cnt_reduction_other        <- 0.85
-   compliance_delay_workplace <- 7
-   compliance_delay_school    <- 0
-   compliance_delay_other     <- 7
+   # date_t0                    <- as.Date('2020-03-13')
+   # cnt_reduction_workplace    <- 0.86
+   # cnt_reduction_school       <- 1
+   # cnt_reduction_other        <- 0.85
+   # compliance_delay_workplace <- 7
+   # compliance_delay_school    <- 0
+   # compliance_delay_other     <- 7
    
    # include 2020 lock-down parameters
-   out$distancing_workplace_ratio         <- c_str(cnt_reduction_workplace)
-   out$distancing_workplace_date          <- c_str(paste(date_t0))
-   out$distancing_workplace_delay         <- c_str(7)
-   
-   out$distancing_community_ratio        <- c_str(cnt_reduction_other)
-   out$distancing_community_date         <- c_str(paste(date_t0))
-   out$distancing_community_delay        <- c_str(7)
-   
-   out$distancing_school_ratio        <- 1
-   out$distancing_school_date         <- paste(date_t0) 
-   out$distancing_school_delay        <- 1 # school closure did not start on Friday 13/3.
+   # out$distancing_workplace_ratio         <- c_str(cnt_reduction_workplace)
+   # out$distancing_workplace_date          <- c_str(paste(date_t0))
+   # out$distancing_workplace_delay         <- c_str(7)
+   # 
+   # out$distancing_community_ratio        <- c_str(cnt_reduction_other)
+   # out$distancing_community_date         <- c_str(paste(date_t0))
+   # out$distancing_community_delay        <- c_str(7)
+   # 
+   # out$distancing_school_ratio        <- 1
+   # out$distancing_school_date         <- paste(date_t0) 
+   # out$distancing_school_delay        <- 1 # school closure did not start on Friday 13/3.
    
    # number of parallel workers (on UA cluster)
-   out$num_parallel_workers <- 50
+   # out$num_parallel_workers <- 50
    
    # # household clustering?
-   # out$household_clustering_ratio       <- c_str(4/7)
+   # out$household_clustering_ratio <- c_str(4/7)
    # out$household_clustering_ratio_date  <- c_str(out$start_date)
    # out$household_clustering_ratio_delay <- c_str(0)
    

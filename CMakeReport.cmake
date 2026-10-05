@@ -31,6 +31,7 @@ message( STATUS " " )
 message( STATUS "------> STRIDE_INCLUDE_DOC          : ${STRIDE_INCLUDE_DOC} "      )
 message( STATUS "------> STRIDE_FORCE_NO_OPENMP      : ${STRIDE_FORCE_NO_OPENMP}"   )
 message( STATUS "------> STRIDE_BUILD_TEST_CASES     : ${STRIDE_BUILD_TEST_CASES}"   )
+message( STATUS "------> STRIDE_INSTALL_POPULATION_PDF : ${STRIDE_INSTALL_POPULATION_PDF}"   )
 
 #
 message( STATUS " " )

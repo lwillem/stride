@@ -20,6 +20,7 @@
 
 #include "SimBuilder.h"
 
+#include "contact/ContactProbabilityRule.h"
 #include "contact/ContactType.h"
 #include "contact/InfectorMap.h"
 #include "contact/ContactDivider.h"
@@ -56,6 +57,10 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         sim->m_run_simplified                = m_config.get<bool>("run.run_simplified", false);
         sim->m_subpools_community            = m_config.get<bool>("run.subpools_community_used", false);
         sim->m_airborne_transmission         = m_config.get<bool>("run.airborne_transmission", false);
+        // Rule combining both age-specific contact probabilities. Defaults to "Min": the rule every
+        // committed disease-file R0 calibration was fitted under. Changing it requires a refit.
+        sim->m_contact_probability_rule      = ContactProbabilityRule::ToRule(
+                                                   m_config.get<string>("run.contact_probability_rule", "Min"));
         // TO DO!!! test only airborne transmission if subpools community!!!
         sim->m_num_threads                   = m_config.get<unsigned int>("run.num_threads");
         unsigned int num_days                = m_config.get<unsigned short>("run.num_days");

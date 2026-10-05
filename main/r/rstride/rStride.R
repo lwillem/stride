@@ -46,7 +46,13 @@ smd_load_packages(c('XML',           # to parse and write XML files
                     'corrplot',      # to visualise the parameter correlations in the paretor front selection
                     'wpp2019',       # to derive population data
                     'dplyr',         # to join data.frames and data.tables
-                    'useful'         # to use compare.list
+                    'useful',        # to use compare.list
+                    
+                    'haven',        # to compile USA population file(s)
+                    'VGAM',         # to compile USA population file(s)
+                    'sf',           # to compile USA population file(s)
+                    'tigris',       # to compile USA population file(s)
+                    'usmap'         # to compile USA population file(s)
                     ))
 
 # load general help functions
@@ -56,9 +62,18 @@ source('./bin/rstride/Misc.R')
 rStride_files <- dir('./bin/rstride',recursive = T,pattern = '\\.R',full.names = T)
 rStride_files <- rStride_files[rStride_files != "./bin/rstride/rStride.R"]
 rStride_files <- rStride_files[! grepl('\\.Rmd',rStride_files)]
+to_remove <- c("./bin/rstride/TransmissionInspector_old.R", 
+               "./bin/rstride/factories/CalendarFactory_testing.R",
+               "./bin/rstride/factories/CalendarFactory_USA.R",
+               "./bin/rstride/factories/PopulationFactory_USA.R",
+               "./bin/rstride/social_contacts_usa2026.R",
+               "./bin/rstride/MeaslesClustering.R")
+rStride_files <- rStride_files[!(rStride_files %in% to_remove)]
 
 # load all (remaining files)
-sapply(rStride_files,source)
+sapply(rStride_files, function(f) {
+  source(f)
+})
 
 # disable scientific notation (prevent interference with cpp)
 options(scipen=999)
@@ -258,7 +273,8 @@ run_rStride <- function(exp_design               = exp_design,
      .rstride$valid_r0_values(exp_design)  == FALSE ||
      .rstride$valid_immunity_profiles(exp_design)  == FALSE ||
      .rstride$valid_seed_infected(exp_design) == FALSE ||
-     .rstride$valid_cnt_param(exp_design) == FALSE){
+     .rstride$valid_cnt_param(exp_design) == FALSE ||
+     .rstride$valid_contact_probability_rule(exp_design) == FALSE){
     
     .rstride$cli_abort('design of experiment is not valid')
     return(.rstride$no_return_value())
@@ -368,11 +384,16 @@ run_rStride <- function(exp_design               = exp_design,
                        if(stdout_fn != "") {
                         cmd = paste(cmd, paste0(" > ",out_dir,"/",stdout_fn)) 
                        }
-                       system(cmd,ignore.stdout = ignore_stdout)
+                       .rstride$run_stride_binary(cmd,
+                                                  exp_id          = i_exp,
+                                                  config_filename = config_exp_filename,
+                                                  ignore_stdout   = ignore_stdout)
 
                        # load output summary
                        summary_filename <- file.path(output_prefix,'summary.csv')
-                       run_summary      <- read.table(summary_filename,header=T,sep=',')
+                       run_summary      <- .rstride$read_stride_summary(summary_filename,
+                                                                        exp_id          = i_exp,
+                                                                        config_filename = config_exp_filename)
                        
                        # merge output summary with input param
                        # note: do not use "merge" to prevent issues with decimal numbers
@@ -473,6 +494,8 @@ get_prevalence_data <- function(config_exp,file_name){
   }
 
 }
+
+# load 
 
 # help function to combine numerical values into a string format
 c_str <- function(...){

@@ -1,0 +1,98 @@
+# Nightly full-pipeline regression: runs the rStride suite against the stored
+# reference .rds files.
+#
+# Not a pull-request gate: the suite is ~1336 s of simulation time across 115
+# runs, which is too slow to sit in front of every change.
+#
+# STATUS: draft, blocked on prerequisites. See
+# doc/markdown/rStride_architecture_and_refactoring.md section 9.4:
+#   1. Phase 3b   -- remove -ffast-math, or results are not comparable across
+#                    compilers and this job can never pass reliably.
+#   2. Phase 4    -- one clean reference reset; the six .rds files currently
+#                    span two dates six weeks apart (F6).
+#   3. Phase 4    -- the comparison engine must return a non-zero exit code on
+#                    failure. Today rStride_gtester_covid19.R only prints, so
+#                    CI cannot detect a regression.
+#   4. Phase 1    -- move sf/tigris/usmap/haven/VGAM to Suggests, or every run
+#                    installs a geospatial stack it never uses.
+# Until these land this workflow is informational: it runs, uploads artefacts
+# and does not gate anything.
+
+name: Nightly regression
+
+on:
+  schedule:
+    - cron: '0 2 * * *'     # 02:00 UTC daily
+  workflow_dispatch:
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            cmake ninja-build ccache libomp-dev
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: 'release'
+          # Posit Package Manager serves precompiled Linux binaries; building
+          # sf and friends from source would take longer than the suite itself.
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          # Once rStride is a package (Phase 1) this reads its DESCRIPTION.
+          # Until then, list what the suite actually needs.
+          packages: |
+            any::XML
+            any::doParallel
+            any::data.table
+            any::ggplot2
+            any::gridExtra
+            any::mgcv
+            any::openxlsx
+            any::scales
+            any::tidyr
+            any::lhs
+            any::corrplot
+            any::wpp2019
+            any::dplyr
+            any::useful
+          cache-version: 1
+
+      # Pin rather than tracking HEAD, so a change in that repository cannot
+      # silently alter a regression result.
+      - name: Install simid.rtools (pinned)
+        run: |
+          Rscript -e 'remotes::install_github("lwillem/simid_rtools@v0.1.43", upgrade = "never")'
+
+      - name: Build and install stride
+        run: make install
+
+      - name: Run the rStride regression suite
+        id: regression
+        run: |
+          STRIDE_DIR="$(ls -d "$HOME"/opt/stride-* | tail -1)"
+          cd "$STRIDE_DIR"
+          Rscript ./bin/rStride_gtester_covid19.R 2>&1 | tee regression.log
+
+      - name: Upload regression output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: regression-output
+          path: |
+            ~/opt/stride-*/regression.log
+            ~/opt/stride-*/sim_output/**/*.pdf
+            ~/opt/stride-*/sim_output/**/*_summary.csv
+          if-no-files-found: warn
+          retention-days: 14

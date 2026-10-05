@@ -28,6 +28,7 @@ set(STRIDE_SRC
     contact/ContactHeterogeneitySeeder.cpp
     contact/ContactPool.cpp
     contact/ContactPoolSys.cpp
+    contact/ContactProbabilityRule.cpp
     contact/ContactType.cpp
     contact/EventLogMode.cpp
     contact/Infector.cpp
@@ -56,6 +57,7 @@ set(STRIDE_SRC
     util/FileSys.cpp
     util/GammaDistribution.cpp
     util/LogUtils.cpp
+    util/PopSnapshotWriter.cpp
     util/Ptree.cpp
     util/RunConfigManager.cpp
     util/SummaryFile.cpp

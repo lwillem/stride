@@ -27,16 +27,19 @@ INSTALL(DIRECTORY
 )
 
 # rStride analysis scripts
-INSTALL( FILES 			
-            rStride_abc.R
-            rStride_contacts.R
-            rStride_covid19_default_param.R	 	
-            rStride_explore.R
-            rStride_epiql.R
-            rStride_gtester_covid19.R
-            rStride_r0.R 	
-			rStride_MDP.R
+#
+# Globbed rather than enumerated by hand. The list used to be maintained manually and
+# had drifted: rStride_measles_default_param.R, rStride_param.R and rStride_r0_measles.R
+# existed in the repository but never reached bin/, so scripts sourcing them failed with
+# a missing-file error that pointed at the install directory rather than at this list.
+#
+# CONFIGURE_DEPENDS makes CMake re-evaluate the glob at build time, so adding a script is
+# just adding the file. Note the top-level Makefile runs `configure` before `all`, so a
+# plain `make install` picks up new scripts either way.
+FILE(GLOB RSTRIDE_SCRIPTS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/rStride_*.R")
+LIST(SORT RSTRIDE_SCRIPTS)
 
+INSTALL( FILES ${RSTRIDE_SCRIPTS}
 	DESTINATION ${BIN_INSTALL_LOCATION}  
 	PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_WRITE GROUP_READ
 )

@@ -1,0 +1,73 @@
+# Per-pull-request gate: build the C++ kernel and run the scenario test suite.
+#
+# Deliberately excludes the R regression suite, which takes ~22 minutes of
+# simulation time and runs nightly instead (see regression.yml).
+#
+# STATUS: draft. See doc/markdown/rStride_architecture_and_refactoring.md section 9.
+
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: ${{ matrix.compiler }} / ${{ matrix.build_type }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc, clang]
+        build_type: [Release]
+
+    steps:
+      # Shallow clone: the repository carries ~110 MB of historical binary
+      # weight (F14) that no build needs. fetch-depth 1 avoids all of it.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            cmake ninja-build ccache libomp-dev
+          # No Boost required: util/Ptree.h is a pugixml-based replacement for
+          # boost::property_tree. trng, pugixml, spdlog and tclap are vendored
+          # under main/resources/lib.
+
+      - name: Select compiler
+        run: |
+          if [ "${{ matrix.compiler }}" = "gcc" ]; then
+            echo "CC=gcc"  >> "$GITHUB_ENV"
+            echo "CXX=g++" >> "$GITHUB_ENV"
+          else
+            echo "CC=clang"   >> "$GITHUB_ENV"
+            echo "CXX=clang++" >> "$GITHUB_ENV"
+          fi
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ matrix.compiler }}-${{ matrix.build_type }}
+
+      # `make gtest` configures, builds, installs to
+      # $HOME/opt/stride-$(git rev-list HEAD --count) and runs bin/gtester.
+      # With fetch-depth 1 that count is 1, which is harmless.
+      - name: Build and run the C++ scenario suite
+        run: make gtest CMAKE_BUILD_TYPE=${{ matrix.build_type }}
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gtester-${{ matrix.compiler }}
+          path: ~/opt/stride-*/tests/gtester_all.xml
+          if-no-files-found: warn

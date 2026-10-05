@@ -70,7 +70,7 @@ inspect_incidence_data <- function(project_dir, bool_add_param=TRUE)
   ## REFERENCE DATA COVID-19: new hospital admissions ----
   # use (local version of) most recent SCIENSANO data (or backup version)
   #ref_data          <- get_observed_incidence_data()
-  ref_data          <- get_hospital_incidence_age()
+  ref_data          <- get_hospital_incidence_age(project_summary$reference_hospital_data_file)
   ref_data$sim_date <- as.Date(ref_data$sim_date)
   dim(ref_data)
   
@@ -85,7 +85,7 @@ inspect_incidence_data <- function(project_dir, bool_add_param=TRUE)
   hosp_adm_data <- hosp_adm_data[flag_compare,]
   
   ## SEROPREVALENCE DATA
-  prevalence_ref <- load_observed_seroprevalence_data()
+  prevalence_ref <- load_observed_seroprevalence_data(project_summary$reference_serology_data_file)
   
   # select simulation period
   sel_ref_dates <- prevalence_ref$seroprevalence_date %in% data_incidence_all$sim_date
@@ -242,7 +242,7 @@ plot_incidence_data <- function(data_incidence_sel,project_summary,
                        pch = 20 , # if points are used
                        stringsAsFactors = F)  # data
   
-  # change transparancey for low number of rng-runs
+  # change transparency for low number of rng-runs
   if(max(table(project_summary$config_id)) < 10){
     pcolor$alpha <- 0.2
   }
@@ -255,7 +255,7 @@ plot_incidence_data <- function(data_incidence_sel,project_summary,
   data_incidence_sel[bool_NA,] <- NA
   
   # set y-lim
-  y_lim <- range(0,pretty(max(hosp_adm_data$num_adm,na.rm=T)*1.1),max(data_incidence_sel$new_hospital_admissions,na.rm=T),na.rm=T)
+  y_lim <- range(0,pretty(max(c(hosp_adm_data$num_adm,data_incidence_sel$new_hospital_admissions),na.rm=T)*1.1))
 
   ## HOSPITAL ADMISSIONS ####
   plot(data_incidence_sel$sim_date,
@@ -292,7 +292,7 @@ plot_incidence_data <- function(data_incidence_sel,project_summary,
   if(bool_only_hospital_adm){ return() } # stop
   
   ## CUMULATIVE: HOSPITAL ####
-  y_lim <- range(0,pretty(max(hosp_adm_data$cum_adm,na.rm=T)*2,data_incidence_sel$cumulative_hospital_cases),na.rm=T)
+  y_lim <- range(0,pretty(max(c(hosp_adm_data$cum_adm*2,data_incidence_sel$cumulative_hospital_cases),na.rm=T)))
   # plot(data_incidence_sel$sim_date,
   #      data_incidence_sel$cumulative_hospital_cases,
   #      type='l',
@@ -670,7 +670,7 @@ add_y_axis_pop <- function(y_lim,pop_size = 11e6){
   
   # add axis
   axis(4,pretty(y_lim),paste0(round(pretty(y_lim)/pop_size*100,digits=1),'%'),las=2,cex.axis=0.9)
-  mtext('Belgian population (%)',side = 4,line=3,cex=0.7)
+  mtext('Population (%)',side = 4,line=3,cex=0.7)
 }
 
 
