@@ -143,3 +143,63 @@ git checkout integration/measles-usa
 Note: the build unpacks population archives at configure time, so if you have an existing
 build directory, reconfigure — `cmake` is now set to re-check for new archives, but an
 old build directory predates that.
+
+---
+
+## 8. Regression suite result — the merge changes nothing
+
+Added 2026-10-05, after running the R regression suite on both sides.
+
+**Headline: your merged code does not change any result.** The full suite (23 scenarios
+x 5 seeds = 115 runs) was run twice — once on `measles_usa` before the merge, once on
+`integration/measles-usa` after it — and the outputs are identical:
+
+- same 115 rows, same 74 columns
+- `num_cases` identical in every run
+- every numeric output column identical
+
+The only column that differs is `holidays_file`, and only because it embeds each run's own
+timestamped output directory (`..._124032_...` vs `..._123317_...`). Same filenames.
+
+**The diffs against the stored references are pre-existing, not caused by the merge.**
+Both runs were compared against `tests/*.rds` and returned *identical* lists of changed
+scenarios:
+
+| stream | scenarios differing from reference | before merge | after merge |
+|---|---|---|---|
+| summary | 23 | ✓ | identical set |
+| incidence | 22 | ✓ | identical set |
+| prevalence | 22 | ✓ | identical set |
+| contacts | `covid_logParticipants` | ✓ | identical set |
+| participants | `covid_daily` | ✓ | identical set |
+
+The references are stale relative to `measles_usa`, which has had 53 commits since the last
+reference reset, and the six files were already split across two dates six weeks apart
+(Jul 6 and Aug 25 — plan F6). Magnitudes are small and consistent with drift rather than a
+break: `covid_collectivity_mixing` +3.7 %, `covid_collectivity` +2.3 %, three scenarios
+−1.5 %, most under 1 %, and `covid_airborne`, `covid_hosp` and `covid_suscept_adapt`
+unchanged at 0.0 %.
+
+A single clean `rrv()` on the consolidated baseline is what resolves this, and the result
+above is what makes it safe to do: the reset will describe one known commit rather than a
+mixture of code states.
+
+### A pre-existing failure, unrelated to the merge
+
+`rStride_gtester_covid19.R` does not reach its comparison section. It halts in the ABC
+test, identically on both builds:
+
+```
+Error in abc_out[i_ref] <- data_incidence_all[sim_date == sum_stat_obs$date[i_ref],  :
+  replacement has length zero
+Calls: run_rStride_abc
+```
+
+`rStride_main_abc.R:221`. `sum_stat_obs.rds` is absent from the project directory, so the
+fallback at line 180 derives the reference period from the simulation's own dates, yet a
+row of `sum_stat_obs$date` then matches no `sim_date`. Under investigation separately.
+
+Consequences worth knowing: the comparison above had to be driven directly against the
+completed runs rather than through the script, `out_abc` is the one reference stream that
+could not be checked, and the suite cannot gate CI until this is fixed (plan section 9.4,
+point 3).
