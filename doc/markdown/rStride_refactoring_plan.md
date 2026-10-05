@@ -831,16 +831,38 @@ must not change. Independent of the branch consolidation and safe to do at any t
       terminal application;
    2. install native Homebrew at `/opt/homebrew` (it coexists with the Intel prefix) and
       `brew install libomp`;
-   3. replace the inert `LDFLAGS` / `CPPFLAGS` lines in `CMakeLocal.cmake` with
-      `set(OpenMP_ROOT /opt/homebrew/opt/libomp)`;
-   4. **delete `cmake-build-release/` outright** — `HAVE_CHECKED_OpenMP` is cached, and
+   3. point CMake at it. **`CMakeLocal.cmake` is gitignored** (`.gitignore:32`) — it is the
+      per-machine override hook — so this step is not carried by the repository and every
+      machine has to do it. Replace the `LDFLAGS` / `CPPFLAGS` lines, which CMake ignores
+      entirely (they are autotools/make names), with:
+
+      ```cmake
+      # Included BEFORE project(), so APPLE and CMAKE_SYSTEM_PROCESSOR are NOT yet
+      # defined here — do not guard on them.
+      if(EXISTS /opt/homebrew/opt/libomp)
+          set(OpenMP_ROOT /opt/homebrew/opt/libomp)
+          message(STATUS "OpenMP: using native Homebrew libomp at ${OpenMP_ROOT}")
+      endif()
+      ```
+
+      `OpenMP_ROOT` is the variable `FindOpenMP` consults, and a standalone probe confirms
+      detection succeeds once it is set. Do **not** auto-select `/usr/local/opt/libomp`:
+      it would be found, and that is the trap in step 5 — an Intel `libomp` links happily
+      into a translated build;
+   4. **delete the build directory outright** — `HAVE_CHECKED_OpenMP` is cached, and
       `make clean` does not remove it;
    5. reconfigure **from the native shell**, or CMake will target `x86_64` and produce a
       translated build that links the Intel `libomp` and appears to work;
-   6. expect a link failure and fix it: `CMakeCPP.cmake:112` adds `${OpenMP_CXX_FLAGS}` to
-      the compile flags but never links the runtime. The correct remedy is the imported
-      target, `target_link_libraries(libstride PUBLIC OpenMP::OpenMP_CXX)` (Phase 7b);
-   7. verify with `otool -L ~/opt/stride-*/bin/stride | grep omp`.
+   6. the link side is **already done** (`94c9fcd`): `libstride` links the
+      `OpenMP::OpenMP_CXX` imported target, guarded on `OPENMP_FOUND`, so compile *and*
+      link flags are both supplied. `CMakeCPP.cmake` previously added
+      `${OpenMP_CXX_FLAGS}` to the compile flags only, so a successful detection would
+      still have failed at link time;
+   7. verify with `otool -L ~/opt/stride/bin/stride | grep omp`;
+   8. expect the C++ gtester's second instantiation to become genuinely multi-threaded for
+      the first time. It may need expected values of its own: the random-number manager is
+      indexed by `omp_get_thread_num()`, so `num_threads > 1` draws from different streams.
+      Repairing the build is a separate decision from enabling threads in production.
 
 7. **Add `CONFIGURE_DEPENDS` to the resource globs** (F7.1), so a population archive added
    after a build directory exists is actually unpacked and installed. Consider moving the
