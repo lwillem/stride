@@ -73,9 +73,8 @@ class ContactPool;
 
 /// Actual contacts and transmission in contactpool (primary template).
 /// \tparam LL          LogLevel
-/// \tparam TIC         TrackIndexCase
 /// \tparam TO          TransmissionOptimization
-template <EventLogMode::Id LL, bool TIC, bool TO = UseOptimizedInfector<LL>::value>
+template <EventLogMode::Id LL, bool TO = UseOptimizedInfector<LL>::value>
 class Infector
 {
 public:
@@ -89,9 +88,8 @@ public:
 
 /// Time-optimized version (For None || Transmission logging).
 /// \tparam LL          LogLevel
-/// \tparam TIC         TrackIndexCase
-template <EventLogMode::Id LL, bool TIC>
-class Infector<LL, TIC, true>
+template <EventLogMode::Id LL>
+class Infector<LL, true>
 {
 public:
         ///
@@ -103,15 +101,10 @@ public:
 };
 
 /// Explicit instantiations in cpp file.
-extern template class Infector<EventLogMode::Id::None, false>;
-extern template class Infector<EventLogMode::Id::None, true>;
-extern template class Infector<EventLogMode::Id::Incidence, false>;
-extern template class Infector<EventLogMode::Id::Incidence, true>;
-extern template class Infector<EventLogMode::Id::Transmissions, false>;
-extern template class Infector<EventLogMode::Id::Transmissions, true>;
-extern template class Infector<EventLogMode::Id::Participants, false>;
-extern template class Infector<EventLogMode::Id::Participants, true>;
-extern template class Infector<EventLogMode::Id::All, false>;
-extern template class Infector<EventLogMode::Id::All, true>;
+extern template class Infector<EventLogMode::Id::None>;
+extern template class Infector<EventLogMode::Id::Incidence>;
+extern template class Infector<EventLogMode::Id::Transmissions>;
+extern template class Infector<EventLogMode::Id::Participants>;
+extern template class Infector<EventLogMode::Id::All>;
 
 } // namespace stride

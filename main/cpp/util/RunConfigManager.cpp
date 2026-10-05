@@ -103,7 +103,6 @@ string RunConfigManager::CreateTestsInfluenza()
         <seeding_age_max>99</seeding_age_max>
         <start_date>2020-04-01</start_date>
         <stride_log_level>info</stride_log_level>
-        <track_index_case>false</track_index_case>
         <use_install_dirs>true</use_install_dirs>
         <vaccine_profile>None</vaccine_profile>
 </run>
@@ -134,7 +133,6 @@ string RunConfigManager::CreateTestsMeasles()
         <num_infected_seeds>1200</num_infected_seeds>
         <start_date>2020-03-29</start_date>
         <stride_log_level>info</stride_log_level>
-        <track_index_case>false</track_index_case>
         <use_install_dirs>true</use_install_dirs>
         <vaccine_link_probability>0</vaccine_link_probability>
         <vaccine_profile>Random</vaccine_profile>
@@ -169,7 +167,6 @@ string RunConfigManager::CreateTestsCovid19()
         <seeding_age_max>99</seeding_age_max>
         <start_date>2020-03-04</start_date>
         <stride_log_level>info</stride_log_level>
-        <track_index_case>false</track_index_case>
         <use_install_dirs>true</use_install_dirs>
         <vaccine_profile>None</vaccine_profile>
         <num_daily_imported_cases>0</num_daily_imported_cases>

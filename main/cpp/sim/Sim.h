@@ -85,7 +85,6 @@ private:
         stride::util::ptree m_config;                        ///< Configuration property tree
         EventLogMode::Id            m_event_log_mode;                ///< Specifies contact/transmission logging mode.
         unsigned int                m_num_threads;                   ///< The number of (OpenMP) threads.
-        bool                        m_track_index_case;              ///< General simulation or tracking index case.
 
         bool                        m_run_simplified;   ///< Run simplified simulations: all persons are present in their clusters all the time
 

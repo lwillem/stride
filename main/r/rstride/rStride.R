@@ -93,7 +93,6 @@ create_default_config <- function(config_default_filename, run_tag)
   config_default$output_summary   <- 'true'
   config_default$run_tag          <- run_tag
   config_default$num_cea_samples  <- 1e4
-  config_default$track_index_case              <- 'false'
   config_default$event_log_level               <- 'Transmissions'
   
   # variable for hospital probability estimation

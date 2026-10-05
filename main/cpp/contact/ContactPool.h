@@ -110,7 +110,7 @@ private:
         std::tuple<bool, unsigned int> SortMembers();
 
         /// Calculates contacts and transmissions; accesses private methods and data.
-        template <EventLogMode::Id LL, bool TIC, bool TO>
+        template <EventLogMode::Id LL, bool TO>
         friend class Infector;
         friend class PoolCharacteristicsSeeder;
 

@@ -24,8 +24,6 @@
 #include "contact/InfectorExec.h"
 
 #include <map>
-#include <tuple>
-#include <utility>
 
 #include "EventLogMode.h"
 
@@ -37,28 +35,19 @@ class Population;
 /**
  * Mechanism to select the appropriate Infector template to execute.
  */
-class InfectorMap : public std::map<std::tuple<stride::EventLogMode::Id, bool>, InfectorExec*>
+class InfectorMap : public std::map<stride::EventLogMode::Id, InfectorExec*>
 {
 public:
         /// Fully initialized.
         InfectorMap()
         {
-                Add<true>();
-                Add<false>();
-        }
-
-private:
-        /// Filling up the InfectorMap.
-        template <bool B>
-        void Add()
-        {
                 using namespace EventLogMode;
 
-                this->emplace(std::make_pair(std::make_tuple(Id::None, B), &Infector<Id::None, B>::Exec));
-                this->emplace(std::make_pair(std::make_tuple(Id::Incidence, B), &Infector<Id::Incidence, B>::Exec));
-                this->emplace(std::make_pair(std::make_tuple(Id::Transmissions, B), &Infector<Id::Transmissions, B>::Exec));
-                this->emplace(std::make_pair(std::make_tuple(Id::Participants, B), &Infector<Id::Participants, B>::Exec));
-                this->emplace(std::make_pair(std::make_tuple(Id::All, B), &Infector<Id::All, B>::Exec));
+                this->emplace(Id::None, &Infector<Id::None>::Exec);
+                this->emplace(Id::Incidence, &Infector<Id::Incidence>::Exec);
+                this->emplace(Id::Transmissions, &Infector<Id::Transmissions>::Exec);
+                this->emplace(Id::Participants, &Infector<Id::Participants>::Exec);
+                this->emplace(Id::All, &Infector<Id::All>::Exec);
         }
 };
 

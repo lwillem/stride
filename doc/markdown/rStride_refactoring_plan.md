@@ -748,7 +748,15 @@ Ordered so that each phase makes the next one safe. Each phase ends with a worki
    > (§7.5). If a phase in between changes results, the cause is that phase — not the
    > contact rule.
 
-### Phase 0b — Feature excision
+### Phase 0b — Feature excision — COMPLETE
+
+> **Both excisions landed 2026-10-05.** The Python/MDP interface (~1,200 lines) and
+> `track_index_case` are removed, each as one self-contained commit. Instantiations of
+> `Infector` dropped from ten to five and the `InfectorMap` key simplified from a
+> `std::tuple<EventLogMode::Id, bool>` to a plain enum, as anticipated below. Both
+> specifications in `removed_features/` record the decisions and the verification; the
+> contact-rule tombstone is live. Verified for each: C++ gtester 22/22 and all six R
+> regression streams unchanged.
 
 Both excisions are behaviour-preserving, remove code that no build currently exercises,
 and reduce the surface every later phase must carry. Each is specified in

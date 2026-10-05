@@ -39,7 +39,7 @@ using namespace stride::util;
 using namespace EventLogMode;
 
 Sim::Sim()
-    : m_config(), m_event_log_mode(Id::None), m_num_threads(1U), m_track_index_case(false),
+    : m_config(), m_event_log_mode(Id::None), m_num_threads(1U),
 	  m_run_simplified(false),
       m_calendar(nullptr), m_contact_profiles(), m_infector_default(),m_infector_tracing(),
       m_population(nullptr), m_rn_man_ptr(), m_transmission_profile(),

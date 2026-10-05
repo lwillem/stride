@@ -36,6 +36,8 @@
 #include "util/FileSys.h"
 #include "util/RnMan.h"
 
+#include <stdexcept>
+
 namespace stride {
 
 using namespace std;
@@ -53,7 +55,15 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
 		std::cout << "Read config info and setup random number manager" << std::endl;
         sim->m_config                        = m_config;
         sim->m_population                    = std::move(pop);
-        sim->m_track_index_case              = m_config.get<bool>("run.track_index_case");
+        // Tombstone: track_index_case was removed (plan F11 / Phase 0b). The ptree silently
+        // ignores unknown keys, so a configuration that still sets it true would otherwise
+        // run WITHOUT the feature and produce quietly wrong results.
+        if (m_config.get<bool>("run.track_index_case", false)) {
+                throw std::runtime_error(
+                    "run.track_index_case was removed; it suppressed onward transmission from "
+                    "every newly infected person. See "
+                    "doc/markdown/removed_features/track_index_case.md");
+        }
         sim->m_run_simplified                = m_config.get<bool>("run.run_simplified", false);
         sim->m_subpools_community            = m_config.get<bool>("run.subpools_community_used", false);
         sim->m_airborne_transmission         = m_config.get<bool>("run.airborne_transmission", false);
@@ -73,16 +83,16 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
 		// --------------------------------------------------------------
         // Select infector template(s) based on configuration.
         // --------------------------------------------------------------
-        const auto& select = make_tuple(sim->m_event_log_mode, sim->m_track_index_case);
+        const auto& select = sim->m_event_log_mode;
         sim->m_infector_default    = InfectorMap().at(select);
 
         // additional infector if logmode is ContactTracing or Participants
         if(m_config.get<string>("run.event_log_level", "None") == "ContactTracing"){
-        	const auto& select_tracing  = make_tuple(EventLogMode::ToMode("ContactTracing"), sim->m_track_index_case);
+        	const auto& select_tracing  = EventLogMode::ToMode("ContactTracing");
         	sim->m_infector_tracing    = InfectorMap().at(select_tracing);
         } else if(m_config.get<string>("run.event_log_level", "None") == "Participants"){
         	sim->m_infector_tracing    = sim->m_infector_default;
-        	const auto& select_default = make_tuple(EventLogMode::ToMode("Transmissions"), sim->m_track_index_case);
+        	const auto& select_default = EventLogMode::ToMode("Transmissions");
         	sim->m_infector_default    = InfectorMap().at(select_default);
         } else{
         	sim->m_infector_tracing    = InfectorMap().at(select);

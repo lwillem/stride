@@ -1,9 +1,9 @@
 # Removed feature: `track_index_case` (TIC)
 
-**Status:** specified for removal; not yet removed.
-**Reference implementation:** tag `pre-refactor-2026-09` (see §6.4 of
-`../rStride_refactoring_plan.md`).
-**Removal commit:** _to be filled in once the removal lands._
+**Status:** REMOVED 2026-10-05.
+**Reference implementation:** tag `pre-refactor-2026-10` (the consolidated baseline).
+**Removal commit:** see `git log -S'bool TIC' -- main/cpp/contact/Infector.h` — one
+self-contained commit, so `git revert` restores the feature whole.
 **Specified:** 2026-09-25
 
 This document is the specification of a feature deliberately removed from Stride. It
@@ -156,11 +156,11 @@ the airborne paths, in both the general and the optimized template specialisatio
 | `sim/Sim.h:87`, `sim/Sim.cpp:42` | `bool m_track_index_case` member |
 | `sim/SimBuilder.cpp` | 55 (read), 71, 76, 80, 83 (four tuple constructions for map lookup) |
 
-Note: the tuple site at `SimBuilder.cpp:76` lies inside a branch testing
-`event_log_level == "ContactTracing"`, but `EventLogMode::Id` defines no such value
-(only `None`, `Incidence`, `Transmissions`, `Participants`, `All`). That branch appears
-unreachable and should be verified separately during removal; it is not part of this
-feature.
+> **Correction, verified during removal 2026-10-05.** That branch is **reachable**, and
+> the note above was wrong. The test is on the raw configuration *string*, not on an
+> `EventLogMode::Id`; `EventLogMode::ToMode` maps `"CONTACTTRACING"` onto
+> `Id::Transmissions`, so the lookup key is valid. The gtester's tracing scenarios exercise
+> it. Nothing was removed on the strength of the original note.
 
 ---
 
@@ -223,9 +223,11 @@ rather than converted to a runtime argument.
 
 ---
 
-## 9. Removal requirements
+## 9. Removal requirements — all met
 
-1. **One self-contained commit**, so a single `git revert` restores the feature.
+Recorded against each requirement as carried out on 2026-10-05.
+
+1. **One self-contained commit**, so a single `git revert` restores the feature. *Done.*
 2. **Leave a tombstone.** After removal the key is no longer read, and Boost ptree
    silently ignores unknown keys — so an existing configuration setting
    `track_index_case = true` would run *without* the feature and produce quietly wrong
@@ -238,20 +240,27 @@ rather than converted to a runtime argument.
    }
    ```
 
-3. **Prove behaviour preservation.** The regression reference `.rds` files must be
-   byte-identical after removal. Because no scenario enables the flag, this is a genuine
-   proof rather than a formality, and satisfies the rule in §7.5 of the refactoring plan.
-4. **Sequence after the branch consolidation** of §6.4. Removing a template parameter
-   from `Infector.h` / `InfectorMap.h` beforehand would add conflict surface to a merge
-   that is currently clean on the C++ side, and removing after the tag keeps
-   `pre-refactor-2026-09` a faithful snapshot of the last version containing the feature.
+   *Done,* in `SimBuilder`, and exercised three ways: with the key **absent** the run
+   proceeds; with it **`false`** the run proceeds; with it **`true`** the run refuses with
+   `run.track_index_case was removed; ... See
+   doc/markdown/removed_features/track_index_case.md`. The `false` case matters — every
+   committed configuration still carried `false` at the time of removal, so a tombstone
+   that fired on mere presence would have broken every existing run.
+
+3. **Prove behaviour preservation.** *Done.* C++ gtester 22/22; the R regression suite
+   reports no change across all six streams and `rSTRIDE ABC OK` against the references at
+   `pre-refactor-2026-10`. Because no scenario enables the flag this is a genuine proof
+   rather than a formality, and it satisfies §5.5 of the refactoring plan.
+4. **Sequence after the branch consolidation.** *Done* — the baseline was consolidated and
+   tagged on 2026-10-05, before this removal, so the tag remains a faithful snapshot of the
+   last version containing the feature.
 
 ---
 
 ## 10. Recovering the original implementation
 
 ```sh
-git show pre-refactor-2026-09:main/cpp/contact/Infector.h
+git show pre-refactor-2026-10:main/cpp/contact/Infector.h
 git show pre-refactor-2026-09:main/cpp/contact/Infector.cpp
 git show pre-refactor-2026-09:main/cpp/contact/InfectorMap.h
 git show pre-refactor-2026-09:main/cpp/sim/SimBuilder.cpp
