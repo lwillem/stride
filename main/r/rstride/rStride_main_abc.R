@@ -177,7 +177,8 @@ run_rStride_abc <- function(abc_function_param,
       sum_stat_obs <- readRDS(file.path('./sim_output',run_tag,'sum_stat_obs.rds'))
    } else{
       ref_period   <- unique(data_incidence_all$sim_date)
-      sum_stat_obs <- get_abc_reference_data(ref_period)
+      sum_stat_obs <- get_abc_reference_data(ref_period,
+                                             reference_serology_data_file = config_exp$reference_serology_data_file)
    }
    
    
@@ -493,7 +494,16 @@ get_abc_reference_data <- function(ref_period,
                                    rel_importance_hosp_data = NA,
                                    age_cat_hosp_str = NA,
                                    bool_add_pop_stat = FALSE,
-                                   bool_truncate_serology = FALSE){
+                                   bool_truncate_serology = FALSE,
+                                   reference_serology_data_file = NULL){
+
+   # take the serology reference from the run configuration. Fall back to the Belgian
+   # reference when the configuration does not name one: the ABC workflow is COVID/BE
+   # today, and load_observed_seroprevalence_data() returns an all-NA table for a missing
+   # file, whose NA dates then match no sim_date downstream.
+   if(is.null(reference_serology_data_file) || all(is.na(reference_serology_data_file))){
+      reference_serology_data_file <- 'data/covid19_serology_BE_reference.csv'
+   }
    
    # set contribution hospital data vs other data sources
    # if 1: number of hospital admission data points == number of (e.g.) seroprevalence data points
@@ -545,13 +555,13 @@ get_abc_reference_data <- function(ref_period,
    
    ## seroprevalence data ----
    if(bool_serology){
-      prevalence_ref <- load_observed_seroprevalence_data(reference_serology_data_file = 'data/covid19_serology_BE_reference.csv',
+      prevalence_ref <- load_observed_seroprevalence_data(reference_serology_data_file = reference_serology_data_file,
                                                           ref_period = ref_period,
                                                           analysis = ifelse(bool_age,'age','overall'))
       
       if(bool_age & bool_add_pop_stat){
          prevalence_ref <- rbind(prevalence_ref,
-                                 load_observed_seroprevalence_data(reference_serology_data_file = 'data/covid19_serology_BE_reference.csv',
+                                 load_observed_seroprevalence_data(reference_serology_data_file = reference_serology_data_file,
                                                                    ref_period = ref_period,
                                                                    analysis = 'overall')
          )
