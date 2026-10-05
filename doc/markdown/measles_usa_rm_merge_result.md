@@ -1,14 +1,19 @@
 # `measles_usa_rm` — what happened to your changes in the merge
 
-**Date:** 2026-10-05
-**Branch:** `integration/measles-usa` (`ac987f8`)
+**Date:** 2026-10-05 (last updated 2026-10-05, after consolidation)
+**Where it landed:** `master`, tagged `pre-refactor-2026-10`
 **Merged:** `origin/measles_usa_rm` @ `2b927f4` (36 commits) into `measles_usa` (53 commits), from merge base `c2e209f` (2026-07-23)
 **Decisions applied:** `measles_usa_rm_discussion.md`
-**Status:** C++ gtester 22/22 in 107 s. R regression suite not yet run.
+**Status:** C++ gtester 22/22 in 91 s. R regression suite green on all six streams.
+
+**`measles_usa_rm` now points at `master`.** It was fast-forwarded, so none of your
+commits were rewritten and `2b927f4` is still in its history — but the branch content is
+now the consolidated baseline rather than what you last pushed.
 
 This is a record of how each part of your work was treated, so nothing has to be
-discovered from a diff. **One file of yours was reverted** — `ImmunitySeeder.cpp` — and
-that is the main thing to read here (§3).
+discovered from a diff. **Three things change how your workflow behaves and are not
+visible from a fast-forward:** `ImmunitySeeder.cpp` was reverted (§3), the population
+snapshot is now opt-in (§5), and workplaces of size 1 are kept rather than removed (§4).
 
 ---
 
@@ -108,16 +113,36 @@ workplace size distribution feeding the `uniroot` adjustment factor. Your
 `rStride_r0_measles.R` carried `## With single-person workplaces` and
 `## Without single-person workplaces` variants; the baseline is now the *with* case.
 
-## 5. One thing to know about `PopSnapshotWriter`
+## 5. `PopSnapshotWriter` is now opt-in — this affects your runs
 
-It is in, unchanged. But `SimController.cpp:149` calls it **unconditionally** — there is no
-config gate — so it writes `households.csv`, the susceptibles-by-age file and the
-population snapshot next to *every* run. That is the remaining ~16 % of the gtester's
-92 s → 107 s, and at calibration scale it means three files per experiment across
-thousands of runs.
+Your code is in unchanged, but it no longer runs by default.
 
-B7 asked whether it should be gated by a config flag and the answer was left open. Worth
-settling before the next large grid.
+`SimController.cpp:149` called it **unconditionally**, so every run walked the whole
+population into a map of households and wrote three CSV files. At 600k persons that was
+about 16 % of the C++ suite's run time (92 s → 107 s), and at calibration scale it meant
+three files beside every experiment of a multi-thousand-run grid. That is the question B7
+raised; it is now settled by gating rather than by removing anything:
+
+```
+run.output_pop_snapshot = false (default) | true
+```
+
+The gate is inside `PopSnapshotWriter::Write()`, so there is one place to look. With it
+off nothing is written; with it on all three files appear exactly as before, and
+`num_cases` is identical either way — the flag does not touch results. The suite is back
+to 91 s.
+
+**What you need to do:** any experiment design whose output you feed to
+`MeaslesClustering.R` must set `output_pop_snapshot = TRUE`. `rStride_measles_explore.R`
+already does. `rStride_r0_measles.R` deliberately does not, because a fitting grid does
+not need three CSVs per run and that is where the cost bites hardest.
+
+`MeaslesClustering.R` now says so when the file is missing. It previously built the path
+with `file.path(folder, dir(folder, pattern='snapshot.csv'))`, which collapses to a
+zero-length path when there is no match, and `read.table()` then reported
+`invalid 'description' argument` — nothing about a missing snapshot or about the flag. It
+now reports the experiment, the directory searched, how many files matched, and what to
+set.
 
 ## 6. What still needs you
 
@@ -136,14 +161,25 @@ settling before the next large grid.
 
 ## 7. Getting the branch
 
+`measles_usa_rm` has been fast-forwarded onto the baseline, so:
+
 ```sh
 git fetch origin
-git checkout integration/measles-usa
+git checkout measles_usa_rm      # now identical to master
 ```
 
-Note: the build unpacks population archives at configure time, so if you have an existing
-build directory, reconfigure — `cmake` is now set to re-check for new archives, but an
-old build directory predates that.
+If you have local commits on top of `2b927f4`, nothing was overwritten — rebase them onto
+the new tip.
+
+Two build notes:
+
+- **Reconfigure if you have an existing build directory.** Population archives are
+  unpacked at *configure* time. The globs now carry `CONFIGURE_DEPENDS` so a newly added
+  archive is picked up, but a build directory created before that change predates the fix
+  and will silently not unpack `pop_usa_tx_gaines_c1000.zip`. The symptom is a missing
+  `data/pop_usa_tx_gaines_c1000.csv`, which points nowhere near the cause.
+- `-ffast-math` was removed from Release builds, so rebuild rather than reusing old
+  objects.
 
 ---
 
@@ -204,3 +240,64 @@ Consequences worth knowing: the comparison above had to be driven directly again
 completed runs rather than through the script, `out_abc` is the one reference stream that
 could not be checked, and the suite cannot gate CI until this is fixed (plan section 9.4,
 point 3).
+
+---
+
+## 9. What changed after the merge, before it reached `master`
+
+Eight commits land between the merge and the baseline you now have. Four are worth your
+attention; the rest are listed for completeness.
+
+### Affects how your runs behave
+
+| | |
+|---|---|
+| `59e50de` | `PopSnapshotWriter` gated, default **off** — §5 |
+| `bcdf2fb` | workplaces of size 1 **kept**; the removal deleted — §4 |
+| `ce8d2bf` | snapshot switched on in `rStride_measles_explore.R`; clear error in `MeaslesClustering.R` |
+| `0d1c6dc` | `-ffast-math` removed from Release builds |
+
+On `-ffast-math`: it permitted floating-point reassociation and denormal flushing, so
+results could differ across compilers and architectures — incompatible with a suite built
+on exact comparison. Removing it turned out to be results-neutral here (all 22 gtester
+scenarios identical with and without), at a cost of about 2.5 % run time. Your numbers
+should not move because of it, but rebuild rather than reusing objects.
+
+### The regression references are trustworthy again
+
+`7c800dc` reset all six reference files from a single run of a single commit. They had
+been split across 2026-07-06 and 2026-08-25 — different streams encoding code states six
+weeks apart — which is why the suite could not attribute a failure to anything.
+
+This was only possible because two blockers were cleared first. `rStride_gtester_covid19.R`
+used to halt in the ABC test before reaching its comparison, so `out_abc` could never be
+reset: `get_abc_reference_data()` called the serology loader without a file, the loader
+returned an all-`NA` table, and `sim_date == NA` matched nothing (`73e9a0f`, then `886511f`
+which takes the path from the run configuration instead of hardcoding it).
+
+Verified by re-running the full suite against the new references: all six streams report
+no change, `rSTRIDE ABC OK`.
+
+**For you this means a regression run is now meaningful.** If your work moves a number,
+the suite will say so and the answer will be attributable to your change rather than to
+six-week-old references.
+
+### Two notes on comparability
+
+1. **Workplaces of size 1.** The removal was live on `measles_usa_rm` and is not in the
+   baseline (§4). Contact rates and any R0 fit you produced are the *without* case; the
+   baseline is the *with* case.
+2. **`disease_measles_usa.xml` is still fitted under the `min` contact rule.** The
+   measles scripts now request `contact_probability_rule = "Mean"`, but the committed
+   `b0`/`b1` were produced under `min`, so a run asking for `r0 = 12` currently receives a
+   higher effective R0. Closing that is what `rStride_r0_measles.R` is for, and it is the
+   calibration work rather than something already done.
+
+### The rest
+
+`342fd68` merged the baseline to `master` and it was tagged `pre-refactor-2026-10`.
+Earlier in the sequence: the contact-probability rule became configurable with `min` as
+the default, kernel failures stopped being silent (`system()` exit status was discarded,
+so a crash surfaced as an unexplained missing `summary.csv` from inside a parallel
+worker), the R install list and the resource globs stopped drifting, and
+`rStride_r0_measles.R` was repointed at inputs that exist.
