@@ -359,7 +359,14 @@ provenance points at vanished directories (F1). Refitting under those conditions
 numbers that cannot be reproduced or defended — `disease_measles_usa.xml` already
 demonstrates the failure mode.
 
-### F11. A dormant Python / MDP layer, disabled in place
+### F11. A dormant Python / MDP layer, disabled in place — REMOVED
+
+> **Removed 2026-10-05** (Phase 0b). Roughly 1,200 lines deleted across `main/cpp/mdp/`,
+> `main/python/` and `main/r/rStride_MDP.R`, in one self-contained commit so a single
+> `git revert` restores the feature. `ContactPoolSys::ClearContactPools()` was deleted with
+> it, closing open decision 4. The specification in
+> `removed_features/python_mdp_interface.md` records the decisions and the verification.
+
 
 Roughly 1,200 lines implement a pybind11 interface exposing Stride as a step-wise,
 controllable simulator for reinforcement-learning agents — an RL agent advances the
@@ -828,7 +835,19 @@ so it needs its own reference set. Once the build works, the gtester's multi-thr
 instantiation becomes meaningful for the first time and may need expected values of its
 own, depending on whether the margins in `ScenarioData.cpp` already absorb the difference.
 
-### Phase 1 — Package skeleton (non-destructive)
+### Phase 1 — Package skeleton (non-destructive) — POSTPONED
+
+> **Postponed 2026-10-05**, by decision. Turning `main/r/` into an R package is deferred
+> until the rest of the sequence has settled; nothing below is cancelled.
+>
+> What this holds up, so it is not rediscovered later: `testthat` stays unavailable, which
+> is what Phase 4 step 10 wants for the extracted comparison engine; the five geospatial
+> packages keep loading unconditionally (C4 of the merge agenda conceded the point to
+> `measles_usa_rm` on the understanding that Phase 1 step 3 would move them to
+> `Suggests:`); and the `.export = rStride_functions` mechanism of F3 stays in place, since
+> `.packages = 'rStride'` was to replace it in Phase 3 step 7.
+>
+> Phases that do **not** depend on this: 0b, 0c, 2, 3 steps 5-6, 3b, 5b, 6, 7a and 7b.
 
 1. Add `DESCRIPTION` and `NAMESPACE` around the existing files; move nothing.
    Verify `devtools::load_all()` loads all 148 functions and exposes any hidden

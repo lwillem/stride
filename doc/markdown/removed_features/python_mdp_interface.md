@@ -1,9 +1,9 @@
 # Removed feature: Python / MDP interface
 
-**Status:** specified for removal; not yet removed.
-**Reference implementation:** tag `pre-refactor-2026-09` (see §6.4 of
-`../rStride_refactoring_plan.md`).
-**Removal commit:** _to be filled in once the removal lands._
+**Status:** REMOVED 2026-10-05.
+**Reference implementation:** tag `pre-refactor-2026-10` (the consolidated baseline).
+**Removal commit:** see `git log --diff-filter=D -- main/python` — one self-contained
+commit, so `git revert` restores the feature whole.
 **Specified:** 2026-09-25
 
 This document specifies a feature deliberately removed from Stride so that it can be
@@ -202,9 +202,13 @@ void ClearContactPools();
 - defined at `main/cpp/contact/ContactPoolSys.cpp:41`
 - **sole caller:** `main/cpp/mdp/MDP.cpp:454`
 
-After removal this becomes dead code in the shipping binary. Either delete it in the same
-commit and record that here, or retain it deliberately and note why. It must not be left
-undecided.
+After removal this becomes dead code in the shipping binary.
+
+> **Decided 2026-10-05: deleted**, in the same commit as the rest, so one `git revert`
+> restores the function together with its only caller. It exists solely for MDP memory
+> management, nothing else in the tree calls it, and its body writes progress text to
+> `cout` — which is appropriate for a stepping harness and not for a library routine. This
+> closes open decision 4 of the refactoring plan.
 
 ---
 
@@ -223,8 +227,10 @@ It carries workflow-specific assumptions that will not survive relocation:
   `vsc`/`vcs` inconsistency between the two
 - `num_threads <- 16`
 
-It should be removed together with the rest and its install entry dropped from
-`main/r/CMakeLists.txt`.
+It was removed together with the rest. No install entry had to be dropped:
+`main/r/CMakeLists.txt` now installs `rStride_*.R` through a glob (F7), so deleting the
+file was sufficient — confirmed by checking that `bin/rStride_MDP.R` is absent from a
+fresh install.
 
 ---
 
@@ -268,32 +274,35 @@ thing to build first. Supporting checks:
 
 ---
 
-## 10. Removal requirements
+## 10. Removal requirements — all met
 
-1. **One self-contained commit**, so a single `git revert` restores the feature.
-2. **Delete, do not comment out.** The current `#add_subdirectory(pybind)` is exactly the
-   failure mode this specification replaces: disabled-in-place code that decays silently.
-   Remove `main/python/` entirely, remove `add_subdirectory(python)` from
-   `main/CMakeLists.txt`, remove `main/cpp/mdp/`, and remove `rStride_MDP.R` with its
-   install entry.
-3. **Decide `ClearContactPools()`** per §6 and record the decision here.
+Recorded against each requirement as carried out on 2026-10-05.
+
+1. **One self-contained commit**, so a single `git revert` restores the feature. *Done.*
+2. **Delete, do not comment out.** *Done.* `main/python/` (10 files), `main/cpp/mdp/`
+   (6 files) and `main/r/rStride_MDP.R` are gone; `add_subdirectory(python)` is removed
+   from `main/CMakeLists.txt`; the `USE_PYLIBSTRIDE` option — which did nothing but was
+   still advertised, and whose help text named a different variable — is removed from the
+   top-level `CMakeLists.txt`. No commented-out remnant is left anywhere.
+3. **Decide `ClearContactPools()`** per §6 and record the decision here. *Done — deleted;
+   see the note in §6.*
 4. **No tombstone is required.** Unlike `track_index_case`, this feature has no
    configuration key that could silently change behaviour — it is a separate build target
    that simply ceases to exist.
-5. **Prove behaviour preservation.** The regression reference `.rds` files must be
-   byte-identical. Because nothing in `main/cpp/mdp/` or `main/python/` is compiled into
-   the current binary, this is guaranteed by construction and should be confirmed rather
-   than assumed.
-6. **Sequence after the branch consolidation** of §6.4, consistent with the other
-   excision.
+5. **Prove behaviour preservation.** *Done, and confirmed rather than assumed:* a clean
+   configure, build and install succeed with zero errors; the C++ gtester passes 22/22;
+   the R regression suite reports no change across all six streams against the references
+   committed at `pre-refactor-2026-10`.
+6. **Sequence after the branch consolidation.** *Done* — the baseline was consolidated and
+   tagged on 2026-10-05, before this removal.
 
 ---
 
 ## 11. Recovering the original implementation
 
 ```sh
-git show pre-refactor-2026-09 --stat -- main/python main/cpp/mdp
-git checkout pre-refactor-2026-09 -- main/python main/cpp/mdp main/r/rStride_MDP.R
+git show pre-refactor-2026-10 --stat -- main/python main/cpp/mdp
+git checkout pre-refactor-2026-10 -- main/python main/cpp/mdp main/r/rStride_MDP.R
 
 # or, once the removal commit is recorded above:
 git revert <removal-commit>
@@ -301,4 +310,9 @@ git revert <removal-commit>
 
 Re-enabling additionally requires restoring `add_subdirectory(python)` in
 `main/CMakeLists.txt`, uncommenting `add_subdirectory(pybind)` in
-`main/python/CMakeLists.txt`, and re-adding `rStride_MDP.R` to `main/r/CMakeLists.txt`.
+`main/python/CMakeLists.txt`, and restoring `ContactPoolSys::ClearContactPools()` — all of
+which a `git revert` of the removal commit does in one step. `rStride_MDP.R` no longer
+needs an install entry: `main/r/CMakeLists.txt` globs `rStride_*.R`.
+
+Note the 2020 pybind11 pin remains the real obstacle (§3.1); restoring the files does not
+by itself make the target build.
