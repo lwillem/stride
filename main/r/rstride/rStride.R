@@ -66,7 +66,8 @@ to_remove <- c("./bin/rstride/TransmissionInspector_old.R",
                "./bin/rstride/factories/CalendarFactory_testing.R",
                "./bin/rstride/factories/CalendarFactory_USA.R",
                "./bin/rstride/factories/PopulationFactory_USA.R",
-               "./bin/rstride/social_contacts_usa2026.R")
+               "./bin/rstride/social_contacts_usa2026.R",
+               "./bin/rstride/MeaslesClustering.R")
 rStride_files <- rStride_files[!(rStride_files %in% to_remove)]
 
 # load all (remaining files)
@@ -493,6 +494,8 @@ get_prevalence_data <- function(config_exp,file_name){
   }
 
 }
+
+# load 
 
 # help function to combine numerical values into a string format
 c_str <- function(...){

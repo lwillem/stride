@@ -25,6 +25,7 @@
 #include "util/ConfigInfo.h"
 #include "util/FileSys.h"
 #include "util/LogUtils.h"
+#include "util/PopSnapshotWriter.h"
 #include "util/Stopwatch.h"
 #include "util/SummaryFile.h"
 #include "util/TimeStamp.h"
@@ -141,6 +142,11 @@ void SimController::Control()
         // Sim scenario: step 2, create a simulator, as described by the parameter in the config.
         // -----------------------------------------------------------------------------------------
         m_simulator = Sim::Create(m_config, pop);
+
+		// -----------------------------------------------------------------------------------------
+		// Sim scenario: step 2b, snapshot initial population state (households & susceptibility).
+		// -----------------------------------------------------------------------------------------
+		util::PopSnapshotWriter::Write(m_config, pop);
 
         // -----------------------------------------------------------------------------------------
         // Sim scenario: step 3, run simulation and print results

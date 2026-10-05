@@ -56,10 +56,12 @@ exp_param_list$r0 <- 12
 exp_param_list$disease_config_file <- "data/disease_measles_usa.xml"
 
 # hospital settings
-exp_param_list$hosp_probability_factor <- 0.1 #TODO: set real value
-exp_param_list$hospital_length_of_stay <- 14  #TODO: set real value  
-exp_param_list$hospital_probability_age       #TODO: set age-specific adjustment of 'hosp_probability_factor'
-exp_param_list$hospital_category_age          #FYI: age categories for 'hosp_probability_factor' adjustments
+# age-specific values taken from measles_usa_rm (2b927f4, "fixed age specific hosp prob")
+exp_param_list$hosp_probability_factor  <- 1
+exp_param_list$hospital_length_of_stay  <- 14  #TODO: set real value
+exp_param_list$hospital_probability_age <- paste(0.18,0.06,0.12,sep=',')
+exp_param_list$hospital_category_age    <- paste(0,5,20,sep=',')
+exp_param_list$hospital_mean_delay_age  <- paste(2,2,5,sep=',')
 
 # USA population
 exp_param_list$population_file         <- "data/pop_usa_tx_gaines_c1000.csv"
@@ -83,7 +85,9 @@ exp_param_list$reference_serology_data_file <- NA
 
 # immunity profile = starting condition (time consuming!)
 exp_param_list$immunity_profile <- "AgeDependent"
-exp_param_list$immunity_distribution_file <- c("data/immunity_measles_dummy.xml", "data/immunity_measles_WI.xml") #c("data/immunity_measles_belgium.xml","data/immunity_measles_belgium_dummy.xml")
+# note: immunity_measles_WI.xml and the data/immunity_6region/ files used on
+# measles_usa_rm are absent from both branches; only the dummy profile is in the tree.
+exp_param_list$immunity_distribution_file <- "data/immunity_measles_dummy.xml"
 exp_param_list$immunity_link_probability <- 0 # immunity is distributed by household, this is the chance of continuing to immunize the next shuffled household member instead of jumping to a new random household
 
 # virtual survey for immunity levels
@@ -96,6 +100,24 @@ exp_param_list$contact_survey_dates <- exp_param_list$start_date # if log level 
 # exp_param_list$vaccine_rate <- c(0.8)
 # exp_param_list$vaccine_min_age <- 0
 # exp_param_list$vaccine_max_age <- 17
+
+# OPEN (B5 of measles_usa_rm_discussion.md): the vaccine-hesitancy and mass-immunisation
+# workflow from measles_usa_rm. Kept inactive here because vaccine_distribution_file
+# points at data/immunity_6region/, which exists on neither branch. The C++ side
+# (ImmunitySeeder, run.mass_immunize, run.vaccine_hesitancy_rate) IS merged and available.
+# exp_param_list$vaccine_link_probability   <- 0
+# exp_param_list$vaccine_profile            <- "AgeDependent" ## MAKE NEW VAC PROF HESITANCY??
+# exp_param_list$vaccine_distribution_file  <- "data/immunity_6region/immunity_measles_child_SC.xml"
+# exp_param_list$vaccine_min_age            <- 0
+# exp_param_list$vaccine_max_age            <- 17
+# exp_param_list$mass_immunize              <- TRUE
+# exp_param_list$vaccine_hesitancy_rate     <- 0.15
+
+# household clustering
+# exp_param_list$household_clustering_date <- "2023-01-01"
+# exp_param_list$household_clustering_ratio <- 4/7
+# exp_param_list$household_clustering_delay <- 0
+# exp_param_list$cnt_intensity_householdCluster <- c(0, 1)
 
 ################################################ #
 ## GENERATE DESIGN OF EXPERIMENT GRID         ####
@@ -117,7 +139,7 @@ if(any(is.na(exp_param_list$immunity_distribution_file))){
 ##################################
 project_dir <- run_rStride(exp_design,
                            dir_postfix,
-                           remove_run_output = FALSE,
+                           remove_run_output = FALSE,   ## THIS NEEDS TO STAY 'FALSE' TO GET HOUSEHOLD AGG
                            num_parallel_workers = 2)
 
 

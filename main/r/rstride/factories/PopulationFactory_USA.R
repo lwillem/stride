@@ -34,9 +34,18 @@ getFREDdata <- function(state = "WI", county = "Milwaukee", com_target_size = 10
   print("FRED population files for the desired county must be manually downloaded from 'https://fred.publichealth.pitt.edu/syn_pops'
   and stored in the '~/opt/FRED_population_usa/' folder before running this script.")
   
-  folder <- fips(state, county = county)
-  state_name_full <- fips_info(folder)$full
-  cty_name_full <- fips_info(folder)$county
+  # Connecticut replaced its counties with planning regions in 2022, so the current
+  # FIPS tables no longer resolve the county names the FRED population files use.
+  # Ported from measles_usa_rm (C1 of measles_usa_rm_discussion.md).
+  if(state == "CT"){       ## Use old data to access old county names for CT
+    folder <- fips(state, county = county, data_year = 2021)
+    state_name_full <- fips_info(folder, data_year = 2021)$full
+    cty_name_full <- fips_info(folder, data_year = 2021)$county
+  } else {
+    folder <- fips(state, county = county)
+    state_name_full <- fips_info(folder)$full
+    cty_name_full <- fips_info(folder)$county
+  }
   
   dir <- grep(folder, list.dirs(paste0("~/opt/FRED_population_usa/", state)), value = TRUE)
 

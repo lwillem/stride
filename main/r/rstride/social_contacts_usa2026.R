@@ -52,13 +52,13 @@ if(!dir.exists(folder_name)) {
 }
 
 # define help function to load social data from Prem et al. by location
-get_cnt_data <- function(location, country) {
+get_cnt_data <- function(location, country, max_age = 94) {
    cnt_matrix <- contactdata::contact_matrix(country = country,
                                    location = location,
                                    #geographic_setting = c("all"),
                                    data_source = c("2020"))
     cnt_count <- rowSums(cnt_matrix)
-    all_ages <- 0:94        # convert matrix to vector                     
+    all_ages <- 0:max_age        # convert matrix to vector                     
     approx(x = seq(0,75,5), # expand matrix age groups using linear interpolation
            y = cnt_count,
            xout = all_ages,
@@ -70,13 +70,25 @@ get_cnt_data <- function(location, country) {
 # LOAD AND PROCESS DATA ####
 ############################## #
 
-# get data by location ----
-cnt_all    <- get_cnt_data("all", country = sel_country)
-cnt_home   <- get_cnt_data("home", country = sel_country)
-cnt_workplace   <- get_cnt_data("work", country = sel_country)#*1.2
+# load population file
+# note: this must precede the contact data below, which derives max_age from the
+# population age range (B4). The pdf stream captures the generator's diagnostic plots.
+pop_file_name <- file.path(folder_name,run_tag)
+pdf(paste0(pop_file_name,'.pdf')) # open pdf stream
+pop_usa <- getFREDdata(state = state,
+                       county = county,
+                       com_target_size = com_target_size,
+                       rng_seed = rng_seed)
+dev.off() # close pdf stream
+dim(pop_usa)
+
+# get contact data by location ----
+cnt_all    <- get_cnt_data("all", country = sel_country, max_age = max(pop_usa$age))
+cnt_home   <- get_cnt_data("home", country = sel_country, max_age = max(pop_usa$age))
+cnt_workplace   <- get_cnt_data("work", country = sel_country, max_age = max(pop_usa$age))#*1.2
 # cnt_sm_workplace   <- get_cnt_data("work", country = sel_country)*1.2
-cnt_school <- get_cnt_data("school", country = sel_country)
-cnt_other  <- get_cnt_data("other", country = sel_country)
+cnt_school <- get_cnt_data("school", country = sel_country, max_age = max(pop_usa$age))
+cnt_other  <- get_cnt_data("other", country = sel_country, max_age = max(pop_usa$age))
 
 # check
 cnt_all_list <- contact_df_countries(countries = sel_country,
@@ -95,16 +107,6 @@ cnt_all[76] # note: index 1 is age age 0
 cnt_additional <- cnt_all * 0
 
 # demography data ----
-pop_file_name <- file.path(folder_name,run_tag)
-
-# generate population (and store plots in pdf)
-pdf(paste0(pop_file_name,'.pdf')) # open pdf stream
-pop_usa <- getFREDdata(state = state, 
-                       county = county, 
-                       com_target_size = com_target_size, 
-                       rng_seed = rng_seed)
-dev.off() # close pdf stream
-dim(pop_usa)
 
 # rename work_id to workplace_id
 names(pop_usa) <- gsub('work','workplace',names(pop_usa))
@@ -114,7 +116,8 @@ pop_usa$school_id[pop_usa$school_id == 0] <- NA
 pop_usa$workplace_id[pop_usa$workplace_id == 0] <- NA
 
 # define age breaks for the age distribution
-breaks_ages <- (0:95) -0.5
+# breaks_ages <- (0:95) -0.5
+breaks_ages <- seq(-0.5, 95.5, by = 1)
 
 # age distribution
 age_counts <- hist(pop_usa$age, breaks = breaks_ages, plot = FALSE)$counts
@@ -168,7 +171,16 @@ cat("Target contact rate:              ", target_contact_rate_school, "\n")
 
 # employment ----
 
-# # Remove workplaces with 1 person
+# OPEN (B1 of measles_usa_rm_discussion.md): remove workplaces with 1 person?
+# Both branches wrote this independently; it was live on measles_usa_rm and commented
+# out here. Left INACTIVE by the merge so that the merge itself changes no results.
+# Enabling it is a deliberate, results-changing step: a one-person workplace
+# contributes no workplace contacts but still counts as employment in
+# age_distr_workplace, the denominator of the conditional contact rate, so removing
+# them raises that rate for everyone else. It also shifts the workplace size
+# distribution and therefore the uniroot adjustment factor below.
+# Enabling it REQUIRES regenerating contact_matrix_usa_tx_gaines_c1000.xml, which was
+# produced on 2026-08-27 with this block inactive and is what the R0 fit now uses.
 # workplace_id_freq    <- table(pop_usa$workplace_id)
 # small_workplace_id   <- names(workplace_id_freq[workplace_id_freq <= 1])
 # pop_usa$workplace_id <- ifelse(pop_usa$workplace_id %in% small_workplace_id, NA, pop_usa$workplace_id)
