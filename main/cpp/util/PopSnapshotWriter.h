@@ -44,6 +44,7 @@ class PopSnapshotWriter
 public:
         /// Write households.csv, susceptibles_by_age.csv, and population_snapshot.csv
         /// to the run's output prefix.
+        /// Does nothing unless run.output_pop_snapshot is true (default false).
         static void Write(const stride::util::ptree& config, std::shared_ptr<Population> pop);
 
 private:

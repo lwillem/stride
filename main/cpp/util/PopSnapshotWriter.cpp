@@ -37,6 +37,15 @@ namespace util {
 
 void PopSnapshotWriter::Write(const stride::util::ptree& config, std::shared_ptr<Population> pop)
 {
+        // Opt-in: this is a diagnostic, and it is not cheap. It walks the whole population
+        // into a map of households and formats three CSV files per run, which costs roughly
+        // 16% of the C++ test suite's run time at 600k persons and writes three files beside
+        // every experiment of every grid. Default off restores the behaviour of runs that do
+        // not ask for it; set run.output_pop_snapshot to true to collect it.
+        if (!config.get<bool>("run.output_pop_snapshot", false)) {
+                return;
+        }
+
         const auto outputPrefix = config.get<std::string>("run.output_prefix");
         WriteHouseholdMemberships(outputPrefix, pop);
         WriteSusceptiblesByAge(outputPrefix, pop);
