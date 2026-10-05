@@ -18,7 +18,18 @@ exp_name <- sprintf("exp%04d", config_exp)
 
 output_folder_name <- file.path(project_dir, exp_name)
 
-population_snapshot_filename <- file.path(output_folder_name, dir(output_folder_name, pattern = 'snapshot.csv'))
+population_snapshot_filename <- dir(output_folder_name, pattern = 'snapshot.csv', full.names = TRUE)
+
+# the snapshot is opt-in: without run.output_pop_snapshot the C++ kernel writes nothing,
+# and read.table() on an empty path fails with "invalid 'description' argument", which
+# says nothing about the cause
+if(length(population_snapshot_filename) != 1){
+  stop(paste0('NO POPULATION SNAPSHOT FOUND for ', exp_name,
+              '\n  looked in: ', output_folder_name,
+              '\n  found ', length(population_snapshot_filename), ' file(s) matching "snapshot.csv"',
+              '\n  set output_pop_snapshot = TRUE in the experiment design and re-run'),
+       call. = FALSE)
+}
 
 population_snapshot <- read.table(population_snapshot_filename,header=T,sep=',') #%>%
   # mutate(immunity_status = ifelse(immunity_status == "immune", 1, 0))

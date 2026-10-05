@@ -71,6 +71,11 @@ exp_param_list$holidays_file           <- "data/calendar_USA_2023_2026_measles.c
 # Combine the two age-specific contact probabilities of a candidate pair by their mean.
 exp_param_list$contact_probability_rule <- "Mean"
 
+# Write the population-wide immunity/susceptibility snapshot at t = 0. This is the input
+# MeaslesClustering.R reads; without it that analysis has nothing to work from. Off by
+# default because it costs roughly 16% of run time and writes three files per experiment.
+exp_param_list$output_pop_snapshot <- TRUE
+
 # initial conditions
 exp_param_list$num_infected_seeds <- 20
 exp_param_list$seeding_age_min    <- 1   # infants <1y cannot be selected as index case
