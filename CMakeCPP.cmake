@@ -32,6 +32,7 @@ endif()
 #----------------------------------------------------------------------------
 # Compile flags
 #----------------------------------------------------------------------------
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 #
@@ -41,7 +42,8 @@ ProcessorCount(PROCCOUNT)
 # Required to avoid ld problems on Mac
 set(CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
 #
-set(CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Wextra -pedantic -Weffc++")
+# The standard comes from CMAKE_CXX_STANDARD above, not from a raw flag.
+set(CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Weffc++")
 set(CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS} -Wno-unknown-pragmas")
 # NOTE: -ffast-math was removed here (plan F13.1). It permits floating-point
 # reassociation, flushes denormals and assumes no NaN/Inf, so results could differ
@@ -60,7 +62,14 @@ set(CMAKE_STATIC_LIBRARY_PREFIX "")
 #----------------------------------------------------------------------------
 # Platform dependent compile flags
 #----------------------------------------------------------------------------
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_HOST_APPLE)
+# Xcode reports AppleClang, never "Clang", so the Apple branch must test for it by that
+# name -- as written before, the Apple case was unreachable and the AppleClang case below
+# only added a second, redundant standard flag (-std=c++1z).
+if(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+	add_definitions( -D__APPLE__ )
+	set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+#
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_HOST_APPLE)
 	add_definitions( -D__APPLE__ )
 	set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -stdlib=libc++")
 #
@@ -72,8 +81,6 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND NOT CMAKE_HOST_APPLE )
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 	set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -fPIC")
 #
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
-	set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++1z")
 endif()
 
 #----------------------------------------------------------------------------
@@ -124,6 +131,13 @@ if(NOT STRIDE_FORCE_NO_OPENMP)
     else()
     	# This is done to eliminate blank output of undefined CMake variables.
     	set(OPENMP_FOUND FALSE)
+    	message(WARNING
+    	    "OpenMP NOT found -- falling back to the dummy stubs in main/resources/lib/domp.\n"
+    	    "   Every '#pragma omp parallel' then compiles to nothing, so the parallel code\n"
+    	    "   paths cannot be compiled, exercised or tested, and half the C++ test suite\n"
+    	    "   silently duplicates the other half (plan F13.2).\n"
+    	    "   The result is CACHED as HAVE_CHECKED_OpenMP: 'make clean' will NOT re-check.\n"
+    	    "   To retry, delete the build directory and reconfigure.")
     endif()
 else()
     # This is done to eliminate blank output of undefined CMake variables.

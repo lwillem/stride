@@ -53,7 +53,9 @@ endif
 #============================================================================
 #   MACRO definitions to pass on to cmake
 #============================================================================
-CXXFLAGS += -g  # Voeg deze regel toe voor debug-informatie
+# NOTE: -g was unconditionally appended here, so it reached Release builds too. Debug
+# information belongs to the Debug configuration, which CMake already supplies.
+# For a one-off:  make all CMAKE_BUILD_TYPE=Debug
 CMAKE_ARGS += -DCMAKE_GENERATOR="Unix Makefiles" -DCMAKE_CXX_FLAGS:STRING="$(CXXFLAGS)"
 ifneq ($(CMAKE_C_COMPILER),)
     CMAKE_ARGS += -DCMAKE_C_COMPILER:FILEPATH=$(CMAKE_C_COMPILER)

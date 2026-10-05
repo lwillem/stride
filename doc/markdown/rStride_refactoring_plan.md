@@ -792,7 +792,24 @@ Notes:
   `ContactPoolSys::ClearContactPools()` is compiled into `libstride` but its only caller
   is `MDP.cpp:454` (open decision 4).
 
-### Phase 0c — Build configuration repair
+### Phase 0c — Build configuration repair — all but the OpenMP install done
+
+> **Steps 1-5, 7 and 8 landed 2026-10-05.** `CMAKE_EXPORT_COMPILE_COMMANDS` is spelled
+> correctly, so `compile_commands.json` now exists for IDEs and clang-tidy;
+> `CMAKE_CXX_STANDARD 17` replaces both raw `-std=` flags; the Apple branch tests for
+> `AppleClang` and so fires for the first time; `-g` no longer reaches Release;
+> `USE_PYLIBSTRIDE` went with the MDP excision; the resource globs carry
+> `CONFIGURE_DEPENDS` (F7.1); and a failed OpenMP detection now warns loudly and says that
+> the result is cached.
+>
+> The compile line is now `-O3 -std=c++17` with no `-g` and no duplicate standard.
+> Behaviour-preserving: C++ gtester 22/22, all six R streams unchanged.
+>
+> **Step 6 — restoring a working local OpenMP build — is NOT done**, because it needs a
+> native arm64 shell and a native Homebrew `libomp`, which cannot be arranged from inside
+> a session running under Rosetta. It remains the one correctness prerequisite in this
+> phase: without it the parallel regions cannot be compiled or exercised, and 22 of the 44
+> C++ test instances duplicate the other 22.
 
 Addresses F13.2 and F13.3. All steps here are behaviour-preserving: reference `.rds` files
 must not change. Independent of the branch consolidation and safe to do at any time.

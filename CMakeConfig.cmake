@@ -22,7 +22,9 @@
 #============================================================================
 # Configuration for the CMake tool itself.
 #============================================================================
-set(CMAKE_ENABLE_COMPILE_COMMANDS      ON)
+# CMAKE_EXPORT_COMPILE_COMMANDS, not CMAKE_ENABLE_... -- the latter is not a CMake
+# variable at all, which is why no compile_commands.json existed for IDEs or clang-tidy.
+set(CMAKE_EXPORT_COMPILE_COMMANDS      ON)
 set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS  TRUE)
 set(CMAKE_COLOR_MAKEFILE               ON)
 set(CMAKE_VERBOSE_MAKEFILE             OFF)
