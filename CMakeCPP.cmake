@@ -43,7 +43,13 @@ set(CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
 #
 set(CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Wextra -pedantic -Weffc++")
 set(CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS} -Wno-unknown-pragmas")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -ffast-math" ) # CMake's Release default already adds -O3
+# NOTE: -ffast-math was removed here (plan F13.1). It permits floating-point
+# reassociation, flushes denormals and assumes no NaN/Inf, so results could differ
+# across compiler versions, optimisation levels and architectures -- which is
+# incompatible with a test strategy built on exact comparison against stored
+# references. It acted directly on the std::exp() calls in the airborne path.
+# If the speed is wanted back, -fno-math-errno alone is safe under IEEE semantics.
+# CMake's Release default already adds -O3.
 set(CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG} -O0"   )
 #
 include_directories(${CMAKE_HOME_DIRECTORY}/main/cpp)
