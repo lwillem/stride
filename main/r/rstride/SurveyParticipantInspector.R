@@ -160,21 +160,27 @@ inspect_participant_data <- function(project_dir, save_pdf = TRUE)
     data_part_survey <- data_part[data_part$survey_type != 'infection',]
     data_part_survey$is_immune   <- data_part_survey$is_immune == "TRUE" 
 
-    immune_age <- data.frame(table(is_immune = data_part_survey$is_immune, part_age = data_part_survey$part_age),stringsAsFactors = F)
-    immune_age$part_age <- as.numeric(levels(immune_age$part_age)[(immune_age$part_age)])
-    names(immune_age)
-    flag <- immune_age$is_immune == FALSE
-    plot(immune_age$part_age[flag],
-         immune_age$Freq[flag]/population_age$Freq,
-         xlab='age',
-         ylab='fraction susceptible',
-         main='population susceptibility',
-         pch=19, lwd=3, ylim=0:1
-    )
-
-    names(data_part)
+    if(nrow(data_part_survey) > 0){
+      immune_age <- data.frame(table(is_immune = data_part_survey$is_immune, part_age = data_part_survey$part_age),stringsAsFactors = F)
+      immune_age$part_age <- as.numeric(levels(immune_age$part_age)[(immune_age$part_age)])
+      names(immune_age)
+      
+      # select
+      immune_age <- immune_age[immune_age$is_immune == FALSE,]
+      
+      # add total sample information
+      immune_age <- merge(immune_age, population_age, by = 'part_age', all.x = TRUE, suffixes = c('_susceptible','_sample'))
+      
+      # plot relative fractions
+      plot(immune_age$part_age,
+           immune_age$Freq_susceptible/immune_age$Freq_sample,
+           xlab='age',
+           ylab='fraction susceptible',
+           main='population susceptibility',
+           pch=19, lwd=3, ylim=0:1
+      )
+    }
     
-   
     # ## SCHOOLING ----
     # data_part$enrolled_school <- data_part$school_id != 0
     # school_age <- data.frame(table(school_enrolled = data_part$enrolled_school,part_age = data_part$part_age))

@@ -545,12 +545,14 @@ get_abc_reference_data <- function(ref_period,
    
    ## seroprevalence data ----
    if(bool_serology){
-      prevalence_ref <- load_observed_seroprevalence_data(ref_period = ref_period,
+      prevalence_ref <- load_observed_seroprevalence_data(reference_serology_data_file = 'data/covid19_serology_BE_reference.csv',
+                                                          ref_period = ref_period,
                                                           analysis = ifelse(bool_age,'age','overall'))
       
       if(bool_age & bool_add_pop_stat){
          prevalence_ref <- rbind(prevalence_ref,
-                                 load_observed_seroprevalence_data(ref_period = ref_period,
+                                 load_observed_seroprevalence_data(reference_serology_data_file = 'data/covid19_serology_BE_reference.csv',
+                                                                   ref_period = ref_period,
                                                                    analysis = 'overall')
          )
       }
@@ -575,7 +577,7 @@ get_abc_reference_data <- function(ref_period,
       }
       abc_sero_stat$level <- NULL # remove tmp column
       
-      # correction for decreasing serology estimaties
+      # correction for decreasing serology estimates
       if(bool_truncate_serology){
          for(i_age in 1:9){
             flag_cat   <- abc_sero_stat$category == paste0('cumulative_infections_age',i_age)
