@@ -90,22 +90,23 @@ elsewhere in `main/cpp`.
 | Removing the five geospatial packages from the load | C4 — you are right that this is where the refactoring is going (Phase 1 moves them to `Suggests:`), but doing it now would break the population generators, which are excluded from the library load and rely on them. Deferred, not rejected. |
 | The vaccine-hesitancy / mass-immunisation config block | Kept in `rStride_measles_explore.R` **commented out**, because `vaccine_distribution_file` points at `data/immunity_6region/`. **The C++ side is merged and available** — see §5. |
 
-### Workplaces of size 1 (B1) — left inactive, needs your view
+### Workplaces of size 1 (B1) — SETTLED: they are kept
 
-Both of us wrote this independently; it was live on your branch and commented out on ours.
-The merge **left it inactive**, so that the merge itself changes no results.
+Both of us wrote this removal independently; it was live on your branch and commented out
+on ours. **The decision is to keep one-person workplaces in the population**, so the
+removal has been deleted from `social_contacts_usa2026.R` rather than left commented out.
 
-Turning it on is a deliberate, results-changing step: a one-person workplace contributes
-no workplace contacts but still counts as employment in `age_distr_workplace`, the
-denominator of the conditional contact rate, so removing them raises that rate for
-everyone else — and it shifts the workplace size distribution and therefore the `uniroot`
-adjustment factor. It would also invalidate `contact_matrix_usa_tx_gaines_c1000.xml`,
-which was generated on 2026-08-27 with the block inactive and is what the R0 fit currently
-uses. So enabling it needs its own commit **plus** a matrix regeneration.
+This changes no results. The block was inert on this side — every line of it was a
+comment — so deleting it is behaviour-identical, and
+`contact_matrix_usa_tx_gaines_c1000.xml` does not need regenerating.
 
-Your `rStride_r0_measles.R` carries `## With single-person workplaces` and
-`## Without single-person workplaces` variants, so you have evidently run both — your
-read on which is right would settle it.
+**It does mean runs made on `measles_usa_rm` are not comparable on this point**, because
+there the removal was live: a one-person workplace contributes no workplace contacts but
+still counts as employment in `age_distr_workplace`, the denominator of the conditional
+contact rate, so removing them raised that rate for everyone else and shifted the
+workplace size distribution feeding the `uniroot` adjustment factor. Your
+`rStride_r0_measles.R` carried `## With single-person workplaces` and
+`## Without single-person workplaces` variants; the baseline is now the *with* case.
 
 ## 5. One thing to know about `PopSnapshotWriter`
 

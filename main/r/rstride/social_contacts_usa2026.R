@@ -171,20 +171,6 @@ cat("Target contact rate:              ", target_contact_rate_school, "\n")
 
 # employment ----
 
-# OPEN (B1 of measles_usa_rm_discussion.md): remove workplaces with 1 person?
-# Both branches wrote this independently; it was live on measles_usa_rm and commented
-# out here. Left INACTIVE by the merge so that the merge itself changes no results.
-# Enabling it is a deliberate, results-changing step: a one-person workplace
-# contributes no workplace contacts but still counts as employment in
-# age_distr_workplace, the denominator of the conditional contact rate, so removing
-# them raises that rate for everyone else. It also shifts the workplace size
-# distribution and therefore the uniroot adjustment factor below.
-# Enabling it REQUIRES regenerating contact_matrix_usa_tx_gaines_c1000.xml, which was
-# produced on 2026-08-27 with this block inactive and is what the R0 fit now uses.
-# workplace_id_freq    <- table(pop_usa$workplace_id)
-# small_workplace_id   <- names(workplace_id_freq[workplace_id_freq <= 1])
-# pop_usa$workplace_id <- ifelse(pop_usa$workplace_id %in% small_workplace_id, NA, pop_usa$workplace_id)
-
 # Get number of workers by age
 age_counts_workplace <- hist(pop_usa$age[!is.na(pop_usa$workplace_id)], breaks = breaks_ages, plot = FALSE)$counts
 age_distr_workplace  <- age_counts_workplace / age_counts
