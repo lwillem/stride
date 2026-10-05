@@ -46,7 +46,7 @@ This should be communicated **before, and independently of, the merge work** —
 results that may already have been interpreted. Fix by merging `master` into
 `measles_usa_rm` first (§6.4 step 2).
 
-> **Decision:** ______________________________________________
+> **Decision:** ____________this fix should be included in measles_usa_rm branch__________________________________
 > **Runs to repeat:** ______________________________________________
 
 ---
@@ -71,7 +71,7 @@ but still counts as employment in `age_distr_workplace`, which is the denominato
 conditional contact rate. Removing them raises the conditional rate for everyone else.
 It also interacts with **B2** and **B3**.
 
-> **Decision — keep, drop, or make it a parameter:** ______________________________________________
+> **Decision — keep, drop, or make it a parameter:** ___________this should be re-included in the measles_usa_rm branch___________________________________
 
 ### B2. The working-age bin for conditional workplace contacts
 
@@ -87,7 +87,7 @@ workplaces, but they were not allowed to have contacts at work."* Theirs keeps t
 Note both sides keep `workplace_ages_select <- 30:49` as the band the average is taken
 over — only the band it is *assigned to* differs.
 
-> **Decision:** ______________________________________________
+> **Decision:** ____________include in the measles_usa_rm branch_________________________________
 
 ### B3. Cluster-size adjustment factors — present on ours, absent on theirs
 
@@ -119,7 +119,7 @@ Consequences to discuss:
   substantially in size. **Worth solving together.**
 
 > **Decision — adopt the adjustment factors as standard? and how to handle the age-specific school issue:**
-> ______________________________________________
+> ______________include in the measles_usa_rm branch. not-age specific is OK for now________________________________
 
 ### B4. `max_age` generalisation — theirs is a genuine fix we lack
 
@@ -138,7 +138,7 @@ This looks like a **straight adopt** — but it changes the length of every cont
 so it interacts with B2 and B3 and should be adopted deliberately rather than merged
 silently.
 
-> **Decision:** ______________________________________________
+> **Decision:** _____________include in my branch_________________________________
 
 ### B5. Household clustering and vaccine hesitancy — a whole capability only they have
 
@@ -194,7 +194,7 @@ simulation.
 Useful, but it is permanent kernel surface added for a diagnostic. Is it wanted in the
 shared baseline, and should it be gated by a config flag rather than always compiled in?
 
-> **Decision:** ______________________________________________
+> **Decision:** __________include in my branch____________________________________
 
 ### B8. Bug fixes to take regardless of everything else
 
@@ -205,7 +205,7 @@ Independent of the merge politics, these are fixes we want:
 - `4234e7d` — copy-constructor fix, and `RnMan::Shuffle` shuffling an index vector rather
   than binding `vector<Person*>` directly.
 
-> **Confirm both land in the baseline:** ______________________________________________
+> **Confirm both land in the baseline:** ________________schedule in the refactoring plan______________________________
 
 ---
 
@@ -217,7 +217,7 @@ Ours renamed and merged it with the community generator (`6ccf4d6`); theirs edit
 original in place (+20). **Git cannot resolve this** — their changes must be ported onto
 the renamed file by hand. Agree who does it and confirm nothing of theirs is dropped.
 
-> **Owner:** ______________________________________________
+> **Owner:** ____________change in mealses_usa_rm branch as well, and adjust other files accordingly__________________________________
 
 ### C2. `getFREDdata()` signature has diverged
 
@@ -225,7 +225,7 @@ Ours dropped `export` (the function only returns a population matrix now) and ad
 `com_target_size` and `rng_seed` (`bb44fc3`, `70913b7`). Theirs still calls
 `getFREDdata(state, county, export = FALSE)`. Their call sites need updating as part of C1.
 
-> **Decision:** ______________________________________________
+> **Decision:** _________________adjust to my code_____________________________
 
 ### C3. An absolute personal path in their script
 
@@ -238,7 +238,7 @@ source("~/Documents/Repositories/stride/main/r/rstride/USA_PopulationBuilder.R")
 This cannot survive the merge. (Same class of problem as `rrv_repo()`'s hardcoded path,
 plan F6.3.)
 
-> **Action:** ______________________________________________
+> **Action:** ______________list it as to be solved in the future________________________________
 
 ### C4. `rStride.R` — the package load list, and we disagree
 
@@ -256,7 +256,7 @@ population factory — which is itself excluded from the load. Worth conceding t
 
 The blacklist difference is mechanical and follows from C1. The `print(f)` should go.
 
-> **Decision:** ______________________________________________
+> **Decision:** ____________make sure it works for now__________________________________
 
 ### C5. Geography and run parameterisation
 
@@ -267,7 +267,7 @@ and no size/seed parameters. Both hardcode the region at the top of the script.
 The real fix is plan **Phase 6** (one config file per study), but the merged baseline
 needs one coherent interim answer.
 
-> **Decision:** ______________________________________________
+> **Decision:** ______________hardcoded is fine for now________________________________
 
 ---
 
@@ -284,7 +284,7 @@ it is how work gets silently overwritten. It is also why B6 is hard to answer: n
 tell from git which side produced the current `disease_measles_usa.xml`. Each of these
 should have been a pull request (plan §7.6).
 
-> **Agreement:** ______________________________________________
+> **Agreement:** ________________keep the duplication for now______________________________
 
 ### D2. Study branches vs code branches
 
@@ -293,7 +293,7 @@ they are two months old and cannot merge (plan §7.2). Proposal: `study/…` bra
 run configurations and rebase onto master; `feature/…`, `fix/…`, `refactor/…` branches
 hold code and merge within days.
 
-> **Agreement:** ______________________________________________
+> **Agreement:** _____________do not change this for now_________________________________
 
 ### D3. Which collaborator remotes are still live?
 
@@ -301,7 +301,7 @@ hold code and merge within days.
 Archive by tag or delete — leaving them ambiguous is itself a cost (plan §7.1, open
 decision 2).
 
-> **Decision:** ______________________________________________
+> **Decision:** _____________do not change for now_________________________________
 
 ---
 
