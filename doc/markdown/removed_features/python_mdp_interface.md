@@ -2,7 +2,7 @@
 
 **Status:** specified for removal; not yet removed.
 **Reference implementation:** tag `pre-refactor-2026-09` (see §6.4 of
-`../rStride_architecture_and_refactoring.md`).
+`../rStride_refactoring_plan.md`).
 **Removal commit:** _to be filled in once the removal lands._
 **Specified:** 2026-09-25
 

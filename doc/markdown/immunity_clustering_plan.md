@@ -3,7 +3,8 @@
 **Date:** 2026-09-26
 **Context:** measles/USA work with Regina Manansala
 **Code inspected:** `measles_usa` @ `97f9b39` and `origin/measles_usa_rm` @ `a8f5095`
-**Related:** `measles_usa_rm_discussion.md` (B5, B8), `rStride_architecture_and_refactoring.md`
+**Related:** `measles_usa_rm_discussion.md` (B5, B8), `rStride_refactoring_plan.md`,
+`rStride_architecture.md`
 
 ## Aim
 

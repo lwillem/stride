@@ -5,7 +5,7 @@
 # runs, which is too slow to sit in front of every change.
 #
 # STATUS: draft, blocked on prerequisites. See
-# doc/markdown/rStride_architecture_and_refactoring.md section 9.4:
+# doc/markdown/rStride_refactoring_plan.md section 7.4:
 #   1. Phase 3b   -- remove -ffast-math, or results are not comparable across
 #                    compilers and this job can never pass reliably.
 #   2. Phase 4    -- one clean reference reset; the six .rds files currently

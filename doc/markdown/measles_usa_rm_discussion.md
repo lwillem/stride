@@ -3,7 +3,7 @@
 **Date:** 2026-09-26
 **Branches:** `measles_usa` (lwillem, tip `97f9b39`) ↔ `origin/measles_usa_rm` (Regina Manansala, tip `a8f5095`)
 **Merge base:** `c2e209f` (2026-07-23) · divergence 35 ↔ 35 commits
-**Related:** `rStride_architecture_and_refactoring.md` §6 (branch reconciliation), §6.3 (conflict surface)
+**Related:** `rStride_refactoring_plan.md` §4 (branch reconciliation, and its conflict surface)
 
 This is the agenda for the joint resolution session in §6.4 step 4. It exists so that
 nothing below is settled silently in a text editor during a merge. Several items are

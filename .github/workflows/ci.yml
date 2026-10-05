@@ -3,7 +3,7 @@
 # Deliberately excludes the R regression suite, which takes ~22 minutes of
 # simulation time and runs nightly instead (see regression.yml).
 #
-# STATUS: draft. See doc/markdown/rStride_architecture_and_refactoring.md section 9.
+# STATUS: draft. See doc/markdown/rStride_refactoring_plan.md section 7.
 
 name: CI
 

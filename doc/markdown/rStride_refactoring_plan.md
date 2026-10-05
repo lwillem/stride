@@ -1,221 +1,20 @@
-# rStride: As-Built Architecture and Refactoring Analysis
+# rStride: Refactoring Plan
 
-**Date:** 2026-09-25
-**Branch analysed:** `measles_usa` (48 commits ahead of `master`, 1 behind)
-**Scope:** the R workbench (`main/r/`) and its coupling to the C++ kernel build/install flow.
-**Working checkout:** `~/Documents/university/research/stride/repo/stride_2026`. Findings
-below were gathered at the commit named above; they rest on this machine's git history,
-the shared install root `~/opt/stride-<N>`, and its toolchain.
+**Date:** 2026-10-05
+**Baseline:** `master` at `pre-refactor-2026-10`
+**Companion:** `rStride_architecture.md` — how the system works today. This document does
+not restate it; where a finding rests on a structure, it cites the architecture section.
+**Related:** `measles_usa_rm_discussion.md`, `measles_usa_rm_merge_result.md`,
+`immunity_clustering_plan.md`, `removed_features/`
 
-This document describes how the system **actually works today**, the reasoning
-behind the problems observed, and a proposed refactoring sequence. It complements
-`rStride_readme.Rmd`, which describes how rStride is *intended* to be used.
-
----
-
-## 1. Current flow (as built)
-
-### 1.1 From repository to a runnable workbench
-
-```
-repo/stride_2026/
-  main/cpp/          C++ kernel            ──┐
-  main/r/*.R         experiment scripts    ──┤
-  main/r/rstride/    core R functions      ──┼── make install ──▶  ~/opt/stride-<N>/
-  main/resources/    data, config          ──┘                        bin/stride      (binary)
-                                                                      bin/*.R         (experiment scripts)
-                                                                      bin/rstride/    (core R, copied)
-                                                                      config/
-                                                                      data/
-                                                                      tests/          (regression .rds)
-                                                                      sim_output/     (created at runtime)
-```
-
-The install prefix is derived in `Makefile:35-36`:
-
-```make
-LABEL = $(shell git rev-list HEAD --count)
-CMAKE_INSTALL_PREFIX = $(HOME)/opt/stride-$(LABEL)
-```
-
-**The install root is a function of the commit count.** Every commit produces a new
-install directory. Observed on this machine: `stride-745, 746, 748, 798, 806, 815, 820`.
-
-Experiment scripts are installed by an explicit file list in `main/r/CMakeLists.txt`;
-the `rstride/` library is installed wholesale as a directory (excluding `*.Rproj*`
-and `*.Rhistory`).
-
-### 1.2 Running an experiment
-
-The user changes directory to the install root and executes a script from there,
-because all internal paths are relative to that root:
-
-```
-cd ~/opt/stride-820
-./bin/rStride_contacts.R
-```
-
-`.rstride$set_wd()` (`Misc.R:588`) automates this: it scans `$HOME/opt`, parses the
-numeric suffix of `stride-<N>`, and `setwd()`s to the highest one. It falls back to
-`$VSC_SCRATCH` on the UA cluster.
-
-### 1.3 The R load sequence
-
-Every experiment script begins with the same two lines:
-
-```r
-rm(list=ls())
-source('./bin/rstride/rStride.R')
-```
-
-`rStride.R` then:
-
-1. Installs/loads `simid.rtools` from GitHub (version >= 0.1.43), installing it if absent.
-2. Force-loads 20 CRAN packages via `smd_load_packages()`, including `sf`, `tigris`,
-   `usmap`, `haven`, `VGAM` (needed only by the USA population factory).
-3. Sources `Misc.R`, which creates the `.rstride` environment.
-4. Sources every `.R` file under `./bin/rstride` found by `dir(recursive=TRUE)`,
-   minus a hardcoded exclusion list.
-5. Sets `options(scipen=999)` to avoid scientific notation reaching the C++ layer.
-6. Defines the public controller functions.
-7. As its **final statement**, captures the whole global environment:
-   `rStride_functions <- ls(all.names = TRUE)`.
-
-### 1.4 The experiment pipeline
-
-```
-exp_param_list   (named list of parameter vectors, set in the experiment script)
-      │
-      ▼  .rstride$get_full_grid_exp_design()
-exp_design       (data.frame: one row per run, full-factorial × rng seeds)
-      │
-      ▼  run_rStride()
-      ├─ validation gate: data_files_exist, log_levels_exist, valid_r0_values,
-      │                   valid_immunity_profiles, valid_seed_infected, valid_cnt_param
-      ├─ create project dir: sim_output/<timestamp><dir_postfix>/
-      ├─ smd_start_cluster()
-      ├─ foreach (%dopar%) over rows of exp_design:
-      │     ├─ create_config_exp()             merge defaults + design row
-      │     ├─ integrate_parameters_in_calendar()
-      │     ├─ save_config_xml()               write <exp_tag>.xml
-      │     ├─ system('./bin/stride -c <xml>') run the C++ kernel
-      │     ├─ read summary.csv, cbind with config
-      │     └─ parse_log_file()                event_log.txt ──▶ <exp_tag>_parsed.rds
-      ├─ write <run_tag>_summary.csv
-      ├─ .rstride$aggregate_compressed_output()
-      └─ smd_stop_cluster()
-      │
-      ▼  returns project_dir
-inspect_*(project_dir)   8 post-processing entry points, uniform signature:
-      inspect_summary, inspect_participant_data, inspect_contact_data,
-      inspect_transmission_data, inspect_transmission_dynamics,
-      inspect_incidence_data, inspect_prevalence_data, inspect_tracing_data
-```
-
-Parallel workers receive the library via
-`foreach(..., .export = c('par_nodes_info', rStride_functions))` — i.e. by exporting
-the captured global environment from step 7 above.
-
-### 1.5 The regression test flow
-
-The load-bearing test suite is **`rStride_gtester_covid19.R`** (717 lines), not the
-C++ gtester (426 lines in `test/cpp/gtester/`).
-
-```
-22 scenario designs (covid_base, covid_hhcl, covid_tracing, covid_collectivity,
-   covid_airborne, covid_subpools, covid_fitting, ...) × 5 rng seeds
-      │
-      ▼ run_rStride()
-      ▼ compare against reference .rds in ./tests/
-        summary / incidence / prevalence / contacts / participants / out_abc
-      ├─ exact equality diff per column
-      ├─ order-of-magnitude reporting for floating-point drift
-      ├─ reports which gtester_label diverged
-      └─ run-time comparison (performance regression)
-
-rrv()       resets the reference .rds in ./tests/
-rrv_repo()  additionally writes them back into the repository
-```
-
-Reference files live in the repo at `main/resources/rstride_test/`.
-
-### 1.6 The USA population / contact-matrix flow
-
-A separate, manually-run pipeline that is **not** part of the loaded library:
-
-```
-~/opt/FRED_population_usa/   (manual download, RTI synthetic population)
-      │
-      ▼  PopulationFactory_USA.R :: getFREDdata(state, county, com_target_size, rng_seed)
-pop_usa   (population matrix)
-      │
-      ▼  social_contacts_usa2026.R
-      ├─ contactdata::contact_matrix()  Prem et al. 2020, by location
-      ├─ convert to *conditional* rates (conditional on school enrolment / employment)
-      ├─ estimate cluster-size adjustment factors by uniroot()
-      └─ write: <run_tag>.csv, contact_matrix_<run_tag>.xml, *_METADATA.txt, *.pdf
-                into sim_output/<timestamp>_<run_tag>/
-      │
-      ▼  C++ AgeContactProfile.cpp:53
-         reads matrices.adjustment_factor.<type>.value and scales the whole age profile
-```
-
-Note that `social_contacts_usa2026.R` is an *experiment script* that lives inside the
-*library* directory `main/r/rstride/`, and is therefore explicitly excluded from the
-library load.
+This document records what is wrong, why, and in what order to fix it. Descriptive
+material — the install flow, the experiment pipeline, the contact-pool structures, the
+transmission and calibration mechanism, the build configuration, the test suites and the
+repository composition — lives in the architecture document.
 
 ---
 
-## 2. Observed state
-
-### 2.1 Code volume
-
-| Layer | Files | Lines |
-|---|---:|---:|
-| C++ kernel (`main/cpp`) | 89 | 11,341 |
-| R workbench (`main/r`) | ~37 | 13,668 |
-| C++ tests (`test/cpp/gtester`) | 3 | 426 |
-| R regression suite (`rStride_gtester_covid19.R`) | 1 | 717 |
-
-The C++ figure includes **898 lines under `main/cpp/mdp/` that are not compiled** — no
-`mdp/*.cpp` appears in `STRIDE_SRC`. Together with `main/python/` and `rStride_MDP.R`,
-roughly 1,200 lines of the totals above are dormant; see F11.
-
-### 2.2 Function inventory (R)
-
-- 108 public functions defined into the global environment
-- 40 private functions in the `.rstride` environment (40 defined, 40 distinct call sites — no dead weight)
-- 6 total occurrences of `stop()` / `warning()` / `tryCatch()` across the whole R layer
-- 16 `if(0==1){ attach(...) }` interactive-debug blocks (two distinct patterns; see F2.1)
-
-### 2.3 Longest functions
-
-| Lines | Function |
-|---:|---|
-| 334 | `CalendarFactory_USA.R :: create_calendar_file` |
-| 310 | `TransmissionAnalyst.R :: analyse_transmission_data_for_r0` |
-| 308 | `CalendarFactory.R :: create_calendar_file` |
-| 262 | `ParameterEstimator.R :: select_ensemble_and_plot` |
-| 238 | `rStride.R :: run_rStride` (with a ~100-line `foreach` body inline) |
-| 237 | `CalendarFactory_testing.R :: create_calenders_universal_testing` |
-| 232 | `HealthEconomist.R :: calculate_cost_effectiveness` |
-| 232 | `HealthEconomist_USA.R :: calculate_cost_effectiveness` |
-
-### 2.4 Duplicated ("twin") files
-
-| Original | Fork(s) | Lines |
-|---|---|---|
-| `HealthEconomist.R` | `HealthEconomist_USA.R` | 557 / 559 |
-| `CalendarFactory.R` | `CalendarFactory_USA.R`, `CalendarFactory_testing.R` | 751 / 777 / 283 |
-| `ImmunityProfileFactory.R` | `ImmunityProfileFactory_USA.R` | 127 / 86 |
-| `rStride_default_param.R` | `rStride_covid19_default_param.R`, `rStride_measles_default_param.R` | 210 / 131 / 131 |
-
-`calculate_cost_effectiveness` being 232 lines in *both* HealthEconomist variants
-indicates the same function with differing constants.
-
----
-
-## 3. Findings and reasoning
+## 1. Findings and reasoning
 
 ### F1. The install directory moves on every commit
 
@@ -450,33 +249,10 @@ need not rediscover the shape.
 
 ### F10. The contact rule is a calibration dependency for every disease file
 
-The change in F8 is not local to `Infector.cpp`. Each disease configuration carries a
-fitted regression of R0 on the transmission probability:
-
-```xml
-<transmission>
-  <b0>0.820990685751851</b0>
-  <b1>18.91204185976</b1>
-  <b2>0</b2>
-</transmission>
-```
-
-`TransmissionProfile.cpp:57-77` inverts `E(R0) = b0 + b1*p + b2*p^2` to derive the
-transmission probability from a requested R0. All ten disease files in
-`main/resources/data/` carry such a fit:
-
-| File | b0 | b1 | b2 |
-|---|---|---|---|
-| `disease_covid19_age.xml` | 0.14744 | 43.960 | 0 |
-| `disease_covid19_age_15min.xml` | 0.21936 | 29.283 | 0 |
-| `disease_covid19_child.xml` | 0.04610 | 38.610 | 0 |
-| `disease_covid19_lognorm.xml` | 0.12449 | 39.646 | 0 |
-| `disease_covid19_lognorm_child.xml` | 0.06896 | 34.571 | 0 |
-| `disease_influenza.xml` | 0 | 37.481 | -27.444 |
-| `disease_influenza_15touch.xml` | 0 | 15.990 | -7.738 |
-| `disease_measles_adaptive_behavior.xml` | 0 | 40.948 | -14.680 |
-| `disease_measles_adaptive_behavior_15min.xml` | 0 | 34.044 | -14.232 |
-| `disease_measles_usa.xml` | 0.82099 | 18.912 | 0 |
+The change in F8 is not local to `Infector.cpp`. Every disease configuration carries a
+fitted regression of R0 on the transmission probability, which `TransmissionProfile`
+inverts to derive the transmission probability from a requested R0. The mechanism and the
+coefficients of all ten disease files are in **architecture §4**.
 
 These fits were produced against the **current `min` implementation**. Switching to
 `mean` raises realised contacts per person, so the same transmission probability yields
@@ -612,37 +388,18 @@ compiled into `libstride`, and its only caller is `MDP.cpp:454` (open decision 4
 ### F12. The venue extension is intrusive, and the population format cannot absorb it
 
 Four contact-pool types were added alongside the original set: `OtherHouse`, `RestoCafe`,
-`OtherPlace` and `Transport`. They are **structurally different** from the classic pools,
-and that difference is legitimate:
-
-| | Classic pools | New venues |
-|---|---|---|
-| Pool id per person | one (`m_pool_ids[type][0]`) | one **per day of week** |
-| Source | population CSV column | separate `subpools_community_file` |
-| Contact rate | `AgeContactProfile`, by age | per-person `CPoolContacts(type)[day]` |
-| Duration | not tracked | tracked per day |
+`OtherPlace` and `Transport`. They are structurally different from the classic pools in
+four respects — see **architecture §3.1** — and that difference is legitimate.
 
 The problem is not the extension. It is that the difference is expressed by **naming the
 four types at every decision point** instead of declaring what makes them different.
 
 #### F12.1 Identity used as a proxy for properties
 
-The literal four-type list appears **nine times across five files**:
-
-```
-PopBuilder.cpp:155,165,188,240   SimBuilder.cpp:93   Sim.cpp:141   Infector.cpp:222
-Person.cpp:106-109,126-134       ContactDivider.cpp:48-61,117-120 (unrolled by hand)
-```
-
-These lists encode **three different predicates that do not coincide**, which is invisible
-because they look alike:
-
-| Predicate | Sites | Members |
-|---|---|---|
-| loaded from subpool file / day-indexed | PopBuilder x4, `SimBuilder.cpp:93`, `Sim.cpp:141`, `Infector.cpp:222` | the 4 venues |
-| has individual contact variation | `Infector.cpp:275` | 4 venues **+ Workplace + both Community**, **minus OtherHouse** |
-| presence toggled per day | `Person.cpp:106-134` | the 4 venues |
-| has physical venue characteristics (airborne) | `PoolCharacteristicsSeeder.cpp:94` | **School, Workplace, Collectivity + the 4 venues** |
+The literal four-type list appears **nine times across five files**, and those sites
+encode **three different predicates that do not coincide** — which is invisible because
+they look alike. The sites and the predicate membership are tabulated in
+**architecture §3.2**.
 
 `Infector.cpp:275` and `PoolCharacteristicsSeeder.cpp:94` are genuinely different sets and
 nothing states so. Adding a fifth venue requires locating all the sites and knowing which
@@ -650,16 +407,8 @@ of the four groups it joins.
 
 #### F12.2 The population file format is positional and count-inferred
 
-`PopBuilder.cpp:82-88` determines the layout by probing a value and a column count:
-
-```cpp
-bool bool_profession = Trim(headers[2]) == "worker";           // layout from a VALUE
-unsigned int profession_adj = bool_profession ? 2 : 0;
-bool has_extra_column = headers.size() == (7+profession_adj);  // and from COLUMN COUNT
-if (has_extra_column) extra_id = Trim(headers[6+profession_adj]);
-bool household_cluster_id = extra_id == "household_cluster_id";
-bool collectivity_id      = extra_id == "collectivity_id";
-```
+`PopBuilder.cpp:82-88` determines the layout by probing a value and a column count; the
+code is quoted in **architecture §3.3**.
 
 Five liabilities:
 
@@ -680,14 +429,8 @@ isolation, but it was forced by the format rather than chosen.
 
 #### F12.3 Memory cost, measured
 
-Compiled against the real headers on 2026-09-25:
-
-```
-NumOfTypes()   = 12   (the enum has 11 values)
-sizeof(Person) = 1192 bytes
-  IdSubscriptArray<array<unsigned int,7>> = 336 bytes each
-  three of them (ids + durations + contacts) = 1008 bytes
-```
+The measured layout is in **architecture §3.4**: `sizeof(Person) = 1192` bytes, of which
+1008 are three `IdSubscriptArray` members, and `NumOfTypes()` returns 12 for 11 types.
 
 **85% of every `Person` is those three arrays**, and most of it is never used:
 
@@ -802,12 +545,8 @@ deliberate reference reset under the rule in §7.5.
 
 The CMake files carry copyright dates of 2017-2019 and predate "modern CMake" throughout.
 Findings below were verified against what the build **actually produces**, not only what
-the files say. The flags reaching the compiler in a Release build are:
-
-```
--g -fvisibility=hidden -std=c++17 -Wall -Wextra -pedantic -Weffc++ \
--Wno-unknown-pragmas -std=c++1z -O3 -DNDEBUG -ffast-math -arch arm64 ...
-```
+the files say; the flags that actually reach the compiler are listed in
+**architecture §6**.
 
 #### F13.1 `-ffast-math` undermines the regression strategy
 
@@ -828,17 +567,9 @@ reference reset, and must precede the reset in Phase 4.
 
 #### F13.2 OpenMP is not linked, and its absence is silent
 
-Verified on the development machine:
-
-| | |
-|---|---|
-| `~/opt/stride-820/bin/stride` | Mach-O **arm64**; `otool -L` shows only `libSystem`, `libc++` |
-| `/usr/local/Cellar/libomp/17.0.6/lib/libomp.dylib` | Mach-O **x86_64** |
-| `/opt/homebrew` (Apple Silicon prefix) | does not exist |
-| `CMakeCache.txt` | `HAVE_FOUND_OpenMP:BOOL=FALSE`, `OpenMP_CXX_FLAGS:STRING=NOTFOUND` |
-
-An arm64 binary cannot link an x86_64 library, so detection failed and the build fell back
-to the dummy-OpenMP stubs in `main/resources/lib/domp`. Every `#pragma omp parallel`
+The evidence is tabulated in **architecture §6.1**: an arm64 binary cannot link the
+x86_64 `libomp` present on this machine, so detection fails and the build falls back to
+the dummy-OpenMP stubs in `main/resources/lib/domp`. Every `#pragma omp parallel`
 compiles to nothing.
 
 **The performance impact today is nil**, because `rStride.R:87` hardcodes
@@ -927,37 +658,10 @@ reduce build time appreciably given the weight of the spdlog and Boost headers.
 
 ### F14. Repository history is dominated by re-committed binary data
 
-`git count-objects -vH` reports a **270 MB** pack. The working tree's
-`main/resources/data` is 213 MB, but 166 MB of that is
-`pop_belgium3000k_c500_teachers_censushh_all.zip`, which is **gitignored**
-(`.gitignore:123`) and therefore local-only — it has never been in a clone.
-
-Aggregating every blob in history by path gives the actual composition.
-
-**Deleted files that still cost every clone — about 57 MB:**
-
-| Size | Path |
-|---:|---|
-| 35.8 MB | `main/resources/data/pop_belgium3000k_..._extended3_size2.zip` |
-| 6.2 MB | `main/resources/data/pop_belgium600k_..._extended3.zip` |
-| 5.7 MB | `main/resources/data/pop_flanders600.csv.zip` |
-| 4.8 MB | `main/r/rstride/lib/simid_rtools-master.zip` |
-| 4.5 MB | `main/resources/data/pop_belgium600k_c1k_teachers_censushh.zip` |
-
-**Superseded versions of files still present at HEAD — about 50 MB:**
-
-| Total | Versions | Path |
-|---:|---:|---|
-| 51.5 MB | **5** | `pop_belgium100k_c500_teachers_censushh.zip` (current version is 6.4 MB) |
-| 9.9 MB | 2 | `pop_belgium600k_c500_teachers_censushh.zip` |
-| 5.2 MB | 5 | `pop_belgium10k_c500_teachers_censushh.zip` |
-
-And one that is small per version but diagnostic:
-`main/resources/rstride_test/regression_rstride_incidence.rds` exists in **51 versions**
-totalling 9.4 MB — every `rrv()` reference reset adds a new binary blob permanently.
-
-So roughly **110 MB of the 270 MB is historical binary weight that nothing at HEAD
-requires.**
+The pack is **270 MB**, of which roughly **110 MB is historical binary weight that nothing
+at HEAD requires** — deleted population archives, superseded versions of archives still
+present, and 51 versions of one regression reference. The breakdown is in
+**architecture §8**.
 
 **Root cause.** Population archives are *re-committed rather than versioned*: regenerate,
 overwrite, commit, and the full size is added to history for good. This is the same
@@ -1001,7 +705,7 @@ ignored archive is excluded.
 
 ---
 
-## 4. Proposed refactoring sequence
+## 2. Proposed refactoring sequence
 
 Ordered so that each phase makes the next one safe. Each phase ends with a working system.
 
@@ -1471,7 +1175,7 @@ Travis-era compiler (F13.3).
 
 ---
 
-## 5. Open decisions
+## 3. Open decisions
 
 1. **`Infector.cpp` min vs average (F8, F10)** — **decided, and the route is fixed.**
    The uncommitted `mean` edit was discarded on 2026-09-26 and the refactoring starts
@@ -1504,10 +1208,17 @@ secondary cases for remaining susceptibles. See
 
 ---
 
-## 6. Branch reconciliation (prerequisite to the refactoring)
+## 4. Branch reconciliation — COMPLETED 2026-10-05
 
-The refactoring in §4 must start from a single consolidated baseline. Two branches
-carry live measles/USA work and have diverged for two months.
+> **Done.** The sequence below was executed on 2026-10-05. `master` now contains the
+> consolidated baseline, tagged `pre-refactor-2026-10`; `measles_usa_rm` tracks it;
+> `measles_usa` and `integration/measles-usa` are archived by tag and deleted. What the
+> merge did with each part of `measles_usa_rm`, and the one file reverted from it, is
+> recorded in `measles_usa_rm_merge_result.md`. The record below is kept as the reasoning
+> that produced that baseline.
+
+The refactoring must start from a single consolidated baseline. Two branches carried live
+measles/USA work and had diverged for two months.
 
 ### 6.1 State as of 2026-09-25
 
@@ -1607,7 +1318,7 @@ which the golden master becomes trustworthy again.
 
 ---
 
-## 7. Proposed branching and pull-request model
+## 5. Proposed branching and pull-request model
 
 The current model is a direct cause of the situation in §6: long-lived personal branches
 (`measles_usa`, `measles_usa_rm`, `superspreading`, `dev`, plus `as/`, `ek/`, `ic/`
@@ -1667,7 +1378,7 @@ someone's work without a trace.
 
 ---
 
-## 8. Calibration management
+## 6. Calibration management
 
 Specification for the infrastructure delivered in Phase 2b. It replaces the current
 practice of writing a refitted disease file into `sim_output/` and copying it into
@@ -1808,17 +1519,11 @@ are being touched anyway.
 
 ---
 
-## 9. Continuous integration
+## 7. Continuous integration
 
 ### 9.1 The two suites are complementary — keep both
 
-| | C++ gtester | rStride regression suite |
-|---|---|---|
-| Location | `test/cpp/gtester/` | `main/r/rStride_gtester_covid19.R` |
-| Scope | kernel only | **whole pipeline**: config generation -> stride -> log parsing -> aggregation |
-| Scenarios | 22 (19 covid, 3 influenza) x 2 thread settings | 23 scenarios x 5 seeds = 115 runs |
-| Assertion | `num_cases` within a **margin** | **byte-exact** across 6 output streams |
-| Cost | fast | **1336 s** of simulation time |
+The two suites are compared in **architecture §7**.
 
 Porting the R suite into C++ would be a mistake. Its value is that it exercises `rStride`
 — 13,668 lines with no other tests — and its assertions depend on R's own parsing and
