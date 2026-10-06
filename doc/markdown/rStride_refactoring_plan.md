@@ -71,12 +71,15 @@ user asks.
 
 ### Next, in order
 
-1. **Repair CI** (§7) — no GitHub Actions run has ever passed. Both jobs stop before
-   compiling: `ci.yml:65` runs `make gtest`, expecting it to configure, build and install,
-   but in the `Makefile` `install` (which `gtest` depends on) has never depended on
-   `configure`/`all`, so `cmake-build-release` does not exist (`Makefile:114`). Likely fix:
-   `install: all`; check `regression.yml:79` too. PR #11 was merged on local evidence only
-   (gtester 44/44, rStride unchanged); Linux gcc/clang have not yet built it.
+1. **Repair CI** (§7) — **in progress, PR #13 (`fix/ci-build`, `74072a3`)**. No GitHub
+   Actions run had ever passed: both jobs stopped before compiling with
+   `make[1]: *** cmake-build-release: No such file or directory` (`Makefile:114`), because
+   `install` (which `gtest` depends on) never depended on `configure`/`all`. Fixed:
+   `install: all`; both workflows' stale `~/opt/stride-*` paths → `~/opt/stride` (F1);
+   ccache wired via `CMAKE_{C,CXX}_COMPILER_LAUNCHER` (it was installed but never used).
+   PR #13's own run is the first Linux gcc/clang build of the post-PR #11 code — results
+   pending; any compile errors it reveals go on the same PR. The nightly regression job
+   stays informational (§7.4 prerequisites 2-3, 5 still open).
 2. **Phase 2 step 2** — population file, backwards compatible (see the rewritten step).
 3. **F12.7** (new, below Phase 5b step 3) — the generator's day-boundary pool-id overlap;
    results-changing, needs its own PR and reference reset.
