@@ -28,7 +28,9 @@
 #include "util/StringUtils.h"
 
 #include "util/Ptree.h"
+#include <algorithm>
 #include <numeric>
+#include <utility>
 #include <vector>
 
 namespace stride {
@@ -76,7 +78,12 @@ void ImmunitySeeder::Vaccinate(const std::string& immunityType, const std::strin
                                 auto immunityRate = immunity_pt.get<double>("immunity.age" + std::to_string(index_age));
                                 immunityDistribution.push_back(immunityRate);
                         }
-                        Random(immunityPools, immunityDistribution, linkProbability, pop, false);
+                        // No clustering requested => use the O(N) path (same quota, no rejection).
+                        if (linkProbability == 0) {
+                                RandomIndependent(immunityPools, immunityDistribution, pop, false);
+                        } else {
+                                Random(immunityPools, immunityDistribution, linkProbability, pop, false);
+                        }
 
 		} else if(immunizationProfile == "Random" || immunizationProfile == "Cocoon") {
 
@@ -105,12 +112,95 @@ void ImmunitySeeder::Vaccinate(const std::string& immunityType, const std::strin
 					}
 			}
 
-			Random(immunityPools_selection, immunityDistribution, linkProbability, pop, true);
+			// linkProbability is 0 on this path: the Random/Cocoon profiles have no
+			// clustering knob, so this always takes the fast path.
+			if (linkProbability == 0) {
+				RandomIndependent(immunityPools_selection, immunityDistribution, pop, true);
+			} else {
+				Random(immunityPools_selection, immunityDistribution, linkProbability, pop, true);
+			}
 
 		}
 }
 
 
+
+void ImmunitySeeder::RandomIndependent(const SegmentedVector<ContactPool>& pools,
+                       vector<double>& immunityDistribution, std::shared_ptr<Population> pop,
+                       const bool log_immunity)
+{
+        // No clustering is requested, so household structure carries no information here:
+        // Random() with immunityLinkProbability == 0 breaks out of each household after a
+        // single member anyway. Bucket the candidates per age class instead, shuffle, and
+        // take the first `quota`. Same exact quota, O(N), no rejection.
+        //
+        // NOTE: deliberately NOT the household-pruning variant that was tried on
+        // measles_usa_rm. That kept the with-replacement draw and added an isExhausted()
+        // scan of the household per draw, which made the 99.91% case far slower rather
+        // than faster (see doc/markdown/measles_usa_rm_merge_result.md section 3).
+
+        const unsigned int maxAge = pop->GetMaxAge();
+        auto&              logger = pop->RefEventLogger();
+
+        // Keep the pool alongside each candidate so the [VACC] log lines stay identical
+        // in content to the ones Random() emits.
+        vector<vector<std::pair<Person*, const ContactPool*>>> byAge(maxAge + 1);
+        for (const auto& c : pools) {
+                for (const auto& p : c.GetPool()) {
+                        if (!p->IsVaccinated()) {
+                                byAge[p->GetAge()].emplace_back(p, &c);
+                        }
+                }
+        }
+
+
+        shared_ptr<ConstantVaccine::Properties> properties(
+            new ConstantVaccine::Properties{"immunity", 1.0, 1.0, 1.0});
+
+        for (unsigned int age = 0; age <= maxAge; age++) {
+                auto& candidates = byAge[age];
+                if (candidates.empty()) { continue; }
+
+                // Identical to Random(): floor(unvaccinated count * rate) for this age class.
+                const auto quota = static_cast<unsigned int>(
+                    floor(static_cast<double>(candidates.size()) * immunityDistribution[age]));
+                if (quota == 0) { continue; }
+
+                // Sample without replacement by PARTIAL Fisher-Yates: only the first
+                // `quota` positions are needed, so this is O(quota), not O(n log n).
+                //
+                // Deliberately NOT RnMan::Shuffle (std::shuffle over trng::lcg64): that
+                // is unusably slow at this scale -- shuffling 6,971 elements did not
+                // complete in 45 s, while the household-sized vectors Random() passes it
+                // (2-3 elements) are unaffected, which is why the defect has stayed
+                // hidden. SampleUniform01() is the draw used elsewhere in this file.
+                auto&      rng = m_rn_man->at(0U);
+                const auto n   = static_cast<unsigned int>(candidates.size());
+
+                vector<unsigned int> order(n);
+                iota(order.begin(), order.end(), 0U);
+
+                for (unsigned int i = 0; i < quota; i++) {
+                        unsigned int j = i + static_cast<unsigned int>(rng.SampleUniform01() * (n - i));
+                        if (j >= n) { j = n - 1; } // guard against SampleUniform01() == 1.0
+                        std::swap(order[i], order[j]);
+                }
+
+                for (unsigned int i = 0; i < quota; i++) {
+                        Person*            p      = candidates[order[i]].first;
+                        const ContactPool& p_pool = *candidates[order[i]].second;
+
+                        auto vaccine = std::unique_ptr<Vaccine>(new ConstantVaccine(properties));
+                        p->SetVaccine(vaccine);
+
+                        if (log_immunity) {
+                                logger->info("[VACC] {} {} {} {} {} {}", p->GetId(), p->GetAge(),
+                                             ToString(p_pool.GetType()), p_pool.GetId(),
+                                             p_pool.HasInfant(), 0);
+                        }
+                }
+        }
+}
 
 void ImmunitySeeder::Random(const SegmentedVector<ContactPool>& pools, vector<double>& immunityDistribution,
                        double immunityLinkProbability,std::shared_ptr<Population> pop, const bool log_immunity)
