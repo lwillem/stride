@@ -22,7 +22,7 @@ Where things stand, so a fresh session can start without re-deriving any of it.
 
 | Branch | Tip | State |
 |---|---|---|
-| `master` | `f57bfd4`, plus plan-only commits | consolidated baseline + Phases 0, 0b, 0c, 5c (steps 1-2), F1, F7.1, F13.1 |
+| `master` | `b588bdc`, plus plan-only commits | consolidated baseline + Phases 0, 0b, 0c, 5c (steps 1-2), F1, F7.1, F13.1 |
 | `feature/immunity-fast-seeding` | `7b97626` | **merged to `master` 2026-10-06** (`f57bfd4`) — Phase 5c; branch kept |
 | `feature/venue-memory` | `bf91ae6` | Phase 5b **step 4 done**, step 3 not started |
 
@@ -32,7 +32,9 @@ is on `master` (2026-10-06), that merge is redundant: rebase or merge `master` i
 `feature/venue-memory` and it drops out.
 
 > **`feature/immunity-fast-seeding` merged 2026-10-06** (`f57bfd4`, no conflicts). It was
-> verified (gtester 44/44; the scenario that never finished now takes 2.1 s). Phase 5c
+> verified (gtester 44/44; the scenario that never finished now takes 2.1 s), and
+> re-verified on `master` after the merge: **gtester 44/44**, `influenza_c` 1.8 s single /
+> 2.2 s multi-threaded (clean native build, `b588bdc`). Phase 5c
 > steps 3-4 — the seeding benchmark and the marginal / within-household comparison — are
 > **still outstanding**: no record of them exists in the plan, the branch's commit or its
 > files. Note the R suite cannot show this change at all (F6.1), so the C++ gtester and
@@ -51,7 +53,7 @@ bypassed it with the user's agreement; the feature branches now make honouring i
 | Install root stable (`~/opt/stride`) | F1 | 10 legacy dirs, `set_wd()` still resolves |
 | Phase 0b — both excisions | F11 + `track_index_case` | 1,419 + ~90 lines; tombstone exercised 3 ways |
 | Phase 0c — build repairs | F13.1/.3 | `-O3 -std=c++17`, `compile_commands.json` exists |
-| **OpenMP actually works** | F13.2 | native arm64, `libomp` linked, **44/44 with 22 genuinely multi-threaded instances** |
+| **OpenMP actually works** | F13.2 | native arm64, `libomp` linked, **44/44 with 22 genuinely multi-threaded instances**; survives a re-configure and a Rosetta-hosted Claude Code since `4dcca5e`/`b588bdc` |
 | Reference reset | F6 | all six streams reproduce |
 | Phase 5c steps 1-2 — immunity fast path | `master` (`f57bfd4`) | 16 min → **2.1 s**; steps 3-4 outstanding |
 | Phase 5b step 4 — `NumOfTypes` | branch | `sizeof(Person)` 1192 → **1104**, 39.7 MB at 474k |
@@ -86,7 +88,9 @@ subpool generator and establish what is actually produced.
 - **B7** — `PopSnapshotWriter` gating is settled, but `MeaslesClustering.R` still hardcodes
   a superseded `project_dir`.
 - **Phase 0c step 6** — local OpenMP is now working, but `CMakeLocal.cmake` is gitignored,
-  so every machine must repeat the `OpenMP_ROOT` recipe in that step.
+  so every machine must repeat the `OpenMP_ROOT` recipe in that step. Build only via the
+  test-runner (`stride-test.sh` forces native arm64); a build started from a Rosetta
+  process drops OpenMP silently — check that the gtester reports 44 tests, not 22.
 - **Phase 1** — postponed by decision; what it holds up is recorded there.
 - **Phase 4 step 1** — `rrv_repo()` still hardcodes an absolute personal path
   (`rStride_gtester_covid19.R:711`).
@@ -727,6 +731,16 @@ reference reset, and must precede the reset in Phase 4.
 > real immediately exposed F16. Two parts remain: `CMakeLocal.cmake` is gitignored, so
 > every machine must repeat the recipe; and `-Wno-unknown-pragmas` is still set. The
 > description below is the state before the fix.
+>
+> **Two follow-ups, 2026-10-06** (after the Phase 5c merge). A build directory recreated
+> from inside Claude Code silently lost OpenMP again (gtester 22/22): **Claude Code itself
+> runs under Rosetta** (an x86_64 Intel-Homebrew cask in `/usr/local`), so every build it
+> starts configures for x86_64 — the trap described below. `.claude/scripts/stride-test.sh`
+> now forces `arch -arm64` (`b588bdc`). The clean native rebuild then exposed a latent bug:
+> the cached detection skipped `find_package(OpenMP)` on a re-configure, losing the
+> `OpenMP::OpenMP_CXX` target (`'omp.h' file not found`). Fixed in `CMakeCPP.cmake`
+> (`4dcca5e`); gtester back to **44/44**. Installing the native Claude Code cask from
+> `/opt/homebrew` removes the root cause.
 
 The evidence is tabulated in **architecture §6.1**: an arm64 binary cannot link the
 x86_64 `libomp` present on this machine, so detection fails and the build falls back to
