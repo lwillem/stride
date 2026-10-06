@@ -125,6 +125,11 @@ if(NOT STRIDE_FORCE_NO_OPENMP)
 	    endif()
     endif()
     if (HAVE_FOUND_OpenMP)
+        # Re-run on every configure: the cache keeps the flags but not the imported
+        # OpenMP::OpenMP_CXX target, which carries omp.h's include path and libomp.
+        # Without it, a re-configure (e.g. the one 'make all' triggers) compiles with
+        # -fopenmp but fails on 'omp.h' file not found.
+        find_package(OpenMP QUIET)
     	set(OPENMP_FOUND TRUE)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
