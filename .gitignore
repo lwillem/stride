@@ -126,3 +126,7 @@ covid19_hospital_age_2020_full.csv
 regression_rstride_cases.pdf
 .positai
 main/r/rstride/rmarkdown/*.html
+
+# Claude Code: personal settings and session worktrees
+.claude/settings.local.json
+.claude/worktrees/
