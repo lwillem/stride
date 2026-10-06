@@ -47,9 +47,18 @@ private:
         void Vaccinate(const std::string& immunityType, const std::string& immunizationProfile,
                        const util::SegmentedVector<ContactPool>& immunityPools, std::shared_ptr<Population> pop);
 
-        /// Random immunization.
+        /// Random immunization, clustered within households by immunityLinkProbability.
 		void Random(const util::SegmentedVector<ContactPool>& pools, std::vector<double>& immunityDistribution,
 					double immunityLinkProbability, std::shared_ptr<Population> pop, const bool log_immunity);
+
+		/// Random immunization WITHOUT clustering, for immunityLinkProbability == 0.
+		/// Fills the same exact per-age quota as Random() -- floor(unvaccinated[age] * rate[age])
+		/// -- but by bucketing candidates per age class, shuffling and taking the first `quota`.
+		/// O(N) in one pass instead of rejection sampling with replacement, which degrades
+		/// badly as the quota fills (see doc/markdown/immunity_clustering_plan.md section 1.4).
+		void RandomIndependent(const util::SegmentedVector<ContactPool>& pools,
+							   std::vector<double>& immunityDistribution,
+							   std::shared_ptr<Population> pop, const bool log_immunity);
 
 
 private:
