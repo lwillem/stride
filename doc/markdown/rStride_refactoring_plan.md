@@ -734,6 +734,27 @@ ignored archive is excluded.
 
 Ordered so that each phase makes the next one safe. Each phase ends with a working system.
 
+### Current priority order — set 2026-10-06
+
+Phases 0, 0b and 0c are done. The next three items are taken in this order, by decision,
+ahead of the numbering below:
+
+| | Work | Where it is specified | Results-changing? |
+|---|---|---|---|
+| 1 | **Venue memory footprint** | Phase 5b step 3 (F12.3) | no — representation only |
+| 2 | **Fast unclustered immunity seeding** | Phase 5c, new | **yes**, see below |
+| 3 | **Population file, backwards compatible** | Phase 2 step 5, rewritten | no, by construction |
+
+**These belong on a branch, not on `master`.** Item 1 rewrites `Person` and the
+transmission loops, item 2 adds a sampler whose output differs from the current one, and
+item 3 changes how every population file is read. Each is large enough that a half-finished
+state on the trunk would block everyone else, and §5.3 wants the reasoning in a pull
+request body. One `feature/…` branch per item, merged when its suite run is green —
+not one branch for all three, or they cannot be reviewed or reverted independently.
+
+Phase 1 (the R package skeleton) stays postponed. Phase 2b, the `mean` calibration
+campaign, is unaffected by all three and can proceed in parallel on its own branch.
+
 ### Phase 0 — Contact-probability rule: settled, nothing to implement
 
 0. **Settled 2026-09-26.** The uncommitted `mean` change was discarded; the baseline is
@@ -947,23 +968,40 @@ rather than an environment: same readability, no indirection.
 4. Wrap `system()` with exit-status checking and a clear per-experiment error naming
    the experiment id, config file and exit code. Apply to `rStride.R:385` and
    `rStride_main_abc.R:141`.
-5. **Parse the population file by header name** (F12.2). Build a name-to-index map from
-   the header row once, then read every field by name:
+5. **Parse the population file by header name — with a positional fallback** (F12.2).
 
-   ```cpp
-   std::map<std::string,size_t> col;
-   for (size_t i = 0; i < headers.size(); ++i) col[Trim(headers[i],"\"")] = i;
-   const auto age = IntFromString(values[col.at("age")]);
-   if (col.count("household_cluster_id")) { ... }
-   if (col.count("collectivity_id"))      { ... }   // both may now coexist
-   ```
+   > **Revised 2026-10-06.** A first attempt resolved every column by name and was
+   > reverted. It required each column to match a *known* name, so a production file whose
+   > headers this repository has never seen would have been rejected outright — turning
+   > files that work today into hard errors. The seven population files in this tree
+   > cannot demonstrate that, which is exactly why it was the wrong design.
 
-   Column order becomes irrelevant, new columns are safe to add anywhere, the two extra
-   pool ids stop being mutually exclusive, and a missing required column throws an error
-   naming it rather than silently shifting every subsequent field. This belongs in this
-   phase because the current behaviour is a *silent* misread, which is the same class of
-   defect as a swallowed exit status. It is also small, and it protects every later phase
-   that touches population input.
+   The rule is **backwards compatibility first**:
+
+   - **Decide whether the first line is a header at all.** A file whose first line parses
+     as all-numeric has no header; read it positionally, exactly as today, byte for byte.
+   - **If it is a header, resolve columns by name**, and only then gain what F12.2 asks
+     for: column order stops being load-bearing, a new column is safe to add anywhere, and
+     `household_cluster_id` and `collectivity_id` stop being mutually exclusive.
+   - **An unrecognised header name is not an error.** Fall back to the positional reading
+     for any field whose name is not recognised, rather than refusing the file. The
+     failure mode to remove is the *silent misread*, not the unfamiliar file.
+   - Keep the CRLF handling either way: at least one population file in the tree is CRLF,
+     so the final column name carries a trailing `\r`. The positional parser never looked
+     at header names and so never noticed.
+
+   Then **update the USA population generators** (`PopulationFactory_USA.R`,
+   `social_contacts_usa2026.R`) to emit the canonical column names, so new files take the
+   name-based path. Existing files keep working untouched.
+
+   Two notes for whoever implements this. The accepted spellings already differ across the
+   files in the tree — `work_id` vs `workplace_id`, `primary_community` vs
+   `community_weekend` — so the name table needs synonyms from the start. And
+   `pop_belgium100k_c500_teachers_censushh.csv` is **misread today**: it carries a
+   `person_id` column but no `worker` column, so the positional probe shifts every field
+   by one and drops `secondary_community`. Nothing references that file, so the misread is
+   latent — but a name-based path would quietly start reading it differently, which must be
+   called out rather than discovered.
 
 ### Phase 2b — Calibration management and migration to the `mean` rule
 
@@ -1159,6 +1197,62 @@ a trustworthy regression suite.
 different pools of the same venue type on a single day? The current format cannot express
 it, so if the generator assumes that constraint the membership-list design is a superset
 and nothing breaks — but it should be confirmed rather than assumed.
+
+### Phase 5c — A fast path for unclustered immunity seeding
+
+**Added 2026-10-06, by decision.** Keep the current sampler; add an optimised path used
+only when no clustering is requested.
+
+Today `ImmunitySeeder::Random()` is **rejection sampling with replacement**: draw a
+household uniformly, shuffle all its members, consider them in order, and continue within
+the household with probability `*_link_probability`. At
+`immunity_link_probability = 0` the walk breaks after the first member considered, so the
+household structure contributes nothing — the clustering is zero and the only thing the
+household draw provides is an expensive way to reach a random person. Each iteration still
+allocates a vector, runs `iota` and shuffles the whole household. As the per-age quota
+fills, most drawn people are already immune, and the tail costs on the order of
+`N_households / remaining_candidates` draws per success. See `immunity_clustering_plan.md`
+§1.4 for the full cost argument.
+
+**The optimisation:** when no clustering is asked for, walk the population once and decide
+each person with an age-specific Bernoulli draw. O(N), one pass, no rejection, no
+household machinery.
+
+**It is not a drop-in replacement, and that is the point to settle first.** The current
+sampler fills an **exact per-age quota**, `floor(count[age] * rate[age])`
+(`ImmunitySeeder.cpp:143`). A per-person Bernoulli draw produces a **stochastic realised
+total** instead. The two agree in expectation and differ in every individual run, so this
+is the question `immunity_clustering_plan.md` §5.4 already raises — *exact quota, or
+stochastic marginal?* — not merely a speed-up. Consequences:
+
+- regression references move, so this needs its own pull request and a deliberate reset
+  under §5.5;
+- the `floor()` per age systematically undershoots the target by up to one person per age
+  class, which a Bernoulli path does not reproduce either;
+- a third option exists if exactness is wanted *and* speed: keep the exact quota and use
+  `RandomIndependent()`-style bucketing — shuffle the candidates of each age class and take
+  the first `quota`. That is O(N), exact, and reproduces the current marginals. It is also
+  already written on `measles_usa_rm`, where it was reverted for an unrelated reason
+  (see `measles_usa_rm_merge_result.md` §3).
+
+**Gate it on the knob that exists.** There is no `immunity_clustering` setting in the
+kernel today; the existing control is `run.immunity_link_probability` (and its `vaccine_`
+counterpart), and `0` is the no-clustering case. A named `*_clustering` mechanism is
+proposed in `immunity_clustering_plan.md` Phase III — if that lands first, gate on
+`none` instead.
+
+Steps:
+
+1. Decide exact-quota vs stochastic-marginal. This determines whether the change is
+   behaviour-preserving (bucketed shuffle) or results-moving (Bernoulli).
+2. Implement the fast path behind the existing knob, leaving `Random()` untouched for any
+   non-zero link probability.
+3. Benchmark seeding at 50 / 70 / 90 / 95 % on Gaines TX and Dane WI —
+   `immunity_clustering_plan.md` §4 Phase I step 3 asks for exactly this, and it is what
+   caught the `measles_usa_rm` pruning regression.
+4. Check the realised per-age marginals against the target, and the within-household
+   correlation against the current sampler at `link_probability = 0`. They should be
+   indistinguishable; if they are not, the fast path is not equivalent.
 
 ### Phase 6 — Configuration as data
 
