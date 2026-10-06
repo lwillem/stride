@@ -741,9 +741,26 @@ ahead of the numbering below:
 
 | | Work | Where it is specified | Results-changing? |
 |---|---|---|---|
-| 1 | **Venue memory footprint** | Phase 5b step 3 (F12.3) | no — representation only |
-| 2 | **Fast unclustered immunity seeding** | Phase 5c, new | **yes** — same marginals, different individuals |
+| 1 | **Fast unclustered immunity seeding** | Phase 5c, new | **yes** — same marginals, different individuals |
+| 2 | **Venue memory footprint** | Phase 5b step 3 (F12.3) | no — representation only |
 | 3 | **Population file, backwards compatible** | Phase 2 step 5, rewritten | no, by construction |
+
+> **Immunity moved to first, 2026-10-06.** It was second until the native OpenMP build made
+> the multi-threaded gtester instantiation real for the first time. 43 of 44 tests pass;
+> the 44th — `influenza_c`, `immunity_rate = 0.9991` — ran **16 minutes without finishing**
+> against **3.8 s** for its single-threaded twin, at 100 % of *one* core with the eight
+> OpenMP threads idle, stuck in `Seed population with immunity`.
+>
+> It is not a parallel-code defect. Seeding runs before any parallel region, on
+> `m_rn_man->at(0U)`. Thread count matters only because `RnMan` is constructed with
+> `num_threads`, so `at(0)` yields a different stream — and the rejection sampler's runtime
+> at 99.91 % is acutely sensitive to the stream (§1.4 of
+> `immunity_clustering_plan.md`: the coupon-collector tail). Pre-existing pathology, newly
+> visible.
+>
+> Phase 5c removes rejection sampling for this case entirely, so it is now motivated by a
+> reproducible failure rather than a cost argument. **That scenario is the acceptance
+> test:** it must drop back to seconds.
 
 **These belong on a branch, not on `master`.** Item 1 rewrites `Person` and the
 transmission loops, item 2 adds a sampler whose output differs from the current one, and
