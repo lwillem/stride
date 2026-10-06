@@ -78,7 +78,8 @@ void ImmunitySeeder::Vaccinate(const std::string& immunityType, const std::strin
                                 auto immunityRate = immunity_pt.get<double>("immunity.age" + std::to_string(index_age));
                                 immunityDistribution.push_back(immunityRate);
                         }
-                        // No clustering requested => use the O(N) path (same quota, no rejection).
+                        // No clustering requested => use the O(N) path (same per-age quota, no
+                        // rejection, no household-size bias; see RandomIndependent()).
                         if (linkProbability == 0) {
                                 RandomIndependent(immunityPools, immunityDistribution, pop, false);
                         } else {
@@ -129,10 +130,14 @@ void ImmunitySeeder::RandomIndependent(const SegmentedVector<ContactPool>& pools
                        vector<double>& immunityDistribution, std::shared_ptr<Population> pop,
                        const bool log_immunity)
 {
-        // No clustering is requested, so household structure carries no information here:
-        // Random() with immunityLinkProbability == 0 breaks out of each household after a
-        // single member anyway. Bucket the candidates per age class instead, shuffle, and
-        // take the first `quota`. Same exact quota, O(N), no rejection.
+        // No clustering is requested: bucket the candidates per age class, shuffle, and
+        // take the first `quota`. Same exact per-age quota as Random(), O(N), no rejection.
+        //
+        // NOT equivalent in distribution to Random() at immunityLinkProbability == 0.
+        // Random() draws a household uniformly and then one member, so it over-samples
+        // people in small households (Dane WI, 50 %: 77 % immune when living alone, 23 % in
+        // households of 8+). Here every candidate of an age class is equally likely.
+        // Accepted as a correction, 2026-10-06 (refactoring plan, Phase 5c step 4).
         //
         // NOTE: deliberately NOT the household-pruning variant that was tried on
         // measles_usa_rm. That kept the with-replacement draw and added an isExhausted()

@@ -94,6 +94,8 @@ exp_param_list$immunity_profile <- "AgeDependent"
 # measles_usa_rm are absent from both branches; only the dummy profile is in the tree.
 exp_param_list$immunity_distribution_file <- "data/immunity_measles_dummy.xml"
 exp_param_list$immunity_link_probability <- 0 # immunity is distributed by household, this is the chance of continuing to immunize the next shuffled household member instead of jumping to a new random household
+# NOTE: 0 selects the independent per-age sampler since 2026-10-06 (f57bfd4). Before that, 0 over-sampled
+# people in small households, so earlier outputs of this script are not reproduced in distribution.
 
 # virtual survey for immunity levels
 exp_param_list$num_participants_survey
