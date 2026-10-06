@@ -14,6 +14,78 @@ repository composition — lives in the architecture document.
 
 ---
 
+## 0. State of play — 2026-10-06
+
+Where things stand, so a fresh session can start without re-deriving any of it.
+
+### Branches
+
+| Branch | Tip | State |
+|---|---|---|
+| `master` | `2c883c7` | consolidated baseline + Phases 0, 0b, 0c, F1, F7.1, F13.1 |
+| `feature/immunity-fast-seeding` | `7b97626` | **done and verified, not merged** — Phase 5c |
+| `feature/venue-memory` | `bf91ae6` | Phase 5b **step 4 done**, step 3 not started |
+
+`feature/venue-memory` **merges `feature/immunity-fast-seeding`** — without it the C++
+gtester cannot complete, because `influenza_c` multi-threaded hits F16. That merge is for
+testability only and should disappear once immunity reaches `master`.
+
+> **Merge `feature/immunity-fast-seeding` first.** It is verified (gtester 44/44; the
+> scenario that never finished now takes 2.1 s) and everything downstream needs a suite
+> that completes.
+
+Note `master` carries a GitHub rule requiring pull requests. Pushes during this session
+bypassed it with the user's agreement; the feature branches now make honouring it cheap.
+
+### Done, with evidence
+
+| | Where | Verified by |
+|---|---|---|
+| Branch consolidation, tag `pre-refactor-2026-10` | §4 | gtester 22/22; merge proven behaviour-preserving over 115 runs |
+| Contact-probability rule configurable, default `min` | F8/F10 | `Min` ≡ absent; `Mean` moves results as predicted |
+| Kernel failures no longer silent | F4 | exit 139 surfaces naming the experiment |
+| Install root stable (`~/opt/stride`) | F1 | 10 legacy dirs, `set_wd()` still resolves |
+| Phase 0b — both excisions | F11 + `track_index_case` | 1,419 + ~90 lines; tombstone exercised 3 ways |
+| Phase 0c — build repairs | F13.1/.3 | `-O3 -std=c++17`, `compile_commands.json` exists |
+| **OpenMP actually works** | F13.2 | native arm64, `libomp` linked, **44/44 with 22 genuinely multi-threaded instances** |
+| Reference reset | F6 | all six streams reproduce |
+| Phase 5c — immunity fast path | branch | 16 min → **2.1 s** |
+| Phase 5b step 4 — `NumOfTypes` | branch | `sizeof(Person)` 1192 → **1104**, 39.7 MB at 474k |
+
+### Next, in order
+
+1. **Merge `feature/immunity-fast-seeding` to `master`.**
+2. **Phase 5b step 3** — the large venue-memory change. *Blocked on one question, below.*
+3. **Phase 2 step 5** — population file, backwards compatible (see the rewritten step).
+
+### Open question blocking Phase 5b step 3
+
+> **Can a person attend two different pools of the same venue type on a single day?**
+
+The current format cannot express it — one pool id per type per day. The membership-list
+design can, so if the generator assumes that constraint the new representation is a
+superset and nothing breaks. It must be confirmed with the extension's author rather than
+assumed, because the whole point of step 3 is to drop the per-person day array.
+
+If no answer is available, the fallback is to read `social_contacts_usa2026.R` and the
+subpool generator and establish what is actually produced.
+
+### Carried forward, not fixed
+
+- **F15** — `RnMan::Shuffle` unusable above trivial sizes. Worked around in Phase 5c, not
+  fixed. A trap for the next person who shuffles anything substantial.
+- **F16** — the thread-count runtime collapse. Resolved by avoidance; the mechanism is
+  unexplained and four hypotheses are recorded as refuted, so they are not re-walked.
+- **F6.1** — the R suite never exercises immunity seeding, so "did not change" there
+  proves nothing about that subsystem.
+- **B7** — `PopSnapshotWriter` gating is settled, but `MeaslesClustering.R` still hardcodes
+  a superseded `project_dir`.
+- **Phase 0c step 6** — local OpenMP is now working, but `CMakeLocal.cmake` is gitignored,
+  so every machine must repeat the `OpenMP_ROOT` recipe in that step.
+- **Phase 1** — postponed by decision; what it holds up is recorded there.
+
+---
+
 ## 1. Findings and reasoning
 
 ### F1. The install directory moved on every commit — RESOLVED
