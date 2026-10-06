@@ -145,20 +145,10 @@ shared_ptr<Population> PoolCharacteristicsSeeder::Seed(shared_ptr<Population> po
     		grootte *= pSize;
     		grootte = max(grootte, minimum_area);
     		pool.SetAirMass(grootte*ceiling_height);
-			if (typ == Id::School || typ == Id::Workplace) {	 
-				for (size_t i_person1 = 0; i_person1 < pSize; i_person1++) {
-					const auto p = pMembers[i_person1];
-					for (int dayWeek = 1; dayWeek <= 5; ++dayWeek) {
-							p->PoolDurations(typ)[dayWeek] = pool_duration;
-					}
-				}
-			} else if (typ == Id::Collectivity){
-				for (size_t i_person1 = 0; i_person1 < pSize; i_person1++) {
-					const auto p = pMembers[i_person1];
-					for (int dayWeek = 0; dayWeek <= 6; ++dayWeek) {
-							p->PoolDurations(typ)[dayWeek] = pool_duration;
-					}
-				}
+			// the same duration for every member; School and Workplace pools only run on
+			// regular weekdays (Sim), so the duration applies whenever the pool runs
+			if (typ == Id::School || typ == Id::Workplace || typ == Id::Collectivity) {
+				pool.SetDuration(pool_duration);
 			}
 				
 	

@@ -39,7 +39,7 @@ using namespace stride::ContactType;
 
 namespace stride {
 
-Population::Population() : m_pool_sys(), m_event_logger() {}
+Population::Population() : m_pool_sys(), m_event_logger(), m_venue_attendance() {}
 
 std::shared_ptr<Population> Population::Create(const stride::util::ptree& config,
                                                std::shared_ptr<spdlog::logger> strideLogger)

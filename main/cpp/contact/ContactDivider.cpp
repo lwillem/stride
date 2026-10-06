@@ -36,6 +36,7 @@ shared_ptr<Population> ContactDivider::Divide(shared_ptr<Population> pop, const 
 	for (size_t i = 0; i < population.size(); ++i) {
 		auto &p = population[i];
 		unsigned int age = p.GetAge();
+		auto &week = population.RefVenueAttendance().Ref(p);
 
 		for (size_t day = 0; day < 7; day++){
 	   		const AgeContactProfile& profile = (day == 0 || day == 6) ?
@@ -45,20 +46,20 @@ shared_ptr<Population> ContactDivider::Divide(shared_ptr<Population> pop, const 
 			double reference_num_contacts_p{profile[EffectiveAge(static_cast<unsigned int>(age))]};
 			unsigned int rounded_reference_num_contacts_p = static_cast<unsigned int>(round(reference_num_contacts_p));
 
-			unsigned int idOtherHouse = p.CPoolIds(Id::OtherHouse)[day];
-			unsigned int idRestoCafe = p.CPoolIds(Id::RestoCafe)[day];
-			unsigned int idOtherPlace = p.CPoolIds(Id::OtherPlace)[day];
-			unsigned int idTransport = p.CPoolIds(Id::Transport)[day];
+			unsigned int idOtherHouse = week[0][day].pool_id;
+			unsigned int idRestoCafe = week[1][day].pool_id;
+			unsigned int idOtherPlace = week[2][day].pool_id;
+			unsigned int idTransport = week[3][day].pool_id;
 		
 			unsigned int sizeOtherHouse = poolSys.CRefPools(Id::OtherHouse)[idOtherHouse].size();
 			unsigned int sizeRestoCafe = poolSys.CRefPools(Id::RestoCafe)[idRestoCafe].size();
 			unsigned int sizeOtherPlace = poolSys.CRefPools(Id::OtherPlace)[idOtherPlace].size();
 			unsigned int sizeTransport = poolSys.CRefPools(Id::Transport)[idTransport].size();
 						
-			unsigned int durationOtherHouse = p.PoolDurations(Id::OtherHouse)[day];
-			unsigned int durationRestoCafe = p.PoolDurations(Id::RestoCafe)[day];
-			unsigned int durationOtherPlace = p.PoolDurations(Id::OtherPlace)[day];
-			unsigned int durationTransport = p.PoolDurations(Id::Transport)[day];
+			unsigned int durationOtherHouse = week[0][day].duration;
+			unsigned int durationRestoCafe = week[1][day].duration;
+			unsigned int durationOtherPlace = week[2][day].duration;
+			unsigned int durationTransport = week[3][day].duration;
 			
 			unsigned int totalDuration = durationOtherHouse + durationRestoCafe + durationOtherPlace + durationTransport;
 
@@ -114,13 +115,16 @@ shared_ptr<Population> ContactDivider::Divide(shared_ptr<Population> pop, const 
         		}
     		}
    		
-			p.PoolContacts(Id::OtherHouse)[day] = results[0];
-			p.PoolContacts(Id::RestoCafe)[day] = results[1];
-			p.PoolContacts(Id::OtherPlace)[day] = results[2];
-			p.PoolContacts(Id::Transport)[day] = results[3];
+			week[0][day].contacts = results[0];
+			week[1][day].contacts = results[1];
+			week[2][day].contacts = results[2];
+			week[3][day].contacts = results[3];
         } 
 
 	}
+
+	// move durations and contacts to the venue pools, parallel to their members
+	population.RefVenueAttendance().CopyToPools(population.RefPoolSys());
 
 	return pop;
 }

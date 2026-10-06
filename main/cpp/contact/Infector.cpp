@@ -210,7 +210,8 @@ using namespace stride::util;
 
 inline double GetContactProbability(const AgeContactProfile& profile, const Person* p1, const Person* p2,
 		size_t pool_size, const ContactType::Id pType, 
-		std::shared_ptr<Population>& population, double cnt_intensity_householdCluster, double pType_distancing_factor, unsigned short int dayWeek,
+		std::shared_ptr<Population>& population, double cnt_intensity_householdCluster, double pType_distancing_factor,
+		unsigned int venue_contacts_p1, unsigned int venue_contacts_p2,
 		ContactProbabilityRule::Id contact_probability_rule)
 {
 
@@ -226,8 +227,8 @@ inline double GetContactProbability(const AgeContactProfile& profile, const Pers
          reference_num_contacts_p2 = profile[EffectiveAge(static_cast<unsigned int>(p2->GetAge()))];
         } 
         else {
-           reference_num_contacts_p1 = p1->CPoolContacts(pType)[dayWeek];
-           reference_num_contacts_p2 = p2->CPoolContacts(pType)[dayWeek];
+           reference_num_contacts_p1 = venue_contacts_p1;
+           reference_num_contacts_p2 = venue_contacts_p2;
                 }
         const double potential_num_contacts{static_cast<double>(pool_size - 1)};
         
@@ -336,7 +337,7 @@ void Infector<LL, TO>::Exec(ContactPool& pool, const AgeContactProfile& profile,
                                  const TransmissionProfile& transProfile, util::Rn& rn,
                                  unsigned short int simDay, shared_ptr<spdlog::logger> eventLogger,
 								 std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster,
-                                 double pType_distancing_factor, unsigned short int dayWeek, bool m_airborne_transmission, bool m_subpools_community, double ventilation_factor,
+                                 double pType_distancing_factor, unsigned short int /*dayWeek*/, bool m_airborne_transmission, bool m_subpools_community, double ventilation_factor,
                                  ContactProbabilityRule::Id contact_probability_rule)
 {
         using LP = LOG_POLICY<LL>;
@@ -372,7 +373,8 @@ void Infector<LL, TO>::Exec(ContactPool& pool, const AgeContactProfile& profile,
                         }
                         // check for contact
                         const double cProb = GetContactProbability(profile, p1, p2, pSize, pType, 
-								population,m_cnt_intensity_householdCluster,pType_distancing_factor, dayWeek,
+								population,m_cnt_intensity_householdCluster,pType_distancing_factor,
+								pool.GetMemberContacts(i_person1), pool.GetMemberContacts(i_person2),
 								contact_probability_rule);
                         
                         // check for ventilation
@@ -440,7 +442,7 @@ void Infector<LL, TO>::Exec(ContactPool& pool, const AgeContactProfile& profile,
                                         auto& h1 = p1->GetHealth();
                                         if (h1.IsSusceptible()){
                                         
-                                                const auto person_duration = p1->PoolDurations(pType)[dayWeek];
+                                                const auto person_duration = pool.GetMemberDuration(i_person1);
                                                 const auto rel_suscep = h1.GetRelativeSusceptibility();
                                                 double v = 0.0;
                                                 std::list<std::pair<double, Person*>> virusContributors;
@@ -467,7 +469,7 @@ void Infector<LL, TO>::Exec(ContactPool& pool, const AgeContactProfile& profile,
                                                                         asymp_correction = transmissionReductionAsymptomatic;
                                                                 } else {asymp_correction = 1.0;}
                                                                 const auto contact_rel_inf = h2.GetRelativeInfectiousness();
-                                                                const auto contact_duration = p2->PoolDurations(pType)[dayWeek];
+                                                                const auto contact_duration = pool.GetMemberDuration(i_person2);
                                                                 double part_contact_time;
                                                                 if (contact_duration >= person_duration) {
                                                                         part_contact_time = 1.0; }
@@ -505,7 +507,7 @@ void Infector<LL, true>::Exec(ContactPool& pool, const AgeContactProfile& profil
                                    const TransmissionProfile& transProfile, util::Rn& rn,
                                    unsigned short int simDay, shared_ptr<spdlog::logger> eventLogger,
 								   std::shared_ptr<Population> population, double m_cnt_intensity_householdCluster,
-                                   double pType_distancing_factor, unsigned short int dayWeek, bool m_airborne_transmission, bool m_subpools_community, double ventilation_factor,
+                                   double pType_distancing_factor, unsigned short int /*dayWeek*/, bool m_airborne_transmission, bool m_subpools_community, double ventilation_factor,
                                  ContactProbabilityRule::Id contact_probability_rule)
 {
         using LP = LOG_POLICY<LL>;
@@ -550,7 +552,8 @@ void Infector<LL, true>::Exec(ContactPool& pool, const AgeContactProfile& profil
                                         continue;
                                 }
                                 const double cProb_p1 = GetContactProbability(profile, p1, p2, pSize, pType,
-															population, m_cnt_intensity_householdCluster, pType_distancing_factor, dayWeek,
+															population, m_cnt_intensity_householdCluster, pType_distancing_factor,
+															pool.GetMemberContacts(i_infected), pool.GetMemberContacts(i_contact),
 															contact_probability_rule);
                                 const auto  tProb_p1_p2 = transProfile.GetProbability(p1,p2);
 
@@ -592,7 +595,7 @@ void Infector<LL, true>::Exec(ContactPool& pool, const AgeContactProfile& profil
                                         }
                                         auto& h1 = p1->GetHealth();
                                         if (h1.IsSusceptible()){
-                                                const auto person_duration = p1->PoolDurations(pType)[dayWeek];
+                                                const auto person_duration = pool.GetMemberDuration(i_contact);
                                                 const auto rel_suscep = h1.GetRelativeSusceptibility();
                                                 double v = 0.0;
                                                 std::list<std::pair<double, Person*>> virusContributors;
@@ -615,7 +618,7 @@ void Infector<LL, true>::Exec(ContactPool& pool, const AgeContactProfile& profil
                                                                         asymp_correction = transmissionReductionAsymptomatic;
                                                                 } else {asymp_correction = 1.0;}
                                                                 const auto contact_rel_inf = h2.GetRelativeInfectiousness();
-                                                                const auto contact_duration = p2->PoolDurations(pType)[dayWeek];
+                                                                const auto contact_duration = pool.GetMemberDuration(i_infected);
                                                                 double part_contact_time;
                                                                 if (contact_duration >= person_duration) {
                                                                         part_contact_time = 1.0; }

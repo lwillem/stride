@@ -24,6 +24,7 @@
 #include "contact/ContactPoolSys.h"
 #include "contact/ContactType.h"
 #include "pop/Person.h"
+#include "pop/VenueAttendance.h"
 #include "util/RnMan.h"
 #include "util/SegmentedVector.h"
 
@@ -103,6 +104,9 @@ public:
         /// Reference the ContactPoolSys of the Population.
         ContactPoolSys& RefPoolSys() { return m_pool_sys; }
 
+        /// Venue attendance read from the subpools file; build-time only, see VenueAttendance.
+        VenueAttendance& RefVenueAttendance() { return m_venue_attendance; }
+
         /// Get the ContactPool size of a given type and id
         unsigned int GetPoolSize(ContactType::Id typeId, const Person* p) const;
 
@@ -116,6 +120,7 @@ private:
 private:
         ContactPoolSys                  m_pool_sys;       ///< The global @ContactPoolSys.
         std::shared_ptr<spdlog::logger> m_event_logger; ///< Logger for contact/transmission/tracing/...
+        VenueAttendance                 m_venue_attendance; ///< Build-time venue attendance, released before the run.
 };
 
 } // namespace stride
