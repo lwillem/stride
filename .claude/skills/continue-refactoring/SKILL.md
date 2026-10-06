@@ -30,6 +30,8 @@ Wait for the user to confirm or pick another item before you change any code.
   structure change in one commit; every phase ends green.
 - Run every build and test through the `test-runner` subagent, never in this session.
 - Commit only when the user asks.
+- Never commit or push to `master`. Work on a branch (create one before the first commit),
+  push it and open a pull request with `gh pr create`; merge only when the user asks.
 
 ## 4. Keep the plan current with every commit
 Every refactoring commit updates the plan in the same commit, or in a `docs:` commit
