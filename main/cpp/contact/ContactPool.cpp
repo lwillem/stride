@@ -30,7 +30,8 @@ namespace stride {
 using namespace std;
 
 ContactPool::ContactPool(unsigned int poolId, ContactType::Id type)
-    : m_index_immune(0), m_pool_id(poolId), m_pool_type(type), m_members(), m_min_age(110), m_ventilation(0), m_venue_non_complier(false), m_day_week(7), m_air_mass(1.0)
+    : m_index_immune(0), m_pool_id(poolId), m_pool_type(type), m_members(), m_min_age(110), m_ventilation(0), m_venue_non_complier(false), m_day_week(7), m_air_mass(1.0),
+      m_duration(0), m_member_durations(), m_member_contacts()
 {
 }
 
@@ -41,6 +42,25 @@ void ContactPool::AddMember(Person* p)
 
         if(p->GetAge()<m_min_age){
         	m_min_age = p->GetAge();
+        }
+}
+
+void ContactPool::SetMemberAttendance(size_t i, unsigned int duration, unsigned int contacts)
+{
+        if (m_member_durations.size() != m_members.size()) {
+                m_member_durations.assign(m_members.size(), 0U);
+                m_member_contacts.assign(m_members.size(), 0U);
+        }
+        m_member_durations[i] = duration;
+        m_member_contacts[i]  = contacts;
+}
+
+void ContactPool::SwapMembers(size_t i, size_t j)
+{
+        swap(m_members[i], m_members[j]);
+        if (!m_member_durations.empty()) {
+                swap(m_member_durations[i], m_member_durations[j]);
+                swap(m_member_contacts[i], m_member_contacts[j]);
         }
 }
 
@@ -72,7 +92,7 @@ std::tuple<bool, unsigned int> ContactPool::SortMembers()
                                         m_index_immune--;
                                         new_place--;
                                 } else {
-                                        swap(m_members[i_member], m_members[new_place]);
+                                        SwapMembers(i_member, new_place);
                                         swapped = true;
                                 }
                         }
@@ -83,7 +103,7 @@ std::tuple<bool, unsigned int> ContactPool::SortMembers()
                                 infectious_cases = true;
                         }
                         if (i_member > num_cases) {
-                                swap(m_members[i_member], m_members[num_cases]);
+                                SwapMembers(i_member, num_cases);
                         }
                         num_cases++;
                 }

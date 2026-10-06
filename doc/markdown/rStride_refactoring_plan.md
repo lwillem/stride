@@ -24,7 +24,7 @@ Where things stand, so a fresh session can start without re-deriving any of it.
 |---|---|---|
 | `master` | `b588bdc`, plus plan-only commits | consolidated baseline + Phases 0, 0b, 0c, 5c, F1, F7.1, F13.1 |
 | `feature/immunity-fast-seeding` | `7b97626` | **merged to `master` 2026-10-06** (`f57bfd4`) — Phase 5c; branch kept |
-| `feature/venue-memory` | `bf91ae6` | Phase 5b **step 4 done**, step 3 not started |
+| `feature/venue-memory` | `13e076e`, PR #11 | Phase 5b **steps 3-4 done**; `master` merged in (`033da90`) |
 
 `feature/venue-memory` **merges `feature/immunity-fast-seeding`** — without it the C++
 gtester cannot complete, because `influenza_c` multi-threaded hits F16. Now that immunity
@@ -67,23 +67,21 @@ user asks.
 | Reference reset | F6 | all six streams reproduce |
 | Phase 5c — immunity fast path, benchmark, equivalence check | `master` (`f57bfd4`) | 16 min → **2.1 s**; seeding ≤ 0.16 s vs 3-24 s; step 4: not equivalent (old sampler's household-size bias removed), **accepted as a correction** |
 | Phase 5b step 4 — `NumOfTypes` | branch | `sizeof(Person)` 1192 → **1104**, 39.7 MB at 474k |
+| Phase 5b step 3 — venue attendance pool-side | branch | `sizeof(Person)` 1104 → **224 B**; gtester 44/44, rStride all outputs unchanged (incl. `covid_subpools`, `covid_airborne`) |
 
 ### Next, in order
 
-1. **Phase 5b step 3** — the large venue-memory change. *Blocked on one question, below.*
+1. **Merge PR #11** (`feature/venue-memory`, Phase 5b steps 3-4, opened 2026-10-06) when
+   the user asks.
 2. **Phase 2 step 2** — population file, backwards compatible (see the rewritten step).
+3. **F12.7** (new, below Phase 5b step 3) — the generator's day-boundary pool-id overlap;
+   results-changing, needs its own PR and reference reset.
 
-### Open question blocking Phase 5b step 3
+### Answered 2026-10-06: one venue pool per type per person per day
 
 > **Can a person attend two different pools of the same venue type on a single day?**
-
-The current format cannot express it — one pool id per type per day. The membership-list
-design can, so if the generator assumes that constraint the new representation is a
-superset and nothing breaks. It must be confirmed with the extension's author rather than
-assumed, because the whole point of step 3 is to drop the per-person day array.
-
-If no answer is available, the fallback is to read `social_contacts_usa2026.R` and the
-subpool generator and establish what is actually produced.
+> **No** — confirmed by the extension's author. Recorded as a model invariant in
+> `rStride_architecture.md` §3.1. Step 3 may rely on it; it no longer blocks.
 
 ### Carried forward, not fixed
 
@@ -1340,7 +1338,7 @@ becomes another twin.
     body; push differences into a region/disease configuration object; delete the fork.
     One pair per commit, each verified green against the now-meaningful harness.
 
-### Phase 5b — Unify the venue extension with the ordinary contact pools
+### Phase 5b — Unify the venue extension with the ordinary contact pools — steps 3-4 done
 
 **Goal: an efficient implementation of the extension, not a smaller feature set.** The
 memory footprint of F12.3 arises from the *representation* rather than from the feature
@@ -1382,8 +1380,8 @@ references were reset on a single commit (Phase 4 step 2) and the extension is c
 `covid_subpools` and `covid_airborne` — but Phase 4 steps 3-4 are not, so the measles /
 USA populations the venues were built for are still not under test.
 
-**Progress:** step 4 done on `feature/venue-memory` (`bf91ae6`); step 3 blocked on the
-question at the end of this phase; steps 1, 2, 5 and 6 not started.
+**Progress:** steps 3 and 4 done on `feature/venue-memory` (step 4 `bf91ae6`, step 3
+2026-10-06); steps 1, 2, 5 and 6 not started.
 
 1. **Introduce a trait table** and replace identity tests with property tests:
 
@@ -1435,6 +1433,48 @@ question at the end of this phase; steps 1, 2, 5 and 6 not started.
 
    Strictly behaviour-preserving: reference `.rds` files must not change.
 
+   **Done 2026-10-06 on `feature/venue-memory`.** As built:
+
+   - `Person::m_pool_ids` is one id per type (`IdSubscriptArray<unsigned int>`, always 0
+     for the venues); `m_pool_durations` and `m_pool_contacts` are gone.
+   - `ContactPool` gains `m_member_durations` / `m_member_contacts` (parallel to
+     `m_members`, venue pools only, kept aligned by `SwapMembers()` in `SortMembers()`) and
+     a pool-wide `m_duration` for School / Workplace / Collectivity, which
+     `PoolCharacteristicsSeeder` used to write into every member for days 1-5 (0-6). The
+     pool-wide value is exact because `Sim` runs School and Workplace pools only on
+     regular weekdays.
+   - The subpools file is read into a **build-time** `VenueAttendance` table
+     (`pop/VenueAttendance.h`, person x venue x day). `ContactDivider` reads and writes it
+     instead of `Person`, its body otherwise unchanged; `CopyToPools()` then stores, for
+     each member of each venue pool, the record of *the pool's day*; `SimBuilder` releases
+     the table before the run. `ContactDivider` was **not** inverted to iterate pools — it
+     runs once at build time, and keeping its loop verbatim made equivalence trivial.
+   - `GetContactProbability` takes the two members' venue contacts as arguments instead of
+     reading `Person`.
+
+   | | Before | After (measured, arm64) |
+   |---|---:|---:|
+   | `sizeof(Person)` | 1104 B | **224 B** |
+   | `sizeof(ContactPool)` | 72 B | 128 B |
+
+   At 474k persons that is about **417 MB less** in `Person`, against roughly 56 B more
+   per pool (~15 MB at a few hundred thousand pools) plus 8 B per venue attendance. Peak
+   memory during the build still includes the transient table (~336 B per person) until
+   it is released.
+
+   **Evidence:** gtester 44/44; rStride regression: all outputs unchanged, including
+   `covid_subpools` and `covid_airborne`.
+
+   **F12.7 — found while doing this: the subpools generator makes day-boundary pools.**
+   In `pop_belgium10k_c500_teachers_censushh_subpools_community.csv`, 17 venue pools carry
+   members from two consecutive days (e.g. `OtherPlace` 20: 412 rows on day 0, 94 on day
+   1) — the last pool id of one day is reused as the first of the next. A pool runs only
+   on the last day read, so on that day its "other-day" members also sit in their own pool
+   of that type: they attend two pools of one venue type on one day, which the model
+   forbids (architecture §3.1). Step 3 reproduces this exactly (the pool-side value is the
+   member's record for the pool's day, as `Person` used to give). Fixing the generator, or
+   rejecting such files, changes results — separate PR with a reference reset.
+
 4. **Correct `NumOfTypes()` to 11** (F12.3). A one-character change worth about 40 MB at
    474k, independent of the rest and safe to land first. **Done** on
    `feature/venue-memory` (`bf91ae6`): `sizeof(Person)` 1192 -> 1104, 39.7 MB at 474k.
@@ -1448,10 +1488,9 @@ question at the end of this phase; steps 1, 2, 5 and 6 not started.
    its own PR with a deliberate reference reset, per §5.5, and requires confirmation from
    the author that per-pool variation was the intent.
 
-**One question for the extension's author before step 3:** can a person attend two
-different pools of the same venue type on a single day? The current format cannot express
-it, so if the generator assumes that constraint the membership-list design is a superset
-and nothing breaks — but it should be confirmed rather than assumed.
+**Question for the extension's author — answered 2026-10-06:** a person **cannot** attend
+two different pools of the same venue type on a single day. The constraint is part of the
+model (architecture §3.1), so step 3 may rely on it.
 
 ### Phase 5c — A fast path for unclustered immunity seeding — COMPLETE (step 4 not equivalent; accepted as a correction)
 

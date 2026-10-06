@@ -89,6 +89,25 @@ public:
         // change the air mass of the pool
         void SetAirMass(double airMass) { m_air_mass = airMass; }
 
+        /// Duration of attendance of the member at index i: per member for venue pools,
+        /// one value for the whole pool otherwise.
+        unsigned int GetMemberDuration(size_t i) const
+        {
+                return m_member_durations.empty() ? m_duration : m_member_durations[i];
+        }
+
+        /// Number of contacts of the member at index i (venue pools only, else 0).
+        unsigned int GetMemberContacts(size_t i) const
+        {
+                return m_member_contacts.empty() ? 0U : m_member_contacts[i];
+        }
+
+        /// Set the duration of attendance shared by all members (non-venue pools).
+        void SetDuration(unsigned int duration) { m_duration = duration; }
+
+        /// Set the attendance of the member at index i (venue pools).
+        void SetMemberAttendance(size_t i, unsigned int duration, unsigned int contacts);
+
 public:
         // To iterate over the members.
         using iterator = std::vector<stride::Person*>::iterator;
@@ -109,6 +128,9 @@ private:
         /// Sort w.r.t. health status: order: exposed/infected/recovered, susceptible, immune.
         std::tuple<bool, unsigned int> SortMembers();
 
+        /// Swap two members, keeping the per-member attendance aligned with them.
+        void SwapMembers(size_t i, size_t j);
+
         /// Calculates contacts and transmissions; accesses private methods and data.
         template <EventLogMode::Id LL, bool TO>
         friend class Infector;
@@ -124,6 +146,9 @@ private:
         bool                 m_venue_non_complier; ///< There is ventilation on the venue or not
         unsigned int         m_day_week;    ///< day on which the pool is valid, if multiple days, m_day = 7
         double               m_air_mass;    ///< air_mass in the pool
+        unsigned int         m_duration;    ///< duration of attendance, if shared by all members
+        std::vector<unsigned int> m_member_durations; ///< per member, parallel to m_members (venue pools only)
+        std::vector<unsigned int> m_member_contacts;  ///< per member, parallel to m_members (venue pools only)
 };
 
 } // namespace stride

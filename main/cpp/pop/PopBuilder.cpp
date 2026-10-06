@@ -255,11 +255,9 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
                 pop->RefPoolSys().RefPools(typ)[subpool_id].AddMember(p);
                 }
                 
-                Person& person = *p;
-
-                person.PoolIds(typ)[day_week] = subpool_id;
-                                
-                person.PoolDurations(typ)[day_week] = duration;
+                auto& record = pop->RefVenueAttendance().Ref(*p)[VenueAttendance::VenueIndex(typ)].at(day_week);
+                record.pool_id  = subpool_id;
+                record.duration = duration;
 
                 }
 
@@ -268,6 +266,10 @@ shared_ptr<Population> PopBuilder::Build(shared_ptr<Population> pop)
                 }
 
                 subpoolsCommunityFile.close();
+
+                // Venue pools now have their final members and day: give them the
+                // durations (contacts follow in ContactDivider).
+                pop->RefVenueAttendance().CopyToPools(pop->RefPoolSys());
        
         }
         

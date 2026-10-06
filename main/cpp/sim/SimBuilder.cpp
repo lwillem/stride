@@ -168,6 +168,8 @@ shared_ptr<Sim> SimBuilder::Build(shared_ptr<Sim> sim, shared_ptr<Population> po
         	std::cout << "Calculate contacts based on age contact profile and duration in location" << std::endl;
         	ContactDivider(sim->m_rn_man_ptr).Divide(sim->m_population, sim->m_contact_profiles);
         };
+        // the venue attendance now lives in the pools: drop the build-time copy
+        sim->m_population->RefVenueAttendance().Release();
 
         // --------------------------------------------------------------
         // Fill in characteristics in the contactPoolSys for airborne transmission
