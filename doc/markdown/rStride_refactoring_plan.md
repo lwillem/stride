@@ -68,18 +68,18 @@ user asks.
 | Phase 5c — immunity fast path, benchmark, equivalence check | `master` (`f57bfd4`) | 16 min → **2.1 s**; seeding ≤ 0.16 s vs 3-24 s; step 4: not equivalent (old sampler's household-size bias removed), **accepted as a correction** |
 | Phase 5b step 4 — `NumOfTypes` | `master` (PR #11) | `sizeof(Person)` 1192 → **1104**, 39.7 MB at 474k |
 | Phase 5b step 3 — venue attendance pool-side | `master` (PR #11) | `sizeof(Person)` 1104 → **224 B**; gtester 44/44, rStride all outputs unchanged (incl. `covid_subpools`, `covid_airborne`) |
+| **CI repaired — first passing run ever** | PR #13, §7.6 | GitHub Actions run 37519593148: gcc **and** clang (ubuntu-latest) build, gtester **44/44** each, OpenMP on (libgomp / libomp, 4 threads) |
 
 ### Next, in order
 
-1. **Repair CI** (§7) — no GitHub Actions run has ever passed. Both jobs stop before
-   compiling: `ci.yml:65` runs `make gtest`, expecting it to configure, build and install,
-   but in the `Makefile` `install` (which `gtest` depends on) has never depended on
-   `configure`/`all`, so `cmake-build-release` does not exist (`Makefile:114`). Likely fix:
-   `install: all`; check `regression.yml:79` too. PR #11 was merged on local evidence only
-   (gtester 44/44, rStride unchanged); Linux gcc/clang have not yet built it.
-2. **Phase 2 step 2** — population file, backwards compatible (see the rewritten step).
-3. **F12.7** (new, below Phase 5b step 3) — the generator's day-boundary pool-id overlap;
+1. **Phase 2 step 2** — population file, backwards compatible (see the rewritten step).
+2. **F12.7** (new, below Phase 5b step 3) — the generator's day-boundary pool-id overlap;
    results-changing, needs its own PR and reference reset.
+3. **CI follow-ups** (§7.6) — not blocking: nightly regression stays informational until
+   §7.4 items 2-3 and 5 land; bump actions off Node 20 (`checkout@v4`,
+   `upload-artifact@v4`, `ccache-action@v1.2` warn); optional `<climits>` hardening in
+   `FileSys.cpp` (`PATH_MAX` is only included under `__linux__`; Homebrew gcc on macOS
+   fails there, Apple clang and Linux do not).
 
 ### Answered 2026-10-06: one venue pool per type per person per day
 
@@ -2087,7 +2087,7 @@ are being touched anyway.
 
 ---
 
-## 7. Continuous integration
+## 7. Continuous integration — per-PR job passing since PR #13 (2026-10-06)
 
 ### 7.1 The two suites are complementary — keep both
 
@@ -2170,3 +2170,24 @@ instantiation runs with `ConfigInfo::NumberAvailableThreads()`, so CI genuinely 
 the multi-threaded path. Local builds now do too, once the per-machine recipe of Phase 0c
 step 6 has been applied (F13.2) — a machine that skips it silently falls back to the
 `domp` stubs and can pass locally what fails in CI.
+
+### 7.6 Repair — PR #13 (2026-10-06)
+
+No run had ever passed. Four faults, each hidden behind the previous one:
+
+1. `make gtest` → `install` never depended on `all`, so nothing configured
+   (`cmake-build-release: No such file or directory`). Fixed: `install: all`.
+2. Configure: the Gaines and Dane population zips carry `__MACOSX/` entries. macOS
+   extraction folds them into xattrs; Linux creates a directory, which `INSTALL(FILES)`
+   rejects. Fixed: `file(GLOB ... LIST_DIRECTORIES false ...)` in
+   `main/resources/CMakeLists.txt`.
+3. Compile: `util/Rn.h` lacked `<functional>`, `health/HealthSeeder.h` lacked `<array>`;
+   libc++ supplies both transitively, libstdc++ does not. A gcc-16/libstdc++
+   `-fsyntax-only` sweep of all 58 TUs confirmed these were the only two.
+4. Workflow hygiene: stale `~/opt/stride-*` paths (pre-F1) in both workflows; ccache was
+   installed but never used (now via `CMAKE_{C,CXX}_COMPILER_LAUNCHER`).
+
+Result: both matrix jobs green, 44/44 each, ~2 min of gtester. Open: Node 20 action
+deprecation warnings; the nightly regression job still cannot pass meaningfully (§7.4).
+To catch libstdc++-only include gaps locally before pushing, Homebrew `g++-16
+-fsyntax-only` over `compile_commands.json` reproduces CI's errors.

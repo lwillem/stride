@@ -52,7 +52,11 @@ unset(UNZIP_STAMP_FOLDER)
 # Install unzipped files.
 # No CONFIGURE_DEPENDS here: this globs the build directory, which the loop above keeps
 # in step with data/*.zip in this same configure pass, so it is current by construction.
-file(GLOB DEPLOY_FILES ${UNZIP_FOLDER}*)
+# LIST_DIRECTORIES false: archives zipped on macOS carry __MACOSX/ resource forks
+# (pop_usa_tx_gaines_c1000, pop_usa_wisconsin_dane474k_c1000). macOS folds them into
+# xattrs on extraction, but Linux extracts them as a directory, which INSTALL(FILES)
+# rejects — the first error CI hit once it got as far as configuring (plan §7).
+file(GLOB DEPLOY_FILES LIST_DIRECTORIES false ${UNZIP_FOLDER}*)
 if(NOT STRIDE_INSTALL_POPULATION_PDF)
 	file(GLOB DEPLOY_PDF_FILES ${UNZIP_FOLDER}*.pdf)
 	list(REMOVE_ITEM DEPLOY_FILES ${DEPLOY_PDF_FILES})
