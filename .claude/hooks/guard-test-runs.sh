@@ -25,6 +25,7 @@ patterns=(
   "${start}make([[:space:]]+-[^[:space:]]+)*[[:space:]]+(configure|all|install|libstride|stride|gtester)([[:space:];&|)]|$)"
   "${start}make([[:space:]]+-[^[:space:]]+)*[[:space:]]*([;&|)]|$)"
   "${start}cmake[[:space:]]+--(build|install)"
+  "${start}(bash[[:space:]]+)?([^[:space:];&|]*/)?stride-test\.sh"
 )
 for p in "${patterns[@]}"; do
   if echo "$cmd" | grep -qE "$p"; then

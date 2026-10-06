@@ -1,6 +1,7 @@
 {
   "permissions": {
     "allow": [
+      "Bash(bash .claude/scripts/stride-test.sh *)",
       "Bash(make configure *)",
       "Bash(make all *)",
       "Bash(make install *)",

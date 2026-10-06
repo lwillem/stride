@@ -12,39 +12,37 @@ commit or stash anything, and you do not touch files under `main/` or `test/`.
 - Which tests: `gtester` (C++, default), `rstride` (R regression), or `both`.
 - Optional: a gtest filter (e.g. `--gtest_filter=Immunity*`).
 - Optional: an install prefix. The default is `$HOME/opt/stride`. If the caller gives a
-  side-by-side prefix (e.g. `$HOME/opt/stride-test`), pass `CMAKE_INSTALL_PREFIX=<prefix>`
-  to every `make` call below and `cd` into that prefix instead.
+  side-by-side prefix (e.g. `$HOME/opt/stride-test`), pass it as `<prefix>` to every step
+  below; the script hands it to `make` as `CMAKE_INSTALL_PREFIX` and runs from there.
 
 ## Steps (run from the repo root)
-Send all output to log files in `$TMPDIR`. Never stream full logs into the conversation.
+Run every step through `.claude/scripts/stride-test.sh`, exactly as written below: one
+plain command, which the project's allow rule covers. Don't write your own `cd ... &&` /
+redirect variants; auto mode denies those. The script writes full logs to `$TMPDIR`,
+prints a short summary and the log path. Never stream full logs into the conversation.
+`<prefix>` is the install prefix, or `-` for the default `$HOME/opt/stride`.
 
 1. **Build + install**
    ```bash
-   L=${TMPDIR:-/tmp}/stride_build.log
-   (make configure && make all && make install) > "$L" 2>&1; echo "build exit=$?"
-   grep -nE "error:|Error [0-9]|undefined reference|ld: " "$L" | head -15
-   grep -cE "warning:" "$L"
+   bash .claude/scripts/stride-test.sh build <prefix>
    ```
    If the build fails, stop and report only the first compiler errors (file:line + message).
 
 2. **C++ gtester** (when requested)
    ```bash
-   G=${TMPDIR:-/tmp}/stride_gtester.log
-   cd "$HOME/opt/stride" && ./bin/gtester <filter-if-any> --gtest_output=xml:tests/gtester_all.xml > "$G" 2>&1; echo "gtester exit=$?"
-   tail -5 "$G"; grep -E "^\[  FAILED  \]" "$G" | sort -u
+   bash .claude/scripts/stride-test.sh gtester <prefix> <filter-if-any>
    ```
-   For each failed test, get its assertion lines with `grep -n -A6 "<TestName>" "$G"`
+   For each failed test, get its assertion lines with `grep -n -A6 "<TestName>" <log>`
    and keep at most ~8 lines per failure.
 
 3. **rStride regression test** (when requested). This is slow (parallel foreach over many
-   scenarios), so run it in the background and check the log only now and then
+   scenarios); the script starts it in the background. Check the log only now and then
    (at most once every few minutes). Don't poll in a tight loop.
    ```bash
-   R=${TMPDIR:-/tmp}/stride_rgtester.log
-   cd "$HOME/opt/stride" && nohup Rscript bin/rStride_gtester_covid19.R > "$R" 2>&1 &
+   bash .claude/scripts/stride-test.sh rstride <prefix>
    ```
-   When it finishes, report:
-   - `grep -nE "did not change|!!|WARNING|ERROR|Error" "$R" | head -40`
+   When it finishes (`<log>` is the path the script printed), report:
+   - `grep -nE "did not change|!!|WARNING|ERROR|Error" <log> | head -40`
    - which output types changed, and which scenarios (`gtester_label`) are new or missing
      compared to the reference
    - the last 5 lines of the log
