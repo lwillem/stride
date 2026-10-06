@@ -24,7 +24,7 @@ Where things stand, so a fresh session can start without re-deriving any of it.
 |---|---|---|
 | `master` | `b588bdc`, plus plan-only commits | consolidated baseline + Phases 0, 0b, 0c, 5c, F1, F7.1, F13.1 |
 | `feature/immunity-fast-seeding` | `7b97626` | **merged to `master` 2026-10-06** (`f57bfd4`) — Phase 5c; branch kept |
-| `feature/venue-memory` | `13e076e`, PR #11 | Phase 5b **steps 3-4 done**; `master` merged in (`033da90`) |
+| `feature/venue-memory` | PR #11 | **merged to `master` 2026-10-06** (`c3a1d9f`) — Phase 5b steps 3-4; branch kept |
 
 `feature/venue-memory` **merges `feature/immunity-fast-seeding`** — without it the C++
 gtester cannot complete, because `influenza_c` multi-threaded hits F16. Now that immunity
@@ -66,13 +66,17 @@ user asks.
 | **OpenMP actually works** | F13.2 | native arm64, `libomp` linked, **44/44 with 22 genuinely multi-threaded instances**; survives a re-configure and a Rosetta-hosted Claude Code since `4dcca5e`/`b588bdc` |
 | Reference reset | F6 | all six streams reproduce |
 | Phase 5c — immunity fast path, benchmark, equivalence check | `master` (`f57bfd4`) | 16 min → **2.1 s**; seeding ≤ 0.16 s vs 3-24 s; step 4: not equivalent (old sampler's household-size bias removed), **accepted as a correction** |
-| Phase 5b step 4 — `NumOfTypes` | branch | `sizeof(Person)` 1192 → **1104**, 39.7 MB at 474k |
-| Phase 5b step 3 — venue attendance pool-side | branch | `sizeof(Person)` 1104 → **224 B**; gtester 44/44, rStride all outputs unchanged (incl. `covid_subpools`, `covid_airborne`) |
+| Phase 5b step 4 — `NumOfTypes` | `master` (PR #11) | `sizeof(Person)` 1192 → **1104**, 39.7 MB at 474k |
+| Phase 5b step 3 — venue attendance pool-side | `master` (PR #11) | `sizeof(Person)` 1104 → **224 B**; gtester 44/44, rStride all outputs unchanged (incl. `covid_subpools`, `covid_airborne`) |
 
 ### Next, in order
 
-1. **Merge PR #11** (`feature/venue-memory`, Phase 5b steps 3-4, opened 2026-10-06) when
-   the user asks.
+1. **Repair CI** (§7) — no GitHub Actions run has ever passed. Both jobs stop before
+   compiling: `ci.yml:65` runs `make gtest`, expecting it to configure, build and install,
+   but in the `Makefile` `install` (which `gtest` depends on) has never depended on
+   `configure`/`all`, so `cmake-build-release` does not exist (`Makefile:114`). Likely fix:
+   `install: all`; check `regression.yml:79` too. PR #11 was merged on local evidence only
+   (gtester 44/44, rStride unchanged); Linux gcc/clang have not yet built it.
 2. **Phase 2 step 2** — population file, backwards compatible (see the rewritten step).
 3. **F12.7** (new, below Phase 5b step 3) — the generator's day-boundary pool-id overlap;
    results-changing, needs its own PR and reference reset.
