@@ -23,6 +23,7 @@
 #include "pop/Age.h"
 
 #include "util/Ptree.h"
+#include <array>
 #include <memory>
 #include <string>
 #include <vector>
