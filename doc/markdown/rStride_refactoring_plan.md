@@ -24,7 +24,7 @@ Where things stand, so a fresh session can start without re-deriving any of it.
 |---|---|---|
 | `master` | `b588bdc`, plus plan-only commits | consolidated baseline + Phases 0, 0b, 0c, 5c, F1, F7.1, F13.1 |
 | `feature/immunity-fast-seeding` | `7b97626` | **merged to `master` 2026-10-06** (`f57bfd4`) — Phase 5c; branch kept |
-| `feature/venue-memory` | `033da90` + step 3 | Phase 5b **steps 3-4 done**; `master` merged in (`033da90`) |
+| `feature/venue-memory` | `13e076e`, PR #11 | Phase 5b **steps 3-4 done**; `master` merged in (`033da90`) |
 
 `feature/venue-memory` **merges `feature/immunity-fast-seeding`** — without it the C++
 gtester cannot complete, because `influenza_c` multi-threaded hits F16. Now that immunity
@@ -71,8 +71,8 @@ user asks.
 
 ### Next, in order
 
-1. **Open the PR for `feature/venue-memory`** (Phase 5b steps 3-4) and merge it when the
-   user asks.
+1. **Merge PR #11** (`feature/venue-memory`, Phase 5b steps 3-4, opened 2026-10-06) when
+   the user asks.
 2. **Phase 2 step 2** — population file, backwards compatible (see the rewritten step).
 3. **F12.7** (new, below Phase 5b step 3) — the generator's day-boundary pool-id overlap;
    results-changing, needs its own PR and reference reset.
