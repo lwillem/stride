@@ -76,8 +76,8 @@ user asks.
 1. **Phase 2 step 2** — population file, backwards compatible (see the rewritten step).
 2. **F12.7** (new, below Phase 5b step 3) — the generator's day-boundary pool-id overlap;
    results-changing, needs its own PR and reference reset.
-3. **CI follow-ups** (§7.6) — not blocking: nightly regression stays informational until
-   §7.4 items 2-3 and 5 land; bump actions off Node 20 (`checkout@v4`,
+3. **CI follow-ups** (§7.6) — not blocking: nightly regression made to run (PR #15,
+   verification run pending) but stays informational until §7.4 items 2-3 land; bump actions off Node 20 (`checkout@v4`,
    `upload-artifact@v4`, `ccache-action@v1.2` warn); optional `<climits>` hardening in
    `FileSys.cpp` (`PATH_MAX` is only included under `__linux__`; Homebrew gcc on macOS
    fails there, Apple clang and Linux do not).
@@ -2197,3 +2197,14 @@ To catch libstdc++-only include gaps locally before pushing, Homebrew `g++-16
 `make install` (configure, compile incl. the gtester binary, install) for gcc and clang,
 and no longer runs `bin/gtester` or uploads its XML. The gtester stays a local check via
 the test-runner. Compiler warnings (~65 lines on gcc/clang) do not fail the job.
+
+**Nightly regression made to run (2026-10-06, user decision: "OK for now", only on days
+with changes).** Its only run so far (2026-10-06 08:14) died at
+`remotes::install_github(...)`: `remotes` was never installed — and the `@v0.1.43` pin
+could not have resolved anyway, as `simid_rtools` has no tags. Now: `simid.rtools` pinned
+to commit `caa0d5e` (DESCRIPTION 0.1.53) through `setup-r-dependencies`; the USA-only
+packages added there too so nothing installs at run time; `shell: bash` so an R error
+fails the step despite `| tee`; stale header rewritten. A `changes` job skips the run
+unless master's HEAD is under 24 h old (master moves only by merged PRs); manual
+`workflow_dispatch` always runs. Still informational: the script never sets an exit code
+on a difference (§7.4 item 3), and macOS-made references are not bit-portable (item 2).
