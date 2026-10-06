@@ -78,8 +78,8 @@ user asks.
 
 ### Next, in order
 
-1. **Merge the Phase 2 step 2 PR** (`feature/pop-header-by-name`) when the user agrees.
-   Architecture §3.3 (population file format) still describes the positional parser.
+1. **Merge the Phase 2 step 2 PR** (#18, `feature/pop-header-by-name`) when the user
+   agrees. Architecture §3.3 is updated in it.
 2. **F12.7** (new, below Phase 5b step 3) — the generator's day-boundary pool-id overlap;
    results-changing, needs its own PR and reference reset.
 3. **Phase 4 step 5** (new) — profile the C++ gtester and the R suite: where does the time go?
@@ -583,10 +583,10 @@ they look alike. The sites and the predicate membership are tabulated in
 nothing states so. Adding a fifth venue requires locating all the sites and knowing which
 of the four groups it joins.
 
-#### F12.2 The population file format is positional and count-inferred
+#### F12.2 The population file format is positional and count-inferred — RESOLVED except ragged rows (Phase 2 step 2)
 
 `PopBuilder.cpp:82-88` determines the layout by probing a value and a column count; the
-code is quoted in **architecture §3.3**.
+old code is quoted in **architecture §3.3**, which now describes the name-based layout.
 
 Five liabilities:
 

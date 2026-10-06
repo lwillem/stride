@@ -276,33 +276,75 @@ Those sites encode **three different predicates that do not coincide**:
 
 ### 3.3 The population file format
 
-`PopBuilder.cpp:82-88` determines the layout by probing a value and a column count:
+`PopFileLayout` (`main/cpp/pop/PopFileLayout.{h,cpp}`) reads the first line of the file
+once and decides which column holds which field. `PopBuilder::MakePersons` then parses every
+row with it, and `PopSnapshotWriter` uses the same layout to mirror the input columns in
+`population_snapshot.csv`. The separator is `;` if the first line contains one, `,`
+otherwise.
+
+**Fields and accepted header names.** Names are compared case-insensitively, ignoring
+surrounding quotes, blanks and a trailing CR (CRLF files). The canonical name comes first.
+
+| Field | Accepted names | Required |
+|---|---|---|
+| age | `age` | yes |
+| person id | `person_id` | no (defaults to the row index) |
+| profession | `worker`, `profession` | no |
+| household | `household_id` | yes |
+| school | `school_id` | yes |
+| workplace | `work_id`, `workplace_id` | yes |
+| weekend community | `community_weekend`, `community_weekend_id`, `primary_community` | yes |
+| weekday community | `community_weekday`, `community_weekday_id`, `secondary_community` | yes |
+| household cluster | `household_cluster_id` | no |
+| collectivity | `collectivity_id` | no |
+
+`primary_community` has always meant the weekend pool and `secondary_community` the weekday
+pool (they were read in that position). New files should use the canonical names; the USA
+generator (`PopulationFactory_USA.R`) does so since Phase 2 step 2.
+
+**How the layout is decided:**
+
+1. **No header.** If every token of the first line is a number, empty or `NA`, the line is
+   the first person. The file is read positionally (age, household, school, work, weekend,
+   weekday), and further columns are ignored.
+2. **Header.** Each column whose name is in the table above is assigned to its field.
+   Column order does not matter, and both optional pool columns may be present together.
+3. **Positional fallback.** A field without a recognised name takes the column the old
+   positional parser would have used, provided that column's own name is not recognised
+   either. So a file with the classic order but unfamiliar names reads as it always did.
+4. Columns still unassigned are ignored and logged.
+5. **Errors** only for an ambiguous or incomplete header: two columns for one field (e.g.
+   `primary_community` and `community_weekend`), or no column for a required field.
+
+The old positional layout, used by the fallback, is: `age` first; if the third column is
+named `worker`, then `person_id` and `worker` follow; then household, school, work,
+weekend, weekday; and a seventh (or ninth) column only when it is named
+`household_cluster_id` or `collectivity_id` and is the last one.
+
+**Rows.** A value is read with `strtoul`, so `NA` or an empty field becomes 0. A row shorter
+than the header leaves the missing fields at 0 without an error. That is the one liability
+of the old format that remains.
+
+**Before Phase 2 step 2 (2026-10-06)** the layout was inferred positionally from one header
+value and the column count (F12.2), with these consequences:
 
 ```cpp
 bool bool_profession = Trim(headers[2]) == "worker";           // layout from a VALUE
 unsigned int profession_adj = bool_profession ? 2 : 0;
 bool has_extra_column = headers.size() == (7+profession_adj);  // and from COLUMN COUNT
-if (has_extra_column) extra_id = Trim(headers[6+profession_adj]);
-bool household_cluster_id = extra_id == "household_cluster_id";
-bool collectivity_id      = extra_id == "collectivity_id";
 ```
 
-Five liabilities:
+- Column order mattered, and any added column broke the detection silently.
+- `household_cluster_id` and `collectivity_id` could not both be present.
+- The first line was always skipped, so a file without a header lost its first person.
+- `pop_belgium100k_c500_teachers_censushh.csv` has `person_id` but no `worker`, and was read
+  shifted by one column. It is now read correctly; nothing references it.
 
-1. **Every field is read positionally** — `values[1+profession_adj]` and so on. Column
-   order is load-bearing.
-2. **The layout is inferred from the column count using `==`.** An eight-column file makes
-   `has_extra_column` false and column 7 is **silently ignored**. Adding a column anywhere
-   breaks detection with no error.
-3. **`household_cluster_id` and `collectivity_id` are mutually exclusive.** Only one extra
-   column is representable; both can never be present.
-4. **Ragged rows degrade silently** — the per-row `if (values.size() == 7+profession_adj)`
-   applies defaults instead of raising an error.
-5. **No header validation** beyond those two probes.
+All other population files in the tree resolve to the same columns under both parsers.
 
-The four new venues consequently could not be added to this file at all, which is why they
-arrive through a separate `subpools_community_file`. The side-file is a reasonable
-isolation, but it was forced by the format rather than chosen.
+The four new venues arrive through a separate `subpools_community_file`. That side file was
+forced by the old format rather than chosen; the format can now take more columns, but
+the venue data is per day and per pool, so it still does not fit in one row per person.
 
 ### 3.4 `Person` memory layout
 
