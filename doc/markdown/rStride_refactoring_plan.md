@@ -77,8 +77,11 @@ user asks.
    `install` (which `gtest` depends on) never depended on `configure`/`all`. Fixed:
    `install: all`; both workflows' stale `~/opt/stride-*` paths → `~/opt/stride` (F1);
    ccache wired via `CMAKE_{C,CXX}_COMPILER_LAUNCHER` (it was installed but never used).
-   PR #13's own run is the first Linux gcc/clang build of the post-PR #11 code — results
-   pending; any compile errors it reveals go on the same PR. The nightly regression job
+   Local gtester 44/44 (OpenMP) on `74072a3`. The first CI run then got as far as
+   configuring and failed at `main/resources/CMakeLists.txt:61`: the Gaines and Dane
+   zips carry `__MACOSX/` entries, which Linux extracts as a directory (macOS folds them
+   into xattrs) and `INSTALL(FILES)` rejects → glob with `LIST_DIRECTORIES false`
+   (`f5875d0`). Linux gcc/clang build results pending; further errors go on the same PR. The nightly regression job
    stays informational (§7.4 prerequisites 2-3, 5 still open).
 2. **Phase 2 step 2** — population file, backwards compatible (see the rewritten step).
 3. **F12.7** (new, below Phase 5b step 3) — the generator's day-boundary pool-id overlap;
