@@ -67,7 +67,7 @@ user asks.
 | Reference reset | F6 | all six streams reproduce |
 | Phase 5c — immunity fast path, benchmark, equivalence check | `master` (`f57bfd4`) | 16 min → **2.1 s**; seeding ≤ 0.16 s vs 3-24 s; step 4: not equivalent (old sampler's household-size bias removed), **accepted as a correction** |
 | Phase 5b step 4 — `NumOfTypes` | `master` (PR #11) | `sizeof(Person)` 1192 → **1104**, 39.7 MB at 474k |
-| Phase 5b step 3 — venue attendance pool-side | `master` (PR #11) | `sizeof(Person)` 1104 → **224 B**; gtester 44/44, rStride all outputs unchanged (incl. `covid_subpools`, `covid_airborne`) |
+| Phase 5b step 3 — venue attendance pool-side | `master` (PR #11) | `sizeof(Person)` 1104 → **224 B**; gtester 44/44, rStride all outputs unchanged (incl. `covid_subpools`, `covid_airborne`); **re-checked 2026-10-06 against the pre-change build: identical results in the single-threaded runs** (all 22 gtester scenarios, exact case counts) |
 | **CI repaired — first passing run ever** | PR #13, §7.6 | GitHub Actions run 37519593148: gcc **and** clang (ubuntu-latest) build, gtester **44/44** each, OpenMP on (libgomp / libomp, 4 threads) |
 | CI reduced to build-only (user decision) | `ci.yml`, §7.6 | per-PR job runs `make install` for gcc + clang; gtester not run in CI for now |
 | Nightly regression runs, only after changes | PR #15, §7.6 | manual run 37521770793: setup → build → suite → upload all green, 11 min (suite 6.5 min); informational |
@@ -1472,6 +1472,24 @@ USA populations the venues were built for are still not under test.
 
    **Evidence:** gtester 44/44; rStride regression: all outputs unchanged, including
    `covid_subpools` and `covid_airborne`.
+
+   **Old vs new, re-checked 2026-10-06.** `master` (`281ad2b`) was compared with the last
+   commit before the change (`439ed4a`), each built separately (`~/opt/stride` vs
+   `~/opt/stride-old`). Because the gtester only checks a ±10 % margin, the exact
+   `num_cases` in each scenario's `summary.csv` was compared:
+
+   - **Single-threaded: the new venue implementation gives identical results.** All 22
+     gtester scenarios match exactly, including `covid19_subpools` (9298) and
+     `covid19_airborne` (9417).
+   - rStride regression (single-threaded, exact comparison with the reference `.rds`,
+     which PR #11 did not touch): incidence, prevalence, contacts, participants and
+     summary values unchanged, including `covid_subpools` and `covid_airborne`. The only
+     flag is the `track_index_case` summary column removed in Phase 0b.
+   - Multi-threaded (8 threads): 21/22 scenarios matched on the first pass; `covid19_airborne`
+     gave 9501 (old) vs 9480 (new). Three reruns of each build gave 9480 every time (and
+     `covid19_subpools` 9340), so the 9501 was a one-off in the old build, most likely
+     because both builds' tests ran at the same time. Multi-threaded runs are not strictly
+     reproducible, so the single-threaded results are the evidence.
 
    **F12.7 — found while doing this: the subpools generator makes day-boundary pools.**
    In `pop_belgium10k_c500_teachers_censushh_subpools_community.csv`, 17 venue pools carry
