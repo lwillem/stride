@@ -163,6 +163,36 @@ The comparison engine is also entangled with the 22 scenario definitions in one 
 so adding a measles suite by the obvious route means copy-pasting ~700 lines — creating
 another twin.
 
+#### F6.1 The R suite never exercises immunity seeding
+
+Discovered 2026-10-06 while validating Phase 5c, and recorded because it makes a green R
+suite misleading for a whole subsystem.
+
+`create_default_config()` (`rStride.R:89-92`) forces:
+
+```r
+config_default$vaccine_profile  <- 'None'
+config_default$vaccine_rate     <- 0
+config_default$immunity_profile <- 'None'
+config_default$immunity_rate    <- 0
+```
+
+and no gtester scenario overrides them. So `ImmunitySeeder::Vaccinate()` returns without
+calling either sampler: **neither `Random()` nor `RandomIndependent()` runs in any of the
+115 R regression runs.**
+
+The consequence is specific and easy to misread: a change to immunity seeding produces
+"did not change" across all six streams, which looks like proof of equivalence and is
+nothing of the kind. Coverage for that subsystem comes from the C++ gtester alone, where
+`influenza_c` and the measles scenarios do exercise it.
+
+Forcing the profiles to `None` is defensible for a transmission-regression suite — it
+removes a large source of variance — but it should be a stated choice rather than an
+accident, and Phase 4's extended harness should include at least one scenario that seeds
+immunity.
+
+---
+
 ### F7. What reaches the install directory is not what you think — RESOLVED for scripts
 
 `main/r/CMakeLists.txt` enumerated experiment scripts by hand. Three had fallen off and
@@ -727,6 +757,73 @@ everyone is on a single branch, and it requires every collaborator to re-clone t
 day. **It is not a prerequisite for anything else in this plan**, and specifically not for
 CI: `fetch-depth: 1` reduces a CI checkout to HEAD blobs only, roughly 47 MB once the
 ignored archive is excluded.
+
+---
+
+### F15. `RnMan::Shuffle` is unusable above trivial sizes
+
+`Rn.h:90`:
+
+```cpp
+void Shuffle(std::vector<unsigned int>& indices) { shuffle(indices.begin(), indices.end()); }
+// -> std::shuffle(first, last, m_engine)   with m_engine a trng::lcg64
+```
+
+Measured 2026-10-06: shuffling a **6,971-element** vector **did not complete in 45
+seconds**. Shuffling 3-element vectors 200,000 times takes **1 ms**, at both 1 and 8
+threads.
+
+`Random()` only ever passes household-sized vectors, which is why this has never
+surfaced. The first implementation of Phase 5c used `Shuffle` on per-age candidate lists
+and inherited the hang; it now uses a partial Fisher-Yates over `SampleUniform01()`
+instead, which is the draw already used elsewhere in `ImmunitySeeder`.
+
+The root cause was not pursued. `trng::lcg64` looks well-formed — `result_type` is
+`uint64_t` with the full 64-bit range — so the suspicion is the interaction between
+`std::shuffle`'s internal `std::uniform_int_distribution` and this engine, but that is
+untested.
+
+**Treat `Shuffle` as unusable above trivial sizes until it is investigated.** It is a trap
+for the next person who shuffles anything substantial. Either fix it, or give it a
+precondition and a name that says so.
+
+### F16. Thread count changed the old sampler's runtime by orders of magnitude — mechanism unexplained
+
+Recorded so the dead ends are not re-walked. **Resolved by avoidance** in Phase 5c, which
+removes rejection sampling for this case so runtime no longer depends on the draw
+sequence; the explanation itself remains open.
+
+The symptom, with `immunity_profile = Random`, `immunity_rate = 0.9991`, 600k population,
+identical `rng_seed`, differing only in `num_threads`:
+
+| `num_threads` | wall clock |
+|---|---|
+| 1 | **6.52 s** |
+| 8 | **>7 min**, never completed |
+
+`RnMan`'s constructor seeds every stream from the same value and then leapfrogs:
+`engine.split(size(), i)`. So `at(0)` is a *different subsequence* depending on thread
+count, even though immunity seeding is single-threaded and always uses `at(0)`.
+
+What was measured and **refuted**:
+
+- *The leapfrogged stream is degenerate.* No: 140,441 distinct values in 200,000 draws
+  over 264,790 pools, parity balanced — statistically indistinguishable from the 1-thread
+  stream.
+- *Draws are more expensive after splitting.* No: raw engine, `SampleUniform01`, trng
+  `uniform_int` and `Shuffle`-on-3 all cost the same at 1 and 8 threads. `lcg64::split()`
+  is O(1) per draw — it raises the multiplier to `a^s` once, it does not step `s` times.
+- *The index generator runs past the end, giving UB on `pools[i]`.* No: verified
+  half-open, `GetUniformIntGenerator(0,10)` yields `[0,9]`.
+- *It starts badly.* No: the first iterations are healthy and identical in both, with
+  valid indices and member counts of 1-4.
+
+What is **established**: at 1 thread the loop completes 14,485,404 iterations and 599,404
+hits in ~6.5 s; at 8 threads it completes **fewer than 100,000 iterations in 40 s**. A
+~1000x collapse in iteration rate that none of the above micro-benchmarks reproduces.
+
+Anyone picking this up should start with a working sampling profiler — `sample(1)` was
+tried here and returned no symbolised stacks.
 
 ---
 
