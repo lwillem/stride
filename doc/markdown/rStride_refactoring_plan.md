@@ -25,7 +25,7 @@ Where things stand, so a fresh session can start without re-deriving any of it.
 | `master` | `b588bdc`, plus plan-only commits | consolidated baseline + Phases 0, 0b, 0c, 5c, F1, F7.1, F13.1 |
 | `feature/immunity-fast-seeding` | `7b97626` | **merged to `master` 2026-10-06** (`f57bfd4`) — Phase 5c; branch kept |
 | `feature/venue-memory` | PR #11 | **merged to `master` 2026-10-06** (`c3a1d9f`) — Phase 5b steps 3-4; branch kept |
-| `feature/pop-header-by-name` | `667e530` + this docs commit | Phase 2 step 2; PR open, not merged |
+| `feature/pop-header-by-name` | PR #18 | **merged to `master` 2026-10-06** (`2fb95ae`) — Phase 2 step 2; branch kept |
 
 `feature/venue-memory` **merges `feature/immunity-fast-seeding`** — without it the C++
 gtester cannot complete, because `influenza_c` multi-threaded hits F16. Now that immunity
@@ -73,21 +73,18 @@ user asks.
 | Phase 5b step 3 — venue attendance pool-side | `master` (PR #11) | `sizeof(Person)` 1104 → **224 B**; gtester 44/44, rStride all outputs unchanged (incl. `covid_subpools`, `covid_airborne`); **re-checked 2026-10-06 against the pre-change build: identical results in the single-threaded runs** (all 22 gtester scenarios, exact case counts) |
 | **CI repaired — first passing run ever** | PR #13, §7.6 | GitHub Actions run 37519593148: gcc **and** clang (ubuntu-latest) build, gtester **44/44** each, OpenMP on (libgomp / libomp, 4 threads) |
 | CI reduced to build-only (user decision) | `ci.yml`, §7.6 | per-PR job runs `make install` for gcc + clang; gtester not run in CI for now |
-| Phase 2 step 2 — population file by header name, positional fallback | `feature/pop-header-by-name` (PR) | gtester **56/56** (44 + 12 new `PopFileLayout` tests), rStride all outputs unchanged; 9 of 10 in-tree files map to identical columns, the unreferenced 100k file is now read unshifted |
+| Phase 2 step 2 — population file by header name, positional fallback | `master` (PR #18) | gtester **56/56** (44 + 12 new `PopFileLayout` tests), rStride all outputs unchanged; 9 of 10 in-tree files map to identical columns, the unreferenced 100k file is now read unshifted |
 | Nightly regression runs, only after changes | PR #15, §7.6 | manual run 37521770793: setup → build → suite → upload all green, 11 min (suite 6.5 min); informational |
 
 ### Next, in order
 
-1. **Merge the Phase 2 step 2 PR** (#18, `feature/pop-header-by-name`) when the user
-   agrees. Architecture §3.3 is updated in it.
+1. **Pro memoria, now due** — update the column names in the `stride_population`
+   repository to `community_weekend` / `community_weekday` (Phase 2 step 2; PR #18 merged).
 2. **F12.7** (new, below Phase 5b step 3) — the generator's day-boundary pool-id overlap;
    results-changing, needs its own PR and reference reset.
 3. **Phase 4 step 5** (new) — profile the C++ gtester and the R suite: where does the time go?
 4. **§7.7** (new, future work) — put the gtester back in the per-PR CI job.
-5. **Pro memoria, after that PR is merged** — update the column names in the
-   `stride_population` repository to `community_weekend` / `community_weekday` (Phase 2
-   step 2).
-6. **CI follow-ups** (§7.6) — not blocking: nightly regression runs (PR #15, verified)
+5. **CI follow-ups** (§7.6) — not blocking: nightly regression runs (PR #15, verified)
    but stays informational until §7.4 items 2-3 land; on Linux `covid_logParticipants`
    and the ABC test differ from the macOS references (§7.6) — look at that first; also
    preinstall `socialmixr`/`wpp2017` (still installed at run time); bump actions off Node 20 (`checkout@v4`,
@@ -1232,7 +1229,7 @@ rather than an environment: same readability, no indirection.
    the experiment id, config file and exit code.~~ **Done** (`ff28cfe`, F4): both
    `rStride.R:386` and `rStride_main_abc.R:141` call `.rstride$run_stride_binary()`.
 2. **Parse the population file by header name — with a positional fallback** (F12.2).
-   **Done 2026-10-06** on `feature/pop-header-by-name`: `97346f9` (structure: one
+   **Done 2026-10-06**, merged to `master` in PR #18 (`2fb95ae`): `97346f9` (structure: one
    `PopFileLayout` shared by `PopBuilder` and `PopSnapshotWriter`), `c9fd536` (by name,
    12 gtests), `667e530` (USA generator writes `community_weekend`/`community_weekday`).
    gtester 56/56, rStride all outputs unchanged. The rule as implemented is in the
