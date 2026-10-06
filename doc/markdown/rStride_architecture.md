@@ -243,6 +243,14 @@ Four contact-pool types were added alongside the original set: `OtherHouse`, `Re
 *(The cost of expressing that difference by naming the four types at each decision point
 is F12 in the refactoring plan.)*
 
+**Model invariant: at most one pool per venue type per person per day.** A person never
+attends two different pools of the same venue type on the same day. This is a modelling
+constraint, not just an artefact of the `subpools_community_file` format (one id per type
+per day): it was confirmed by the extension's author on 2026-10-06. Code may rely on it —
+in particular, a person's attendance of a venue type on a given day is fully described by
+a single pool id (or none), and a pool-side membership list never holds the same person
+for two pools of one type on one day.
+
 
 ### 3.2 Which predicate applies where
 
