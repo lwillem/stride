@@ -22,20 +22,21 @@ Where things stand, so a fresh session can start without re-deriving any of it.
 
 | Branch | Tip | State |
 |---|---|---|
-| `master` | `2c883c7`, plus plan-only commits | consolidated baseline + Phases 0, 0b, 0c, F1, F7.1, F13.1 |
-| `feature/immunity-fast-seeding` | `7b97626` | **done and verified, not merged** — Phase 5c |
+| `master` | `f57bfd4`, plus plan-only commits | consolidated baseline + Phases 0, 0b, 0c, 5c (steps 1-2), F1, F7.1, F13.1 |
+| `feature/immunity-fast-seeding` | `7b97626` | **merged to `master` 2026-10-06** (`f57bfd4`) — Phase 5c; branch kept |
 | `feature/venue-memory` | `bf91ae6` | Phase 5b **step 4 done**, step 3 not started |
 
 `feature/venue-memory` **merges `feature/immunity-fast-seeding`** — without it the C++
-gtester cannot complete, because `influenza_c` multi-threaded hits F16. That merge is for
-testability only and should disappear once immunity reaches `master`.
+gtester cannot complete, because `influenza_c` multi-threaded hits F16. Now that immunity
+is on `master` (2026-10-06), that merge is redundant: rebase or merge `master` into
+`feature/venue-memory` and it drops out.
 
-> **Merge `feature/immunity-fast-seeding` first.** It is verified (gtester 44/44; the
-> scenario that never finished now takes 2.1 s) and everything downstream needs a suite
-> that completes. Phase 5c steps 3-4 — the seeding benchmark and the marginal /
-> within-household comparison — are **not recorded as done**; either record them or run
-> them before the merge. Note the R suite cannot show this change at all (F6.1), so the
-> C++ gtester and those two steps are the whole of the evidence.
+> **`feature/immunity-fast-seeding` merged 2026-10-06** (`f57bfd4`, no conflicts). It was
+> verified (gtester 44/44; the scenario that never finished now takes 2.1 s). Phase 5c
+> steps 3-4 — the seeding benchmark and the marginal / within-household comparison — are
+> **still outstanding**: no record of them exists in the plan, the branch's commit or its
+> files. Note the R suite cannot show this change at all (F6.1), so the C++ gtester and
+> those two steps are the whole of the evidence.
 
 Note `master` carries a GitHub rule requiring pull requests. Pushes during this session
 bypassed it with the user's agreement; the feature branches now make honouring it cheap.
@@ -52,12 +53,13 @@ bypassed it with the user's agreement; the feature branches now make honouring i
 | Phase 0c — build repairs | F13.1/.3 | `-O3 -std=c++17`, `compile_commands.json` exists |
 | **OpenMP actually works** | F13.2 | native arm64, `libomp` linked, **44/44 with 22 genuinely multi-threaded instances** |
 | Reference reset | F6 | all six streams reproduce |
-| Phase 5c — immunity fast path | branch | 16 min → **2.1 s** |
+| Phase 5c steps 1-2 — immunity fast path | `master` (`f57bfd4`) | 16 min → **2.1 s**; steps 3-4 outstanding |
 | Phase 5b step 4 — `NumOfTypes` | branch | `sizeof(Person)` 1192 → **1104**, 39.7 MB at 474k |
 
 ### Next, in order
 
-1. **Merge `feature/immunity-fast-seeding` to `master`**, after Phase 5c steps 3-4.
+1. **Phase 5c steps 3-4** — seeding benchmark and marginal / within-household comparison.
+   The merge itself is done (2026-10-06, `f57bfd4`).
 2. **Phase 5b step 3** — the large venue-memory change. *Blocked on one question, below.*
 3. **Phase 2 step 2** — population file, backwards compatible (see the rewritten step).
 
@@ -1429,13 +1431,14 @@ different pools of the same venue type on a single day? The current format canno
 it, so if the generator assumes that constraint the membership-list design is a superset
 and nothing breaks — but it should be confirmed rather than assumed.
 
-### Phase 5c — A fast path for unclustered immunity seeding — steps 1-2 done, not merged
+### Phase 5c — A fast path for unclustered immunity seeding — steps 1-2 done, merged
 
 > **Status 2026-10-06.** Steps 1-2 are implemented on `feature/immunity-fast-seeding`
 > (`7b97626`, `ImmunitySeeder` only). The acceptance test passes: `influenza_c`
 > multi-threaded drops from 16 min (never finished) to 2.1 s, and the C++ gtester runs
 > 44/44. **Steps 3-4 are not recorded as done.** They are the only evidence of
 > equivalence in distribution, because the R suite never runs this code (F6.1).
+> **Merged to `master` 2026-10-06** (`f57bfd4`) with steps 3-4 still outstanding.
 
 **Added 2026-10-06, by decision.** Keep the current sampler; add an optimised path used
 only when no clustering is requested.
