@@ -59,7 +59,7 @@ bypassed it with the user's agreement; the feature branches now make honouring i
 
 1. **Merge `feature/immunity-fast-seeding` to `master`**, after Phase 5c steps 3-4.
 2. **Phase 5b step 3** — the large venue-memory change. *Blocked on one question, below.*
-3. **Phase 2 step 5** — population file, backwards compatible (see the rewritten step).
+3. **Phase 2 step 2** — population file, backwards compatible (see the rewritten step).
 
 ### Open question blocking Phase 5b step 3
 
@@ -86,7 +86,7 @@ subpool generator and establish what is actually produced.
 - **Phase 0c step 6** — local OpenMP is now working, but `CMakeLocal.cmake` is gitignored,
   so every machine must repeat the `OpenMP_ROOT` recipe in that step.
 - **Phase 1** — postponed by decision; what it holds up is recorded there.
-- **Phase 4 step 8** — `rrv_repo()` still hardcodes an absolute personal path
+- **Phase 4 step 1** — `rrv_repo()` still hardcodes an absolute personal path
   (`rStride_gtester_covid19.R:711`).
 - **Phase 0c step 8, second half** — `-Wno-unknown-pragmas` is still set
   (`CMakeCPP.cmake:47`); only the loud OpenMP-detection warning landed.
@@ -127,7 +127,7 @@ could produce the same count and silently share an install root.
 > exercised by both `make install CMAKE_INSTALL_PREFIX=…` and the environment variable.
 >
 > **Not covered by this fix:** relocating `sim_output` outside the install root
-> (Phase 3 step 6). That remains worthwhile for a different reason — keeping run output out
+> (Phase 3 step 2). That remains worthwhile for a different reason — keeping run output out
 > of a directory that `make install` overwrites — but it is no longer urgent, and it is not
 > free: `rStride_gtester_covid19.R:335/351` and `rStride_abc.R:114/143` do
 > `setwd(project_dir)` followed by `setwd('../..')`, which assumes a two-level *relative*
@@ -248,7 +248,7 @@ reporting, reference reset, performance tracking. Three problems:
 > **Problem 2 resolved 2026-10-05** (`7c800dc`): all six references were rewritten from a
 > single run of a single commit, after `-ffast-math` was removed (`0d1c6dc`) and the merge
 > was proven behaviour-preserving (`fa78c0d`). **Problems 1 and 3 remain** — Phase 4
-> steps 8, 10 and 11.
+> steps 1, 3 and 4.
 
 The comparison engine is also entangled with the 22 scenario definitions in one script,
 so adding a measles suite by the obvious route means copy-pasting ~700 lines — creating
@@ -304,7 +304,7 @@ confirming the friction is known.
 
 > **Resolved 2026-09-28** (commit `bd577ae`). The hand-kept list was replaced by a
 > `CONFIGURE_DEPENDS` glob over `rStride_*.R`, so adding a script is just adding the file.
-> All twelve now install, against nine before. Phase 4 step 11 therefore no longer needs
+> All twelve now install, against nine before. Phase 4 step 4 therefore no longer needs
 > to add the three orphans by hand — only the new gtester, which the glob picks up
 > automatically.
 
@@ -363,7 +363,7 @@ raises realised contacts relative to the minimum rule) and it would alter every 
 the 22 regression scenarios. The reasoning for discarding it is F10: all ten disease
 files carry an R0 fit produced under `min`, so adopting `mean` invalidates every
 calibration and all 22 regression references at once. Starting from committed `min`
-means the reference `.rds` files describe the code as committed, and the §7.5 rule — a
+means the reference `.rds` files describe the code as committed, and the §5.5 rule — a
 refactoring PR must not modify them — is enforceable from the first commit.
 
 > ### ⚠ The switch to `mean` is deferred, not cancelled
@@ -453,7 +453,7 @@ Two consequences:
    that output is orphaned by the next commit (F1). This is the mechanism that produced
    the stale provenance in `disease_measles_usa.xml`: it carries
    `run_tag=20260727_171147_r0` and a `population_file` path that no longer exists.
-   Relocating `sim_output` (Phase 3 step 6) and scripting the copy-back are prerequisites
+   Relocating `sim_output` (Phase 3 step 2) and scripting the copy-back are prerequisites
    for a defensible calibration.
 
 2. **The quadratic term is currently disabled.** `TransmissionAnalyst.R:96` hardcodes
@@ -687,7 +687,7 @@ The single draw is reused for **every pool of every type**, so `variability_area
 no variation between pools — only a constant offset applied uniformly. If per-pool area
 variability was intended, it is not occurring. This should be confirmed with the author
 before changing, because correcting it will move results and therefore requires a
-deliberate reference reset under the rule in §7.5.
+deliberate reference reset under the rule in §5.5.
 
 ### F13. Build configuration is dated, and two settings are actively harmful
 
@@ -706,7 +706,7 @@ the files say; the flags that actually reach the compiler are listed in
 reassociation, flushes denormals and assumes no NaN or Inf.
 
 The project's entire test strategy is **byte-exact comparison against stored `.rds`
-references** (§1.5). Under `-ffast-math`, results may differ across compiler versions,
+references** (architecture §1.5). Under `-ffast-math`, results may differ across compiler versions,
 optimisation levels and architectures, so a colleague on a different machine can obtain
 different numbers from identical source with no way to distinguish that from a genuine
 regression. It also acts directly on the `std::exp()` calls in the airborne transmission
@@ -760,7 +760,7 @@ locally the parallel code cannot be compiled, exercised or tested at all:
 This matters because **OpenMP is live on a deployment target in actual use**: the VSC
 cluster, for which `.rstride$is_ua_cluster()` exists, and `rStride_MDP.R` with
 `num_threads = 16`. A defect in the parallel path would surface there, or in CI once the
-workflows of §9 land, rather than on the developer's machine.
+workflows of §7 land, rather than on the developer's machine.
 
 **A previous attempt to fix this is still in the tree and has never had any effect.**
 `CMakeLocal.cmake` — the file included by `CMakeLists.txt:23` as the designated local
@@ -839,7 +839,7 @@ increasing order of effort:
    listing each population file with its DOI or URL, SHA-256 and target path, and a
    `make data` target that downloads and verifies. Version control then holds the
    *reference* to the data, not the data; a stale or corrupted download fails loudly; and
-   the provenance requirement of §8.4 is satisfied by the same hash.
+   the provenance requirement of §6.4 is satisfied by the same hash.
 2. **GitHub Releases as asset storage** for files without a Zenodo record — keeps them
    near the code without entering the git object database.
 3. **Git LFS** for files that genuinely must be tracked. Note that migrating *existing*
@@ -856,7 +856,7 @@ simultaneously invalidates all six local branches, `origin`, and the three colla
 remotes (`as/`, `ek/`, `ic/`). With active work on `measles_usa_rm` the coordination cost
 greatly exceeds 110 MB of disk.
 
-If it is done at all, the moment is immediately after the §6.4 consolidation tag, when
+If it is done at all, the moment is immediately after the §4.4 consolidation tag, when
 everyone is on a single branch, and it requires every collaborator to re-clone the same
 day. **It is not a prerequisite for anything else in this plan**, and specifically not for
 CI: `fetch-depth: 1` reduces a CI checkout to HEAD blobs only, roughly 47 MB once the
@@ -944,7 +944,7 @@ ahead of the numbering below:
 |---|---|---|---|
 | 1 | **Fast unclustered immunity seeding** | Phase 5c, new | **yes** — same marginals, different individuals |
 | 2 | **Venue memory footprint** | Phase 5b step 3 (F12.3) | no — representation only |
-| 3 | **Population file, backwards compatible** | Phase 2 step 5, rewritten | no, by construction |
+| 3 | **Population file, backwards compatible** | Phase 2 step 2, rewritten | no, by construction |
 
 > **Immunity moved to first, 2026-10-06.** It was second until the native OpenMP build made
 > the multi-threaded gtester instantiation real for the first time. 43 of 44 tests pass;
@@ -983,7 +983,7 @@ campaign, is unaffected by all three and can proceed in parallel on its own bran
    > the default once `mean` calibrations exist and have been compared against `min`.
    > **Every phase between here
    > and Phase 2b runs under `min` and must leave the regression references untouched**
-   > (§7.5). If a phase in between changes results, the cause is that phase — not the
+   > (§5.5). If a phase in between changes results, the cause is that phase — not the
    > contact rule.
 
 ### Phase 0b — Feature excision — COMPLETE
@@ -999,7 +999,7 @@ campaign, is unaffected by all three and can proceed in parallel on its own bran
 Both excisions are behaviour-preserving, remove code that no build currently exercises,
 and reduce the surface every later phase must carry. Each is specified in
 `removed_features/` so it can be re-implemented later, and each must be a single
-self-contained commit so `git revert` restores it. Sequence both **after** the §6.4
+self-contained commit so `git revert` restores it. Sequence both **after** the §4.4
 consolidation tag, so the tag remains a faithful snapshot of the last version containing
 them.
 
@@ -1132,13 +1132,13 @@ own, depending on whether the margins in `ScenarioData.cpp` already absorb the d
 > until the rest of the sequence has settled; nothing below is cancelled.
 >
 > What this holds up, so it is not rediscovered later: `testthat` stays unavailable, which
-> is what Phase 4 step 10 wants for the extracted comparison engine; the five geospatial
+> is what Phase 4 step 3 wants for the extracted comparison engine; the five geospatial
 > packages keep loading unconditionally (C4 of the merge agenda conceded the point to
 > `measles_usa_rm` on the understanding that Phase 1 step 3 would move them to
 > `Suggests:`); and the `.export = rStride_functions` mechanism of F3 stays in place, since
-> `.packages = 'rStride'` was to replace it in Phase 3 step 7.
+> `.packages = 'rStride'` was to replace it in Phase 3 step 3.
 >
-> Phases that do **not** depend on this: 0b, 0c, 2, 3 steps 5-6, 3b, 5b, 6, 7a and 7b.
+> Phases that do **not** depend on this: 0b, 0c, 2, 3 steps 1-2, 3b, 5b, 6, 7a and 7b.
 
 1. Add `DESCRIPTION` and `NAMESPACE` around the existing files; move nothing.
    Verify `devtools::load_all()` loads all 148 functions and exposes any hidden
@@ -1174,9 +1174,9 @@ own, depending on whether the margins in `ScenarioData.cpp` already absorb the d
    Behaviour-preserving — the blocks never execute.
 5. **Keep `.rstride` for now** (F2.2). It costs nothing inside a package, and the job it
    quietly does for `foreach(.export=)` is retired by `.packages = 'rStride'` in Phase 3
-   step 7, not here. Do fix the `exists()` guard so re-sourcing rebuilds the environment.
+   step 3, not here. Do fix the `exists()` guard so re-sourcing rebuilds the environment.
 6. Add `testthat`, now available for the first time. This is the prerequisite for
-   Phase 4 step 10.
+   Phase 4 step 3.
 
 Flattening `.rstride` into ordinary internal functions is **deliberately not in this
 phase.** Once the package exists the namespace already makes them private, so the
@@ -1188,10 +1188,10 @@ rather than an environment: same readability, no indirection.
 
 ### Phase 2 — Make failures visible
 
-4. ~~Wrap `system()` with exit-status checking and a clear per-experiment error naming
+1. ~~Wrap `system()` with exit-status checking and a clear per-experiment error naming
    the experiment id, config file and exit code.~~ **Done** (`ff28cfe`, F4): both
    `rStride.R:386` and `rStride_main_abc.R:141` call `.rstride$run_stride_binary()`.
-5. **Parse the population file by header name — with a positional fallback** (F12.2).
+2. **Parse the population file by header name — with a positional fallback** (F12.2).
 
    > **Revised 2026-10-06.** A first attempt resolved every column by name and was
    > reverted. It required each column to match a *known* name, so a production file whose
@@ -1230,7 +1230,7 @@ rather than an environment: same readability, no indirection.
 
 `mean` is intended to become the default contact-probability rule. This phase delivers
 that migration. It is gated on earlier phases rather than optional, and its design is
-specified in §8.
+specified in §6.
 
 This is the phase the deferred `mean` switch of F8 and Phase 0 lands in. The rule
 mechanism already exists (`f314514`); what remains are the calibrations that make `mean`
@@ -1242,7 +1242,7 @@ Prerequisites:
   grid cannot be silently excluded from the fit (F4) — **done** (`ff28cfe`).
 - F7 install-list repair, so `rStride_r0_measles.R` reaches `bin/` — **done**
   (`bd577ae`). F7.1, the stale archive glob — **done** in Phase 0c step 7.
-- Phase 3 step 6 — a durable output location, so refits are not orphaned in a
+- Phase 3 step 2 — a durable output location, so refits are not orphaned in a
   superseded install root (F1).
 - A decision on the quadratic term disabled at `TransmissionAnalyst.R:96` (F10,
   open decision 3).
@@ -1251,21 +1251,21 @@ Steps:
 
 1. ~~Implement the contact rule as a configuration option defaulting to `min`~~
    **Done** (`f314514`, F10 option C). Behaviour-preserving: the default is unchanged.
-2. Build the calibration infrastructure of §8: separated calibration artefacts,
+2. Build the calibration infrastructure of §6: separated calibration artefacts,
    hash-based provenance, `promote_calibration()`, and the validation-gate check.
 3. Refit the disease files under `mean` into new calibration artefacts. Keys differ by
    rule, so the existing `min` calibrations are never overwritten.
 4. Compare the two rules on identical populations — possible only once both
    calibrations coexist.
 5. **Flip the default to `mean`** in a single dedicated PR that changes only the default
-   and the regression references, carrying the step-4 comparison as justification (§7.5).
+   and the regression references, carrying the step-4 comparison as justification (§5.5).
 6. Retain the `min` calibrations in version control as history.
 
 ### Phase 3 — Decouple from the install directory
 
-5. Replace hardcoded paths with a single `stride_paths()` object resolved once at
+1. Replace hardcoded paths with a single `stride_paths()` object resolved once at
    `run_rStride()` entry.
-6. Relocate `sim_output` outside the install root (`STRIDE_OUTPUT_DIR`, default
+2. Relocate `sim_output` outside the install root (`STRIDE_OUTPUT_DIR`, default
    `~/stride_runs/`). **No longer urgent** — F1 is resolved by the stable install prefix,
    so output no longer moves — but still worth doing, because `make install` overwrites
    the directory that run output sits in. The `~/opt/stride-current` symlink of the
@@ -1276,7 +1276,7 @@ Steps:
    two-level *relative* path; an absolute output directory would silently land them in
    `$HOME`. Both must be converted to save and restore the working directory explicitly,
    as `rStride_main_abc.R` already does with `wd_start`.
-7. Flip experiment scripts to `library(rStride)` and drop the R library copy from
+3. Flip experiment scripts to `library(rStride)` and drop the R library copy from
    `main/r/CMakeLists.txt`. This also removes the "edits in `bin/rstride/` are destroyed
    on rebuild" trap.
 
@@ -1286,7 +1286,7 @@ Steps:
 > sequenced here.
 
 Addresses F13.1. **Not behaviour-preserving** — it changes floating-point results — so it
-requires its own pull request and a deliberate reference reset under the rule in §7.5.
+requires its own pull request and a deliberate reference reset under the rule in §5.5.
 
 Sequenced immediately before Phase 4 so that the single clean reference reset performed
 there is taken against a build with deterministic IEEE semantics. Resetting references
@@ -1294,24 +1294,24 @@ first and removing the flag afterwards would invalidate them again.
 
 ### Phase 4 — Repair and extend the regression harness
 
-8. Replace `rrv_repo()`'s hardcoded absolute path with a derived repository root, so
+1. Replace `rrv_repo()`'s hardcoded absolute path with a derived repository root, so
    reference promotion works for any checkout and any user (F6).
-9. ~~Run one clean full `rrv()` so all six reference files derive from a single known
+2. ~~Run one clean full `rrv()` so all six reference files derive from a single known
    commit.~~ **Done 2026-10-05** (`7c800dc`). They remain valid until Phase 2b step 5
    flips the default, which resets them deliberately.
-10. Extract the comparison engine into `rstride/RegressionTester.R`, leaving
+3. Extract the comparison engine into `rstride/RegressionTester.R`, leaving
     `rStride_gtester_covid19.R` as scenario definitions only.
-11. Add `rStride_gtester_measles.R` on that engine: USA populations, measles config,
+4. Add `rStride_gtester_measles.R` on that engine: USA populations, measles config,
     household clustering, contact adjustment factors. No install-list edit is needed —
     the glob of F7 picks it up — but check F7.1 if it needs a population archive that is
     not yet in the tree.
 
-Step 10 must precede step 11, otherwise the measles suite is created by copy-paste and
+Step 3 must precede step 4, otherwise the measles suite is created by copy-paste and
 becomes another twin.
 
 ### Phase 5 — Collapse the twins
 
-12. `ImmunityProfileFactory` (smallest, proves the pattern) → `HealthEconomist` →
+1. `ImmunityProfileFactory` (smallest, proves the pattern) → `HealthEconomist` →
     `CalendarFactory` (largest, ~1,800 lines across three files). Extract the shared
     body; push differences into a region/disease configuration object; delete the fork.
     One pair per commit, each verified green against the now-meaningful harness.
@@ -1354,8 +1354,8 @@ day, which a single id per type per day cannot.
 Originally sequenced after Phase 4, because steps 2 and 3 alter `Person` and the
 transmission loops and need a trustworthy regression suite. The priority order of
 2026-10-06 brings step 3 forward. What it needed from Phase 4 is in place — the
-references were reset on a single commit (Phase 4 step 9) and the extension is covered by
-`covid_subpools` and `covid_airborne` — but Phase 4 steps 10-11 are not, so the measles /
+references were reset on a single commit (Phase 4 step 2) and the extension is covered by
+`covid_subpools` and `covid_airborne` — but Phase 4 steps 3-4 are not, so the measles /
 USA populations the venues were built for are still not under test.
 
 **Progress:** step 4 done on `feature/venue-memory` (`bf91ae6`); step 3 blocked on the
@@ -1421,7 +1421,7 @@ question at the end of this phase; steps 1, 2, 5 and 6 not started.
 6. **Resolve F12.6** — the shared random draw in `PoolCharacteristicsSeeder::Seed()`.
    Unlike the rest of this phase this is **not** behaviour-preserving: correcting it
    introduces genuine per-pool variability and will move results. It therefore belongs in
-   its own PR with a deliberate reference reset, per §7.5, and requires confirmation from
+   its own PR with a deliberate reference reset, per §5.5, and requires confirmation from
    the author that per-pool variation was the intent.
 
 **One question for the extension's author before step 3:** can a person attend two
@@ -1508,18 +1508,18 @@ Steps:
 
 ### Phase 6 — Configuration as data
 
-13. One config file per study (e.g. `config/studies/measles_gaines_tx.yml`) holding
+1. One config file per study (e.g. `config/studies/measles_gaines_tx.yml`) holding
     population file, contact matrix, immunity, dates and clustering parameters.
     Experiment scripts reduce to a loader plus `inspect_*` calls. This makes a run's
     provenance recoverable, which it currently is not.
 
 ### Phase 7 — Internal structure
 
-14. Extract the `foreach` body of `run_rStride()` into a testable
+1. Extract the `foreach` body of `run_rStride()` into a testable
     `run_one_experiment()`.
-15. Split `Infector.cpp` (668 lines). The contact-probability rule is already a
+2. Split `Infector.cpp` (668 lines). The contact-probability rule is already a
     configuration option (`f314514`, F8); this step gives it a proper home in the split.
-16. Modernise the Infector template dispatch — see Phase 7a.
+3. Modernise the Infector template dispatch — see Phase 7a.
 
 #### Phase 7a — Infector template dispatch
 
@@ -1556,7 +1556,7 @@ policy-based design used correctly and should be retained.
    (`Infector.cpp:330-498`) is 169 lines; the optimised form (`504-651`) is 148 lines.
    Whitespace-normalised, only 84 of 317 lines differ. The core transmission algorithm
    therefore exists twice and is kept in step by hand. This is the C++ counterpart of the
-   twin-file problem in §2.4, and it carries the same correctness hazard: an edit applied
+   twin-file problem in architecture §2.4, and it carries the same correctness hazard: an edit applied
    to one body and not the other. The `min` -> `mean` change of F8 was unaffected only
    because `GetContactProbability` is a shared free function — placement, not structure.
 
@@ -1592,7 +1592,7 @@ language standard the project already compiles against.
 
 **Verification.** The R regression suite already records `run_time` per scenario and
 reports the largest difference between runs, so step 1 needs a suite run rather than new
-benchmarking tooling. Per §7.5, none of these changes may alter the reference `.rds`
+benchmarking tooling. Per §5.5, none of these changes may alter the reference `.rds`
 files — which is precisely the correct test for a behaviour-preserving template refactor.
 
 #### Phase 7b — CMake modernisation
@@ -1621,9 +1621,9 @@ Travis-era compiler (F13.3).
    migration rather than cutover: **Phase 2b** flips the default once `mean`
    calibrations exist and have been compared against `min` on the same population. The
    only remaining choice is the quadratic term (decision 3).
-2. **Branch reconciliation** — resolved into a concrete plan; see §6. The remaining
+2. **Branch reconciliation** — resolved into a concrete plan; see §4. The remaining
    judgement calls are which of the stale local branches and collaborator remotes
-   (`as/`, `ek/`, `ic/`) are live, and who owns each conflict resolution in §6.3.
+   (`as/`, `ek/`, `ic/`) are live, and who owns each conflict resolution in §4.3.
 3. **Quadratic term in the R0 fit (F10)** — `TransmissionAnalyst.R:96` hardcodes
    `fit_b2 <- 0`. Four committed disease files carry a non-zero `b2` from an earlier
    quadratic fit. Restore the quadratic term, or accept linear-only and refit those four
@@ -1631,7 +1631,7 @@ Travis-era compiler (F13.3).
 4. **`ClearContactPools()` after the MDP excision** — **closed 2026-10-05**: deleted
    with the MDP removal (`2ce8ab2`), since its sole caller was `MDP.cpp:454`.
 5. **Package installation route** — install `rStride` into the R library at build time,
-   or `devtools::load_all()` against the repo during development? Affects Phase 1 step 7
+   or `devtools::load_all()` against the repo during development? Affects Phase 3 step 3
    and how collaborators set up.
 6. **Generated data in git** — once `sim_output` is relocated (Phase 3), should the
    generated population CSVs currently in `main/resources/data/` be removed from version
@@ -1656,7 +1656,7 @@ secondary cases for remaining susceptibles. See
 The refactoring must start from a single consolidated baseline. Two branches carried live
 measles/USA work and had diverged for two months.
 
-### 6.1 State as of 2026-09-25
+### 4.1 State as of 2026-09-25
 
 | Branch | Tip | Date | Author |
 |---|---|---|---|
@@ -1677,7 +1677,7 @@ Dane Co"):
 | `master` ↔ `origin/measles_usa_rm` | 1 | 51 |
 | `measles_usa` ↔ `origin/measles_usa_rm` | 32 | 35 |
 
-### 6.2 Critical: the School presence fix is missing from one branch
+### 4.2 Critical: the School presence fix is missing from one branch
 
 `master`'s single exclusive commit `c79a76f` adds one line to
 `Person::UpdatePresence()`:
@@ -1701,11 +1701,11 @@ simulation run from `measles_usa_rm` since the merge base should be treated as
 suspect until re-run. **This should be communicated before, and independently of,
 the merge work.**
 
-### 6.3 Conflict surface
+### 4.3 Conflict surface
 
 > The full agenda for resolving this — every modelling decision, merge-mechanics item and
 > process question, with a decision line against each — is kept separately in
-> **`measles_usa_rm_discussion.md`**. Bring that document to the §6.4 step 4 session.
+> **`measles_usa_rm_discussion.md`**. Bring that document to the §4.4 step 4 session.
 
 A dry-run merge (`git merge-tree --write-tree measles_usa origin/measles_usa_rm`,
 object-database only) reports **five conflicting files, all R**:
@@ -1726,16 +1726,16 @@ Five files exist on both branches **byte-identical** — `HealthEconomist_USA.R`
 `factories/ImmunityProfileFactory_USA.R`, `immunity_measles_dummy.xml`,
 `disease_measles_usa.xml`, `Misc.R`. These were synchronised outside git (copied rather
 than merged). The practice has kept the conflict count low so far, but it is how work
-gets silently lost; see §7.6.
+gets silently lost; see §5.6.
 
-### 6.4 Consolidation sequence
+### 4.4 Consolidation sequence
 
 ```
 1. git fetch --all
-2. merge master → measles_usa_rm          # the School fix (§6.2); do first, independently
+2. merge master → measles_usa_rm          # the School fix (§4.2); do first, independently
 3. merge master → measles_usa             # near no-op, same line already present
 4. branch integration/measles-usa from measles_usa
-   merge measles_usa_rm into it           # resolve the 5 conflicts of §6.3
+   merge measles_usa_rm into it           # resolve the 5 conflicts of §4.3
 5. build; run the C++ gtester; run the R regression suite
 6. tag pre-refactor-2026-09; merge to master
 7. all refactoring branches start from master
@@ -1756,18 +1756,18 @@ which the golden master becomes trustworthy again.
 
 ## 5. Proposed branching and pull-request model
 
-The current model is a direct cause of the situation in §6: long-lived personal branches
+The current model is a direct cause of the situation in §4: long-lived personal branches
 (`measles_usa`, `measles_usa_rm`, `superspreading`, `dev`, plus `as/`, `ek/`, `ic/`
 remotes carrying parallel `measles`/`universal`/`GeoClustering` forks), two months of
 unmerged parallel work, and file-level synchronisation outside version control.
 
-### 7.1 `master` is the trunk
+### 5.1 `master` is the trunk
 
 Everything lands on `master`. It must always build and pass the C++ gtester. Stale
 branches and collaborator remotes should be explicitly archived (by tag) or deleted,
 not left ambiguous.
 
-### 7.2 Separate study branches from code branches
+### 5.2 Separate study branches from code branches
 
 This is the most important change. `measles_usa` is currently both a kernel-development
 branch and the Gaines TX study, which is precisely why it is two months old and cannot
@@ -1781,7 +1781,7 @@ merge.
 A study branch holds run configurations and results. A code branch holds changes to the
 kernel or the workbench. Conflating them is what makes both unmergeable.
 
-### 7.3 Pull requests for everything
+### 5.3 Pull requests for everything
 
 Including self-merged ones. With a team of this size the value is not gatekeeping but
 the written rationale. The repository's commit subjects are good, but the reasoning
@@ -1789,26 +1789,26 @@ behind model changes — min vs average contact probability, the household clust
 ratio, the cluster-size adjustment factors — is not recorded anywhere. A PR body is the
 cheapest durable place for it.
 
-### 7.4 Continuous integration
+### 5.4 Continuous integration
 
 `.travis.yml` is present but presumed dead. Move to GitHub Actions:
 
 - **Per PR:** build + C++ gtester.
 - **Nightly on master:** the full R regression suite (too slow for per-PR).
 
-### 7.5 The rule that makes the refactoring safe
+### 5.5 The rule that makes the refactoring safe
 
 > **A refactoring PR must not modify the regression reference `.rds` files.**
 
 This turns "behaviour-preserving" from a promise into something CI can check, using the
 harness that already exists. If a change genuinely requires new references, it belongs in
 a separate PR whose sole purpose is that change, with the justification in the body.
-This is the §4 working rule — never mix behaviour and structure in one commit —
+This is the §2 working rule — never mix behaviour and structure in one commit —
 expressed in enforceable form.
 
-### 7.6 No out-of-band file synchronisation
+### 5.6 No out-of-band file synchronisation
 
-The five byte-identical files in §6.3 should each have been a pull request. Copying files
+The five byte-identical files in §4.3 should each have been a pull request. Copying files
 between checkouts bypasses history, review and attribution, and eventually overwrites
 someone's work without a trace.
 
@@ -1820,7 +1820,7 @@ Specification for the infrastructure delivered in Phase 2b. It replaces the curr
 practice of writing a refitted disease file into `sim_output/` and copying it into
 `main/resources/data/` by hand.
 
-### 8.1 What is wrong with the current arrangement
+### 6.1 What is wrong with the current arrangement
 
 The existing practice has one correct property that must be preserved: **a refit never
 overwrites a committed disease file**. The refit is written as
@@ -1837,7 +1837,7 @@ Three properties are missing:
    `population_file = sim_output/20260710_111118_WI-Dane_.../...csv`, which no longer
    resolves. The fit cannot be reproduced or even verified.
 
-### 8.2 Root cause: two different kinds of thing in one file
+### 6.2 Root cause: two different kinds of thing in one file
 
 `disease_*.xml` conflates:
 
@@ -1855,7 +1855,7 @@ fitted against a WI-Dane population; both WI-Dane and TX-Gaines populations appe
 the branch history. The `min` -> `mean` change widens this hazard but does not create
 it — it exists today.
 
-### 8.3 Proposed layout
+### 6.3 Proposed layout
 
 ```
 main/resources/data/
@@ -1871,7 +1871,7 @@ The calibration key encodes every dimension the fit depends on, including the co
 rule and the fit form, so that restoring the quadratic term (F10) cannot silently change
 the meaning of an existing artefact.
 
-### 8.4 Calibration artefact format
+### 6.4 Calibration artefact format
 
 ```xml
 <calibration>
@@ -1893,11 +1893,11 @@ the meaning of an existing artefact.
 </calibration>
 ```
 
-**Content hashes rather than paths** is the specific remedy for 8.1.3. A path breaks when
+**Content hashes rather than paths** is the specific remedy for 6.1.3. A path breaks when
 a file is moved, re-exported or stranded in a superseded install root; a SHA-256 remains
 verifiable indefinitely and identifies the input unambiguously.
 
-### 8.5 Enforcement
+### 6.5 Enforcement
 
 `run_rStride()` already applies a validation gate before any experiment launches
 (`.rstride$data_files_exist`, `log_levels_exist`, `valid_r0_values`,
@@ -1913,7 +1913,7 @@ verifiable indefinitely and identifies the input unambiguously.
 This converts a silent wrong-calibration into an impossible one. `SimBuilder.cpp:103` is
 the single equivalent hook on the C++ side if the same check is wanted in the kernel.
 
-### 8.6 Promotion
+### 6.6 Promotion
 
 ```r
 promote_calibration(project_dir, force = FALSE)
@@ -1932,7 +1932,7 @@ The result of a promotion is a git diff, so promotion becomes a pull request: re
 attributed and permanently recorded. The non-overwrite guarantee is then enforced by
 tooling and version control rather than by manual discipline.
 
-### 8.7 Migration to `mean`
+### 6.7 Migration to `mean`
 
 See Phase 2b for the sequenced steps. The property that matters: because calibration keys
 differ by rule, `min` and `mean` calibrations coexist in version control. There is never
@@ -1940,16 +1940,16 @@ a window in which the model is uncalibrated, the two rules can be compared on id
 populations, and the change of default is a single reviewable diff rather than ten files
 quietly mutating.
 
-### 8.8 Lighter first step
+### 6.8 Lighter first step
 
 If separating the files is too invasive at the point this is picked up, the following
-obtains most of the safety for roughly a day's work and is forward-compatible with §8.3:
+obtains most of the safety for roughly a day's work and is forward-compatible with §6.3:
 
 - keep a single disease file, adding a `<provenance>` block with hashes alongside the
   existing `<label>`;
 - implement `promote_calibration()` with the repository target and non-overwrite
-  semantics of §8.6;
-- add the §8.5 hash check to the validation gate — warning first, aborting once trusted.
+  semantics of §6.6;
+- add the §6.5 hash check to the validation gate — warning first, aborting once trusted.
 
 Separating natural history from calibration can then follow in Phase 6, when those files
 are being touched anyway.
@@ -1958,7 +1958,7 @@ are being touched anyway.
 
 ## 7. Continuous integration
 
-### 9.1 The two suites are complementary — keep both
+### 7.1 The two suites are complementary — keep both
 
 The two suites are compared in **architecture §7**.
 
@@ -1968,7 +1968,7 @@ aggregation, which are themselves the code under test. The two suites sit at dif
 levels with different sensitivities: a fast tolerance-based kernel smoke test, and a slow
 exact full-pipeline regression.
 
-### 9.2 Tiering
+### 7.2 Tiering
 
 | Trigger | Job | Target |
 |---|---|---|
@@ -1981,7 +1981,7 @@ The regression suite must not gate pull requests: twenty-plus minutes in front o
 change trains people to route around it. Nightly on `master` detects regressions within a
 day, which is the right resolution here.
 
-### 9.3 R runs in GitHub Actions without difficulty
+### 7.3 R runs in GitHub Actions without difficulty
 
 `r-lib/actions` is mature. The obstacle is not R but the dependency load:
 `smd_load_packages()` pulls twenty packages including `sf`, `tigris` and `usmap`, which
@@ -1990,10 +1990,10 @@ both already in this plan: Phase 1 step 3 moves the USA-only packages to `Sugges
 Posit Package Manager serves precompiled Linux binaries.
 
 Note that the present suite is **not** testthat — it is a script with hand-rolled
-comparison. Phase 1 makes `testthat` available; Phase 4 step 10 extracts the comparison
+comparison. Phase 1 makes `testthat` available; Phase 4 step 3 extracts the comparison
 engine, which is what makes it callable from CI.
 
-### 9.4 Prerequisites, and one genuine design decision
+### 7.4 Prerequisites, and one genuine design decision
 
 1. **`-ffast-math` must go first (F13.1, Phase 3b)** — **done** (`0d1c6dc`). CI runs
    Linux/gcc while development is macOS/AppleClang. With that flag the two legitimately
@@ -2018,7 +2018,7 @@ engine, which is what makes it callable from CI.
    guarantee, so it is a deliberate choice rather than an obvious one.
 
 3. **The suite must return an exit code.** `rStride_gtester_covid19.R` currently only
-   prints; CI cannot detect a regression from it. Part of Phase 4 step 10.
+   prints; CI cannot detect a regression from it. Part of Phase 4 step 3.
 
 4. **Reference consistency (F6)** — **done** (`7c800dc`). The six `.rds` files spanned two
    dates six weeks apart; they now derive from a single commit.
@@ -2026,7 +2026,7 @@ engine, which is what makes it callable from CI.
 5. **Pin `simid.rtools`** to a tag or commit rather than installing from GitHub HEAD, or a
    change in that repository can silently alter a regression result.
 
-### 9.5 Drafted workflows
+### 7.5 Drafted workflows
 
 `.github/workflows/ci.yml` and `.github/workflows/regression.yml` are drafted and carry
 their prerequisites in header comments. Both use `fetch-depth: 1`, which reduces a
