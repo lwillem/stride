@@ -23,6 +23,7 @@
 #include "contact/IdSubscriptArray.h"
 #include "pop/Person.h"
 #include "pop/Population.h"
+#include "pop/PopFileLayout.h"
 #include "pop/SurveyManager.h"
 #include "util/FileSys.h"
 #include "util/RnMan.h"
@@ -71,59 +72,16 @@ shared_ptr<Population> PopBuilder::MakePersons(shared_ptr<Population> pop)
 
     string line;
     getline(popFile, line); // step over file header
-
-    // Fix for different population separators
-    bool bool_semicolumn = (line.find(";") != std::string::npos );
-    auto csv_sep = bool_semicolumn ? ";" : ",";
-
-    // get headers
-    auto headers   = Split(line, csv_sep);
-
-    bool bool_profession = Trim(ToString(headers[2]),ToString('"')) == "worker";
-    unsigned int profession_adj = bool_profession ? 2 : 0;
-
-    // check for additional pool id
-    bool has_extra_column = headers.size() == (7+profession_adj);
-    string extra_id = "";
-    if (has_extra_column) { extra_id = Trim(ToString(headers[6+profession_adj]),ToString('"')); }
-    bool household_cluster_id = extra_id == "household_cluster_id";
-    bool collectivity_id = extra_id == "collectivity_id";
-    const unsigned int defaultHouseholdClusterId = 0;
-    const unsigned int defaultCollectivityId = 0;
-
+    const auto layout = PopFileLayout::FromFirstLine(line);
 
     // Read lines from file
     unsigned int default_person_id = 0U;
-
-
     while (getline(popFile, line)) {
-        const auto values               = Split(line, csv_sep); //","
-        const auto age                  = static_cast<unsigned int>(IntFromString(values[0]));
-        const auto person_id            = bool_profession ?	static_cast<unsigned int>(IntFromString(values[1])) : default_person_id;
-        const auto profession           = bool_profession ?	static_cast<unsigned int>(IntFromString(values[2])) : 0;
-        const auto householdId          = static_cast<unsigned int>(IntFromString(values[1+profession_adj]));
-        const auto schoolId             = static_cast<unsigned int>(IntFromString(values[2+profession_adj]));
-        const auto workplaceId          = static_cast<unsigned int>(IntFromString(values[3+profession_adj]));
-        const auto communityWeekendId   = static_cast<unsigned int>(IntFromString(values[4+profession_adj]));
-        const auto communityWeekdayId   = static_cast<unsigned int>(IntFromString(values[5+profession_adj]));
-
-        unsigned int householdClusterId = defaultHouseholdClusterId;
-        unsigned int collectivityId = defaultCollectivityId;
-        if (values.size() == 7+profession_adj) {
-            if (household_cluster_id) {
-                householdClusterId = static_cast<unsigned int>(IntFromString(values[6+profession_adj]));
-            } else if (collectivity_id) {
-                collectivityId = static_cast<unsigned int>(IntFromString(values[6+profession_adj]));
-            }
-        }
-
-        pop->CreatePerson(person_id, age, profession, householdId, schoolId, workplaceId, communityWeekendId,
-                          communityWeekdayId, householdClusterId, collectivityId);
-       
+        const auto r = layout.Parse(line, default_person_id);
+        pop->CreatePerson(r.person_id, r.age, r.profession, r.household, r.school, r.workplace,
+                          r.community_weekend, r.community_weekday, r.household_cluster, r.collectivity);
         ++default_person_id;
-
     }
-
 
     popFile.close();
 

@@ -23,6 +23,7 @@
 #include "contact/ContactType.h"
 #include "pop/Age.h"
 #include "pop/Person.h"
+#include "pop/PopFileLayout.h"
 #include "util/FileSys.h"
 #include "util/StringUtils.h"
 
@@ -129,8 +130,8 @@ void PopSnapshotWriter::WritePopulationSnapshot(const stride::util::ptree& confi
                                                 std::shared_ptr<Population> pop)
 {
         // --------------------------------------------------------------
-        // Re-read just the header line of the population input file, using the
-        // same parsing rules as PopBuilder::MakePersons, so our output mirrors
+        // Re-read just the header line of the population input file, with the
+        // same PopFileLayout as PopBuilder::MakePersons, so our output mirrors
         // whatever column layout that file actually used (with/without a
         // profession column, with/without household_cluster_id / collectivity_id).
         // --------------------------------------------------------------
@@ -143,20 +144,12 @@ void PopSnapshotWriter::WritePopulationSnapshot(const stride::util::ptree& confi
         std::getline(popFile, headerLine);
         popFile.close();
 
-        const bool        useSemicolon = headerLine.find(';') != std::string::npos;
-        const std::string sep          = useSemicolon ? ";" : ",";
-        const auto        headers      = Split(headerLine, sep);
-
-        const bool         hasProfession = headers.size() > 2 && Trim(ToString(headers[2]), ToString('"')) == "worker";
-        const unsigned int professionAdj = hasProfession ? 2 : 0;
-        const bool         hasExtraColumn = headers.size() == (7 + professionAdj);
-
-        std::string extraId;
-        if (hasExtraColumn) {
-                extraId = Trim(ToString(headers[6 + professionAdj]), ToString('"'));
-        }
-        const bool hasHouseholdClusterId = extraId == "household_cluster_id";
-        const bool hasCollectivityId     = extraId == "collectivity_id";
+        using Field                      = PopFileLayout::Field;
+        const auto        layout         = PopFileLayout::FromFirstLine(headerLine);
+        const std::string sep            = layout.Separator();
+        const bool        hasProfession  = layout.Has(Field::Profession);
+        const bool hasHouseholdClusterId = layout.Has(Field::HouseholdCluster);
+        const bool hasCollectivityId     = layout.Has(Field::Collectivity);
 
         // --------------------------------------------------------------
         // Write population_snapshot.csv: original columns + immunity_status.
