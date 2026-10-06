@@ -1,5 +1,5 @@
 #!/bin/bash
-# SessionStart hook (startup): show a short intro on how Claude works in this repo,
+# SessionStart hook (startup, clear): show a short intro on how Claude works in this repo,
 # with the current branch and the refactoring plan's next step.
 
 cd "${CLAUDE_PROJECT_DIR:-.}" || exit 0
