@@ -69,6 +69,7 @@ user asks.
 | Phase 5b step 4 — `NumOfTypes` | `master` (PR #11) | `sizeof(Person)` 1192 → **1104**, 39.7 MB at 474k |
 | Phase 5b step 3 — venue attendance pool-side | `master` (PR #11) | `sizeof(Person)` 1104 → **224 B**; gtester 44/44, rStride all outputs unchanged (incl. `covid_subpools`, `covid_airborne`) |
 | **CI repaired — first passing run ever** | PR #13, §7.6 | GitHub Actions run 37519593148: gcc **and** clang (ubuntu-latest) build, gtester **44/44** each, OpenMP on (libgomp / libomp, 4 threads) |
+| CI reduced to build-only (user decision) | `ci.yml`, §7.6 | per-PR job runs `make install` for gcc + clang; gtester not run in CI for now |
 
 ### Next, in order
 
@@ -2087,7 +2088,7 @@ are being touched anyway.
 
 ---
 
-## 7. Continuous integration — per-PR job passing since PR #13 (2026-10-06)
+## 7. Continuous integration — per-PR build job passing since PR #13 (2026-10-06)
 
 ### 7.1 The two suites are complementary — keep both
 
@@ -2103,7 +2104,7 @@ exact full-pipeline regression.
 
 | Trigger | Job | Target |
 |---|---|---|
-| Every pull request | build gcc + clang, run C++ gtester | ~8 min |
+| Every pull request | build + install, gcc + clang (gtester **off** since 2026-10-06, user decision; re-enable by `make install` → `make gtest` in `ci.yml`) | ~2 min |
 | Every pull request | `R CMD check` on the rStride package (after Phase 1) | ~3 min cached |
 | **Nightly on `master`** | full rStride regression suite | ~25 min |
 | Weekly | macOS build + gtester | — |
@@ -2191,3 +2192,8 @@ Result: both matrix jobs green, 44/44 each, ~2 min of gtester. Open: Node 20 act
 deprecation warnings; the nightly regression job still cannot pass meaningfully (§7.4).
 To catch libstdc++-only include gaps locally before pushing, Homebrew `g++-16
 -fsyntax-only` over `compile_commands.json` reproduces CI's errors.
+
+**Scope reduced to build-only (2026-10-06, user decision).** The per-PR job now runs
+`make install` (configure, compile incl. the gtester binary, install) for gcc and clang,
+and no longer runs `bin/gtester` or uploads its XML. The gtester stays a local check via
+the test-runner. Compiler warnings (~65 lines on gcc/clang) do not fail the job.

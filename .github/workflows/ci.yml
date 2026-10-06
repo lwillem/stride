@@ -1,4 +1,9 @@
-# Per-pull-request gate: build the C++ kernel and run the scenario test suite.
+# Per-pull-request gate: check that the C++ code configures, compiles and installs
+# without errors, with gcc and with clang.
+#
+# The C++ scenario suite (bin/gtester, ~2 min) is deliberately not run here for now;
+# to re-enable it, replace `make install` below by `make gtest` and restore an
+# upload step for ~/opt/stride/tests/gtester_all.xml.
 #
 # Deliberately excludes the R regression suite, which takes ~22 minutes of
 # simulation time and runs nightly instead (see regression.yml).
@@ -62,15 +67,8 @@ jobs:
         with:
           key: ${{ matrix.compiler }}-${{ matrix.build_type }}
 
-      # `make gtest` configures, builds, installs to $HOME/opt/stride (the stable
-      # install root, plan F1) and runs bin/gtester.
-      - name: Build and run the C++ scenario suite
-        run: make gtest CMAKE_BUILD_TYPE=${{ matrix.build_type }}
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: gtester-${{ matrix.compiler }}
-          path: ~/opt/stride/tests/gtester_all.xml
-          if-no-files-found: warn
+      # `make install` configures, builds and installs to $HOME/opt/stride (the
+      # stable install root, plan F1). Any configure, compile, link or install error
+      # fails the job.
+      - name: Build and install
+        run: make install CMAKE_BUILD_TYPE=${{ matrix.build_type }}
