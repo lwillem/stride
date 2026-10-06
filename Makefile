@@ -110,7 +110,10 @@ configure:
 all: configure
 	$(MAKE) $(PARALLEL_MAKE) -C $(BUILD_DIR) --no-print-directory all
 
-install:
+# install depends on all (which configures), so `make install` and `make gtest` work from a
+# fresh checkout. Without it they failed with "cmake-build-release: No such file or
+# directory" unless `make all` had been run first — which is why CI never passed (plan §7).
+install: all
 	$(MAKE) $(PARALLEL_MAKE) -C $(BUILD_DIR) --no-print-directory install
 
 clean: 

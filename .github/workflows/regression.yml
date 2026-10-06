@@ -81,8 +81,7 @@ jobs:
       - name: Run the rStride regression suite
         id: regression
         run: |
-          STRIDE_DIR="$(ls -d "$HOME"/opt/stride-* | tail -1)"
-          cd "$STRIDE_DIR"
+          cd "$HOME/opt/stride"
           Rscript ./bin/rStride_gtester_covid19.R 2>&1 | tee regression.log
 
       - name: Upload regression output
@@ -91,8 +90,8 @@ jobs:
         with:
           name: regression-output
           path: |
-            ~/opt/stride-*/regression.log
-            ~/opt/stride-*/sim_output/**/*.pdf
-            ~/opt/stride-*/sim_output/**/*_summary.csv
+            ~/opt/stride/regression.log
+            ~/opt/stride/sim_output/**/*.pdf
+            ~/opt/stride/sim_output/**/*_summary.csv
           if-no-files-found: warn
           retention-days: 14

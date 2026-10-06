@@ -52,15 +52,18 @@ jobs:
             echo "CC=clang"   >> "$GITHUB_ENV"
             echo "CXX=clang++" >> "$GITHUB_ENV"
           fi
+          # CMake (>= 3.17) reads these at configure time; without them ccache is
+          # installed but never called, so nothing is ever cached.
+          echo "CMAKE_C_COMPILER_LAUNCHER=ccache"   >> "$GITHUB_ENV"
+          echo "CMAKE_CXX_COMPILER_LAUNCHER=ccache" >> "$GITHUB_ENV"
 
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: ${{ matrix.compiler }}-${{ matrix.build_type }}
 
-      # `make gtest` configures, builds, installs to
-      # $HOME/opt/stride-$(git rev-list HEAD --count) and runs bin/gtester.
-      # With fetch-depth 1 that count is 1, which is harmless.
+      # `make gtest` configures, builds, installs to $HOME/opt/stride (the stable
+      # install root, plan F1) and runs bin/gtester.
       - name: Build and run the C++ scenario suite
         run: make gtest CMAKE_BUILD_TYPE=${{ matrix.build_type }}
 
@@ -69,5 +72,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: gtester-${{ matrix.compiler }}
-          path: ~/opt/stride-*/tests/gtester_all.xml
+          path: ~/opt/stride/tests/gtester_all.xml
           if-no-files-found: warn
