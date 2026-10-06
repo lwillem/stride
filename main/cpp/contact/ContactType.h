@@ -46,7 +46,11 @@ enum class Id : unsigned int
 };
 
 /// Number of ContactPool types.
-inline constexpr unsigned int NumOfTypes() { return 12U; }
+/// Must equal the number of values in Id (and in IdPack_t / IdList below). It returned 12
+/// for 11 types -- almost certainly a remnant of the College type still visible commented
+/// out in ContactType.cpp -- which gave every IdSubscriptArray a phantom trailing slot.
+/// At 474k persons that one slot cost about 40 MB (plan F12.3).
+inline constexpr unsigned int NumOfTypes() { return 11U; }
 
 /// Check whether string is name of a ContactPoolType::Id.
 bool IsId(const std::string& s);
