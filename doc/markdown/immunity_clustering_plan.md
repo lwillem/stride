@@ -92,6 +92,14 @@ The loop is **rejection sampling with replacement**, and each rejection is expen
 Cost is therefore roughly *O(H · Σ_age 1/p_accept(age))* with a per-draw constant of
 *O(household size)*, against an achievable *O(N)*.
 
+> **Not only slow — biased (found 2026-10-06, refactoring plan Phase 5c step 4).** At
+> `link = 0` a person's chance of being reached per draw is `1 / (H × household size)`,
+> so within each age class immunity is shifted towards small households (Dane WI, 50 %:
+> 77 % immune when living alone, 23 % in households of 8+; pairwise within-household ICC
+> 0.05-0.09 from this alone). The O(N) independent sampler now on `master` removes the
+> gradient; this was accepted as a correction. Any clustering mechanism (Phase III) should
+> be measured against the independent sampler, not against the old `link = 0` output.
+
 ---
 
 ## 2. What `measles_usa_rm` already solves

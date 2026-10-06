@@ -22,7 +22,7 @@ Where things stand, so a fresh session can start without re-deriving any of it.
 
 | Branch | Tip | State |
 |---|---|---|
-| `master` | `b588bdc`, plus plan-only commits | consolidated baseline + Phases 0, 0b, 0c, 5c (steps 1-2), F1, F7.1, F13.1 |
+| `master` | `b588bdc`, plus plan-only commits | consolidated baseline + Phases 0, 0b, 0c, 5c, F1, F7.1, F13.1 |
 | `feature/immunity-fast-seeding` | `7b97626` | **merged to `master` 2026-10-06** (`f57bfd4`) — Phase 5c; branch kept |
 | `feature/venue-memory` | `bf91ae6` | Phase 5b **step 4 done**, step 3 not started |
 
@@ -39,6 +39,14 @@ is on `master` (2026-10-06), that merge is redundant: rebase or merge `master` i
 > **still outstanding**: no record of them exists in the plan, the branch's commit or its
 > files. Note the R suite cannot show this change at all (F6.1), so the C++ gtester and
 > those two steps are the whole of the evidence.
+>
+> **Steps 3-4 done later on 2026-10-06 — and step 4 failed.** Seeding is 25-150× faster
+> (≤ 0.16 s at every coverage on Gaines and Dane) and the per-age marginals are identical,
+> but the fast path is **not equivalent in distribution**: at link probability 0 the old
+> sampler over-samples people in small households (Dane 50 %: 77 % immune if living alone,
+> 23 % in households of 8+), the fast path does not. So the change on `master` is a
+> modelling change, not an optimisation. Full numbers in Phase 5c. **Accepted as a
+> correction** (option (a), 2026-10-06); Phase 5c is complete.
 
 Note `master` carries a GitHub rule requiring pull requests. Pushes during this session
 bypassed it with the user's agreement; the feature branches now make honouring it cheap.
@@ -55,15 +63,13 @@ bypassed it with the user's agreement; the feature branches now make honouring i
 | Phase 0c — build repairs | F13.1/.3 | `-O3 -std=c++17`, `compile_commands.json` exists |
 | **OpenMP actually works** | F13.2 | native arm64, `libomp` linked, **44/44 with 22 genuinely multi-threaded instances**; survives a re-configure and a Rosetta-hosted Claude Code since `4dcca5e`/`b588bdc` |
 | Reference reset | F6 | all six streams reproduce |
-| Phase 5c steps 1-2 — immunity fast path | `master` (`f57bfd4`) | 16 min → **2.1 s**; steps 3-4 outstanding |
+| Phase 5c — immunity fast path, benchmark, equivalence check | `master` (`f57bfd4`) | 16 min → **2.1 s**; seeding ≤ 0.16 s vs 3-24 s; step 4: not equivalent (old sampler's household-size bias removed), **accepted as a correction** |
 | Phase 5b step 4 — `NumOfTypes` | branch | `sizeof(Person)` 1192 → **1104**, 39.7 MB at 474k |
 
 ### Next, in order
 
-1. **Phase 5c steps 3-4** — seeding benchmark and marginal / within-household comparison.
-   The merge itself is done (2026-10-06, `f57bfd4`).
-2. **Phase 5b step 3** — the large venue-memory change. *Blocked on one question, below.*
-3. **Phase 2 step 2** — population file, backwards compatible (see the rewritten step).
+1. **Phase 5b step 3** — the large venue-memory change. *Blocked on one question, below.*
+2. **Phase 2 step 2** — population file, backwards compatible (see the rewritten step).
 
 ### Open question blocking Phase 5b step 3
 
@@ -958,7 +964,7 @@ ahead of the numbering below:
 
 | | Work | Where it is specified | Results-changing? |
 |---|---|---|---|
-| 1 | **Fast unclustered immunity seeding** | Phase 5c, new | **yes** — same marginals, different individuals |
+| 1 | **Fast unclustered immunity seeding** | Phase 5c, new | **yes** — same per-age marginals, but removes the old sampler's household-size bias (Phase 5c step 4) |
 | 2 | **Venue memory footprint** | Phase 5b step 3 (F12.3) | no — representation only |
 | 3 | **Population file, backwards compatible** | Phase 2 step 2, rewritten | no, by construction |
 
@@ -1445,7 +1451,70 @@ different pools of the same venue type on a single day? The current format canno
 it, so if the generator assumes that constraint the membership-list design is a superset
 and nothing breaks — but it should be confirmed rather than assumed.
 
-### Phase 5c — A fast path for unclustered immunity seeding — steps 1-2 done, merged
+### Phase 5c — A fast path for unclustered immunity seeding — COMPLETE (step 4 not equivalent; accepted as a correction)
+
+> **Steps 3-4 result, 2026-10-06: the fast path is NOT equivalent in distribution.** The
+> old sampler at link probability 0 is biased by household size, the fast path is not.
+> The premise below that "the household structure contributes nothing" at link 0 is
+> **wrong**: `Random()` draws a household uniformly, then one member, so a person's chance
+> of being reached per draw is `1 / (N_households × household_size)`. Members of small
+> households are over-sampled, members of large households (i.e. children) under-sampled.
+> **Decided 2026-10-06: option (a), accept the fast path as a correction.** It stays on
+> `master` as merged (`f57bfd4`) and is recorded as **results-changing** for every
+> `AgeDependent` run at link 0 and every `Random`/`Cocoon` run — including the
+> `Teachers` vaccine profile, which samples school pools the same way and so loses an
+> analogous small-school bias. The comments in `ImmunitySeeder.cpp` that claimed
+> equivalence are corrected. Affected and unaffected work:
+> - **Unaffected:** the committed disease calibrations (`disease_measles_usa.xml`,
+>   `disease_measles_adaptive_behavior*.xml`) were fitted with `immunity_profile = None`.
+> - **Affected:** outputs of `rStride_measles_explore.R` (`AgeDependent`, link 0) made
+>   before `f57bfd4` are not reproduced in distribution; the script now says so.
+> - No separate pull request: it was merged before step 4 ran. There is no changelog in
+>   the repo; this section is the record.
+> The alternatives considered were (b) reproduce the old distribution by `1/household_size`
+> weighting and (c) restore the old sampler for link 0 behind an opt-in.
+>
+> *Method.* Installed `master` binary (`b588bdc` build), seeding only (`num_days` 1, no
+> infected seeds, vaccine `None`), `AgeDependent` with a flat per-age rate,
+> `run.output_pop_snapshot` for `households.csv` and `susceptibles_by_age.csv`, seeding
+> time from timestamped stdout between the "Seed population with immunity" and "Seed
+> population with infected cases" lines. The old sampler is reached with
+> `immunity_link_probability = 1e-12` (the fast path takes exactly `0`; `1e-12` breaks
+> after the first member with probability 1 − 1e-12, i.e. today's link-0 behaviour).
+> Gaines TX (17,367 people): 10 seeds per cell. Dane WI (473,566): 3 seeds fast, 1 old.
+> Scripts were scratchpad-only (`run.py`, `analyse.py`, `bysize.py`), not committed.
+>
+> *Step 3 — seeding time (median, s).* No run timed out.
+>
+> | | 50 % | 70 % | 90 % | 95 % |
+> |---|---|---|---|---|
+> | Gaines, old | 3.06 | 4.94 | 10.9 | 16.4 |
+> | Gaines, fast | 0.12 | 0.12 | 0.12 | 0.11 |
+> | Dane, old | 3.96 | 7.58 | 21.1 | 23.7 |
+> | Dane, fast | 0.15 | 0.15 | 0.16 | 0.16 |
+>
+> *Step 4a — per-age marginals: identical.* Every run of both samplers hits
+> `floor(n_age × rate)` exactly in all 110 age classes (e.g. Dane 90 %: 426,166 immune
+> = target).
+>
+> *Step 4b — within-household dependence: different.* Pairwise ICC of immune status:
+> fast ≈ 0 (|mean| ≤ 0.0013, sd ≤ 0.007) at every coverage; old 0.035-0.065 (Gaines) and
+> 0.047-0.093 (Dane). Chi-square on pooled (household size, #immune) counts, Gaines sizes
+> 2-6: 1552 / 2080 / 2290 / 1664 on 13-20 df. The cause is the household-size gradient:
+>
+> | Immune share by household size, Dane | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8+ |
+> |---|---|---|---|---|---|---|---|---|
+> | 50 %, old | .770 | .537 | .468 | .432 | .361 | .319 | .289 | .233 |
+> | 50 %, fast | .498 | .501 | .499 | .500 | .500 | .500 | .501 | .499 |
+> | 90 %, old | .995 | .944 | .893 | .887 | .787 | .743 | .732 | .646 |
+> | 90 %, fast | .901 | .900 | .900 | .900 | .900 | .899 | .901 | .902 |
+>
+> Since quotas are per age, the overall marginals still match: within an age class, the old
+> sampler moves immunity from people in large households to people in small ones. For an
+> epidemic model this matters — susceptibles concentrated in large households give more
+> household transmission — so results seeded with the old sampler (existing measles
+> calibrations, any `AgeDependent`/`Random`/`Cocoon` run) are not reproduced by the fast
+> path in distribution. The gtester's `influenza_c`/measles tolerances absorbed it (44/44).
 
 > **Status 2026-10-06.** Steps 1-2 are implemented on `feature/immunity-fast-seeding`
 > (`7b97626`, `ImmunitySeeder` only). The acceptance test passes: `influenza_c`
