@@ -48,8 +48,10 @@ is on `master` (2026-10-06), that merge is redundant: rebase or merge `master` i
 > modelling change, not an optimisation. Full numbers in Phase 5c. **Accepted as a
 > correction** (option (a), 2026-10-06); Phase 5c is complete.
 
-Note `master` carries a GitHub rule requiring pull requests. Pushes during this session
-bypassed it with the user's agreement; the feature branches now make honouring it cheap.
+Note `master` carries a GitHub rule requiring pull requests. Pushes up to `0f6879e`
+bypassed it with the user's agreement. **From 2026-10-06 on, the rule is honoured:** every
+change goes on a branch and reaches `master` through a pull request, merged only when the
+user asks.
 
 ### Done, with evidence
 
