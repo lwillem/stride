@@ -470,6 +470,45 @@ read once in `SimBuilder`, stored on `Sim`, and threaded through `InfectorExec` 
 `Infector::Exec` bodies. `Min` is the rule every committed disease-file fit was produced
 under. An unknown value throws rather than defaulting silently.
 
+### 4.2 Immunity seeding, and how it changed on 2026-10-06
+
+`ImmunitySeeder` makes a share of each age class immune (or vaccinated) before the
+simulation starts, following the `AgeDependent`, `Random`, `Cocoon` or `Teachers` profile.
+With `run.immunity_link_probability` (or `vaccine_link_probability`) above 0, it draws
+whole households so that immunity clusters within them. At exactly 0 it takes a fast
+path: per age class, shuffle the candidates and take the first `floor(n_age × rate)`.
+
+**Results seeded before `f57bfd4` (2026-10-06) have a different immunity profile.** The
+old sampler also served link probability 0. It drew a household uniformly and then one
+member, so a person's chance of being reached was `1 / (N_households × household_size)`.
+The per-age totals were exact, but within each age class **people in small households,
+above all people living alone, were more likely to be made immune** than people in large
+households:
+
+| Dane WI, immune share by household size | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8+ |
+|---|---|---|---|---|---|---|---|---|
+| 50 % target, before `f57bfd4` | .77 | .54 | .47 | .43 | .36 | .32 | .29 | .23 |
+| 50 % target, since | .50 | .50 | .50 | .50 | .50 | .50 | .50 | .50 |
+| 90 % target, before | .995 | .94 | .89 | .89 | .79 | .74 | .73 | .65 |
+| 90 % target, since | .90 | .90 | .90 | .90 | .90 | .90 | .90 | .90 |
+
+The old profile also showed a spurious within-household correlation (pairwise ICC
+0.035-0.093), although no clustering was requested. Because susceptibles were concentrated
+in large households, household transmission was higher than the target coverage implies.
+The `Teachers` vaccine profile drew school pools the same way and lost an analogous
+small-school bias.
+
+- **Affected:** every run at link probability 0 with an `AgeDependent`, `Random`, `Cocoon`
+  or `Teachers` profile, e.g. the `rStride_measles_explore.R` outputs made before
+  `f57bfd4`. They are not reproduced, not even in distribution.
+- **Unaffected:** runs with immunity and vaccine profile `None`, which include the
+  committed measles calibrations and the whole R regression suite, and runs with a
+  non-zero link probability, which still use the old sampler unchanged.
+
+This was accepted as a correction of a bias, not as an optimisation. The measurements are
+in refactoring plan Phase 5c (steps 3-4), and `immunity_clustering_plan.md` §1.4 covers
+what it means for future clustering work.
+
 ---
 
 ## 5. The Infector dispatch
