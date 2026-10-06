@@ -235,10 +235,10 @@ Four contact-pool types were added alongside the original set: `OtherHouse`, `Re
 
 | | Classic pools | New venues |
 |---|---|---|
-| Pool id per person | one (`m_pool_ids[type][0]`) | one **per day of week** |
+| Membership held by | `Person::m_pool_ids[type]` and the pool | the pool only (`m_members`); at most one pool per type per day |
 | Source | population CSV column | separate `subpools_community_file` |
-| Contact rate | `AgeContactProfile`, by age | per-person `CPoolContacts(type)[day]` |
-| Duration | not tracked | tracked per day |
+| Contact rate | `AgeContactProfile`, by age | per member, `ContactPool::GetMemberContacts(i)` |
+| Duration | one per pool (`m_duration`; School, Workplace, Collectivity) | per member, `GetMemberDuration(i)` |
 
 *(The cost of expressing that difference by naming the four types at each decision point
 is F12 in the refactoring plan.)*
@@ -306,31 +306,36 @@ isolation, but it was forced by the format rather than chosen.
 
 ### 3.4 `Person` memory layout
 
-Compiled against the real headers on 2026-09-25:
+*Updated 2026-10-06 for Phase 5b steps 3-4 (PR #11).* Measured on arm64:
 
 ```
-NumOfTypes()   = 12   (the enum has 11 values)
-sizeof(Person) = 1192 bytes
-  IdSubscriptArray<array<unsigned int,7>> = 336 bytes each
-  three of them (ids + durations + contacts) = 1008 bytes
+NumOfTypes()        = 11
+sizeof(Person)      = 224 bytes   (was 1192: 1104 after step 4)
+sizeof(ContactPool) = 128 bytes   (was 72)
 ```
 
-**85% of every `Person` is those three arrays**, and most of it is never used:
+`Person` holds only `m_pool_ids` as `IdSubscriptArray<unsigned int>` — one id per type, 44
+B, always 0 for the four venues. Venue attendance lives in the pools:
 
-| Waste | Per person |
-|---|---:|
-| `NumOfTypes()` returns 12 for 11 types — a phantom slot in all three arrays | 84 B |
-| `m_pool_durations` + `m_pool_contacts` sized for 12 types, used by 4 | 448 B |
-| `m_pool_ids` gives 7 days to classic types that use only day 0 | 168 B |
-| **Total** | **~700 B of 1192 (59%)** |
+| Data | Where | Cost |
+|---|---|---|
+| venue membership | `ContactPool::m_members` (the pool's day: `m_day_week`) | 8 B per attendance |
+| venue duration, contacts | `m_member_durations` / `m_member_contacts`, parallel to `m_members` | 8 B per attendance |
+| School / Workplace / Collectivity duration | `ContactPool::m_duration`, one per pool | in `sizeof(ContactPool)` |
 
-At population scale: Dane WI (474k) holds roughly 565 MB of `Person` objects, about
-**332 MB of it waste**; a 3M Belgian population roughly 3.6 GB with about 2.1 GB waste.
-This is the probable reason `.rstride$print_system_memory_info()` exists in the R layer.
+The parallel vectors are filled only for venue pools and are kept aligned with the members
+by `ContactPool::SwapMembers()`, which `SortMembers()` uses.
 
-The `NumOfTypes()` discrepancy is a one-character fix worth about 40 MB at 474k, and is
-almost certainly a remnant of the `College` type still visible commented out at
-`ContactType.cpp:41`.
+**Build-time table.** `PopBuilder` reads the `subpools_community_file` into a
+`VenueAttendance` table (`pop/VenueAttendance.h`, person x venue x day: pool id, duration,
+contacts), held by `Population`. `ContactDivider` computes the contact counts on it, and
+`VenueAttendance::CopyToPools()` gives each member of each venue pool the record for *the
+pool's day*. `SimBuilder` releases the table before the run, so it only adds to peak memory
+during the build (~336 B per person).
+
+Before this change the three per-person `IdSubscriptArray<array<unsigned int,7>>` (ids,
+durations, contacts) made up 85 % of every `Person`; at Dane WI scale (474k) `Person`
+objects went from roughly 565 MB to about 106 MB.
 
 ### 3.5 What is already generalized, and the three day-gating mechanisms
 
@@ -359,9 +364,12 @@ if (typ == Id::School || typ == Id::Workplace) {
 }
 ```
 
-So `PoolDurations` has two loaders writing the same field: a type-level value from the XML
-for School/Workplace/Collectivity, and a per-person-per-day value from the subpools file
-for the venues.
+So duration had two loaders: a type-level value from the XML for
+School/Workplace/Collectivity, and a per-person-per-day value from the subpools file for
+the venues. *Since Phase 5b step 3 both are pool-side:* the seeder sets the pool-wide
+`ContactPool::m_duration`, and the venue values sit in `m_member_durations`; the
+transmission loop reads either through `GetMemberDuration(i)`. (The pool-wide value is
+exact because `Sim` runs School and Workplace pools only on regular weekdays.)
 
 **What remains genuinely venue-specific is therefore only two things:** per-day pool
 membership, and a contact rate taken per-person rather than from the age profile. The
@@ -376,15 +384,21 @@ if (day_week_pool != dayWeek) { continue; }
 ```
 
 Each venue pool carries its own day, so pool 17 *is* a Tuesday pool and `Sim` runs it only
-on Tuesdays. A person's membership of pool 17 is therefore already a Tuesday fact:
-`m_pool_ids[RestoCafe][2] == 17` duplicates `pool17.m_day_week` together with
-`pool17.m_members`. That duplication is what costs the ~700 bytes per person in F12.3.
+on Tuesdays. A person's membership of pool 17 is therefore already a Tuesday fact. Until
+Phase 5b step 3 it was stored again per person (`m_pool_ids[RestoCafe][2] == 17`); that
+duplication cost the ~700 bytes per person of F12.3 and has been removed (§3.4).
 
-Per-individual non-attendance is currently encoded as **pool id 0** — `PopBuilder.cpp:257`
-adds a member only when `subpool_id > 0`, while storing the zero in the person's array
-regardless, and `Sim` iterates pools from index 1, so pool 0 is a null pool. Attendance
-therefore already varies per individual per day, but through the id array rather than
-through `m_in_pools`, which `UpdatePresence()` sets uniformly to `true` for every
+**Exception in the data (F12.7).** The subpools generator reuses the last pool id of one day
+as the first of the next: in the 10k test file, 17 venue pools hold members from two
+consecutive days. The pool's day is the last one read, so on that day its other-day members
+also attend their own pool of that type, breaking the invariant of §3.1. The code reproduces
+this as before; fixing it changes results.
+
+Per-individual non-attendance is encoded as **pool id 0** — `PopBuilder.cpp:252` adds a
+member only when `subpool_id > 0` (the zero is still kept, with its duration, in the
+build-time `VenueAttendance` table, where `ContactDivider` sees it), and `Sim` iterates
+pools from index 1, so pool 0 is a null pool. Attendance therefore varies per individual
+per day through pool membership rather than through `m_in_pools`, which `UpdatePresence()` sets uniformly to `true` for every
 non-isolated person.
 
 **Three day-gating mechanisms consequently overlap:**
