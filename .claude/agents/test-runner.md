@@ -35,17 +35,18 @@ prints a short summary and the log path. Never stream full logs into the convers
    For each failed test, get its assertion lines with `grep -n -A6 "<TestName>" <log>`
    and keep at most ~8 lines per failure.
 
-3. **rStride regression test** (when requested). This is slow (parallel foreach over many
-   scenarios); the script starts it in the background. Check the log only now and then
-   (at most once every few minutes). Don't poll in a tight loop.
+3. **rStride regression test** (when requested). This takes ~3-4 minutes. Run it as ONE
+   blocking call in the foreground, with the Bash tool's `timeout` set to `600000`. Don't
+   use `run_in_background`, don't poll the log, and don't sleep; the call returns when the
+   test is done and prints the summary itself.
    ```bash
    bash .claude/scripts/stride-test.sh rstride <prefix>
    ```
-   When it finishes (`<log>` is the path the script printed), report:
-   - `grep -nE "did not change|!!|WARNING|ERROR|Error" <log> | head -40`
-   - which output types changed, and which scenarios (`gtester_label`) are new or missing
-     compared to the reference
-   - the last 5 lines of the log
+   From the printed summary, report which output types changed, and which scenarios
+   (`gtester_label`) are new or missing compared to the reference. Lines with `!!` flag
+   differences; a column change can still be followed by "did not change" for the values.
+   Open the log only if the summary is not enough. If the call times out, report that
+   rather than retrying.
 
 ## Report format (keep it under ~30 lines)
 ```

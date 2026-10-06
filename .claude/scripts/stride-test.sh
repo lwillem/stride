@@ -4,7 +4,7 @@
 #
 #   .claude/scripts/stride-test.sh build   [prefix]
 #   .claude/scripts/stride-test.sh gtester [prefix] [gtest args...]
-#   .claude/scripts/stride-test.sh rstride [prefix]     # starts in the background
+#   .claude/scripts/stride-test.sh rstride [prefix]     # blocks until done (~3-4 min)
 #
 # prefix defaults to $HOME/opt/stride; pass "-" to keep the default when adding gtest args.
 # Full logs go to $TMPDIR; only short summaries are printed.
@@ -50,9 +50,14 @@ case "$step" in
   rstride)
     R="$logdir/stride_rgtester.log"
     cd "$prefix" || exit 1
-    nohup "${native[@]}" Rscript bin/rStride_gtester_covid19.R > "$R" 2>&1 &
-    echo "rstride started pid=$!"
+    "${native[@]}" Rscript bin/rStride_gtester_covid19.R > "$R" 2>&1
+    rc=$?
+    echo "rstride exit=$rc"
+    grep -nE "did not change|!!|ERROR|Error" "$R" | head -40
+    echo "warnings: $(grep -c "WARNING" "$R")"
+    tail -5 "$R"
     echo "log: $R"
+    exit $rc
     ;;
   *)
     echo "usage: $0 build|gtester|rstride [prefix] [gtest args...]" >&2
