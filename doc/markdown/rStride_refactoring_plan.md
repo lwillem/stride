@@ -22,7 +22,7 @@ Where things stand, so a fresh session can start without re-deriving any of it.
 
 | Branch | Tip | State |
 |---|---|---|
-| `master` | `2c883c7` | consolidated baseline + Phases 0, 0b, 0c, F1, F7.1, F13.1 |
+| `master` | `2c883c7`, plus plan-only commits | consolidated baseline + Phases 0, 0b, 0c, F1, F7.1, F13.1 |
 | `feature/immunity-fast-seeding` | `7b97626` | **done and verified, not merged** — Phase 5c |
 | `feature/venue-memory` | `bf91ae6` | Phase 5b **step 4 done**, step 3 not started |
 
@@ -32,7 +32,10 @@ testability only and should disappear once immunity reaches `master`.
 
 > **Merge `feature/immunity-fast-seeding` first.** It is verified (gtester 44/44; the
 > scenario that never finished now takes 2.1 s) and everything downstream needs a suite
-> that completes.
+> that completes. Phase 5c steps 3-4 — the seeding benchmark and the marginal /
+> within-household comparison — are **not recorded as done**; either record them or run
+> them before the merge. Note the R suite cannot show this change at all (F6.1), so the
+> C++ gtester and those two steps are the whole of the evidence.
 
 Note `master` carries a GitHub rule requiring pull requests. Pushes during this session
 bypassed it with the user's agreement; the feature branches now make honouring it cheap.
@@ -54,7 +57,7 @@ bypassed it with the user's agreement; the feature branches now make honouring i
 
 ### Next, in order
 
-1. **Merge `feature/immunity-fast-seeding` to `master`.**
+1. **Merge `feature/immunity-fast-seeding` to `master`**, after Phase 5c steps 3-4.
 2. **Phase 5b step 3** — the large venue-memory change. *Blocked on one question, below.*
 3. **Phase 2 step 5** — population file, backwards compatible (see the rewritten step).
 
@@ -83,6 +86,11 @@ subpool generator and establish what is actually produced.
 - **Phase 0c step 6** — local OpenMP is now working, but `CMakeLocal.cmake` is gitignored,
   so every machine must repeat the `OpenMP_ROOT` recipe in that step.
 - **Phase 1** — postponed by decision; what it holds up is recorded there.
+- **Phase 4 step 8** — `rrv_repo()` still hardcodes an absolute personal path
+  (`rStride_gtester_covid19.R:711`).
+- **Phase 0c step 8, second half** — `-Wno-unknown-pragmas` is still set
+  (`CMakeCPP.cmake:47`); only the loud OpenMP-detection warning landed.
+- A stale `TIC` comment survives the excision at `Infector.cpp:401`.
 
 ---
 
@@ -192,7 +200,13 @@ The convention works but couples three unrelated things — user workspace hygie
 library loading, and parallel dispatch. As a package this line disappears entirely
 (`.packages='rStride'`).
 
-### F4. Kernel failures are silent
+### F4. Kernel failures are silent — RESOLVED
+
+> **Resolved 2026-09-28** (`ff28cfe`). Both call sites now go through
+> `.rstride$run_stride_binary()` (`Misc.R:186`), which checks the exit status and stops
+> with the experiment id, config file and exit code — with a hint when the status is 127
+> (binary not found). Covers `rStride.R:386` and `rStride_main_abc.R:141`. The original
+> finding is kept below.
 
 `rStride.R:385`:
 
@@ -230,6 +244,11 @@ reporting, reference reset, performance tracking. Three problems:
    reference-promotion step only works for one person on one machine, and silently writes
    nothing useful for anyone else. It should derive the repository root rather than
    assume it.
+
+> **Problem 2 resolved 2026-10-05** (`7c800dc`): all six references were rewritten from a
+> single run of a single commit, after `-ffast-math` was removed (`0d1c6dc`) and the merge
+> was proven behaviour-preserving (`fa78c0d`). **Problems 1 and 3 remain** — Phase 4
+> steps 8, 10 and 11.
 
 The comparison engine is also entangled with the 22 scenario definitions in one script,
 so adding a measles suite by the obvious route means copy-pasting ~700 lines — creating
@@ -322,7 +341,14 @@ command over configure-time `execute_process` so that re-extraction follows the 
 timestamp. The same applies to the `data/*`, `config/*` and `rstride_test/*` globs in that
 file, none of which carry it.
 
-### F8. The contact-probability rule — RESOLVED: `min` is the baseline
+### F8. The contact-probability rule — RESOLVED: configurable, default `min`
+
+> **Status.** The uncommitted `mean` edit was discarded (2026-09-26). The configurable
+> rule — F10 option C — then landed on 2026-09-28 (`f314514`), **before** the
+> consolidation tag, contrary to the plan recorded below; it defaults to `min`, so the
+> tag and the references still describe `min` behaviour. What remains for Phase 2b is
+> only the `mean` calibrations and the flip of the default. The text below is kept as the
+> reasoning, but its statements that the mechanism waits for Phase 2b are superseded.
 
 `Infector.cpp:265-271` carried an **uncommitted** working-tree change switching the
 contact probability from the **minimum** of the two age-specific probabilities to their
@@ -342,18 +368,13 @@ refactoring PR must not modify them — is enforceable from the first commit.
 
 > ### ⚠ The switch to `mean` is deferred, not cancelled
 >
-> `mean` remains the intended default. It is reached in **Phase 2b**, which introduces
-> the configurable rule *and* flips the default, once `mean` calibrations exist and have
-> been compared against `min` on the same population. **Nothing about the rule lands
-> before the §6.4 consolidation tag.** Until Phase 2b the simulator has exactly one
-> contact rule and it is `min`.
+> `mean` remains the intended default. It is reached in **Phase 2b**, which flips the
+> default once `mean` calibrations exist and have been compared against `min` on the
+> same population. Until then every run uses `min` unless it opts into `mean`.
 
-A prototype of the mechanism was built and compiled cleanly on 2026-09-26 — a
-`ContactProbabilityRule { Min, Mean }` enum in `main/cpp/contact/`, read once in
-`SimBuilder` and threaded through `Infector.h`, `InfectorExec.h`, `Infector.cpp`, `Sim.h`
-and `Sim.cpp` to `GetContactProbability` — then discarded so the baseline would be
-byte-identical to HEAD. It touches six files plus one new pair. Recorded here so Phase 2b
-need not rediscover the shape.
+The mechanism is a `ContactProbabilityRule { Min, Mean }` enum in `main/cpp/contact/`,
+read once in `SimBuilder` and threaded through `Infector.h`, `InfectorExec.h`,
+`Infector.cpp`, `Sim.h` and `Sim.cpp` to `GetContactProbability` (`f314514`).
 
 ### F9. Minor items
 
@@ -399,7 +420,7 @@ materialising as a reproducibility failure in a committed artefact.
 | B | Revert to `min` | none | loses whatever motivated the change |
 | C | **Make the rule configurable, default `min`** | small | existing calibrations remain valid; `mean` becomes opt-in |
 
-**Option C is the destination — taken in Phase 2b, not now.** It converts a
+**Option C was taken** (`f314514`, 2026-09-28). It converts a
 globally-invalidating change into a local, opt-in one: existing disease files and
 regression references stay valid, so the refactoring retains its safety net, and the two
 rules become comparable on the same population — which is impossible today, since `min`
@@ -408,11 +429,10 @@ configuration value read once and stored as a member, branched on in
 `GetContactProbability`. The branch is loop-invariant; if zero overhead is required,
 `InfectorExec.h` / `InfectorMap.h` already establish a compile-time dispatch pattern.
 
-**It is deliberately not done before the consolidation tag** (decided 2026-09-26, F8).
-The baseline is committed `min`, so the tag, the Phase 4 reference reset and every
-behaviour-preserving phase in between are taken against the code exactly as committed,
-with no new mechanism to account for. The rule switch lands in Phase 2b alongside the
-calibrations that make it usable.
+It was originally deferred to Phase 2b (decided 2026-09-26, F8) and then landed before
+the consolidation tag. Because the default is `min`, the tag and the Phase 4 reference
+reset still describe `min` behaviour. The *default* switch lands in Phase 2b alongside
+the calibrations that make it usable.
 
 **How refitting actually works.** The fit is produced by `bin/rStride_r0.R`, which runs
 an R0 sweep and calls `analyse_transmission_data_for_r0()`
@@ -448,15 +468,15 @@ Two consequences:
    decision that must be settled *before* any recalibration campaign, independently of
    the min/mean question.
 
-**Ordering.** The baseline is committed `min` (F8), so nothing about the rule needs to
-land before the §6.4 consolidation tag: the tag is simply the code as committed. Both the
-*mechanism* and the *recalibration campaign* belong to Phase 2b. The campaign in
-particular must not precede the refactoring, because refitting depends on
+**Ordering.** The mechanism is in place with default `min` (F8). The *recalibration
+campaign* belongs to Phase 2b and must not precede the refactoring, because refitting
+depends on
 `rStride_r0.R` / `rStride_r0_measles.R` -> `TransmissionAnalyst::analyse_transmission_data_for_r0`
 -> `ParameterEstimator`, which is currently among the least reliable code in the
 workbench: `rStride_r0_measles.R` did not install at all until 2026-09-28 (F7); the analysis function is
-310 lines and untestable; `system()` swallows kernel failures (F4), so in a 3,645-run
-fitting grid a subset can die silently and the fit is taken over the survivors; and fit
+310 lines and untestable; until 2026-09-28 `system()` swallowed kernel failures (F4,
+now resolved), so in a 3,645-run fitting grid a subset could die silently and the fit be
+taken over the survivors; and fit
 provenance points at vanished directories (F1). Refitting under those conditions produces
 numbers that cannot be reproduced or defended — `disease_measles_usa.xml` already
 demonstrates the failure mode.
@@ -509,8 +529,9 @@ build, and the knowledge of what it was for lives only in the author's memory. D
 removal requirements are in `removed_features/python_mdp_interface.md`; the excision is
 Phase 0b.
 
-One residual coupling reaches the live core: `ContactPoolSys::ClearContactPools()` is
-compiled into `libstride`, and its only caller is `MDP.cpp:454` (open decision 4).
+One residual coupling reached the live core: `ContactPoolSys::ClearContactPools()` was
+compiled into `libstride`, and its only caller was `MDP.cpp:454`. It was deleted with the
+excision (open decision 4, closed).
 
 ### F12. The venue extension is intrusive, and the population format cannot absorb it
 
@@ -675,7 +696,11 @@ Findings below were verified against what the build **actually produces**, not o
 the files say; the flags that actually reach the compiler are listed in
 **architecture §6**.
 
-#### F13.1 `-ffast-math` undermines the regression strategy
+#### F13.1 `-ffast-math` undermines the regression strategy — RESOLVED
+
+> **Resolved 2026-10-05** (`0d1c6dc`), before the reference reset (`7c800dc`), so the
+> references describe an IEEE-conforming build. `CMakeCPP.cmake:48` records why. This
+> also completes Phase 3b.
 
 `CMakeCPP.cmake:45` adds `-ffast-math` to every Release build. It permits floating-point
 reassociation, flushes denormals and assumes no NaN or Inf.
@@ -692,7 +717,14 @@ for IEEE semantics and captures most of the benefit in `exp`/`log`-heavy code. R
 **changes results** and therefore requires its own pull request with a deliberate
 reference reset, and must precede the reset in Phase 4.
 
-#### F13.2 OpenMP is not linked, and its absence is silent
+#### F13.2 OpenMP is not linked, and its absence is silent — RESOLVED locally
+
+> **Resolved 2026-10-06** on the development machine: native arm64 build, native Homebrew
+> `libomp` linked, and the C++ gtester runs **44/44 with 22 genuinely multi-threaded
+> instances** (`94c9fcd`, `92cc149`; recipe in Phase 0c step 6). Making the parallel path
+> real immediately exposed F16. Two parts remain: `CMakeLocal.cmake` is gitignored, so
+> every machine must repeat the recipe; and `-Wno-unknown-pragmas` is still set. The
+> description below is the state before the fix.
 
 The evidence is tabulated in **architecture §6.1**: an arm64 binary cannot link the
 x86_64 `libomp` present on this machine, so detection fails and the build falls back to
@@ -931,9 +963,9 @@ ahead of the numbering below:
 > reproducible failure rather than a cost argument. **That scenario is the acceptance
 > test:** it must drop back to seconds.
 
-**These belong on a branch, not on `master`.** Item 1 rewrites `Person` and the
-transmission loops, item 2 adds a sampler whose output differs from the current one, and
-item 3 changes how every population file is read. Each is large enough that a half-finished
+**These belong on a branch, not on `master`.** Item 1 adds a sampler whose output differs
+from the current one, item 2 rewrites `Person` and the transmission loops, and item 3
+changes how every population file is read. Each is large enough that a half-finished
 state on the trunk would block everyone else, and §5.3 wants the reasoning in a pull
 request body. One `feature/…` branch per item, merged when its suite run is green —
 not one branch for all three, or they cannot be reviewed or reverted independently.
@@ -941,16 +973,15 @@ not one branch for all three, or they cannot be reviewed or reverted independent
 Phase 1 (the R package skeleton) stays postponed. Phase 2b, the `mean` calibration
 campaign, is unaffected by all three and can proceed in parallel on its own branch.
 
-### Phase 0 — Contact-probability rule: settled, nothing to implement
+### Phase 0 — Contact-probability rule — COMPLETE
 
 0. **Settled 2026-09-26.** The uncommitted `mean` change was discarded; the baseline is
-   committed `min` (F8). Nothing lands in this phase, no disease file is refitted and no
-   regression reference changes, so the §6.4 consolidation tag is the code exactly as
-   committed.
+   `min` (F8). The configurable rule then landed with default `min` (`f314514`,
+   2026-09-28). No disease file was refitted and no regression reference changed.
 
-   > ⚠ **The switch to `mean` is deferred to Phase 2b, not cancelled.** That phase both
-   > introduces the configurable rule (F10 option C) and flips the default, once `mean`
-   > calibrations exist and have been compared against `min`. **Every phase between here
+   > ⚠ **The switch to `mean` is deferred to Phase 2b, not cancelled.** That phase flips
+   > the default once `mean` calibrations exist and have been compared against `min`.
+   > **Every phase between here
    > and Phase 2b runs under `min` and must leave the regression references untouched**
    > (§7.5). If a phase in between changes results, the cause is that phase — not the
    > contact rule.
@@ -995,13 +1026,21 @@ Notes:
   configured build cannot produce, blocked by a pybind11 pin from 2020. Re-enabling is
   therefore not a matter of uncommenting the line; see
   `removed_features/python_mdp_interface.md` §3.1. Delete rather than comment out, since
-  commenting out is precisely what produced this situation. One decision is required:
-  `ContactPoolSys::ClearContactPools()` is compiled into `libstride` but its only caller
-  is `MDP.cpp:454` (open decision 4).
+  commenting out is precisely what produced this situation.
+  `ContactPoolSys::ClearContactPools()`, whose only caller was `MDP.cpp:454`, was deleted
+  with it (open decision 4, closed).
 
-### Phase 0c — Build configuration repair — all but the OpenMP install done
+### Phase 0c — Build configuration repair — COMPLETE except half of step 8
 
-> **Steps 1-5, 7 and 8 landed 2026-10-05.** `CMAKE_EXPORT_COMPILE_COMMANDS` is spelled
+> **Step 6 landed 2026-10-06**: a native arm64 build links native `libomp`, and the C++
+> gtester runs 44/44 with 22 genuinely multi-threaded instances (F13.2). It must be
+> repeated on every machine, because `CMakeLocal.cmake` is gitignored.
+>
+> **Step 8 is half done**: a failed detection now warns loudly, but
+> `-Wno-unknown-pragmas` is still set (`CMakeCPP.cmake:47`), so a dropped or misspelled
+> pragma is still silent.
+>
+> **Steps 1-5, 7 and the first half of 8 landed 2026-10-05.** `CMAKE_EXPORT_COMPILE_COMMANDS` is spelled
 > correctly, so `compile_commands.json` now exists for IDEs and clang-tidy;
 > `CMAKE_CXX_STANDARD 17` replaces both raw `-std=` flags; the Apple branch tests for
 > `AppleClang` and so fires for the first time; `-g` no longer reaches Release;
@@ -1012,11 +1051,9 @@ Notes:
 > The compile line is now `-O3 -std=c++17` with no `-g` and no duplicate standard.
 > Behaviour-preserving: C++ gtester 22/22, all six R streams unchanged.
 >
-> **Step 6 — restoring a working local OpenMP build — is NOT done**, because it needs a
-> native arm64 shell and a native Homebrew `libomp`, which cannot be arranged from inside
-> a session running under Rosetta. It remains the one correctness prerequisite in this
-> phase: without it the parallel regions cannot be compiled or exercised, and 22 of the 44
-> C++ test instances duplicate the other 22.
+> Step 6 was not done in that session because it needed a native arm64 shell and a native
+> Homebrew `libomp`, which could not be arranged from inside a session running under
+> Rosetta; it was completed the next day, as recorded above.
 
 Addresses F13.2 and F13.3. All steps here are behaviour-preserving: reference `.rds` files
 must not change. Independent of the branch consolidation and safe to do at any time.
@@ -1151,9 +1188,9 @@ rather than an environment: same readability, no indirection.
 
 ### Phase 2 — Make failures visible
 
-4. Wrap `system()` with exit-status checking and a clear per-experiment error naming
-   the experiment id, config file and exit code. Apply to `rStride.R:385` and
-   `rStride_main_abc.R:141`.
+4. ~~Wrap `system()` with exit-status checking and a clear per-experiment error naming
+   the experiment id, config file and exit code.~~ **Done** (`ff28cfe`, F4): both
+   `rStride.R:386` and `rStride_main_abc.R:141` call `.rstride$run_stride_binary()`.
 5. **Parse the population file by header name — with a positional fallback** (F12.2).
 
    > **Revised 2026-10-06.** A first attempt resolved every column by name and was
@@ -1195,16 +1232,16 @@ rather than an environment: same readability, no indirection.
 that migration. It is gated on earlier phases rather than optional, and its design is
 specified in §8.
 
-This is the phase the deferred `mean` switch of F8 and Phase 0 lands in. It carries both
-halves: the rule mechanism, and the calibrations that make `mean` usable.
+This is the phase the deferred `mean` switch of F8 and Phase 0 lands in. The rule
+mechanism already exists (`f314514`); what remains are the calibrations that make `mean`
+usable and the flip of the default.
 
 Prerequisites:
 
 - Phase 2 — `system()` error handling, so a failed run in a multi-thousand-run fitting
-  grid cannot be silently excluded from the fit (F4).
+  grid cannot be silently excluded from the fit (F4) — **done** (`ff28cfe`).
 - F7 install-list repair, so `rStride_r0_measles.R` reaches `bin/` — **done**
-  (`bd577ae`). F7.1 remains: a population archive added after a build directory exists
-  is silently not unpacked, which bites precisely when setting up a fitting run.
+  (`bd577ae`). F7.1, the stale archive glob — **done** in Phase 0c step 7.
 - Phase 3 step 6 — a durable output location, so refits are not orphaned in a
   superseded install root (F1).
 - A decision on the quadratic term disabled at `TransmissionAnalyst.R:96` (F10,
@@ -1212,10 +1249,8 @@ Prerequisites:
 
 Steps:
 
-1. **Implement the contact rule as a configuration option defaulting to `min`**
-   (F10 option C — the mechanism deferred from Phase 0). Behaviour-preserving: the
-   default is unchanged, so no reference `.rds` file may move. See F8 for the shape of
-   the prototype already proven to compile.
+1. ~~Implement the contact rule as a configuration option defaulting to `min`~~
+   **Done** (`f314514`, F10 option C). Behaviour-preserving: the default is unchanged.
 2. Build the calibration infrastructure of §8: separated calibration artefacts,
    hash-based provenance, `promote_calibration()`, and the validation-gate check.
 3. Refit the disease files under `mean` into new calibration artefacts. Keys differ by
@@ -1245,7 +1280,10 @@ Steps:
    `main/r/CMakeLists.txt`. This also removes the "edits in `bin/rstride/` are destroyed
    on rebuild" trap.
 
-### Phase 3b — Remove `-ffast-math`
+### Phase 3b — Remove `-ffast-math` — COMPLETE
+
+> **Done 2026-10-05** (`0d1c6dc`), immediately before the reference reset (`7c800dc`), as
+> sequenced here.
 
 Addresses F13.1. **Not behaviour-preserving** — it changes floating-point results — so it
 requires its own pull request and a deliberate reference reset under the rule in §7.5.
@@ -1258,10 +1296,9 @@ first and removing the flag afterwards would invalidate them again.
 
 8. Replace `rrv_repo()`'s hardcoded absolute path with a derived repository root, so
    reference promotion works for any checkout and any user (F6).
-9. Run one clean full `rrv()` so all six reference files derive from a single known
-   commit, and record that hash alongside them. F8 no longer blocks this: the rule is
-   settled at `min`, so the references describe the code as committed. They remain valid
-   until Phase 2b step 5 flips the default, which resets them deliberately.
+9. ~~Run one clean full `rrv()` so all six reference files derive from a single known
+   commit.~~ **Done 2026-10-05** (`7c800dc`). They remain valid until Phase 2b step 5
+   flips the default, which resets them deliberately.
 10. Extract the comparison engine into `rstride/RegressionTester.R`, leaving
     `rStride_gtester_covid19.R` as scenario definitions only.
 11. Add `rStride_gtester_measles.R` on that engine: USA populations, measles config,
@@ -1314,8 +1351,15 @@ being stored again per person. This is also strictly more expressive than the pr
 format: a membership list can represent attending two pools of one venue type on the same
 day, which a single id per type per day cannot.
 
-Sequence after Phase 4 — steps 2 and 3 alter `Person` and the transmission loops, and need
-a trustworthy regression suite.
+Originally sequenced after Phase 4, because steps 2 and 3 alter `Person` and the
+transmission loops and need a trustworthy regression suite. The priority order of
+2026-10-06 brings step 3 forward. What it needed from Phase 4 is in place — the
+references were reset on a single commit (Phase 4 step 9) and the extension is covered by
+`covid_subpools` and `covid_airborne` — but Phase 4 steps 10-11 are not, so the measles /
+USA populations the venues were built for are still not under test.
+
+**Progress:** step 4 done on `feature/venue-memory` (`bf91ae6`); step 3 blocked on the
+question at the end of this phase; steps 1, 2, 5 and 6 not started.
 
 1. **Introduce a trait table** and replace identity tests with property tests:
 
@@ -1347,13 +1391,13 @@ a trustworthy regression suite.
 
    Cost moves from *per person x per type x per day* to *per actual attendance*:
 
-   | | Now | Target |
-   |---|---:|---:|
-   | `m_pool_ids` | 336 B (12 types x 7 days) | 44 B (one id per type, 11 types) |
-   | `m_pool_durations` | 336 B | 0 — pool-side |
-   | `m_pool_contacts` | 336 B | 0 — pool-side |
-   | other members | 184 B | 184 B |
-   | **`sizeof(Person)`** | **1192 B** | **~230 B** |
+   | | Before step 4 | After step 4 | Target |
+   |---|---:|---:|---:|
+   | `m_pool_ids` | 336 B (12 types x 7 days) | 308 B (11 x 7) | 44 B (one id per type, 11 types) |
+   | `m_pool_durations` | 336 B | 308 B | 0 — pool-side |
+   | `m_pool_contacts` | 336 B | 308 B | 0 — pool-side |
+   | other members | 184 B | 180 B | ~180 B |
+   | **`sizeof(Person)`** | **1192 B** | **1104 B** (measured) | **~230 B** |
 
    At 474k persons: roughly **565 MB -> ~110 MB**. The pool-side vectors cost one entry per
    attendance record rather than per person-type-day; at roughly four venue-days per person
@@ -1368,7 +1412,8 @@ a trustworthy regression suite.
    Strictly behaviour-preserving: reference `.rds` files must not change.
 
 4. **Correct `NumOfTypes()` to 11** (F12.3). A one-character change worth about 40 MB at
-   474k, independent of the rest and safe to land first.
+   474k, independent of the rest and safe to land first. **Done** on
+   `feature/venue-memory` (`bf91ae6`): `sizeof(Person)` 1192 -> 1104, 39.7 MB at 474k.
 
 5. **Fix the defects of F12.4** — `IsId()`, and the debug output plus ad-hoc quote
    stripping in `ToId()`.
@@ -1384,7 +1429,13 @@ different pools of the same venue type on a single day? The current format canno
 it, so if the generator assumes that constraint the membership-list design is a superset
 and nothing breaks — but it should be confirmed rather than assumed.
 
-### Phase 5c — A fast path for unclustered immunity seeding
+### Phase 5c — A fast path for unclustered immunity seeding — steps 1-2 done, not merged
+
+> **Status 2026-10-06.** Steps 1-2 are implemented on `feature/immunity-fast-seeding`
+> (`7b97626`, `ImmunitySeeder` only). The acceptance test passes: `influenza_c`
+> multi-threaded drops from 16 min (never finished) to 2.1 s, and the C++ gtester runs
+> 44/44. **Steps 3-4 are not recorded as done.** They are the only evidence of
+> equivalence in distribution, because the R suite never runs this code (F6.1).
 
 **Added 2026-10-06, by decision.** Keep the current sampler; add an optimised path used
 only when no clustering is requested.
@@ -1419,14 +1470,20 @@ individual run, which is `immunity_clustering_plan.md` §5.4's open question —
 or stochastic marginal?* — and answering it with "stochastic" would be a modelling change
 smuggled in as an optimisation.
 
-> **It still moves the regression references, and this is the easy thing to get wrong.**
-> Exact quota preserves *how many* people of each age are immune. It does not preserve
-> *which* people: the current sampler reaches individuals through household draws, the fast
-> path through shuffled age buckets, so a different set of individuals ends up immune and
-> transmission diverges from there. The change is equivalent **in distribution**, not
-> bit-identical. It therefore needs its own pull request and a deliberate reference reset
-> under §5.5 — the justification being the marginal and clustering comparison in step 4,
-> not the speed-up.
+> **It is not bit-identical, and this is the easy thing to get wrong.** Exact quota
+> preserves *how many* people of each age are immune. It does not preserve *which*
+> people: the current sampler reaches individuals through household draws, the fast path
+> through shuffled age buckets, so a different set of individuals ends up immune and
+> transmission diverges from there. The change is equivalent **in distribution** only.
+>
+> **The R regression references will nevertheless not move**, and that proves nothing.
+> `create_default_config()` forces both immunity and vaccine profiles to `None`, so no R
+> scenario reaches either sampler (F6.1). The divergence is visible only in the C++
+> gtester, whose `influenza_c` and measles scenarios do seed immunity and whose
+> tolerance margins absorbed it (44/44). So no reference reset is needed under §5.5, and
+> "all six R streams unchanged" must not be cited as evidence. The justification for the
+> merge is the marginal and clustering comparison in step 4 — not the speed-up, and not
+> the R suite. The change still gets its own pull request.
 
 **Gate it on the knob that exists.** There is no `immunity_clustering` setting in the
 kernel today; the existing control is `run.immunity_link_probability` (and its `vaccine_`
@@ -1460,9 +1517,8 @@ Steps:
 
 14. Extract the `foreach` body of `run_rStride()` into a testable
     `run_one_experiment()`.
-15. Split `Infector.cpp` (668 lines). Make the contact-probability rule a named,
-    switchable strategy rather than a commented-out block (already delivered as a
-    configuration option in Phase 0; this step gives it a proper home).
+15. Split `Infector.cpp` (668 lines). The contact-probability rule is already a
+    configuration option (`f314514`, F8); this step gives it a proper home in the split.
 16. Modernise the Infector template dispatch — see Phase 7a.
 
 #### Phase 7a — Infector template dispatch
@@ -1560,12 +1616,11 @@ Travis-era compiler (F13.3).
 ## 3. Open decisions
 
 1. **`Infector.cpp` min vs average (F8, F10)** — **decided, and the route is fixed.**
-   The uncommitted `mean` edit was discarded on 2026-09-26 and the refactoring starts
-   from committed `min`. `mean` remains the intended default, reached by migration rather
-   than cutover: **Phase 2b** introduces the configurable rule *and* flips the default,
-   once `mean` calibrations exist and have been compared against `min` on the same
-   population. Nothing about the rule lands before the §6.4 tag. The only remaining
-   choice is the quadratic term (decision 3).
+   The uncommitted `mean` edit was discarded on 2026-09-26; the configurable rule landed
+   with default `min` (`f314514`). `mean` remains the intended default, reached by
+   migration rather than cutover: **Phase 2b** flips the default once `mean`
+   calibrations exist and have been compared against `min` on the same population. The
+   only remaining choice is the quadratic term (decision 3).
 2. **Branch reconciliation** — resolved into a concrete plan; see §6. The remaining
    judgement calls are which of the stale local branches and collaborator remotes
    (`as/`, `ek/`, `ic/`) are live, and who owns each conflict resolution in §6.3.
@@ -1573,9 +1628,8 @@ Travis-era compiler (F13.3).
    `fit_b2 <- 0`. Four committed disease files carry a non-zero `b2` from an earlier
    quadratic fit. Restore the quadratic term, or accept linear-only and refit those four
    deliberately? Must be settled before Phase 2b.
-4. **`ClearContactPools()` after the MDP excision** — compiled into `libstride`, sole
-   caller `MDP.cpp:454`. Delete alongside the MDP removal, or retain deliberately with a
-   recorded reason? Must not be left undecided.
+4. **`ClearContactPools()` after the MDP excision** — **closed 2026-10-05**: deleted
+   with the MDP removal (`2ce8ab2`), since its sole caller was `MDP.cpp:454`.
 5. **Package installation route** — install `rStride` into the R library at build time,
    or `devtools::load_all()` against the repo during development? Affects Phase 1 step 7
    and how collaborators set up.
@@ -1774,8 +1828,9 @@ overwrites a committed disease file**. The refit is written as
 
 Three properties are missing:
 
-1. **The output is volatile.** `sim_output` lives inside the install root, which moves on
-   every commit (F1). An unpromoted refit is orphaned.
+1. **The output is volatile.** `sim_output` lived inside an install root that moved on
+   every commit (F1), orphaning unpromoted refits. F1 is resolved and the root is now
+   stable, but `sim_output` still sits inside it, where `make install` overwrites.
 2. **Promotion is unrecorded.** The copy is a manual step with no trace of who promoted
    what, when, or on what evidence.
 3. **Provenance names paths, not content.** `disease_measles_usa.xml` records
@@ -1940,9 +1995,10 @@ engine, which is what makes it callable from CI.
 
 ### 9.4 Prerequisites, and one genuine design decision
 
-1. **`-ffast-math` must go first (F13.1, Phase 3b).** CI runs Linux/gcc while development
-   is macOS/AppleClang. With that flag the two legitimately produce different
-   floating-point results, so an exact-comparison job could never pass reliably.
+1. **`-ffast-math` must go first (F13.1, Phase 3b)** — **done** (`0d1c6dc`). CI runs
+   Linux/gcc while development is macOS/AppleClang. With that flag the two legitimately
+   produced different floating-point results, so an exact-comparison job could never
+   have passed reliably.
 
 2. **Removing it is necessary but not sufficient — this is the decision.** Bit-exact
    floating-point reproducibility *across platforms* is not attainable even under strict
@@ -1964,8 +2020,8 @@ engine, which is what makes it callable from CI.
 3. **The suite must return an exit code.** `rStride_gtester_covid19.R` currently only
    prints; CI cannot detect a regression from it. Part of Phase 4 step 10.
 
-4. **Reference consistency (F6).** The six `.rds` files span two dates six weeks apart.
-   CI built on them would report unattributable failures.
+4. **Reference consistency (F6)** — **done** (`7c800dc`). The six `.rds` files spanned two
+   dates six weeks apart; they now derive from a single commit.
 
 5. **Pin `simid.rtools`** to a tag or commit rather than installing from GitHub HEAD, or a
    change in that repository can silently alter a regression result.
@@ -1978,9 +2034,8 @@ checkout to HEAD blobs and makes F14's history weight irrelevant to CI.
 
 Two notes on the drafts. Neither requires Boost — `util/Ptree.h` is a pugixml-based
 replacement for `boost::property_tree`, and trng, pugixml, spdlog and tclap are vendored.
-And both install `libomp-dev`, so **OpenMP is available in CI although absent locally**
-(F13.2); the gtester's second instantiation runs with
-`ConfigInfo::NumberAvailableThreads()`, so CI will genuinely exercise the multi-threaded
-path that local builds currently cannot. That is additional coverage, but it also means CI
-can fail on something never seen locally — which is a reason to fix local OpenMP
-detection, not a reason to disable it in CI.
+And both install `libomp-dev`, so **OpenMP is available in CI**; the gtester's second
+instantiation runs with `ConfigInfo::NumberAvailableThreads()`, so CI genuinely exercises
+the multi-threaded path. Local builds now do too, once the per-machine recipe of Phase 0c
+step 6 has been applied (F13.2) — a machine that skips it silently falls back to the
+`domp` stubs and can pass locally what fails in CI.
