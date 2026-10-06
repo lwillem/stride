@@ -70,17 +70,35 @@ shared_ptr<Population> PopBuilder::MakePersons(shared_ptr<Population> pop)
         throw runtime_error(string(__func__) + "> Error opening population file " + filePath.string());
     }
 
+    // The first line is either a header or, in a file without one, the first person.
     string line;
-    getline(popFile, line); // step over file header
+    getline(popFile, line);
     const auto layout = PopFileLayout::FromFirstLine(line);
+    if (layout.HasHeader()) {
+        m_stride_logger->info("Population file columns resolved by header name.");
+    } else {
+        m_stride_logger->warn("Population file has no header: columns read by position.");
+    }
+    for (const auto& c : layout.PositionalColumns()) {
+        m_stride_logger->warn("Population file: unrecognised column name {}.", c);
+    }
+    for (const auto& c : layout.IgnoredColumns()) {
+        m_stride_logger->info("Population file: column {} not used.", c);
+    }
 
-    // Read lines from file
+    // Read persons from file
     unsigned int default_person_id = 0U;
-    while (getline(popFile, line)) {
-        const auto r = layout.Parse(line, default_person_id);
+    const auto   add_person        = [&](const string& row) {
+        const auto r = layout.Parse(row, default_person_id);
         pop->CreatePerson(r.person_id, r.age, r.profession, r.household, r.school, r.workplace,
                           r.community_weekend, r.community_weekday, r.household_cluster, r.collectivity);
         ++default_person_id;
+    };
+    if (!layout.HasHeader()) {
+        add_person(line);
+    }
+    while (getline(popFile, line)) {
+        add_person(line);
     }
 
     popFile.close();

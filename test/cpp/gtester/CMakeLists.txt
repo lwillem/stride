@@ -29,6 +29,7 @@ set(EXEC gtester)
 set(SRC
     ScenarioData.cpp
     ScenarioRuns.cpp
+    PopFileLayoutTest.cpp
     #---
     main.cpp
 )

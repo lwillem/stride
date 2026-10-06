@@ -44,6 +44,15 @@ struct PopRecord
 /// Which column of a population file holds which field. Built once from the first line of
 /// the file, then used to parse every data row. Shared by PopBuilder (reading persons) and
 /// PopSnapshotWriter (mirroring the input layout in its output).
+///
+/// - A first line without a header name (only numbers, empty or NA) is the first person;
+///   the file is then read positionally: age, household, school, work, weekend, weekday.
+/// - Otherwise columns are resolved by header name (case, quotes and a trailing CR are
+///   ignored; synonyms such as work_id / workplace_id are accepted). A field without a
+///   recognised name falls back to its positional column, provided that column's own name
+///   was not recognised. Columns that remain unrecognised are ignored, not an error.
+/// - An error is raised only for an ambiguous or incomplete header: two columns for one
+///   field, or no column at all for a required field.
 class PopFileLayout
 {
 public:
@@ -72,7 +81,19 @@ public:
         bool HasHeader() const { return m_has_header; }
 
         /// Whether the file has a column for this field.
-        bool Has(Field f) const { return m_column[static_cast<std::size_t>(f)] >= 0; }
+        bool Has(Field f) const { return Column(f) >= 0; }
+
+        /// Zero-based column of this field, -1 if absent.
+        int Column(Field f) const { return m_column[static_cast<std::size_t>(f)]; }
+
+        /// Columns read by position because their name was not recognised (for logging).
+        const std::vector<std::string>& PositionalColumns() const { return m_positional; }
+
+        /// Columns that are not read at all (for logging).
+        const std::vector<std::string>& IgnoredColumns() const { return m_ignored; }
+
+        /// Canonical header name of a field.
+        static std::string FieldName(Field f);
 
         /// Parse one data row. Fields without a column keep their default (0), except the
         /// person id, which defaults to defaultPersonId.
@@ -81,12 +102,19 @@ public:
 private:
         PopFileLayout();
 
+        /// The layout inferred from position only, as before columns were resolved by name.
+        static PopFileLayout Positional(const std::vector<std::string>& names);
+
+        /// Fields every population file must provide.
+        static const std::vector<Field>& RequiredFields();
+
         void Set(Field f, int column) { m_column[static_cast<std::size_t>(f)] = column; }
 
         std::string                                             m_separator;
         bool                                                    m_has_header;
-        std::size_t                                             m_num_columns; ///< in the first line
-        std::array<int, static_cast<std::size_t>(Field::Count)> m_column;      ///< -1 if absent
+        std::array<int, static_cast<std::size_t>(Field::Count)> m_column; ///< -1 if absent
+        std::vector<std::string>                                m_positional;
+        std::vector<std::string>                                m_ignored;
 };
 
 } // namespace stride
