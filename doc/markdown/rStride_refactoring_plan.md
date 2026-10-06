@@ -70,14 +70,17 @@ user asks.
 | Phase 5b step 3 — venue attendance pool-side | `master` (PR #11) | `sizeof(Person)` 1104 → **224 B**; gtester 44/44, rStride all outputs unchanged (incl. `covid_subpools`, `covid_airborne`) |
 | **CI repaired — first passing run ever** | PR #13, §7.6 | GitHub Actions run 37519593148: gcc **and** clang (ubuntu-latest) build, gtester **44/44** each, OpenMP on (libgomp / libomp, 4 threads) |
 | CI reduced to build-only (user decision) | `ci.yml`, §7.6 | per-PR job runs `make install` for gcc + clang; gtester not run in CI for now |
+| Nightly regression runs, only after changes | PR #15, §7.6 | manual run 37521770793: setup → build → suite → upload all green, 11 min (suite 6.5 min); informational |
 
 ### Next, in order
 
 1. **Phase 2 step 2** — population file, backwards compatible (see the rewritten step).
 2. **F12.7** (new, below Phase 5b step 3) — the generator's day-boundary pool-id overlap;
    results-changing, needs its own PR and reference reset.
-3. **CI follow-ups** (§7.6) — not blocking: nightly regression made to run (PR #15,
-   verification run pending) but stays informational until §7.4 items 2-3 land; bump actions off Node 20 (`checkout@v4`,
+3. **CI follow-ups** (§7.6) — not blocking: nightly regression runs (PR #15, verified)
+   but stays informational until §7.4 items 2-3 land; on Linux `covid_logParticipants`
+   and the ABC test differ from the macOS references (§7.6) — look at that first; also
+   preinstall `socialmixr`/`wpp2017` (still installed at run time); bump actions off Node 20 (`checkout@v4`,
    `upload-artifact@v4`, `ccache-action@v1.2` warn); optional `<climits>` hardening in
    `FileSys.cpp` (`PATH_MAX` is only included under `__linux__`; Homebrew gcc on macOS
    fails there, Apple clang and Linux do not).
@@ -2208,3 +2211,13 @@ fails the step despite `| tee`; stale header rewritten. A `changes` job skips th
 unless master's HEAD is under 24 h old (master moves only by merged PRs); manual
 `workflow_dispatch` always runs. Still informational: the script never sets an exit code
 on a difference (§7.4 item 3), and macOS-made references are not bit-portable (item 2).
+
+**Verified 2026-10-06** (PRs #14 and #15 merged; manual run 37521770793 on the branch):
+`changes` job → `regression` job, 11 min in total (R setup 2 min, build 1 min, suite 6.5 min
+vs ~22 min locally). First cross-platform evidence for §7.4 item 2: against the
+macOS-made references, **every gtester matches except `covid_logParticipants`** (summary
+has different columns; `num_cases`, `AR`, prevalence, incidence and contacts differ) and
+**the ABC test** ("rSTRIDE ABC CHANGED!"). Locally on macOS all were unchanged (PR #11), so
+this is platform-dependent: a libm/`std::exp` difference, or the participant-logging path
+behaving differently under libgomp. Not investigated. `socialmixr` and `wpp2017` are
+still installed at run time (pulled in indirectly), so add them to the preinstalled list.
