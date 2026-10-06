@@ -4,19 +4,14 @@
 # Not a pull-request gate: the suite is ~1336 s of simulation time across 115
 # runs, which is too slow to sit in front of every change.
 #
-# STATUS: draft, blocked on prerequisites. See
-# doc/markdown/rStride_refactoring_plan.md section 7.4:
-#   1. Phase 3b   -- remove -ffast-math, or results are not comparable across
-#                    compilers and this job can never pass reliably.
-#   2. Phase 4    -- one clean reference reset; the six .rds files currently
-#                    span two dates six weeks apart (F6).
-#   3. Phase 4    -- the comparison engine must return a non-zero exit code on
-#                    failure. Today rStride_gtester_covid19.R only prints, so
-#                    CI cannot detect a regression.
-#   4. Phase 1    -- move sf/tigris/usmap/haven/VGAM to Suggests, or every run
-#                    installs a geospatial stack it never uses.
-# Until these land this workflow is informational: it runs, uploads artefacts
-# and does not gate anything.
+# Runs only when master changed in the last 24 hours (a manual run via
+# workflow_dispatch always runs).
+#
+# STATUS: informational. The job fails only if the build, the R setup or the
+# script itself errors. It does NOT yet detect a regression: the comparison in
+# rStride_gtester_covid19.R prints differences but never sets an exit code, and
+# exact comparison against references produced on macOS is not portable to
+# Linux (plan section 7.4, items 2-3). Read regression.log in the artefacts.
 
 name: Nightly regression
 
@@ -26,7 +21,35 @@ on:
   workflow_dispatch:
 
 jobs:
+  # Skip the ~30 min run when nothing landed on master since the previous night.
+  # master only changes through merged pull requests, so the committer date of
+  # its HEAD is the time of the last change.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - id: check
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" != "schedule" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          age=$(( $(date +%s) - $(git log -1 --format=%ct) ))
+          echo "HEAD $(git rev-parse --short HEAD) is ${age}s old"
+          if [ "$age" -lt 86400 ]; then
+            echo "run=true"  >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
   regression:
+    needs: changes
+    if: needs.changes.outputs.run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 90
 
@@ -50,9 +73,13 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          # Once rStride is a package (Phase 1) this reads its DESCRIPTION.
-          # Until then, list what the suite actually needs.
+          # Everything rStride.R loads via smd_load_packages(), so nothing is
+          # installed at run time. The USA-only packages (haven .. usmap) go
+          # once Phase 1 moves them to Suggests.
+          # simid.rtools is pinned to a commit (the repository has no tags), so
+          # a change there cannot silently alter a regression result.
           packages: |
+            github::lwillem/simid_rtools@caa0d5e92652bc0bb4d15a975991ee99c2b2618d
             any::XML
             any::doParallel
             any::data.table
@@ -67,19 +94,18 @@ jobs:
             any::wpp2019
             any::dplyr
             any::useful
-          cache-version: 1
-
-      # Pin rather than tracking HEAD, so a change in that repository cannot
-      # silently alter a regression result.
-      - name: Install simid.rtools (pinned)
-        run: |
-          Rscript -e 'remotes::install_github("lwillem/simid_rtools@v0.1.43", upgrade = "never")'
+            any::haven
+            any::VGAM
+            any::sf
+            any::tigris
+            any::usmap
+          cache-version: 2
 
       - name: Build and install stride
         run: make install
 
       - name: Run the rStride regression suite
-        id: regression
+        shell: bash      # -eo pipefail: an R error fails the step despite tee
         run: |
           cd "$HOME/opt/stride"
           Rscript ./bin/rStride_gtester_covid19.R 2>&1 | tee regression.log
