@@ -12,4 +12,5 @@ If yes, follow the `/continue-refactoring` skill. Don't read the full plan (~200
 
 ## Builds and tests
 - Always run builds and tests through the `test-runner` subagent (`.claude/agents/test-runner.md`); never run `gtester` or `rStride_gtester_covid19.R` in the main session.
+- A PreToolUse hook (`.claude/hooks/guard-test-runs.sh`) denies build/test commands outside a subagent.
 - Pass it what to run (`gtester`, `rstride` or `both`), an optional gtest filter, and an optional install prefix (default `~/opt/stride`). Use its summary, and open the log files it names only when a failure needs a closer look.
