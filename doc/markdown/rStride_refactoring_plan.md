@@ -742,7 +742,7 @@ ahead of the numbering below:
 | | Work | Where it is specified | Results-changing? |
 |---|---|---|---|
 | 1 | **Venue memory footprint** | Phase 5b step 3 (F12.3) | no — representation only |
-| 2 | **Fast unclustered immunity seeding** | Phase 5c, new | **yes**, see below |
+| 2 | **Fast unclustered immunity seeding** | Phase 5c, new | **yes** — same marginals, different individuals |
 | 3 | **Population file, backwards compatible** | Phase 2 step 5, rewritten | no, by construction |
 
 **These belong on a branch, not on `master`.** Item 1 rewrites `Person` and the
@@ -1218,22 +1218,29 @@ fills, most drawn people are already immune, and the tail costs on the order of
 each person with an age-specific Bernoulli draw. O(N), one pass, no rejection, no
 household machinery.
 
-**It is not a drop-in replacement, and that is the point to settle first.** The current
-sampler fills an **exact per-age quota**, `floor(count[age] * rate[age])`
-(`ImmunitySeeder.cpp:143`). A per-person Bernoulli draw produces a **stochastic realised
-total** instead. The two agree in expectation and differ in every individual run, so this
-is the question `immunity_clustering_plan.md` §5.4 already raises — *exact quota, or
-stochastic marginal?* — not merely a speed-up. Consequences:
+**Decided 2026-10-06: keep the exact quota, and bucket-and-shuffle.** For each age class,
+collect the unvaccinated candidates, shuffle, and take the first `quota`. O(N), single
+pass, no rejection, and it reproduces the current per-age marginals exactly — including the
+`floor()` behaviour, so the systematic undershoot of up to one person per age class is
+preserved rather than silently changed. This is `RandomIndependent()` as already written on
+`measles_usa_rm`; **adopt it rather than rewriting it** (`immunity_clustering_plan.md` §2),
+noting that branch's version was reverted here for an unrelated performance reason
+(`measles_usa_rm_merge_result.md` §3).
 
-- regression references move, so this needs its own pull request and a deliberate reset
-  under §5.5;
-- the `floor()` per age systematically undershoots the target by up to one person per age
-  class, which a Bernoulli path does not reproduce either;
-- a third option exists if exactness is wanted *and* speed: keep the exact quota and use
-  `RandomIndependent()`-style bucketing — shuffle the candidates of each age class and take
-  the first `quota`. That is O(N), exact, and reproduces the current marginals. It is also
-  already written on `measles_usa_rm`, where it was reverted for an unrelated reason
-  (see `measles_usa_rm_merge_result.md` §3).
+A per-person Bernoulli draw was considered and **rejected**: it produces a stochastic
+realised total rather than an exact quota. The two agree in expectation and differ in every
+individual run, which is `immunity_clustering_plan.md` §5.4's open question — *exact quota,
+or stochastic marginal?* — and answering it with "stochastic" would be a modelling change
+smuggled in as an optimisation.
+
+> **It still moves the regression references, and this is the easy thing to get wrong.**
+> Exact quota preserves *how many* people of each age are immune. It does not preserve
+> *which* people: the current sampler reaches individuals through household draws, the fast
+> path through shuffled age buckets, so a different set of individuals ends up immune and
+> transmission diverges from there. The change is equivalent **in distribution**, not
+> bit-identical. It therefore needs its own pull request and a deliberate reference reset
+> under §5.5 — the justification being the marginal and clustering comparison in step 4,
+> not the speed-up.
 
 **Gate it on the knob that exists.** There is no `immunity_clustering` setting in the
 kernel today; the existing control is `run.immunity_link_probability` (and its `vaccine_`
@@ -1243,10 +1250,12 @@ proposed in `immunity_clustering_plan.md` Phase III — if that lands first, gat
 
 Steps:
 
-1. Decide exact-quota vs stochastic-marginal. This determines whether the change is
-   behaviour-preserving (bucketed shuffle) or results-moving (Bernoulli).
+1. Adopt `RandomIndependent()` from `measles_usa_rm` — bucket per age class, shuffle, take
+   the first `quota`. Do not reintroduce that branch's household-pruning change to
+   `Random()` along with it: that is what made `influenza_c` non-terminating here
+   (`measles_usa_rm_merge_result.md` §3).
 2. Implement the fast path behind the existing knob, leaving `Random()` untouched for any
-   non-zero link probability.
+   non-zero link probability, so clustered runs are bit-identical to today.
 3. Benchmark seeding at 50 / 70 / 90 / 95 % on Gaines TX and Dane WI —
    `immunity_clustering_plan.md` §4 Phase I step 3 asks for exactly this, and it is what
    caught the `measles_usa_rm` pruning regression.
