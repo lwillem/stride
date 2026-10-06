@@ -108,14 +108,14 @@ getFREDdata <- function(state = "WI", county = "Milwaukee", com_target_size = 10
     rename(household_id = sp_hh_id,
            school_id_og = school_id,
            work_id_og = work_id,
-           primary_community = com_id,
-           secondary_community = com2_id) %>%
+           community_weekend = com_id,
+           community_weekday = com2_id) %>%
     mutate(school_id = dense_rank(school_id_og),
            school_id = ifelse(school_id_og == "X", 0, school_id),
            work_id = dense_rank(work_id_og),
            work_id = ifelse(work_id_og == "X", 0, work_id)
     ) %>%
-    select(c("age","household_id","school_id","work_id","primary_community","secondary_community"))
+    select(c("age","household_id","school_id","work_id","community_weekend","community_weekday"))
   comm_data <- tmp_wp[[2]]
   
   return(pop_data)
