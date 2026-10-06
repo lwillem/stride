@@ -83,7 +83,9 @@ user asks.
    into xattrs) and `INSTALL(FILES)` rejects → glob with `LIST_DIRECTORIES false`
    (`f5875d0`). The next run compiled and failed in `util/Rn.h`: `std::function`/`std::bind`
    without `#include <functional>` (libc++ includes it transitively, libstdc++ does not)
-   → `4a9e9a1`. Linux gcc/clang results pending; further errors go on the same PR. The nightly regression job
+   → `4a9e9a1`; then `HealthSeeder.h` (`std::array` without `<array>`). A gcc-16/libstdc++
+   `-fsyntax-only` pass over all 58 TUs (`compile_commands.json`) found nothing else, so
+   both fixes landed together. Linux gcc/clang results pending. The nightly regression job
    stays informational (§7.4 prerequisites 2-3, 5 still open).
 2. **Phase 2 step 2** — population file, backwards compatible (see the rewritten step).
 3. **F12.7** (new, below Phase 5b step 3) — the generator's day-boundary pool-id overlap;
