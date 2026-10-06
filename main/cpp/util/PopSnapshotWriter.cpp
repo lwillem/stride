@@ -23,6 +23,7 @@
 #include "contact/ContactType.h"
 #include "pop/Age.h"
 #include "pop/Person.h"
+#include "pop/PopFileLayout.h"
 #include "util/FileSys.h"
 #include "util/StringUtils.h"
 
@@ -129,8 +130,8 @@ void PopSnapshotWriter::WritePopulationSnapshot(const stride::util::ptree& confi
                                                 std::shared_ptr<Population> pop)
 {
         // --------------------------------------------------------------
-        // Re-read just the header line of the population input file, using the
-        // same parsing rules as PopBuilder::MakePersons, so our output mirrors
+        // Re-read just the header line of the population input file, with the
+        // same PopFileLayout as PopBuilder::MakePersons, so our output mirrors
         // whatever column layout that file actually used (with/without a
         // profession column, with/without household_cluster_id / collectivity_id).
         // --------------------------------------------------------------
@@ -143,20 +144,13 @@ void PopSnapshotWriter::WritePopulationSnapshot(const stride::util::ptree& confi
         std::getline(popFile, headerLine);
         popFile.close();
 
-        const bool        useSemicolon = headerLine.find(';') != std::string::npos;
-        const std::string sep          = useSemicolon ? ";" : ",";
-        const auto        headers      = Split(headerLine, sep);
-
-        const bool         hasProfession = headers.size() > 2 && Trim(ToString(headers[2]), ToString('"')) == "worker";
-        const unsigned int professionAdj = hasProfession ? 2 : 0;
-        const bool         hasExtraColumn = headers.size() == (7 + professionAdj);
-
-        std::string extraId;
-        if (hasExtraColumn) {
-                extraId = Trim(ToString(headers[6 + professionAdj]), ToString('"'));
-        }
-        const bool hasHouseholdClusterId = extraId == "household_cluster_id";
-        const bool hasCollectivityId     = extraId == "collectivity_id";
+        using Field                      = PopFileLayout::Field;
+        const auto        layout         = PopFileLayout::FromFirstLine(headerLine);
+        const std::string sep            = layout.Separator();
+        const bool        hasPersonId    = layout.Has(Field::PersonId);
+        const bool        hasProfession  = layout.Has(Field::Profession);
+        const bool hasHouseholdClusterId = layout.Has(Field::HouseholdCluster);
+        const bool hasCollectivityId     = layout.Has(Field::Collectivity);
 
         // --------------------------------------------------------------
         // Write population_snapshot.csv: original columns + immunity_status.
@@ -165,22 +159,29 @@ void PopSnapshotWriter::WritePopulationSnapshot(const stride::util::ptree& confi
         std::ofstream csvFile(path.string());
 
         csvFile << "age" << sep;
+        if (hasPersonId) {
+                csvFile << "person_id" << sep;
+        }
         if (hasProfession) {
-                csvFile << "person_id" << sep << "profession" << sep;
+                csvFile << "profession" << sep;
         }
         csvFile << "household_id" << sep << "school_id" << sep << "workplace_id" << sep << "community_weekend_id"
                  << sep << "community_weekday_id" << sep;
         if (hasHouseholdClusterId) {
                 csvFile << "household_cluster_id" << sep;
-        } else if (hasCollectivityId) {
+        }
+        if (hasCollectivityId) {
                 csvFile << "collectivity_id" << sep;
         }
         csvFile << "immunity_status\n";
 
         for (const auto& p : *pop) {
                 csvFile << static_cast<int>(p.GetAge()) << sep;
+                if (hasPersonId) {
+                        csvFile << p.GetId() << sep;
+                }
                 if (hasProfession) {
-                        csvFile << p.GetId() << sep << p.GetProfession() << sep;
+                        csvFile << p.GetProfession() << sep;
                 }
                 csvFile << p.GetPoolId(ContactType::Id::Household) << sep
                          << p.GetPoolId(ContactType::Id::School) << sep
@@ -189,7 +190,8 @@ void PopSnapshotWriter::WritePopulationSnapshot(const stride::util::ptree& confi
                          << p.GetPoolId(ContactType::Id::CommunityWeekday) << sep;
                 if (hasHouseholdClusterId) {
                         csvFile << p.GetPoolId(ContactType::Id::HouseholdCluster) << sep;
-                } else if (hasCollectivityId) {
+                }
+                if (hasCollectivityId) {
                         csvFile << p.GetPoolId(ContactType::Id::Collectivity) << sep;
                 }
                 // "immune" means Person::IsImmune() -- natural or vaccine-induced immunity

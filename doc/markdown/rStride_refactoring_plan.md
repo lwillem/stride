@@ -25,6 +25,7 @@ Where things stand, so a fresh session can start without re-deriving any of it.
 | `master` | `b588bdc`, plus plan-only commits | consolidated baseline + Phases 0, 0b, 0c, 5c, F1, F7.1, F13.1 |
 | `feature/immunity-fast-seeding` | `7b97626` | **merged to `master` 2026-10-06** (`f57bfd4`) — Phase 5c; branch kept |
 | `feature/venue-memory` | PR #11 | **merged to `master` 2026-10-06** (`c3a1d9f`) — Phase 5b steps 3-4; branch kept |
+| `feature/pop-header-by-name` | `667e530` + this docs commit | Phase 2 step 2; PR open, not merged |
 
 `feature/venue-memory` **merges `feature/immunity-fast-seeding`** — without it the C++
 gtester cannot complete, because `influenza_c` multi-threaded hits F16. Now that immunity
@@ -47,6 +48,8 @@ is on `master` (2026-10-06), that merge is redundant: rebase or merge `master` i
 > 23 % in households of 8+), the fast path does not. So the change on `master` is a
 > modelling change, not an optimisation. Full numbers in Phase 5c. **Accepted as a
 > correction** (option (a), 2026-10-06); Phase 5c is complete.
+> The user-facing note on this difference (people living alone were more likely to be
+> made immune in runs seeded before `f57bfd4`) is `rStride_architecture.md` §4.2.
 
 Note `master` carries a GitHub rule requiring pull requests. Pushes up to `0f6879e`
 bypassed it with the user's agreement. **From 2026-10-06 on, the rule is honoured:** every
@@ -70,14 +73,21 @@ user asks.
 | Phase 5b step 3 — venue attendance pool-side | `master` (PR #11) | `sizeof(Person)` 1104 → **224 B**; gtester 44/44, rStride all outputs unchanged (incl. `covid_subpools`, `covid_airborne`); **re-checked 2026-10-06 against the pre-change build: identical results in the single-threaded runs** (all 22 gtester scenarios, exact case counts) |
 | **CI repaired — first passing run ever** | PR #13, §7.6 | GitHub Actions run 37519593148: gcc **and** clang (ubuntu-latest) build, gtester **44/44** each, OpenMP on (libgomp / libomp, 4 threads) |
 | CI reduced to build-only (user decision) | `ci.yml`, §7.6 | per-PR job runs `make install` for gcc + clang; gtester not run in CI for now |
+| Phase 2 step 2 — population file by header name, positional fallback | `feature/pop-header-by-name` (PR) | gtester **56/56** (44 + 12 new `PopFileLayout` tests), rStride all outputs unchanged; 9 of 10 in-tree files map to identical columns, the unreferenced 100k file is now read unshifted |
 | Nightly regression runs, only after changes | PR #15, §7.6 | manual run 37521770793: setup → build → suite → upload all green, 11 min (suite 6.5 min); informational |
 
 ### Next, in order
 
-1. **Phase 2 step 2** — population file, backwards compatible (see the rewritten step).
+1. **Merge the Phase 2 step 2 PR** (#18, `feature/pop-header-by-name`) when the user
+   agrees. Architecture §3.3 is updated in it.
 2. **F12.7** (new, below Phase 5b step 3) — the generator's day-boundary pool-id overlap;
    results-changing, needs its own PR and reference reset.
-3. **CI follow-ups** (§7.6) — not blocking: nightly regression runs (PR #15, verified)
+3. **Phase 4 step 5** (new) — profile the C++ gtester and the R suite: where does the time go?
+4. **§7.7** (new, future work) — put the gtester back in the per-PR CI job.
+5. **Pro memoria, after that PR is merged** — update the column names in the
+   `stride_population` repository to `community_weekend` / `community_weekday` (Phase 2
+   step 2).
+6. **CI follow-ups** (§7.6) — not blocking: nightly regression runs (PR #15, verified)
    but stays informational until §7.4 items 2-3 land; on Linux `covid_logParticipants`
    and the ABC test differ from the macOS references (§7.6) — look at that first; also
    preinstall `socialmixr`/`wpp2017` (still installed at run time); bump actions off Node 20 (`checkout@v4`,
@@ -573,10 +583,10 @@ they look alike. The sites and the predicate membership are tabulated in
 nothing states so. Adding a fifth venue requires locating all the sites and knowing which
 of the four groups it joins.
 
-#### F12.2 The population file format is positional and count-inferred
+#### F12.2 The population file format is positional and count-inferred — RESOLVED except ragged rows (Phase 2 step 2)
 
 `PopBuilder.cpp:82-88` determines the layout by probing a value and a column count; the
-code is quoted in **architecture §3.3**.
+old code is quoted in **architecture §3.3**, which now describes the name-based layout.
 
 Five liabilities:
 
@@ -1216,12 +1226,21 @@ call-site marker is worth keeping — `.rstride$f()` says "internal" at a glance
 `f()` does not — keep it as a **naming convention** (`.rs_` prefix or a leading dot)
 rather than an environment: same readability, no indirection.
 
-### Phase 2 — Make failures visible
+### Phase 2 — Make failures visible — steps 1-2 done
 
 1. ~~Wrap `system()` with exit-status checking and a clear per-experiment error naming
    the experiment id, config file and exit code.~~ **Done** (`ff28cfe`, F4): both
    `rStride.R:386` and `rStride_main_abc.R:141` call `.rstride$run_stride_binary()`.
 2. **Parse the population file by header name — with a positional fallback** (F12.2).
+   **Done 2026-10-06** on `feature/pop-header-by-name`: `97346f9` (structure: one
+   `PopFileLayout` shared by `PopBuilder` and `PopSnapshotWriter`), `c9fd536` (by name,
+   12 gtests), `667e530` (USA generator writes `community_weekend`/`community_weekday`).
+   gtester 56/56, rStride all outputs unchanged. The rule as implemented is in the
+   `PopFileLayout` class comment. Beyond the plan below: a file **without** a header now
+   keeps its first row (it was silently dropped before — user decision); a duplicate
+   field (e.g. `primary_community` and `community_weekend`) or a missing required field is
+   an error. All 10 in-tree population files resolve to the same columns as before except
+   `pop_belgium100k_c500_teachers_censushh.csv` (now read correctly, see below).
 
    > **Revised 2026-10-06.** A first attempt resolved every column by name and was
    > reverted. It required each column to match a *known* name, so a production file whose
@@ -1246,6 +1265,19 @@ rather than an environment: same readability, no indirection.
    Then **update the USA population generators** (`PopulationFactory_USA.R`,
    `social_contacts_usa2026.R`) to emit the canonical column names, so new files take the
    name-based path. Existing files keep working untouched.
+
+   **Canonical names (decided 2026-10-06):** `community_weekend` / `community_weekday`,
+   the names the kernel uses (`Id::CommunityWeekend` / `CommunityWeekday`). Positionally,
+   `primary_community` has always been read as the weekend pool and
+   `secondary_community` as the weekday pool; both stay accepted as synonyms "for now".
+
+   **Pro memoria: the `stride_population` repository** (separate repo, locally
+   `../stride_population`) generates population files too. Its column names must be
+   updated to the canonical names above once this step is merged. Population files in
+   this repo named `pop_belgium3000k_c500_teachers_censushh_<suffix>.csv` (household,
+   school, workplace, district, community data, …) are generator inputs, not population
+   files, and are out of scope for the population-file checks; only
+   `pop_belgium3000k_c500_teachers_censushh.csv` is a population file.
 
    Two notes for whoever implements this. The accepted spellings already differ across the
    files in the tree — `work_id` vs `workplace_id`, `primary_community` vs
@@ -1335,6 +1367,15 @@ first and removing the flag afterwards would invalidate them again.
     household clustering, contact adjustment factors. No install-list edit is needed —
     the glob of F7 picks it up — but check F7.1 if it needs a population archive that is
     not yet in the tree.
+
+5. **Profile both test suites** (added 2026-10-06, user request). Measure where the time
+    goes in the C++ gtester (per scenario: population build, immunity seeding, simulation
+    days, comparison) and in `rStride_gtester_covid19.R` (per stream: install/load,
+    config generation, kernel runs, output parsing, reference comparison). Report it as a
+    table of wall-clock time per part, so the slowest parts can be targeted. Runs via the
+    test-runner; `gtest --gtest_print_time` gives the C++ per-test times, `Sys.time()`
+    checkpoints or `profvis` the R side. Independent of steps 1-4; a natural input to
+    §7.7 (what the per-PR CI job can afford).
 
 Step 3 must precede step 4, otherwise the measles suite is created by copy-paste and
 becomes another twin.
@@ -2239,3 +2280,16 @@ has different columns; `num_cases`, `AR`, prevalence, incidence and contacts dif
 this is platform-dependent: a libm/`std::exp` difference, or the participant-logging path
 behaving differently under libgomp. Not investigated. `socialmixr` and `wpp2017` are
 still installed at run time (pulled in indirectly), so add them to the preinstalled list.
+
+### 7.7 Future work: the gtester back in the per-PR job
+
+Added 2026-10-06 (user request). The per-PR job was reduced to build-only by decision
+(§7.6), so a pull request can currently break a scenario without CI noticing; the
+gtester is a local check via the test-runner only. Restore it:
+
+- Re-enable `bin/gtester` after `make install` for gcc and clang, and upload its XML. It
+  was proven to work in PR #13: 44/44 on both compilers, about 2 min each, OpenMP on.
+- Decide whether it gates the merge or stays informational. Its tolerance margins are
+  platform-independent, so unlike the R suite (§7.4 item 2) it can gate.
+- If time is the concern, run a filtered subset per PR and the full set in the nightly
+  job. The profile of Phase 4 step 5 says which subset is worth it.

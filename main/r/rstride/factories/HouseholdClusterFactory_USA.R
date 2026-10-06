@@ -63,6 +63,9 @@ extend_population_data <- function(pop_file_name, max_age_diff, household_cluste
   # inspection
   names(pop_data)
   names_orig <- names(pop_data)
+
+  # weekend community column: 'community_weekend', or 'primary_community' in older files
+  col_community <- intersect(c('community_weekend', 'primary_community'), names(pop_data))[1]
   
   # get file names for output files
   pop_file_name_out <- paste0('data/population_6region/',
@@ -100,7 +103,7 @@ extend_population_data <- function(pop_file_name, max_age_diff, household_cluste
     
     # add primary community
     # note: households are duplicated if two seniors have the same age (and different prim. community)
-    hh_data_summary <- merge(hh_data_age, pop_data[,c('primary_community', names(hh_data_age))])
+    hh_data_summary <- merge(hh_data_age, pop_data[,c(col_community, names(hh_data_age))])
     dim(hh_data_summary)
     
     # select one row per household
@@ -129,7 +132,7 @@ extend_population_data <- function(pop_file_name, max_age_diff, household_cluste
                     sprintf("(%.1f%%)", pct_households_clustered*100)))
     
     # select unique primary community ids, shuffled order
-    community_opt <- sample(unique(hh_data_summary$primary_community))
+    community_opt <- sample(unique(hh_data_summary[[col_community]]))
     length(community_opt)
     
     # create new variable for household_cluster_id
@@ -146,7 +149,7 @@ extend_population_data <- function(pop_file_name, max_age_diff, household_cluste
       if(total_clustered >= target_households_clustered) break
       
       # select population data
-      hh_data_community <- hh_data_summary[hh_data_summary$primary_community == i_community,]
+      hh_data_community <- hh_data_summary[hh_data_summary[[col_community]] == i_community,]
       dim(hh_data_community)
       
       # sort this community's households by age (oldest hh member)
