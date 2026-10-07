@@ -84,7 +84,7 @@ user asks.
 2. **F12.7** (new, below Phase 5b step 3) — the generator's day-boundary pool-id overlap;
    results-changing, needs its own PR and reference reset.
 3. **Phase 5d** (new 2026-10-07) — pool types as configuration; household clusters
-   become a configured venue type, venue contacts come out of community contacts, the
+   are retired in favour of generic leisure venues, venue contacts come out of community contacts, the
    reduction counts present members, and each type gets a symptomatic-withdrawal
    probability. Model decisions taken; start with step a (results-neutral).
 4. **Phase 4 step 5** (new) — profile the C++ gtester and the R suite: where does the time go?
@@ -1564,11 +1564,24 @@ model (architecture §3.1), so step 3 may rely on it.
 ### Phase 5d — Pool types as configuration: venues and household clusters as one mechanism — PLANNED
 
 **Decided 2026-10-07 (user).** Venues are the way forward. Household clusters stop being a
-separate mechanism and become one configured pool type. Whether a person is grouped by
-household, interest or anything else is decided when the population is generated; the
+separate mechanism: what is now in mind is a generic clustering of leisure contacts, of
+which household clustering was one pandemic-specific setting. Whether a person is grouped
+by household, interest or anything else is decided when the population is generated; the
 simulator only reads "column X holds a pool id, and this type has these properties".
 The pandemic on/off of household clustering is not given its own mechanism; it becomes a
 case of a generic per-type calendar multiplier.
+
+**How the household-clustering ratio worked (traced 2026-10-07).** The ratio was meant as
+the proportion of days a person meets the cluster (e.g. 3 of 7). `include_temporal_distancing_factors`
+(`CalendarFactory.R:649,685`) writes it into the `household_clustering` calendar category
+as one constant value for every day from the start date. The cluster pools run **every**
+day (`Sim.cpp:136`), every member is present unless isolated, hospitalised or
+symptomatic, and each pair from different households makes contact with probability =
+ratio, independently per pair per day (`Infector.cpp:302`). The mean matches "the cluster
+meets on 3 of 7 days" (3 contacts per pair per week), but there are no meeting days:
+contacts are not correlated within a day. Under Phase 5d the frequency of attendance is
+carried by the membership data (on which days a person is in which pool), set by the
+generator, not by a per-pair probability.
 
 #### Why the two mechanisms differ today
 
@@ -1602,9 +1615,8 @@ Quirks found in the cluster code (2026-10-07), to be removed rather than ported:
    special case where the venues absorb everything; it is no longer a switch.
 2. **The reduction is computed from members present, not from pool size.** For person *i*
    in pool *v* on day *d*, the reduction is the expected number of contacts with the
-   members of *v* who are present that day (after `UpdatePresence`), excluding members
-   already counted elsewhere (e.g. own household for clusters). Under the fixed per-pair
-   model that is `intensity × present non-excluded members`; under the per-member-rate
+   other members of *v* who are present that day (after `UpdatePresence`). Under the
+   fixed per-pair model that is `p × (present members − 1)`; under the per-member-rate
    model it is the rate scaled to the present fraction. This needs a per-day pre-pass
    over the absorbing pools **before** the community pools run, storing one value per
    person (4 bytes; computed, not persisted across days).
@@ -1614,6 +1626,11 @@ Quirks found in the cluster code (2026-10-07), to be removed rather than ported:
    School+Workplace via `GetSymptomaticCntReductionWorkSchool`, one for both Community
    types). To keep step a results-neutral, those types keep their grouped draw; new and
    converted types draw independently per type.
+4. **All members of a venue have the same contact probability, irrespective of other
+   pools they share.** The household-overlap exclusion of HouseholdCluster
+   (`Infector.cpp:302`: probability 0 within a household) is not carried over; it was
+   specific to that setting. Housemates attending the same venue meet there like anyone
+   else, on top of their household contact.
 
 #### Pool-type specification
 
@@ -1626,7 +1643,6 @@ different predicates):
 | schedule | every day / regular weekdays / weekend / per pool | `Sim.cpp:131-146` |
 | contact model | age profile / per-member rate / fixed per-pair probability | `Infector.cpp:224`, `:302` |
 | absorbs from | none / `community` | HouseholdCluster only, hard-coded |
-| excludes overlap with | none / `household` / … | HouseholdCluster only, hard-coded |
 | symptomatic withdrawal | probability | per disease, grouped; venues none |
 | individual contact factor | on / off | `Infector.cpp:275` list |
 | physical properties | ventilation, air mass, airborne | `PoolCharacteristicsSeeder.cpp:94` list |
@@ -1637,14 +1653,13 @@ different predicates):
 | | Content | Changes results? |
 |---|---|---|
 | a | Declare the existing 11 types with properties that reproduce today's behaviour; remove the hard-coded type lists (completes Phase 5b, starts Phase 6) | no |
-| b | Express HouseholdCluster through the declaration; delete its special code in `Infector`, `Sim`, `Person`, `Calendar`, `AgeContactProfile`; generic `<type>_intensity` calendar multiplier replaces `household_clustering`; drop the dead R parameter | no — verified against the `covid_hhcl` scenario of the R suite |
-| c | Reduction from members present (decision 2), for clusters first | **yes** — `covid_hhcl` reference reset |
-| d | Venues absorb from community instead of replacing it (decision 1) | **yes** — `covid_subpools`, `covid_airborne` reference reset |
-| e | Symptomatic withdrawal per type (decision 3) | **yes** for venues and clusters |
-| f | User-defined extra pool types at run time instead of the compile-time `ContactType` enum / `IDPack` | no, but large; after Phase 7a |
-| g | Grouping rules (household, interest, …) in the population generator; `HouseholdClusterFactory_USA.R` becomes one rule among several | outside the simulator |
+| b | Retire HouseholdCluster as a type: re-express `covid_hhcl` as a leisure venue type built from `household_cluster_id`; delete the special code in `Infector`, `Sim`, `Person`, `Calendar`, `AgeContactProfile`; generic `<type>_intensity` calendar multiplier replaces `household_clustering`; drop the dead R parameter | **yes** — no household exclusion (decision 4), attendance from membership instead of a per-pair ratio; `covid_hhcl` reference reset |
+| c | Venues absorb from community instead of replacing it, reduction from members present (decisions 1-2) | **yes** — `covid_subpools`, `covid_airborne` reference reset |
+| d | Symptomatic withdrawal per type (decision 3) | **yes** for venues |
+| e | User-defined extra pool types at run time instead of the compile-time `ContactType` enum / `IDPack` | no, but large; after Phase 7a |
+| f | Grouping rules (household, interest, …) and attendance days in the population generator; `HouseholdClusterFactory_USA.R` becomes one rule among several | outside the simulator |
 
-Steps c, d and e each get their own PR and reference reset (§5.5). Step d needs a check
+Steps b, c and d each get their own PR and reference reset (§5.5). Step c needs a check
 first: if the existing venue files were built to *replace* community contacts, the
 residual community rate may be close to zero and the change small; if not, venue
 scenarios will see more contacts than before.
@@ -1923,7 +1938,8 @@ Travis-era compiler (F13.3).
 7. **Venues versus household clusters** — **decided 2026-10-07** (Phase 5d). Venues are
    the general mechanism; household clusters become a configured pool type. Contacts in
    venues come out of community contacts; the reduction counts members present, not pool
-   size; each pool type specifies a symptomatic-withdrawal probability. Still open: the
+   size; each pool type specifies a symptomatic-withdrawal probability; all members of a
+   venue have the same contact probability (no household exclusion). Still open: the
    per-member-rate form of the present-members reduction (Phase 5d decision 2) and whether
    the classic types should eventually drop their grouped symptomatic draws.
 _(A question about whether R0 fitting should use index-case tracking was raised and
