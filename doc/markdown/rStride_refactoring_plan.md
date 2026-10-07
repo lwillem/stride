@@ -14,7 +14,7 @@ repository composition — lives in the architecture document.
 
 ---
 
-## 0. State of play — 2026-10-06
+## 0. State of play — 2026-10-07
 
 Where things stand, so a fresh session can start without re-deriving any of it.
 
@@ -78,13 +78,18 @@ user asks.
 
 ### Next, in order
 
-1. **Pro memoria, now due** — update the column names in the `stride_population`
-   repository to `community_weekend` / `community_weekday` (Phase 2 step 2; PR #18 merged).
+1. **Pro memoria, deferred by the user 2026-10-07** — update the column names in the
+   `stride_population` repository to `community_weekend` / `community_weekday` (Phase 2
+   step 2; PR #18 merged).
 2. **F12.7** (new, below Phase 5b step 3) — the generator's day-boundary pool-id overlap;
    results-changing, needs its own PR and reference reset.
-3. **Phase 4 step 5** (new) — profile the C++ gtester and the R suite: where does the time go?
-4. **§7.7** (new, future work) — put the gtester back in the per-PR CI job.
-5. **CI follow-ups** (§7.6) — not blocking: nightly regression runs (PR #15, verified)
+3. **Phase 5d** (new 2026-10-07) — pool types as configuration; household clusters
+   become a configured venue type, venue contacts come out of community contacts, the
+   reduction counts present members, and each type gets a symptomatic-withdrawal
+   probability. Model decisions taken; start with step a (results-neutral).
+4. **Phase 4 step 5** (new) — profile the C++ gtester and the R suite: where does the time go?
+5. **§7.7** (new, future work) — put the gtester back in the per-PR CI job.
+6. **CI follow-ups** (§7.6) — not blocking: nightly regression runs (PR #15, verified)
    but stays informational until §7.4 items 2-3 land; on Linux `covid_logParticipants`
    and the ABC test differ from the macOS references (§7.6) — look at that first; also
    preinstall `socialmixr`/`wpp2017` (still installed at run time); bump actions off Node 20 (`checkout@v4`,
@@ -1556,6 +1561,94 @@ USA populations the venues were built for are still not under test.
 two different pools of the same venue type on a single day. The constraint is part of the
 model (architecture §3.1), so step 3 may rely on it.
 
+### Phase 5d — Pool types as configuration: venues and household clusters as one mechanism — PLANNED
+
+**Decided 2026-10-07 (user).** Venues are the way forward. Household clusters stop being a
+separate mechanism and become one configured pool type. Whether a person is grouped by
+household, interest or anything else is decided when the population is generated; the
+simulator only reads "column X holds a pool id, and this type has these properties".
+The pandemic on/off of household clustering is not given its own mechanism; it becomes a
+case of a generic per-type calendar multiplier.
+
+#### Why the two mechanisms differ today
+
+| | HouseholdCluster | Venues (`OtherHouse`, `RestoCafe`, `OtherPlace`, `Transport`) |
+|---|---|---|
+| Membership | `household_cluster_id` column | `subpools_community_file`, one pool per type per person per day |
+| Relation to community | **takes part of it**: community rate reduced by (cluster size − household size) × intensity (`Infector.cpp:240-259`) | **replaces all of it**: `subpools_community` switches both Community types off (`Person.cpp:120-131`) |
+| Contact model | fixed per-pair probability = calendar level; 0 within a household (`Infector.cpp:302`) | per-member rate from the file |
+| Timing | calendar category `household_clustering`; type skipped when level is 0 (`Sim.cpp:82,136`) | fixed weekday per pool (`Sim.cpp:141`) |
+| Symptomatic | always withdraws (`Person.cpp:154`), no parameter | **never withdraws** — the symptomatic branch does not touch venue types |
+| Ventilation / airborne | declared in `pool_characteristics.xml`, effect unverified | yes |
+
+Quirks found in the cluster code (2026-10-07), to be removed rather than ported:
+- `Calendar::GetDistancingFactor` computes `1 - level` for HouseholdCluster
+  (`Calendar.cpp:199`), but `GetContactProbability` then overwrites the probability with
+  the fixed per-pair value, so it has no effect.
+- The community reduction uses cluster **size**, not the members present: isolated or
+  hospitalised cluster members still reduce their housemates' community contacts.
+- The cluster's `AgeContactProfile` reads the `household` key (`AgeContactProfile.cpp:45`)
+  and is never used, because the probability is overwritten.
+- `cnt_intensity_householdCluster` is set in the R default parameters and validated in
+  `Misc.R:583`, but the C++ code takes the intensity from the calendar (`Sim.cpp:82`).
+
+#### Model decisions — 2026-10-07 (user)
+
+1. **Venue contacts come out of community contacts.** On a day a person attends a pool of
+   an absorbing type, the expected number of contacts there is subtracted from their
+   community reference rate for that day (floored at 0), as household clusters do now.
+   Each person's total contacts stay roughly constant, so calibrations carry over between
+   configurations (F10). The current venue behaviour (community fully off) becomes the
+   special case where the venues absorb everything; it is no longer a switch.
+2. **The reduction is computed from members present, not from pool size.** For person *i*
+   in pool *v* on day *d*, the reduction is the expected number of contacts with the
+   members of *v* who are present that day (after `UpdatePresence`), excluding members
+   already counted elsewhere (e.g. own household for clusters). Under the fixed per-pair
+   model that is `intensity × present non-excluded members`; under the per-member-rate
+   model it is the rate scaled to the present fraction. This needs a per-day pre-pass
+   over the absorbing pools **before** the community pools run, storing one value per
+   person (4 bytes; computed, not persisted across days).
+3. **Each pool type specifies a probability of withdrawing when symptomatic.** This
+   replaces the hard-coded "always withdraws" of clusters and the missing withdrawal of
+   venues. Open detail: the classic types currently share draws (one draw for
+   School+Workplace via `GetSymptomaticCntReductionWorkSchool`, one for both Community
+   types). To keep step a results-neutral, those types keep their grouped draw; new and
+   converted types draw independently per type.
+
+#### Pool-type specification
+
+One declaration per type, replacing the hard-coded type lists of F12.1 (nine sites, three
+different predicates):
+
+| Property | Values | Today |
+|---|---|---|
+| membership source | population-file column name, or per-day file | hard-coded per type |
+| schedule | every day / regular weekdays / weekend / per pool | `Sim.cpp:131-146` |
+| contact model | age profile / per-member rate / fixed per-pair probability | `Infector.cpp:224`, `:302` |
+| absorbs from | none / `community` | HouseholdCluster only, hard-coded |
+| excludes overlap with | none / `household` / … | HouseholdCluster only, hard-coded |
+| symptomatic withdrawal | probability | per disease, grouped; venues none |
+| individual contact factor | on / off | `Infector.cpp:275` list |
+| physical properties | ventilation, air mass, airborne | `PoolCharacteristicsSeeder.cpp:94` list |
+| calendar multiplier | optional calendar category `<type>_intensity` | `household_clustering` only |
+
+#### Steps
+
+| | Content | Changes results? |
+|---|---|---|
+| a | Declare the existing 11 types with properties that reproduce today's behaviour; remove the hard-coded type lists (completes Phase 5b, starts Phase 6) | no |
+| b | Express HouseholdCluster through the declaration; delete its special code in `Infector`, `Sim`, `Person`, `Calendar`, `AgeContactProfile`; generic `<type>_intensity` calendar multiplier replaces `household_clustering`; drop the dead R parameter | no — verified against the `covid_hhcl` scenario of the R suite |
+| c | Reduction from members present (decision 2), for clusters first | **yes** — `covid_hhcl` reference reset |
+| d | Venues absorb from community instead of replacing it (decision 1) | **yes** — `covid_subpools`, `covid_airborne` reference reset |
+| e | Symptomatic withdrawal per type (decision 3) | **yes** for venues and clusters |
+| f | User-defined extra pool types at run time instead of the compile-time `ContactType` enum / `IDPack` | no, but large; after Phase 7a |
+| g | Grouping rules (household, interest, …) in the population generator; `HouseholdClusterFactory_USA.R` becomes one rule among several | outside the simulator |
+
+Steps c, d and e each get their own PR and reference reset (§5.5). Step d needs a check
+first: if the existing venue files were built to *replace* community contacts, the
+residual community rate may be close to zero and the change small; if not, venue
+scenarios will see more contacts than before.
+
 ### Phase 5c — A fast path for unclustered immunity seeding — COMPLETE (step 4 not equivalent; accepted as a correction)
 
 > **Steps 3-4 result, 2026-10-06: the fast path is NOT equivalent in distribution.** The
@@ -1827,6 +1920,12 @@ Travis-era compiler (F13.3).
 6. **Generated data in git** — once `sim_output` is relocated (Phase 3), should the
    generated population CSVs currently in `main/resources/data/` be removed from version
    control in favour of a documented regeneration step?
+7. **Venues versus household clusters** — **decided 2026-10-07** (Phase 5d). Venues are
+   the general mechanism; household clusters become a configured pool type. Contacts in
+   venues come out of community contacts; the reduction counts members present, not pool
+   size; each pool type specifies a symptomatic-withdrawal probability. Still open: the
+   per-member-rate form of the present-members reduction (Phase 5d decision 2) and whether
+   the classic types should eventually drop their grouped symptomatic draws.
 _(A question about whether R0 fitting should use index-case tracking was raised and
 resolved: it should not. The fit is a calibration mapping and must be derived under the
 same natural flow of infection under which it is applied, including competition between
