@@ -1631,6 +1631,24 @@ Quirks found in the cluster code (2026-10-07), to be removed rather than ported:
    (`Infector.cpp:302`: probability 0 within a household) is not carried over; it was
    specific to that setting. Housemates attending the same venue meet there like anyone
    else, on top of their household contact.
+5. **A pool meets on a set of weekdays (7-bit mask), not on one weekday.** Presence is
+   decided per pool: the whole group meets on its fixed days, which keeps the venue model
+   (a pool is a recurring gathering) and lets a cluster meeting e.g. Mon/Wed/Sat be one
+   pool with one member list instead of three. Fixed meeting days are sufficient; a random
+   "3 of 7 days" attendance is **not** required (user, 2026-10-07). Today a pool holds a
+   single `m_day_week` (`ContactPool.h:147`, 7 = every day), set by the loader to the last
+   day read (`PopBuilder.cpp:230`) and matched in `Sim.cpp:143`. The single-day venues of
+   today become masks with one bit set, so the change is results-neutral **provided F12.7
+   is fixed first**: with a mask, the loader ORs the days, and the 17 day-boundary pools
+   of F12.7 would then meet on both days instead of the last one read. Two loader details:
+   - a member must be added once per pool, not once per row (`PopBuilder.cpp:231` calls
+     `AddMember` for every row);
+   - duration and contacts are stored per member per pool (`SetMemberAttendance`,
+     `VenueAttendance::CopyToPools`), not per day. Proposal: require them to be equal on all
+     days a member attends a pool, and reject the file otherwise; per-day values would
+     need per-(member, day) storage and are not needed for fixed recurring groups.
+   The invariant of architecture §3.1 (at most one pool per venue type per person per day)
+   is unchanged.
 
 #### Pool-type specification
 
@@ -1640,7 +1658,7 @@ different predicates):
 | Property | Values | Today |
 |---|---|---|
 | membership source | population-file column name, or per-day file | hard-coded per type |
-| schedule | every day / regular weekdays / weekend / per pool | `Sim.cpp:131-146` |
+| schedule | every day / regular weekdays / weekend / per pool weekday mask | `Sim.cpp:131-146` |
 | contact model | age profile / per-member rate / fixed per-pair probability | `Infector.cpp:224`, `:302` |
 | absorbs from | none / `community` | HouseholdCluster only, hard-coded |
 | symptomatic withdrawal | probability | per disease, grouped; venues none |
@@ -1653,13 +1671,14 @@ different predicates):
 | | Content | Changes results? |
 |---|---|---|
 | a | Declare the existing 11 types with properties that reproduce today's behaviour; remove the hard-coded type lists (completes Phase 5b, starts Phase 6) | no |
-| b | Retire HouseholdCluster as a type: re-express `covid_hhcl` as a leisure venue type built from `household_cluster_id`; delete the special code in `Infector`, `Sim`, `Person`, `Calendar`, `AgeContactProfile`; generic `<type>_intensity` calendar multiplier replaces `household_clustering`; drop the dead R parameter | **yes** — no household exclusion (decision 4), attendance from membership instead of a per-pair ratio; `covid_hhcl` reference reset |
-| c | Venues absorb from community instead of replacing it, reduction from members present (decisions 1-2) | **yes** — `covid_subpools`, `covid_airborne` reference reset |
-| d | Symptomatic withdrawal per type (decision 3) | **yes** for venues |
-| e | User-defined extra pool types at run time instead of the compile-time `ContactType` enum / `IDPack` | no, but large; after Phase 7a |
-| f | Grouping rules (household, interest, …) and attendance days in the population generator; `HouseholdClusterFactory_USA.R` becomes one rule among several | outside the simulator |
+| b | Weekday mask per pool (decision 5); loader adds each member once and ORs the days; `Sim` tests the mask. Requires F12.7 fixed first | no |
+| c | Retire HouseholdCluster as a type: re-express `covid_hhcl` as a leisure venue type built from `household_cluster_id`; delete the special code in `Infector`, `Sim`, `Person`, `Calendar`, `AgeContactProfile`; generic `<type>_intensity` calendar multiplier replaces `household_clustering`; drop the dead R parameter | **yes** — no household exclusion (decision 4), attendance from membership instead of a per-pair ratio; `covid_hhcl` reference reset |
+| d | Venues absorb from community instead of replacing it, reduction from members present (decisions 1-2) | **yes** — `covid_subpools`, `covid_airborne` reference reset |
+| e | Symptomatic withdrawal per type (decision 3) | **yes** for venues |
+| f | User-defined extra pool types at run time instead of the compile-time `ContactType` enum / `IDPack` | no, but large; after Phase 7a |
+| g | Grouping rules (household, interest, …) and attendance days in the population generator; `HouseholdClusterFactory_USA.R` becomes one rule among several | outside the simulator |
 
-Steps b, c and d each get their own PR and reference reset (§5.5). Step c needs a check
+Steps c, d and e each get their own PR and reference reset (§5.5). Step d needs a check
 first: if the existing venue files were built to *replace* community contacts, the
 residual community rate may be close to zero and the change small; if not, venue
 scenarios will see more contacts than before.
@@ -1939,7 +1958,8 @@ Travis-era compiler (F13.3).
    the general mechanism; household clusters become a configured pool type. Contacts in
    venues come out of community contacts; the reduction counts members present, not pool
    size; each pool type specifies a symptomatic-withdrawal probability; all members of a
-   venue have the same contact probability (no household exclusion). Still open: the
+   venue have the same contact probability (no household exclusion); a pool meets on a
+   fixed set of weekdays (7-bit mask), presence decided per pool. Still open: the
    per-member-rate form of the present-members reduction (Phase 5d decision 2) and whether
    the classic types should eventually drop their grouped symptomatic draws.
 _(A question about whether R0 fitting should use index-case tracking was raised and
