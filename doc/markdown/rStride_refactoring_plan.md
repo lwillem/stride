@@ -1543,6 +1543,11 @@ USA populations the venues were built for are still not under test.
    forbids (architecture §3.1). Step 3 reproduces this exactly (the pool-side value is the
    member's record for the pool's day, as `Person` used to give). Fixing the generator, or
    rejecting such files, changes results — separate PR with a reference reset.
+   **It is also a data race (noted 2026-10-07):** the invariant exists so that the pools
+   of one type can be processed in parallel (`Sim.cpp`, `omp for` over the pools of each
+   type). A person in two pools of one type that are active on the same day can be
+   written by two threads at once (`StartInfection`, `RegisterContact`), so in
+   multi-threaded runs these 17 pools are a race, not only a modelling defect.
 
 4. **Correct `NumOfTypes()` to 11** (F12.3). A one-character change worth about 40 MB at
    474k, independent of the rest and safe to land first. **Done** on
@@ -1644,11 +1649,18 @@ Quirks found in the cluster code (2026-10-07), to be removed rather than ported:
    - a member must be added once per pool, not once per row (`PopBuilder.cpp:231` calls
      `AddMember` for every row);
    - duration and contacts are stored per member per pool (`SetMemberAttendance`,
-     `VenueAttendance::CopyToPools`), not per day. Proposal: require them to be equal on all
-     days a member attends a pool, and reject the file otherwise; per-day values would
-     need per-(member, day) storage and are not needed for fixed recurring groups.
-   The invariant of architecture §3.1 (at most one pool per venue type per person per day)
-   is unchanged.
+     `VenueAttendance::CopyToPools`), not per day. **Decided (user, 2026-10-07):** they
+     are fixed per member per pool and may not differ between days; the loader rejects a
+     file where they do.
+6. **One pool per venue type per person per day, stated on masks (user, 2026-10-07).**
+   For each venue type, the weekday masks of the pools a person belongs to must not
+   overlap; the loader rejects a file where they do. The rule exists so that the pools of
+   one type can be processed in parallel: types run one after another, the pools of a
+   type are split over threads (`Sim.cpp`, `omp for`), and a person in two pools of one
+   type active on the same day could be written by two threads at once. A strict "one
+   pool per type" rule is not needed and would not fit the current data: in the 10k test
+   file every person attends every venue type on all 7 days, in a different pool each day
+   (7 distinct pools per person per type, no pool id 0).
 
 #### Pool-type specification
 
@@ -1671,7 +1683,7 @@ different predicates):
 | | Content | Changes results? |
 |---|---|---|
 | a | Declare the existing 11 types with properties that reproduce today's behaviour; remove the hard-coded type lists (completes Phase 5b, starts Phase 6) | no |
-| b | Weekday mask per pool (decision 5); loader adds each member once and ORs the days; `Sim` tests the mask. Requires F12.7 fixed first | no |
+| b | Weekday mask per pool (decision 5); loader adds each member once, ORs the days, and rejects inconsistent duration/contacts and overlapping masks (decision 6); `Sim` tests the mask. Requires F12.7 fixed first | no |
 | c | Retire HouseholdCluster as a type: re-express `covid_hhcl` as a leisure venue type built from `household_cluster_id`; delete the special code in `Infector`, `Sim`, `Person`, `Calendar`, `AgeContactProfile`; generic `<type>_intensity` calendar multiplier replaces `household_clustering`; drop the dead R parameter | **yes** — no household exclusion (decision 4), attendance from membership instead of a per-pair ratio; `covid_hhcl` reference reset |
 | d | Venues absorb from community instead of replacing it, reduction from members present (decisions 1-2) | **yes** — `covid_subpools`, `covid_airborne` reference reset |
 | e | Symptomatic withdrawal per type (decision 3) | **yes** for venues |

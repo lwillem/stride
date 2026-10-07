@@ -251,6 +251,14 @@ in particular, a person's attendance of a venue type on a given day is fully des
 a single pool id (or none), and a pool-side membership list never holds the same person
 for two pools of one type on one day.
 
+**Why the invariant exists: parallel processing.** `Sim` runs the contact types one after
+another and splits the pools of each type over threads (`omp for` inside the loop over
+`ContactType::IdList`). Pools of one type on different days never run together, so the
+rule only needs to hold per day: a person in two pools of one type that are active on the
+same day could be updated by two threads at once (`StartInfection`, `RegisterContact`).
+Phase 5d (refactoring plan) restates it for pools meeting on several weekdays: for each
+venue type, the weekday masks of a person's pools must not overlap.
+
 
 ### 3.2 Which predicate applies where
 
@@ -433,8 +441,9 @@ duplication cost the ~700 bytes per person of F12.3 and has been removed (§3.4)
 **Exception in the data (F12.7).** The subpools generator reuses the last pool id of one day
 as the first of the next: in the 10k test file, 17 venue pools hold members from two
 consecutive days. The pool's day is the last one read, so on that day its other-day members
-also attend their own pool of that type, breaking the invariant of §3.1. The code reproduces
-this as before; fixing it changes results.
+also attend their own pool of that type, breaking the invariant of §3.1 — in multi-threaded
+runs this is a data race on those members. The code reproduces this as before; fixing it
+changes results.
 
 Per-individual non-attendance is encoded as **pool id 0** — `PopBuilder.cpp:252` adds a
 member only when `subpool_id > 0` (the zero is still kept, with its duration, in the
