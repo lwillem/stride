@@ -80,13 +80,16 @@ user asks.
 
 1. **Pro memoria, deferred by the user 2026-10-07** — update the column names in the
    `stride_population` repository to `community_weekend` / `community_weekday` (Phase 2
-   step 2; PR #18 merged).
+   step 2; PR #18 merged). Add the optional `sex` column in the same PR (Phase 5d
+   step h0).
 2. **F12.7** (new, below Phase 5b step 3) — the generator's day-boundary pool-id overlap;
    results-changing, needs its own PR and reference reset.
 3. **Phase 5d** (new 2026-10-07) — pool types as configuration; household clusters
    are retired in favour of generic leisure venues, venue contacts come out of community contacts, the
    reduction counts present members, and each type gets a symptomatic-withdrawal
    probability. Model decisions taken; start with step a (results-neutral).
+   Decision 7 (2026-10-07) adds household contacts by size, age and sex: a `sex`
+   attribute (step h0) and a `pair_matrix` contact model (step h), both results-neutral.
 4. **Phase 4 step 5** (new) — profile the C++ gtester and the R suite: where does the time go?
 5. **§7.7** (new, future work) — put the gtester back in the per-PR CI job.
 6. **CI follow-ups** (§7.6) — not blocking: nightly regression runs (PR #15, verified)
@@ -1661,6 +1664,33 @@ Quirks found in the cluster code (2026-10-07), to be removed rather than ported:
    pool per type" rule is not needed and would not fit the current data: in the 10k test
    file every person attends every venue type on all 7 days, in a different pool each day
    (7 distinct pools per person per type, no pool id 0).
+7. **Household contacts vary by household size, age and sex (user, 2026-10-07).**
+   Today every household pair has a daily contact probability of 0.999, set at the end of
+   `GetContactProbability` (`Infector.cpp:298`), bypassing the age profile and the
+   min/mean rule. The aim is to let it depend on household size and on who the two people
+   are (child/adult, mother/father). Two parts, kept separate:
+   - **Sex becomes a person attribute.** An optional `sex` column in the population file,
+     read by header name (Phase 2 step 2); absent means "unknown" and nothing changes.
+     One byte in `Person` (female / male / unknown). It is a plain attribute rather than
+     a household-only one, since it may later serve severity or vaccination uptake.
+   - **A fourth contact model, `pair_matrix`** (next to age profile, per-member rate and
+     fixed per-pair probability). Each person maps to a class by configurable rules on
+     age and sex (e.g. child < 18, adult female, adult male, optionally 65+); household
+     size is grouped into bins (e.g. 2 / 3-4 / 5+); per bin a symmetric class × class
+     matrix gives the daily per-pair contact probability. No matrix configured means
+     all 0.999, so introducing it is results-neutral. A per-pair probability avoids the
+     min/mean question (F8/F10) and matches what diary surveys give for households (which
+     household members the participant met, with their age and sex).
+
+   "Mother/father" is a household **role**, not a sex: age and sex cannot tell a mother
+   from an adult daughter or a grandmother. Classes from age and sex at load time are the
+   starting point; a `household_role` column written by the generator, which knows the
+   composition, can be added later as one more input to the class rules without code
+   changes. Which of the two is needed is open (§3 item 8).
+
+   Calibration: household contacts carry much of the R0 fit, so any matrix below 0.999
+   changes the transmission-parameter → R0 mapping. Each household-matrix configuration
+   needs its own calibration (Phase 2b, §6).
 
 #### Pool-type specification
 
@@ -1671,7 +1701,7 @@ different predicates):
 |---|---|---|
 | membership source | population-file column name, or per-day file | hard-coded per type |
 | schedule | every day / regular weekdays / weekend / per pool weekday mask | `Sim.cpp:131-146` |
-| contact model | age profile / per-member rate / fixed per-pair probability | `Infector.cpp:224`, `:302` |
+| contact model | age profile / per-member rate / fixed per-pair probability / per-pair matrix by class and pool-size bin (decision 7) | `Infector.cpp:224`, `:298` (household 0.999), `:302` |
 | absorbs from | none / `community` | HouseholdCluster only, hard-coded |
 | symptomatic withdrawal | probability | per disease, grouped; venues none |
 | individual contact factor | on / off | `Infector.cpp:275` list |
@@ -1689,6 +1719,9 @@ different predicates):
 | e | Symptomatic withdrawal per type (decision 3) | **yes** for venues |
 | f | User-defined extra pool types at run time instead of the compile-time `ContactType` enum / `IDPack` | no, but large; after Phase 7a |
 | g | Grouping rules (household, interest, …) and attendance days in the population generator; `HouseholdClusterFactory_USA.R` becomes one rule among several | outside the simulator |
+| h0 | Optional `sex` column in the population file, `Person` field (1 byte), generator writes it (decision 7). Independent of the other steps; can go with the `stride_population` column rename | no |
+| h | Contact model `pair_matrix`: class rules on person attributes, pool-size bins, per-bin class × class matrix; Household declared with it, default all 0.999 (decision 7). After step a | no |
+| — | Fitting real household matrices from survey data, with recalibration | **yes** — a study, not refactoring |
 
 Steps c, d and e each get their own PR and reference reset (§5.5). Step d needs a check
 first: if the existing venue files were built to *replace* community contacts, the
@@ -1974,6 +2007,11 @@ Travis-era compiler (F13.3).
    fixed set of weekdays (7-bit mask), presence decided per pool. Still open: the
    per-member-rate form of the present-members reduction (Phase 5d decision 2) and whether
    the classic types should eventually drop their grouped symptomatic draws.
+8. **Household classes: age and sex, or an explicit role?** (Phase 5d decision 7.)
+   Classes derived at load time from age and sex (child / adult female / adult male) need
+   no new data but cannot distinguish a parent from an adult child or grandparent. A
+   `household_role` column from the generator can. Depends on what the household contact
+   data distinguishes; start with age and sex.
 _(A question about whether R0 fitting should use index-case tracking was raised and
 resolved: it should not. The fit is a calibration mapping and must be derived under the
 same natural flow of infection under which it is applied, including competition between
