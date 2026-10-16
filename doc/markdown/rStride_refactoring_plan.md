@@ -14,7 +14,7 @@ repository composition — lives in the architecture document.
 
 ---
 
-## 0. State of play — 2026-10-07
+## 0. State of play — 2026-10-16
 
 Where things stand, so a fresh session can start without re-deriving any of it.
 
@@ -22,15 +22,20 @@ Where things stand, so a fresh session can start without re-deriving any of it.
 
 | Branch | Tip | State |
 |---|---|---|
-| `master` | `b588bdc`, plus plan-only commits | consolidated baseline + Phases 0, 0b, 0c, 5c, F1, F7.1, F13.1 |
-| `feature/immunity-fast-seeding` | `7b97626` | **merged to `master` 2026-10-06** (`f57bfd4`) — Phase 5c; branch kept |
-| `feature/venue-memory` | PR #11 | **merged to `master` 2026-10-06** (`c3a1d9f`) — Phase 5b steps 3-4; branch kept |
-| `feature/pop-header-by-name` | PR #18 | **merged to `master` 2026-10-06** (`2fb95ae`) — Phase 2 step 2; branch kept |
+| `master` | `28ece0a` (PR #21) | consolidated baseline + Phases 0, 0b, 0c, 5b (steps 3-4), 5c, F1, F7.1, F13.1, Phase 2 step 2; plan-only commits for Phase 5d |
+| `measles_usa_rm` | tracks `master` | the colleague's branch, fast-forwarded to `master` 2026-10-05; **kept**. |
+| `dev` | — | long-lived, merged into `master`; **kept** |
+| `fix/usa-contacts-age-groups` | PR #22 | open — contact-matrix age groups and age breaks derived from the data (not refactoring work) |
 
-`feature/venue-memory` **merges `feature/immunity-fast-seeding`** — without it the C++
-gtester cannot complete, because `influenza_c` multi-threaded hits F16. Now that immunity
-is on `master` (2026-10-06), that merge is redundant: rebase or merge `master` into
-`feature/venue-memory` and it drops out.
+**Branch clean-up, 2026-10-16.** The feature and docs branches of this refactoring were
+merged through pull requests and then **deleted, locally and on `origin`**: `feature/immunity-fast-seeding`
+(Phase 5c, `f57bfd4`), `feature/venue-memory` (PR #11, `c3a1d9f`), `feature/pop-header-by-name`
+(PR #18, `2fb95ae`), `fix/ci-build` (PR #13), `ci/build-only` (PR #14), `ci/nightly-regression`
+(PR #15), plus the `docs/*` and worktree branches. Every commit is in `master`;
+references to those branch names elsewhere in this document are to the merged PRs. PR #21 removed
+the superseded `social_contacts_usa2026.Rmd` (the `.R` script is the generator of record).
+`feature/venue-memory` had merged `feature/immunity-fast-seeding` to get the C++ gtester through
+(F16); with both on `master` that is moot.
 
 > **`feature/immunity-fast-seeding` merged 2026-10-06** (`f57bfd4`, no conflicts). It was
 > verified (gtester 44/44; the scenario that never finished now takes 2.1 s), and
