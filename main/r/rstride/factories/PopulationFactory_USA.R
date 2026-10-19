@@ -9,7 +9,12 @@ if(0==1){
   dane <- getFREDdata(state = "WI", county = "Dane")
   mke  <- getFREDdata(state = "WI", county = "Milwaukee")
   cook <- getFREDdata(state = "IL", county = "Cook")
+  fairfield <- getFREDdata(state = "CT", county = "Fairfield")
+  piscataquis <- getFREDdata(state = "ME", county = "Piscataquis")
   hennepin <- getFREDdata(state = "MN", county = "Hennepin")
+  cuyahoga <- getFREDdata(state = "OH", county = "Cuyahoga")
+  spartanburg <- getFREDdata(state = "SC", county = "Spartanburg")
+  gaines <- getFREDdata(state = "TX", county = "Gaines")
   
   # or set function parameters
   state = "WI"; county = "Dane"
