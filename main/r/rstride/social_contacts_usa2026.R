@@ -58,8 +58,9 @@ get_cnt_data <- function(location, country, max_age = 94) {
                                    #geographic_setting = c("all"),
                                    data_source = c("2020"))
     cnt_count <- rowSums(cnt_matrix)
+    cnt_ages <- as.numeric(gsub('_.*','',colnames(cnt_matrix)))
     all_ages <- 0:max_age        # convert matrix to vector                     
-    approx(x = seq(0,75,5), # expand matrix age groups using linear interpolation
+    approx(x = cnt_ages, # expand matrix age groups using linear interpolation
            y = cnt_count,
            xout = all_ages,
            method = 'constant',
@@ -117,7 +118,7 @@ pop_usa$workplace_id[pop_usa$workplace_id == 0] <- NA
 
 # define age breaks for the age distribution
 # breaks_ages <- (0:95) -0.5
-breaks_ages <- seq(-0.5, 95.5, by = 1)
+breaks_ages <- seq(-0.5, max(pop_usa$age)+0.5, by = 1)
 
 # age distribution
 age_counts <- hist(pop_usa$age, breaks = breaks_ages, plot = FALSE)$counts
