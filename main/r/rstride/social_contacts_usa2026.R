@@ -33,8 +33,8 @@ source("bin/rstride/factories/PopulationFactory_USA.R")
 sel_country <- 'US'
 
 # set state, county, community size and rng seed
-state <- "TX"
-county <- "Gaines"
+state <- "SC"
+county <- "Spartanburg"
 com_target_size <- 1000
 rng_seed  <- 1234
 
