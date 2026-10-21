@@ -30,6 +30,9 @@
 
 #include "util/Ptree.h"
 
+#include <stdexcept>
+#include <string>
+
 namespace stride {
 
 using namespace stride::ContactType;
@@ -52,9 +55,31 @@ void DiseaseSeeder::ImportInfectedCases(std::shared_ptr<Population> pop, unsigne
         auto&        logger      = pop->RefEventLogger();
         const EventLogMode::Id log_level   = EventLogMode::ToMode(m_config.get<string>("run.event_log_level", "None"));
 
+        // A seed must be susceptible in BOTH senses: no infection history (Health) and no
+        // immunity from ImmunitySeeder (Person::IsImmune(), natural or vaccine-induced).
+        // ContactPool::SortMembers() moves immune persons out of the transmission loop, so an
+        // immune seed would be infected but could never infect anyone.
+        const auto isEligible = [&](const Person& p) {
+                return p.GetHealth().IsSusceptible() && !p.IsImmune() &&
+                       (p.GetAge() >= sAgeMin) && (p.GetAge() <= sAgeMax);
+        };
+
+        // Guard against an endless rejection loop when too few eligible persons remain.
+        unsigned int numEligible = 0;
+        for (const auto& p : *pop) {
+                if (isEligible(p)) {
+                        numEligible++;
+                }
+        }
+        if (numEligible < numInfected) {
+                throw runtime_error("DiseaseSeeder::ImportInfectedCases> requested " + to_string(numInfected) +
+                                    " seed(s), but only " + to_string(numEligible) +
+                                    " persons are susceptible, not immune and within the seeding age range.");
+        }
+
         while (numInfected > 0) {
                 Person& p = pop->at(static_cast<size_t>(generator()));
-                if (p.GetHealth().IsSusceptible() && (p.GetAge() >= sAgeMin) && (p.GetAge() <= sAgeMax)) {
+                if (isEligible(p)) {
                         double rel_inf = transProfile.GetIndividualInfectiousness(rn);
                         p.GetHealth().StartInfection(p.GetId(),0,rel_inf); // TODO why is infector_id 0 here? it is logged as -1 for index cases
                         numInfected--;
