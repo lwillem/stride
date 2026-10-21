@@ -67,6 +67,8 @@ private:
         unsigned int m_delay_isolation_index;         ///< Number of days after symptom onset to perform a clinical test
         unsigned int m_delay_contact_tracing; ///< Number of days after clinical test to start contact tracing
 		double m_test_false_negative;         ///< False negative rate of PCR tests
+		unsigned int m_isolation_duration_index;   ///< days of isolation for a detected index case
+		unsigned int m_isolation_duration_contact; ///< days of isolation for a traced (infected) contact
 };
 
 } // namespace stride

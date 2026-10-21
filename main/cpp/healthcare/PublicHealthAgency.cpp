@@ -39,7 +39,7 @@ using namespace std;
 // Default constructor
 PublicHealthAgency::PublicHealthAgency(): m_detection_probability(0),
 		m_tracing_efficiency_household(0),m_tracing_efficiency_other(0),m_case_finding_capacity(0),m_delay_isolation_index(0),m_delay_contact_tracing(0),
-		m_test_false_negative(0)
+		m_test_false_negative(0),m_isolation_duration_index(7),m_isolation_duration_contact(7)
 	{}
 
 void PublicHealthAgency::Initialize(const ptree& config){
@@ -53,6 +53,11 @@ void PublicHealthAgency::Initialize(const ptree& config){
 	m_delay_isolation_index          = config.get<unsigned int>("run.delay_isolation_index",3);
 	m_delay_contact_tracing  = config.get<unsigned int>("run.delay_contact_tracing",1);
 	m_test_false_negative    = config.get<double>("run.test_false_negative",0.3);
+
+	// isolation periods (days); the default of 7 days was set for COVID-19. For measles,
+	// traced contacts are quarantined for 21 days after exposure.
+	m_isolation_duration_index   = config.get<unsigned int>("run.isolation_duration_index",7);
+	m_isolation_duration_contact = config.get<unsigned int>("run.isolation_duration_contact",7);
 
 	// account for false negative tests
 	m_detection_probability        *= (1.0 - m_test_false_negative);
@@ -121,7 +126,7 @@ void PublicHealthAgency::Trace(Person& p_case,
 			// Set index case in quarantine.
 		    // As this individual tested positive, he/she is isolated for 7 days.
 		     	unsigned int start = simDay + 1; //start tomorrow
-			p_case.Isolate(simDay, start, start+7);
+			p_case.Isolate(simDay, start, start + m_isolation_duration_index);
 
 			// counter for number of contacts tested
 			unsigned int num_contacts_tested = 0;
@@ -174,7 +179,7 @@ void PublicHealthAgency::Trace(Person& p_case,
 					if(p_contact->GetHealth().IsInfected()){
 						// start isolation over X days
 					    unsigned int start = simDay + m_delay_contact_tracing;
-						p_contact->Isolate(simDay, start, start + 7);
+						p_contact->Isolate(simDay, start, start + m_isolation_duration_contact);
 
 						// add to log (TODO: check log_level)
 						logger->info("[TRACE] {} {} {} {} {} {} {} {} {} {}",
