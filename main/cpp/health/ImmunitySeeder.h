@@ -47,6 +47,20 @@ private:
         void Vaccinate(const std::string& immunityType, const std::string& immunizationProfile,
                        const util::SegmentedVector<ContactPool>& immunityPools, std::shared_ptr<Population> pop);
 
+        /// Vaccine hesitancy: if run.vaccine_hesitancy_rate > 0 and this is the "vaccine" pass
+        /// over Household pools, mark round(rate * N) of all households as hesitant (optionally
+        /// clustered around a few pools, see the implementation) and split the households with
+        /// a member of vaccine-eligible age into compliantPools,
+        /// hesitantPools (spread at random) and hesitantClusterPools (clustered).
+        /// Returns true if the split should be used instead of the full pools.
+        bool SelectHesitantHouseholds(const std::string& immunityType,
+                                      const util::SegmentedVector<ContactPool>& pools,
+                                      const std::vector<double>& distribution,
+                                      std::shared_ptr<Population> pop,
+                                      util::SegmentedVector<ContactPool>& compliantPools,
+                                      util::SegmentedVector<ContactPool>& hesitantPools,
+                                      util::SegmentedVector<ContactPool>& hesitantClusterPools);
+
         /// Random immunization, clustered within households by immunityLinkProbability.
 		void Random(const util::SegmentedVector<ContactPool>& pools, std::vector<double>& immunityDistribution,
 					double immunityLinkProbability, std::shared_ptr<Population> pop, const bool log_immunity);

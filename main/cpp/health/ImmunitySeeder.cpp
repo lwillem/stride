@@ -29,6 +29,10 @@
 
 #include "util/Ptree.h"
 #include <algorithm>
+#include <iostream>
+#include <cmath>
+#include <stdexcept>
+#include <string>
 #include <numeric>
 #include <utility>
 #include <vector>
@@ -64,67 +68,310 @@ void ImmunitySeeder::Vaccinate(const std::string& immunityType, const std::strin
 {
         std::vector<double> immunityDistribution;
         double              linkProbability = 0;
+        bool                log_immunity    = false;
 
         // retrieve the maximum age in the population
         unsigned int maxAge = pop->GetMaxAge();
 
+        // --------------------------------------------------------------
+        // 1. Age-specific immunity/vaccination rates (no random numbers).
+        // --------------------------------------------------------------
         if (immunizationProfile == "AgeDependent") {
-                        const auto   immunityFile = m_config.get<string>("run." + ToLower(immunityType) + "_distribution_file");
-                        const ptree& immunity_pt  = FileSys::ReadPtreeFile(immunityFile);
+                const auto   immunityFile = m_config.get<string>("run." + ToLower(immunityType) + "_distribution_file");
+                const ptree& immunity_pt  = FileSys::ReadPtreeFile(immunityFile);
 
-                        linkProbability = m_config.get<double>("run." + ToLower(immunityType) + "_link_probability");
+                linkProbability = m_config.get<double>("run." + ToLower(immunityType) + "_link_probability");
 
-                        for (unsigned int index_age = 0; index_age <= maxAge; index_age++) {
-                                auto immunityRate = immunity_pt.get<double>("immunity.age" + std::to_string(index_age));
+                for (unsigned int index_age = 0; index_age <= maxAge; index_age++) {
+                        auto immunityRate = immunity_pt.get<double>("immunity.age" + std::to_string(index_age));
+                        immunityDistribution.push_back(immunityRate);
+                }
+
+        } else if (immunizationProfile == "Random" || immunizationProfile == "Cocoon") {
+                // linkProbability stays 0: the Random/Cocoon profiles have no clustering knob.
+                log_immunity = true;
+
+                const auto immunityRate     = m_config.get<double>("run." + ToLower(immunityType) + "_rate");
+                const auto immunity_min_age = m_config.get<double>("run." + ToLower(immunityType) + "_min_age",0);
+                const auto immunity_max_age = m_config.get<double>("run." + ToLower(immunityType) + "_max_age",maxAge);
+
+                for (unsigned int index_age = 0; index_age <= maxAge; index_age++) {
+                        if(index_age >= immunity_min_age && index_age <= immunity_max_age){
                                 immunityDistribution.push_back(immunityRate);
+                        } else{
+                                immunityDistribution.push_back(0);
                         }
-                        // No clustering requested => use the O(N) path (same per-age quota, no
-                        // rejection, no household-size bias; see RandomIndependent()).
-                        if (linkProbability == 0) {
-                                RandomIndependent(immunityPools, immunityDistribution, pop, false);
-                        } else {
-                                Random(immunityPools, immunityDistribution, linkProbability, pop, false);
+                }
+        } else {
+                // e.g. "None": nothing to do
+                return;
+        }
+
+        // --------------------------------------------------------------
+        // 2. Vaccine hesitancy (optional, "vaccine" pass over Household pools only).
+        //    Splits the households into compliant and hesitant ones. Without
+        //    run.vaccine_hesitancy_rate (or 0), no random numbers are drawn and all
+        //    pools are used as before, so existing runs are unchanged.
+        // --------------------------------------------------------------
+        SegmentedVector<ContactPool> compliantPools;
+        SegmentedVector<ContactPool> hesitantPools;
+        SegmentedVector<ContactPool> hesitantClusterPools;
+        const bool applyHesitancy = SelectHesitantHouseholds(immunityType, immunityPools, immunityDistribution, pop,
+                                                             compliantPools, hesitantPools, hesitantClusterPools);
+
+        // --------------------------------------------------------------
+        // 3. Sample immune persons per age class.
+        // --------------------------------------------------------------
+        const auto immunize = [&](const SegmentedVector<ContactPool>& pools, std::vector<double>& distribution) {
+                const SegmentedVector<ContactPool>* target = &pools;
+
+                // immunizationProfile == Cocoon: only pools with an infant
+                SegmentedVector<ContactPool> cocoonPools;
+                if (immunizationProfile == "Cocoon") {
+                        for (auto& c : pools) {
+                                if (c.HasInfant()) {
+                                        cocoonPools.push_back(c);
+                                }
                         }
+                        target = &cocoonPools;
+                }
 
-		} else if(immunizationProfile == "Random" || immunizationProfile == "Cocoon") {
+                // No clustering requested => use the O(N) path (same per-age quota, no
+                // rejection, no household-size bias; see RandomIndependent()).
+                if (linkProbability == 0) {
+                        RandomIndependent(*target, distribution, pop, log_immunity);
+                } else {
+                        Random(*target, distribution, linkProbability, pop, log_immunity);
+                }
+        };
 
-			// Initialize new ContactPool vector
-			SegmentedVector<ContactPool> immunityPools_selection;
+        if (!applyHesitancy) {
+                immunize(immunityPools, immunityDistribution);
+        } else {
+                // compliant households: the rates as given
+                immunize(compliantPools, immunityDistribution);
 
-			// immunizationProfile == Random: copy all contact pools
-			// immunizationProfile == Cocoon: copy all contact pools with an infant
-			for (auto& c : immunityPools) {
-				if(immunizationProfile == "Random" || c.HasInfant()){
-					immunityPools_selection.push_back(c);
-				}
-			}
-
-			// get immunity rate and
-			const auto immunityRate     = m_config.get<double>("run." + ToLower(immunityType) + "_rate");
-			const auto immunity_min_age = m_config.get<double>("run." + ToLower(immunityType) + "_min_age",0);
-			const auto immunity_max_age = m_config.get<double>("run." + ToLower(immunityType) + "_max_age",maxAge);
-
-			// Initialize a vector to store the immunity rate per age class [0-maxAge].
-			for (unsigned int index_age = 0; index_age <= maxAge; index_age++) {
-					if(index_age >= immunity_min_age && index_age <= immunity_max_age){
-						immunityDistribution.push_back(immunityRate);
-					} else{
-						immunityDistribution.push_back(0);
-					}
-			}
-
-			// linkProbability is 0 on this path: the Random/Cocoon profiles have no
-			// clustering knob, so this always takes the fast path.
-			if (linkProbability == 0) {
-				RandomIndependent(immunityPools_selection, immunityDistribution, pop, true);
-			} else {
-				Random(immunityPools_selection, immunityDistribution, linkProbability, pop, true);
-			}
-
-		}
+                // hesitant households: optionally a reduced uptake, relative to the rates above
+                // (default 0 = refuse all). Clustered hesitant households can have their own
+                // uptake (default: the same as the other hesitant households).
+                const auto uptake        = m_config.get<double>("run.vaccine_hesitancy_uptake", 0.0);
+                const auto uptakeCluster = m_config.get<double>("run.vaccine_hesitancy_cluster_uptake", uptake);
+                for (const auto u : {uptake, uptakeCluster}) {
+                        if (u < 0.0 || u > 1.0) {
+                                throw runtime_error("ImmunitySeeder> vaccine_hesitancy_(cluster_)uptake must be in [0,1], got " +
+                                                    to_string(u));
+                        }
+                }
+                const auto immunizeReduced = [&](const SegmentedVector<ContactPool>& pools, double u) {
+                        if (u > 0.0 && !pools.empty()) {
+                                std::vector<double> reducedDistribution(immunityDistribution);
+                                for (auto& rate : reducedDistribution) {
+                                        rate *= u;
+                                }
+                                immunize(pools, reducedDistribution);
+                        }
+                };
+                immunizeReduced(hesitantPools, uptake);
+                immunizeReduced(hesitantClusterPools, uptakeCluster);
+        }
 }
 
+bool ImmunitySeeder::SelectHesitantHouseholds(const std::string& immunityType,
+                                              const SegmentedVector<ContactPool>& pools,
+                                              const std::vector<double>& distribution,
+                                              std::shared_ptr<Population> pop,
+                                              SegmentedVector<ContactPool>& compliantPools,
+                                              SegmentedVector<ContactPool>& hesitantPools,
+                                              SegmentedVector<ContactPool>& hesitantClusterPools)
+{
+        // Only the vaccine pass is affected: natural immunity ("immunity" pass) is assigned
+        // regardless of a household's attitude towards vaccination.
+        if (immunityType != "vaccine") {
+                return false;
+        }
 
+        const auto hesitancyRate = m_config.get<double>("run.vaccine_hesitancy_rate", 0.0);
+        if (hesitancyRate <= 0.0) {
+                return false;
+        }
+        if (hesitancyRate > 1.0) {
+                throw runtime_error("ImmunitySeeder> run.vaccine_hesitancy_rate must be in [0,1], got " +
+                                    to_string(hesitancyRate));
+        }
+
+        // Hesitancy is defined per household. The "Teachers" profile vaccinates via School
+        // pools, where it does not apply. Pool 0 is the placeholder pool of the right type,
+        // so the type of the container can be read from it.
+        if (pools.empty() || pools[0].GetType() != Id::Household) {
+                return false;
+        }
+
+        // ------------------------------------------------------------------
+        // The hesitancy rate is the share of ALL (non-empty) households that is hesitant,
+        // e.g. an adult vaccine-hesitancy estimate applied per household. Only households
+        // with at least one member whose age has a vaccination rate > 0 (with the child
+        // file: a member aged 0-18) are "eligible": hesitancy only changes anything there.
+        // ------------------------------------------------------------------
+        const auto isEligibleAge = [&](const Person* p) {
+                const auto age = static_cast<unsigned int>(p->GetAge());
+                return age < distribution.size() && distribution[age] > 0.0;
+        };
+
+        vector<bool> isEligible(pools.size(), false);
+        unsigned int numEligible   = 0;
+        unsigned int numHouseholds = 0;
+        for (unsigned int i = 0; i < pools.size(); i++) {
+                if (pools[i].size() > 0) {
+                        numHouseholds++;
+                }
+                for (const auto& p : pools[i].GetPool()) {
+                        if (isEligibleAge(p)) {
+                                isEligible[i] = true;
+                                numEligible++;
+                                break;
+                        }
+                }
+        }
+
+        const auto numHesitant =
+            static_cast<unsigned int>(floor(hesitancyRate * static_cast<double>(numHouseholds) + 0.5));
+
+        // Sample `count` elements of `candidates` uniformly without replacement (partial
+        // Fisher-Yates, O(count)) and mark them hesitant. Deliberately not RnMan::Shuffle,
+        // which is far too slow at this scale (see RandomIndependent below).
+        auto&        rng = m_rn_man->at(0U);
+        vector<bool> isHesitant(pools.size(), false);
+        const auto   markHesitant = [&](vector<unsigned int>& candidates, unsigned int count) {
+                const auto n = static_cast<unsigned int>(candidates.size());
+                count        = std::min(count, n);
+                for (unsigned int i = 0; i < count; i++) {
+                        unsigned int j = i + static_cast<unsigned int>(rng.SampleUniform01() * (n - i));
+                        if (j >= n) { j = n - 1; } // guard against SampleUniform01() == 1.0
+                        std::swap(candidates[i], candidates[j]);
+                        isHesitant[candidates[i]] = true;
+                }
+                return count;
+        };
+
+        // ------------------------------------------------------------------
+        // Optional clustering: concentrate hesitant households around a few contact pools
+        // (e.g. schools), as in outbreaks centred on a handful of schools or congregations.
+        //   run.vaccine_hesitancy_cluster_pooltype  pool type ("School", "Community_Weekend",
+        //                                           ...); "None" or absent = no clustering
+        //   run.vaccine_hesitancy_num_clusters      number of such pools, drawn at random
+        //   run.vaccine_hesitancy_cluster_rate      share of the eligible households linked to
+        //                                           those pools (any member attends) that is
+        //                                           hesitant
+        // The total number of hesitant households stays round(rate * all households): the
+        // clustered ones are placed first, the remainder is spread at random over all other
+        // households (if the clusters need more than the total, the total wins).
+        // ------------------------------------------------------------------
+        const auto clusterType = m_config.get<string>("run.vaccine_hesitancy_cluster_pooltype", "None");
+        unsigned int numClustered = 0;
+        unsigned int numLinked    = 0;
+        vector<unsigned int> clusterIds;
+
+        vector<bool> isLinked(pools.size(), false);
+        if (clusterType != "None" && clusterType != "NA" && !clusterType.empty()) {
+                const auto clusterTypeId = ContactType::ToId(clusterType);
+                const auto numClusters   = m_config.get<unsigned int>("run.vaccine_hesitancy_num_clusters", 0U);
+                const auto clusterRate   = m_config.get<double>("run.vaccine_hesitancy_cluster_rate", 0.0);
+                if (clusterRate < 0.0 || clusterRate > 1.0) {
+                        throw runtime_error("ImmunitySeeder> run.vaccine_hesitancy_cluster_rate must be in [0,1], got " +
+                                            to_string(clusterRate));
+                }
+
+                if (numClusters > 0 && clusterRate > 0.0) {
+                        // candidate cluster pools: non-empty pools with at least one eligible-age member
+                        const auto&          clusterPools = pop->CRefPoolSys().CRefPools(clusterTypeId);
+                        vector<unsigned int> candidatePools;
+                        for (unsigned int i = 1; i < clusterPools.size(); i++) {
+                                for (const auto& p : clusterPools[i].GetPool()) {
+                                        if (isEligibleAge(p)) {
+                                                candidatePools.push_back(i);
+                                                break;
+                                        }
+                                }
+                        }
+
+                        // draw the cluster pools uniformly without replacement
+                        const auto nPools = static_cast<unsigned int>(candidatePools.size());
+                        const auto k      = std::min(numClusters, nPools);
+                        for (unsigned int i = 0; i < k; i++) {
+                                unsigned int j = i + static_cast<unsigned int>(rng.SampleUniform01() * (nPools - i));
+                                if (j >= nPools) { j = nPools - 1; }
+                                std::swap(candidatePools[i], candidatePools[j]);
+                                clusterIds.push_back(candidatePools[i]);
+                        }
+
+                        // eligible households linked to a cluster pool, in household order
+                        for (const auto poolIdx : clusterIds) {
+                                for (const auto& p : clusterPools[poolIdx].GetPool()) {
+                                        const auto hh = p->GetPoolId(Id::Household);
+                                        if (hh < pools.size() && isEligible[hh]) {
+                                                isLinked[hh] = true;
+                                        }
+                                }
+                        }
+                        vector<unsigned int> linked;
+                        for (unsigned int i = 0; i < pools.size(); i++) {
+                                if (isLinked[i]) {
+                                        linked.push_back(i);
+                                }
+                        }
+                        numLinked = static_cast<unsigned int>(linked.size());
+
+                        const auto target = std::min(
+                            numHesitant,
+                            static_cast<unsigned int>(floor(clusterRate * static_cast<double>(numLinked) + 0.5)));
+                        numClustered = markHesitant(linked, target);
+                }
+        }
+
+        // the remainder: at random over all other (non-empty) households, with or without
+        // children, outside the clusters
+        vector<unsigned int> others;
+        for (unsigned int i = 0; i < pools.size(); i++) {
+                if (pools[i].size() > 0 && !isLinked[i]) {
+                        others.push_back(i);
+                }
+        }
+        const auto numRandom = markHesitant(others, numHesitant - numClustered);
+
+        // Split into compliant and hesitant households, keeping the original order so the
+        // samplers visit households in the same order as without hesitancy. Households
+        // without eligible members cannot be vaccinated in this pass, so they are left out.
+        compliantPools.clear();
+        hesitantPools.clear();
+        hesitantClusterPools.clear();
+        for (unsigned int i = 0; i < pools.size(); i++) {
+                if (!isEligible[i]) {
+                        continue;
+                }
+                if (isHesitant[i] && isLinked[i]) {
+                        hesitantClusterPools.push_back(pools[i]);
+                } else if (isHesitant[i]) {
+                        hesitantPools.push_back(pools[i]);
+                } else {
+                        compliantPools.push_back(pools[i]);
+                }
+        }
+
+        // short report on stdout (not in the event log, to keep its format unchanged)
+        unsigned int numEligibleHesitant = 0;
+        for (unsigned int i = 0; i < pools.size(); i++) {
+                if (isEligible[i] && isHesitant[i]) {
+                        numEligibleHesitant++;
+                }
+        }
+        std::cout << "Vaccine hesitancy: " << numClustered + numRandom << " of " << numHouseholds
+                  << " households hesitant (" << numClustered << " clustered in " << clusterIds.size() << " "
+                  << clusterType << " pool(s) linked to " << numLinked << " households, " << numRandom
+                  << " at random); " << numEligibleHesitant << " of the " << numEligible
+                  << " households with vaccine-eligible members are hesitant." << std::endl;
+
+        return true;
+}
 
 void ImmunitySeeder::RandomIndependent(const SegmentedVector<ContactPool>& pools,
                        vector<double>& immunityDistribution, std::shared_ptr<Population> pop,
