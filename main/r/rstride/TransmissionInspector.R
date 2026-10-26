@@ -119,11 +119,18 @@ inspect_transmission_dynamics <- function(project_dir,save_pdf = TRUE)
     ## GENERATION INTERVAL   ----
     # note: the generation interval is the time between the infection time of an infected person and the infection time of his or her infector.
     # reference: Kenah et al (2007)
+    # DEBUG/BYPASS: if no finite generation intervals (e.g. r0 = 0, no secondary cases),
+    # use a default y-range so plot.window() does not fail on non-finite ylim
+    gen_interval_ylim <- .rstride$safe_ylim(c(0,data_incidence$gen_interval),default = c(0,10))
     plot(data_incidence$sim_date,data_incidence$gen_interval,type='l',
          xlab='day of infection',ylab='generation interval [infection]',
          main='generation interval\n[infection]',
+         ylim=gen_interval_ylim,
          xaxt='n',
          col=alpha(1,0.5))
+    if(!any(is.finite(data_incidence$gen_interval))){
+      mtext('[no generation interval data available]',3,cex=0.8,col=2)
+    }
     add_x_axis(range(data_incidence$sim_date,na.rm=T))
     text(max(data_incidence$sim_date,na.rm=T),5.2,'5.2',pos=3)
     abline(h=5.2,col=4)
@@ -180,7 +187,7 @@ inspect_transmission_dynamics <- function(project_dir,save_pdf = TRUE)
    if(any(!is.na(data_incidence$new_hospital_admissions_age1))){
      data_new_hosp <- data_incidence[,paste0('new_hospital_admissions_age',1:length(age_labels))]
      plot(aggregate(new_hospital_admissions_age1 ~ sim_date, data = data_incidence,mean),
-          ylim=range(data_new_hosp),col=1,lwd=2,type='l',
+          ylim=.rstride$safe_ylim(c(0,unlist(data_new_hosp)),default = c(0,1)),col=1,lwd=2,type='l',
           xlab='Time',ylab='Average number of hospital admissions')
      lines(aggregate(new_hospital_admissions_age2 ~ sim_date, data = data_incidence,mean),col=2,lwd=2)
      lines(aggregate(new_hospital_admissions_age3 ~ sim_date, data = data_incidence,mean),col=3,lwd=2)
@@ -241,6 +248,16 @@ inspect_transmission_dynamics <- function(project_dir,save_pdf = TRUE)
   
 } # function end
 
+
+## HELP FUNCTION: finite y-axis range, with fallback if no finite values are available
+.rstride$safe_ylim <- function(y, default = c(0,1)){
+  y <- suppressWarnings(as.numeric(y))
+  y <- y[is.finite(y)]
+  if(length(y) == 0) return(default)
+  y_lim <- range(y)
+  if(diff(y_lim) == 0) y_lim <- y_lim + c(-0.5,0.5)
+  return(y_lim)
+}
 
 ## DEFENSIVE PROGRAMMING
 inspect_transmission_data <- function(project_dir,save_pdf = TRUE){
