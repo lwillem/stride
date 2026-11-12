@@ -180,7 +180,7 @@ age_distr_workplace[is.na(age_distr_workplace)] <- 0
 # define conditional number of contacts for all ages as the average of a selection of the the (most) active population
 # workplace_ages <- 18:69
 workplace_ages <- sort(unique(pop_usa$age[!is.na(pop_usa$workplace_id)]))
-workplace_ages_select <- 30:49
+workplace_ages_select <- 25:54 ## age range with highest labor participation rate from BLS
 cnt_workplace_conditional <- cnt_workplace * 0 # start with zero's
 cnt_workplace_conditional[workplace_ages + 1]  <- mean(cnt_workplace[workplace_ages_select + 1]) # index = age + 1
 
