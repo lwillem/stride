@@ -43,8 +43,8 @@ rm(list = ls())
 ## 0. SETTINGS                               ####
 ################################################ #
 
-steps                <- 1                     # step(s) to run now, e.g. 1, 2, c(3,4), 5
-calib_dir            <- "sim_output/calibration_SC"
+steps                <- 1:5                    # step(s) to run now, e.g. 1, 2, c(3,4), 5
+calib_dir            <- "sim_output/calibration_SC33"
 num_parallel_workers <- 3
 
 ## ---- input files (the ones that may be updated) ----
@@ -67,7 +67,7 @@ fixed <- list(
   vaccine_hesitancy_rate       = 0.14,          # ASPE/CDC q9mh-h2tw, Spartanburg 0.1443
   vaccine_hesitancy_uptake     = 0.5,           # assumption: county child coverage ~88-90%
   vaccine_hesitancy_cluster_pooltype = "School",
-  vaccine_hesitancy_num_clusters     = 7,       # assumption (not data-based)
+  vaccine_hesitancy_num_clusters     = 33,       # 33 schools impacted with exposures from SC DPH
   vaccine_hesitancy_cluster_uptake   = 0,       # assumption
   detection_probability        = 0.9,           # assumption
   tracing_efficiency_household = 0.95,          # assumption
@@ -95,21 +95,29 @@ obs <- data.frame(date = as.Date(c(
                 176,185,211,310,434,558,646,700,789,847,876,920,933,950,962,973,979,985,990,991,
                 993,996,997))
 target_final_size          <- 997          # DPH, outbreak declared over 2026-04-27
-target_adult_share         <- 87 / 990     # 87 adults of 990 cases with known age (DPH data via WSPA)
+target_adult_share         <- 87 / 997     # 87 adults of 997 cases with known age (DPH data via WSPA)
 target_share_in_quarantine <- 496 / 989    # 496 of 2,219 quarantined fell ill in quarantine; 989 cases (DPH, 2026-03-02)
 target_child_coverage      <- 0.90         # Spartanburg K-12 "just under 90%" (DPH school data, 2024-25)
 
 ## ---- how model output is compared with the targets ----
 report_lag        <- 3      # days from symptom onset to DPH report (assumption)
 min_outbreak_size <- 200    # runs below this did not take off and are excluded
+min_p_outbreak    <- 0.5    # settings where fewer runs take off are penalised in the score (the observed outbreak should not be a rare event)
+min_outbreak_runs <- 10     # settings with fewer outbreak runs are not scored (medians too noisy)
 num_obs_cases     <- 997    # adult share is measured over the first 997 cases
 
 ## ---- scan grids and seeds ----
 grid_r0             <- seq(0, 15, 3)
 num_seeds_r0        <- 10
-grid_adult_factor   <- c(0.20, 0.25, 0.30, 0.35, 0.40, 0.50)
-grid_cluster_rate   <- c(0.35, 0.40, 0.45, 0.50)
-grid_tracing_other  <- c(0.3, 0.4, 0.5)
+# grids widened 2026-11-18 after the 7- and 33-cluster runs (values at the grid edges)
+grid_adult_factor   <- c(0.3, 0.4, 0.5, 0.6, 0.7, 0.8)          # chosen: 0.45 (7 clusters), 0.60 (33)
+grid_cluster_rate   <- if (fixed$vaccine_hesitancy_num_clusters >= 20) {
+                         c(0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40)          # 33 clusters: 0.30 was the top of the old grid
+                       } else {
+                         c(0.20, 0.25, 0.30, 0.35, 0.45)          # 7 clusters: 0.25 chosen; < 0.20 gave no outbreaks
+                       }
+# previous grids: adult c(0.4, 0.5, 0.6, 0.7, 0.8, 1.0); cluster c(0.05, 0.10, 0.15, 0.20, 0.25, 0.30)
+grid_tracing_other  <- c(0.15, 0.20, 0.25, 0.30, 0.40)          # 0.3 was the bottom of the old grid c(0.3, 0.4, 0.5)
 num_seeds_scan      <- 40
 num_seeds_check     <- 100
 
@@ -174,6 +182,7 @@ get_sc_param_list <- function(st, num_seeds) {
   p$holidays_file              <- holidays_file
   p$contact_probability_rule   <- "Mean"
   p$event_log_level            <- "Transmissions"     # [PRIM]/[TRAN]/[TRACE] lines for the metrics
+  p$output_pop_snapshot        <- TRUE                # writes susceptibles_by_age.csv (coverage check)
   p$reference_hospital_data_file <- NA
   p$reference_serology_data_file <- NA
   p$immunity_profile           <- "AgeDependent"
@@ -256,7 +265,7 @@ summarise_runs <- function(m, by = c("adult_file", "cluster_rate", "tracing_othe
   out <- do.call(rbind, lapply(split(m, key), function(d) {
     ok <- d[d$num_cases >= min_outbreak_size, ]
     r  <- d[1, by, drop = FALSE]
-    r$runs <- nrow(d); r$p_outbreak <- nrow(ok) / nrow(d)
+    r$runs <- nrow(d); r$n_outbreak <- nrow(ok); r$p_outbreak <- nrow(ok) / nrow(d)
     r$coverage_5_17 <- median(d$coverage_5_17, na.rm = TRUE)
     for (k in c("num_cases", "adult_share_first", "share_traced", "share_traced_first", cum_cols))
       r[[k]] <- if (nrow(ok) > 0) median(ok[[k]]) else NA
@@ -265,22 +274,38 @@ summarise_runs <- function(m, by = c("adult_file", "cluster_rate", "tracing_othe
   rownames(out) <- NULL
   out
 }
-# fit score: mean squared log error of the cumulative curve + squared log error of the traced share
+# fit score (lower = better), sum of four terms:
+#   score_curve    mean squared log error of the cumulative curve over the DPH report dates
+#   score_traced   squared log error of the share of cases traced as contacts
+#   score_final    squared log error of the final size (median of outbreak runs, day num_days) vs 997;
+#                  penalises outbreaks that keep growing after the last DPH report
+#   score_outbreak squared log of min_p_outbreak / p_outbreak if p_outbreak < min_p_outbreak, else 0
+# settings with fewer than min_outbreak_runs outbreak runs get score NA and are listed last
 score_fit <- function(s) {
   cum_cols <- grep("^cum_", names(s), value = TRUE)
   curve  <- apply(s[, cum_cols, drop = FALSE], 1, function(x) mean((log1p(x) - log1p(obs$cum_cases))^2))
   traced <- (log(s$share_traced_first) - log(target_share_in_quarantine))^2
-  s$score_curve <- curve; s$score_traced <- traced; s$score <- curve + traced
-  s[order(s$score), ]
+  final  <- (log(s$num_cases) - log(target_final_size))^2
+  outbr  <- ifelse(s$p_outbreak < min_p_outbreak, log(min_p_outbreak / pmax(s$p_outbreak, 0.01))^2, 0)
+  s$score_curve <- curve; s$score_traced <- traced; s$score_final <- final; s$score_outbreak <- outbr
+  s$score <- ifelse(s$n_outbreak >= min_outbreak_runs, curve + traced + final + outbr, NA)
+  s[order(s$score, na.last = TRUE), ]
+}
+# warn when the best value of a scanned parameter is the lowest or highest grid value
+warn_grid_edge <- function(value, grid, name) {
+  if (isTRUE(value == min(grid)) || isTRUE(value == max(grid)))
+    message(sprintf("%s = %s is at the edge of its grid (%s): widen the grid and rerun", name, value,
+                    paste(grid, collapse = ", ")))
 }
 compare_with_targets <- function(s) {
   sel <- format(as.Date(c("2025-11-14","2025-12-16","2026-01-09","2026-01-27","2026-02-03","2026-03-03","2026-03-17")), "%Y%m%d")
-  data.frame(target = c(paste("cumulative cases", sel), "adult share (first 997)",
+  data.frame(target = c(paste("cumulative cases", sel), "final size (median of outbreak runs)",
+                        "share of runs with an outbreak (>= min_outbreak_size)", "adult share (first 997)",
                         "share of cases traced as contacts (first 997)", "coverage ages 5-17"),
-             observed = c(obs$cum_cases[match(sel, format(obs$date, "%Y%m%d"))], target_adult_share,
-                          target_share_in_quarantine, target_child_coverage),
-             model = c(unlist(s[1, paste0("cum_", sel)]), s$adult_share_first[1], s$share_traced_first[1],
-                       s$coverage_5_17[1]))
+             observed = c(obs$cum_cases[match(sel, format(obs$date, "%Y%m%d"))], target_final_size,
+                          min_p_outbreak, target_adult_share, target_share_in_quarantine, target_child_coverage),
+             model = c(unlist(s[1, paste0("cum_", sel)]), s$num_cases[1], s$p_outbreak[1],
+                       s$adult_share_first[1], s$share_traced_first[1], s$coverage_5_17[1]))
 }
 
 ################################################ #
@@ -334,7 +359,7 @@ if (3 %in% steps) {
   s <- summarise_runs(m)
   s$factor <- grid_adult_factor[match(s$adult_file, files)]
   s <- s[order(s$factor), ]
-  print(s[, c("factor", "runs", "p_outbreak", "num_cases", "adult_share_first")], row.names = FALSE)
+  print(s[, c("factor", "runs", "n_outbreak", "p_outbreak", "num_cases", "adult_share_first")], row.names = FALSE)
   if (is.unsorted(s$adult_share_first)) warning("adult share not increasing in the factor: add seeds")
   f_hat <- approx(s$adult_share_first, s$factor, xout = target_adult_share, ties = mean)$y
   if (is.na(f_hat)) stop("target adult share outside the scanned range: extend grid_adult_factor")
@@ -359,11 +384,15 @@ if (4 %in% steps) {
   project_dir <- run_design(p, '_calib_SC_step4_cluster_tracing')
   m <- run_metrics(file.path("sim_output", basename(project_dir)))
   s <- score_fit(summarise_runs(m))
-  print(s[, c("cluster_rate", "tracing_other", "p_outbreak", "num_cases", "adult_share_first",
-              "share_traced_first", "score_curve", "score_traced", "score")], row.names = FALSE, digits = 3)
+  print(s[, c("cluster_rate", "tracing_other", "n_outbreak", "p_outbreak", "num_cases", "adult_share_first",
+              "share_traced_first", "score_curve", "score_traced", "score_final", "score_outbreak", "score")],
+        row.names = FALSE, digits = 3)
+  if (is.na(s$score[1])) stop("no setting has >= min_outbreak_runs outbreak runs: add seeds or change the grids")
   st$cluster_rate  <- s$cluster_rate[1]
   st$tracing_other <- s$tracing_other[1]
   cat(sprintf("[step 4] best: cluster_rate %.2f, tracing_other %.2f\n", st$cluster_rate, st$tracing_other))
+  warn_grid_edge(st$cluster_rate, grid_cluster_rate, "cluster_rate")
+  warn_grid_edge(st$tracing_other, grid_tracing_other, "tracing_other")
   write.csv(m, file.path(calib_dir, "step4_runs.csv"), row.names = FALSE)
   write.csv(s, file.path(calib_dir, "step4_scores.csv"), row.names = FALSE)
   save_state(st)
@@ -382,6 +411,10 @@ if (5 %in% steps) {
   print(cmp, row.names = FALSE, digits = 3)
   cat(sprintf("[step 5] P(outbreak) %.2f, median final size %.0f (observed %d)\n",
               s$p_outbreak, s$num_cases, target_final_size))
+  if (s$n_outbreak < min_outbreak_runs)
+    message(sprintf("only %d outbreak runs: the medians above are unreliable", s$n_outbreak))
+  if (abs(log(s$num_cases / target_final_size)) > log(1.5))
+    message("median final size is off by more than a factor 1.5: check the cumulative curve after March")
   if (abs(s$adult_share_first - target_adult_share) > 0.02)
     message("adult share is off by > 2 percentage points: rerun step 3 with the step-4 values, then step 4 again")
   # cumulative curves: runs (grey), median (black), DPH (red)
