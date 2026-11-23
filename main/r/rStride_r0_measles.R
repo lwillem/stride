@@ -41,7 +41,7 @@ source('./bin/rstride/rStride.R')
 dir_postfix <- '_r0'
 
 # set the number of realisations per configuration set
-num_seeds  <- 5
+num_seeds  <- 10
 
 # add parameters and values to combine in a full-factorial grid
 exp_design <- expand.grid(r0                            = seq(0,16,3),
@@ -52,8 +52,8 @@ exp_design <- expand.grid(r0                            = seq(0,16,3),
                           seeding_age_min               = 1,
                           seeding_age_max               = 99,
                           disease_config_file           = "data/disease_measles_usa.xml",
-                          population_file               = "data/population_6region/pop_usa_sc_spartanburg_c1000.csv",
-                          age_contact_matrix_file       = "sim_output/20261113_091348_pop_usa_sc_spartanburg_c1000/contact_matrix_usa_sc_spartanburg_c1000.xml", #"data/contacts_usa/contact_matrix_usa_sc_spartanburg_c1000.xml",
+                          population_file               = "data/population_6region/pop_usa_sc_spartanburg_c1000_hhdense.csv",
+                          age_contact_matrix_file       = "data/contacts_usa/contact_matrix_usa_sc_spartanburg_c1000_v2.xml",
                           holidays_file                 = "data/calendar_USA_2023_2026_measles.csv",
                           stringsAsFactors = F)
 
