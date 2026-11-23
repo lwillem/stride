@@ -50,11 +50,11 @@ exp_param_list$num_rng_seeds <- 100
 # simulation horizon and start
 # calibrated to the Spartanburg 2025-26 outbreak (declared 2025-10-02, last case 2026-03-15)
 exp_param_list$num_days   <- 365
-exp_param_list$start_date <- "2025-09-01"
+exp_param_list$start_date <- "2025-09-15"
 
 # case study for measles
 exp_param_list$r0 <- 12
-exp_param_list$disease_config_file <- "data/SC_20261113_110514_r0_disease_measles_usa.xml" #"data/OH_20261022_232515_r0_disease_measles_usa.xml"
+exp_param_list$disease_config_file <- "data/SC_20261116_161125_r0_disease_measles_usa.xml" #"data/OH_20261022_232515_r0_disease_measles_usa.xml"
 
 # hospital settings
 # age-specific values taken from measles_usa_rm (2b927f4, "fixed age specific hosp prob")
@@ -96,7 +96,7 @@ exp_param_list$immunity_profile <- "AgeDependent"
 # note: immunity_measles_WI.xml and the data/immunity_6region/ files used on
 # measles_usa_rm are absent from both branches; only the dummy profile is in the tree.
 # adult susceptibility x 0.35 (calibrated: ~10% of outbreak cases are adults)
-exp_param_list$immunity_distribution_file <- "data/immunity_6region/immunity_measles_adult_SC.xml"
+exp_param_list$immunity_distribution_file <- "data/immunity_6region/immunity_measles_adult_SC_calib_f035.xml"
 exp_param_list$immunity_link_probability <- 0 # immunity is distributed by household, this is the chance of continuing to immunize the next shuffled household member instead of jumping to a new random household
 # NOTE: 0 selects the independent per-age sampler since 2026-10-06 (f57bfd4). Before that, 0 over-sampled
 # people in small households, so earlier outputs of this script are not reproduced in distribution.
@@ -120,12 +120,12 @@ exp_param_list$vaccine_distribution_file  <- "data/immunity_6region/immunity_mea
 exp_param_list$vaccine_min_age            <- 0
 exp_param_list$vaccine_max_age            <- 17
 exp_param_list$mass_immunize              <- TRUE
-exp_param_list$vaccine_hesitancy_rate     <- 0.15   # share of ALL households that is hesitant (CDC/ASPE COVID-19 adult hesitancy estimate)
+exp_param_list$vaccine_hesitancy_rate     <- 0.14   # share of ALL households that is hesitant (CDC/ASPE COVID-19 adult hesitancy estimate)
 exp_param_list$vaccine_hesitancy_uptake   <- 0.5    # relative uptake in hesitant households (0 = refuse all)
 # cluster part of the hesitant households around a few schools (low-coverage schools)
 exp_param_list$vaccine_hesitancy_cluster_pooltype <- "School"  # "None" = spread at random
-exp_param_list$vaccine_hesitancy_num_clusters     <- 7         # number of schools, drawn at random per run
-exp_param_list$vaccine_hesitancy_cluster_rate     <- 0.45      # share of households linked to those schools that is hesitant
+exp_param_list$vaccine_hesitancy_num_clusters     <- 33         # number of schools, drawn at random per run
+exp_param_list$vaccine_hesitancy_cluster_rate     <- 0.2      # share of households linked to those schools that is hesitant
 exp_param_list$vaccine_hesitancy_cluster_uptake   <- 0         # uptake in clustered hesitant households
 
 # household clustering
@@ -144,7 +144,7 @@ exp_param_list$vaccine_hesitancy_cluster_uptake   <- 0         # uptake in clust
 exp_param_list$contact_tracing_date         <- "2025-10-02" # outbreak declared
 exp_param_list$detection_probability        <- 0.9   # share of cases detected (index cases)
 exp_param_list$tracing_efficiency_household <- 0.95  # share of household contacts traced
-exp_param_list$tracing_efficiency_other     <- 0.4   # share of other contacts traced (calibrated)
+exp_param_list$tracing_efficiency_other     <- 0.2   # share of other contacts traced (calibrated)
 exp_param_list$delay_isolation_index        <- 3     # days after symptom onset (~rash) until isolation/tracing
 exp_param_list$delay_contact_tracing        <- 1     # days until traced contacts are quarantined
 exp_param_list$case_finding_capacity        <- 10000  # index cases traced per day; keep < 1e5: R writes 100000 as "1e+05", which C++ reads as 1 (0 would also stop after 1)
