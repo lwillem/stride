@@ -188,8 +188,8 @@ num_seeds_tracing  <- 100    # step 4 (one parameter only, so more seeds per val
 num_seeds_check    <- 100    # step 5
 
 ## ---- step 2b: grids and school data ----
-grid_hesitancy_uptake    <- c(0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 1.0)
-grid_cluster_rate_school <- c(0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 1.0)
+grid_hesitancy_uptake    <- c(0.6, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0)
+grid_cluster_rate_school <- c(0.10, 0.15, 0.20, 0.25, 0.30)
 num_seeds_school         <- 5       # each seed draws other cluster schools
 min_school_size          <- 10      # model schools with fewer students are left out (DPH reports them as "<10")
 # SC only: school-level data for the extra check plot in step 2b (not used in the score)
