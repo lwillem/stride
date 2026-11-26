@@ -20,23 +20,30 @@
 #
 # Calibration written out as one sequence of steps without helper functions,
 # so the order is visible and the output of each step can be checked before
-# the next one is run. Steps 1-3 and 5 do what rStride_measles_calibrate_sc.R
-# does; step 2b (added 2026-11-24) fits the school clusters to the DPH school
-# coverage data, so step 4 now calibrates the tracing efficiency only.
+# the next one is run.
+# Key mechanisms: vaccine hesitancy (households) and school clustering of
+# children from hesitant households. Exemption policy acts through the uptake
+# in hesitant households: children left unvaccinated by hesitancy = children
+# with a non-medical exemption (CDC SchoolVaxView 2025). SC is calibrated in
+# steps 2b-5; step 6 transfers the hesitancy values to the other regions.
 # Targets and sources: doc/markdown/measles_sc_calibration.md
 #
 #   STEP 0  settings: input files, fixed parameters, targets, grids  (run every session)
 #   STEP 1  population: household ids renumbered 1..N ("hhdense")
 #   STEP 2  R0 -> transmission probability (new disease file)
-#   STEP 2b school vaccination coverage: hesitancy uptake and cluster rate
+#   STEP 2b hesitancy uptake and school-cluster rate (SC)
 #           (number of cluster schools fixed as a share of schools)
-#                                           target: DPH school coverage (45-Day report)
+#                                           targets: hesitancy gap = exemption rate (5.6%),
+#                                           share of unvaccinated students in the
+#                                           cluster schools (46.8%)
 #   STEP 3  adult susceptibility factor     target: adult share of cases
 #   STEP 4  tracing efficiency "other"      targets: case curve, final size,
 #                                            share of runs that take off,
 #                                            share of cases traced
 #   STEP 5  check run with 100 seeds: model vs all targets, and the values to
 #           use in the simulation scripts
+#   STEP 6  transfer to CT, ME, MN, OH, TX: uptake from each region's exemption
+#           rate with the same rule as SC; clusters from SC (CT: own school data)
 #
 # HOW TO USE
 #   - Run from the main project folder (opt/stride), e.g. open this file in
@@ -46,8 +53,13 @@
 #     before running the next one.
 #   - Every step writes its results to `calib_dir` and the next step reads
 #     them from there. You can close R between steps: run STEP 0 again first.
-#   - When the population or contact matrix change: steps 1-5 (incl. 2b).
-#     When the child immunity file or the school data change: steps 2b-5.
+#   - County: set county_code in STEP 0. Steps 1 and 2 work for every county
+#     (SC, CT, ME, MN, OH, TX); steps 2b-6 run with county_code "SC" (step 6
+#     needs step 1 to have been run once for each other region).
+#   - calib_dir contains the date (Sys.Date()): if you continue on another day,
+#     set calib_dir to the folder of the earlier steps.
+#   - When the population or contact matrix change: steps 1-6 (incl. 2b).
+#     When the child immunity file, exemption rates or school targets change: steps 2b-6.
 #     When only the adult immunity file changes: steps 3-5.
 #   - Second round (step 5 says the adult share is off): run step 3 again
 #     (it then uses the step-4 values), then steps 4 and 5.
@@ -68,17 +80,30 @@
 rm(list = ls())
 source('./bin/rstride/rStride.R')
 
-calib_dir            <- "sim_output/calibration_SC33"   # all step results are written here
+county_code          <- "SC"                            # SC, CT, ME, MN, OH or TX
+calib_dir            <- paste0("sim_output/", Sys.Date(), "_calibration_", county_code)   # all step results are written here; one folder per county
 num_parallel_workers <- 3
 dir.create(calib_dir, showWarnings = FALSE, recursive = TRUE)
 
-## ---- input files (the ones that may be updated) ----
-pop_file_in      <- "data/population_6region/pop_usa_sc_spartanburg_c1000.csv"     # from social_contacts_usa2026.R
-contact_file     <- "data/contacts_usa/contact_matrix_usa_sc_spartanburg_c1000_v2.xml"
+## ---- input files and rates per county (the ones that may be updated) ----
+# hesitancy_rate: ASPE county "estimated hesitant" (COVID-19, Household Pulse Survey; data.cdc.gov q9mh-h2tw)
+# exemption_rate: non-medical exemptions among kindergarteners, state level, CDC SchoolVaxView 2025
+#   (policy: CT, ME medical only; SC religious; MN personal; OH, TX personal and religious;
+#    ME has no non-medical exemptions since 2021 -> 0)
+county_inputs <- list(
+  SC = list(pop = "pop_usa_sc_spartanburg_c1000.csv", contacts = "contact_matrix_usa_sc_spartanburg_c1000_v2.xml", hesitancy_rate = 0.14,  exemption_rate = 0.056),
+  CT = list(pop = "pop_usa_ct_fairfield_c1000.csv",   contacts = "contact_matrix_usa_ct_fairfield_c1000_v2.xml",   hesitancy_rate = 0.05,  exemption_rate = 0.001),
+  ME = list(pop = "pop_usa_me_piscataquis_c1000.csv", contacts = "contact_matrix_usa_me_piscataquis_c1000_v2.xml", hesitancy_rate = 0.105, exemption_rate = 0.000),
+  MN = list(pop = "pop_usa_mn_hennepin_c1000.csv",    contacts = "contact_matrix_usa_mn_hennepin_c1000_v2.xml",    hesitancy_rate = 0.062, exemption_rate = 0.068),
+  OH = list(pop = "pop_usa_oh_cuyahoga_c1000.csv",    contacts = "contact_matrix_usa_oh_cuyahoga_c1000_v2.xml",    hesitancy_rate = 0.122, exemption_rate = 0.055),
+  TX = list(pop = "pop_usa_tx_gaines_c1000.csv",      contacts = "contact_matrix_usa_tx_gaines_c1000_v2.xml",      hesitancy_rate = 0.117, exemption_rate = 0.050))
+exemption_ages <- c(5, 6)   # kindergarten: the ages at which the exemption rate is compared (steps 2b and 6)
+pop_file_in      <- file.path("data/population_6region", county_inputs[[county_code]]$pop)  # from social_contacts_usa2026.R
+contact_file     <- file.path("data/contacts_usa", county_inputs[[county_code]]$contacts)
 holidays_file    <- "data/calendar_USA_2023_2026_measles.csv"
 disease_template <- "data/disease_measles_usa.xml"                                  # natural history; b0/b1 are refitted in step 2
-adult_raw_file   <- "data/immunity_6region/immunity_measles_adult_SC.xml"           # natural immunity, ages 18+ (uncalibrated)
-child_file       <- "data/immunity_6region/immunity_measles_child_SC.xml"           # vaccine coverage, ages 0-17
+adult_raw_file   <- sprintf("data/immunity_6region/immunity_measles_adult_%s.xml", county_code)  # natural immunity, ages 18+ (uncalibrated)
+child_file       <- sprintf("data/immunity_6region/immunity_measles_child_%s.xml", county_code)  # immunity by age, ages 0-17
 
 ## ---- fixed parameters (not calibrated; sources: table 2 of the documentation) ----
 fixed <- list(
@@ -89,9 +114,10 @@ fixed <- list(
   seeding_age_min                    = 1,
   seeding_age_max                    = 17,
   contact_tracing_date               = "2025-10-02",  # outbreak declared (DPH)
-  vaccine_hesitancy_rate             = 0.14,          # ASPE/CDC q9mh-h2tw, Spartanburg 0.1443
+  vaccine_hesitancy_rate             = county_inputs[[county_code]]$hesitancy_rate,   # ASPE (SC: Spartanburg 0.1443)
   vaccine_hesitancy_cluster_pooltype = "School",
-  vaccine_hesitancy_cluster_uptake   = 0,             # assumption
+  vaccine_hesitancy_cluster_uptake   = 0,             # calibration baseline; a scenario parameter later
+                                                      # (how do cases change when uptake rises in the clusters?)
   # used only if step 2b has not been run (step 2b fits these two):
   vaccine_hesitancy_uptake           = 0.5,
   vaccine_hesitancy_cluster_rate     = 0.20,
@@ -107,13 +133,20 @@ fixed <- list(
   isolation_duration_contact         = 21             # DPH: 21-day quarantine
 )
 
+## ---- school coverage targets per county (2025-26 school year) ----
+# One row per target: coverage (with the ages it refers to; a check only),
+# cluster_school_share and unvaccinated_share_in_clusters (SC: step 2b target).
+# Sources are in the file. Counties without school-level data use the SC share.
+school_targets_file <- "data/immunity_6region/school_coverage_targets_2025-26.csv"
+school_targets      <- read.csv(school_targets_file, stringsAsFactors = FALSE)
+school_targets      <- school_targets[school_targets$county_code == county_code, ]
+print(school_targets[, c("target", "age_min", "age_max", "value", "measure")], row.names = FALSE)
+
 ## ---- share of schools that are hesitant clusters ----
 # Step 1 turns this into the number of cluster schools (vaccine_hesitancy_num_clusters)
-# = round(share x schools in the population file); SC: 90 schools -> 23.
-# Spartanburg 2025-26 DPH 45-Day report: 24 of 93 schools below 85% coverage.
-# A share (not a count) so that the same rule can be used for counties without
-# school-level data.
-cluster_school_share <- 24 / 93
+# = round(share x schools in the population file); SC: 24 of 93 schools below 85%
+# -> 25.8% of 90 schools = 23.
+cluster_school_share <- school_targets$value[school_targets$target == "cluster_school_share"]
 
 ## ---- tracing "other" used in steps 2b and 3 before step 4 has been run ----
 # (in a second round, step 3 reads the step-4 result from calib_dir instead)
@@ -152,16 +185,20 @@ num_seeds_scan     <- 40     # step 3
 num_seeds_tracing  <- 100    # step 4 (one parameter only, so more seeds per value)
 num_seeds_check    <- 100    # step 5
 
-## ---- step 2b: school coverage data and grids ----
-school_data_file         <- "data/immunity_6region/45_Day_Report_25-26_cleaned.csv"   # SC DPH 45-Day Immunization Report 2025-26
-                                                                                     # (cleaned by clean_sc_45day_report.R; .csv or .xlsx)
+## ---- step 2b: grids and school data ----
+grid_hesitancy_uptake    <- c(0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 1.0)
+grid_cluster_rate_school <- c(0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 1.0)
+num_seeds_school         <- 5       # each seed draws other cluster schools
+min_school_size          <- 10      # model schools with fewer students are left out (DPH reports them as "<10")
+# SC only: school-level data for the extra check plot in step 2b (not used in the score)
+school_data_file         <- "data/immunity_6region/45_Day_Report_25-26_cleaned.csv"   # cleaned by clean_sc_45day_report.R
 school_data_county       <- "Spartanburg"
-min_school_size          <- 10      # DPH shows schools with < 10 students as "<10"; model schools this small are left out too
-school_coverage_probs    <- c(0.01, 0.05, 0.10, 0.25, 0.50)   # lower half of the school coverage distribution
-grid_hesitancy_uptake    <- c(0.5, 0.6, 0.7, 0.8, 0.9)
-grid_cluster_rate_school <- c(0.2, 0.3, 0.4, 0.5, 0.6, 0.8, 1.0)
-num_seeds_school         <- 10      # each seed draws other cluster schools
-step2b_delete_snapshots  <- TRUE    # population_snapshot.csv is ~14 MB per run; deleted after reading
+step2b_delete_snapshots  <- TRUE    # population_snapshot.csv is ~14 MB per run; deleted after reading (steps 2b and 6)
+
+## ---- step 6: transfer to the other regions ----
+regions_transfer     <- c("CT", "ME", "MN", "OH", "TX")
+grid_uptake_transfer <- seq(0, 1, by = 0.1)
+num_seeds_transfer   <- 5
 
 ## ---- STRIDE parameters shared by steps 3-5 ----
 # Steps 3-5 copy this list and add: population_file, disease_config_file,
@@ -247,7 +284,7 @@ rm(pop)
 #          (ages 1-99) in a fully susceptible population over 40 days, for a
 #          grid of R0 values, then a linear fit R0 = b0 + b1 * p.
 # INPUTS   step 1: calib_dir/step1_population.csv; contact_file; disease_template
-# OUTPUTS  data/SC_<run_tag>_disease_measles_usa.xml (new b0, b1);
+# OUTPUTS  data/<county_code>_<run_tag>_disease_measles_usa.xml (new b0, b1);
 #          calib_dir/step2_disease.csv (file, b0, b1, transmission probability at R0 = 12)
 #
 # CHECK BEFORE CONTINUING
@@ -275,7 +312,7 @@ step2_project <- run_rStride(exp_design = step2_design, dir_postfix = '_r0', ign
 analyse_transmission_data_for_r0(step2_project)
 
 step2_fit_file     <- list.files(step2_project, pattern = "_disease_.*\\.xml$", full.names = TRUE)[1]
-step2_disease_file <- file.path("data", paste0("SC_", basename(step2_fit_file)))
+step2_disease_file <- file.path("data", paste0(county_code, "_", basename(step2_fit_file)))
 file.copy(step2_fit_file, step2_disease_file, overwrite = FALSE)
 
 step2_xml <- readLines(step2_disease_file)
@@ -289,72 +326,76 @@ print(step2_result)
 
 
 #############################################################################
-## STEP 2b: SCHOOL VACCINATION COVERAGE (hesitancy and school clusters)   ####
+## STEP 2b: VACCINE HESITANCY AND SCHOOL CLUSTERS (SC)                    ####
 #############################################################################
-# PURPOSE  Choose how vaccine hesitancy is spread over households and schools,
-#          so that the simulated coverage per school at the start (t = 0)
-#          matches the SC DPH 45-Day Immunization Report for Spartanburg County:
-#            vaccine_hesitancy_uptake        relative uptake in hesitant households (all schools)   fitted
-#            vaccine_hesitancy_cluster_rate  share of the households linked to the cluster
-#                                            schools that is hesitant                                fitted
-#            vaccine_hesitancy_num_clusters  number of cluster schools from step 1
-#                                            (cluster_school_share x schools in the population)     FIXED
-#          vaccine_hesitancy_rate stays at the ASPE value (0.14) and the cluster
-#          uptake at 0. Only t = 0 is needed: every run lasts 1 day and writes
-#          population_snapshot.csv (immunity and school of every person).
+# PURPOSE  Choose how vaccine hesitancy is spread over households and schools
+#          in Spartanburg at the start of the simulation (t = 0):
+#            vaccine_hesitancy_uptake        uptake in hesitant households outside the
+#                                            cluster schools (the policy lever)      fitted
+#            vaccine_hesitancy_cluster_rate  share of the households linked to the
+#                                            cluster schools that is hesitant          fitted
+#            vaccine_hesitancy_num_clusters  number of cluster schools, from step 1
+#                                            (cluster_school_share x schools)          fixed
+#            vaccine_hesitancy_cluster_uptake  uptake in clustered hesitant households:
+#                                            0 here; a scenario parameter later         fixed
+#          vaccine_hesitancy_rate stays at the ASPE value.
+#
+#          Targets:
+#            hesitancy_gap   = immunity at ages 5-6 without hesitancy (from the child
+#                              immunity file) minus immunity at ages 5-6 with hesitancy
+#                            = the non-medical exemption rate (kindergarten, CDC
+#                              SchoolVaxView 2025; SC 5.6%).
+#                              Assumption: children unvaccinated because of hesitancy
+#                              are the children with a non-medical exemption.
+#            concentration   = share of all non-immune school attendees who are in the
+#                              lowest-coverage cluster_school_share of the schools
+#                              (SC 45-Day report: 46.8% in the lowest 24 of 93 schools)
 #          Score (lower = better):
-#            score_county    ((county coverage model - DPH) / 0.01)^2
-#            score_quantiles mean over school_coverage_probs of ((quantile model - DPH) / 0.05)^2
-#          so 1 point of county coverage weighs as much as 5 points on a quantile.
-#          Only the lower half of the school distribution is compared: the child
-#          immunity file caps immunity at ~94-96%, so schools at 97-100% in the
-#          DPH data cannot be reproduced.
-#          Model coverage = share immune; DPH coverage = share with a complete
-#          immunization certificate (all required vaccines). Not the same measure.
-# INPUTS   step 1 (population), step 2 (disease file, only needed to start STRIDE);
-#          school_data_file (columns County, School Name, Type, Grade Range,
-#          Total Students, Immunizations); .csv, or .xlsx (needs readxl)
-# OUTPUTS  calib_dir/step2b_data_schools.csv (DPH schools used),
-#          printed: schools in the population file and the number of cluster schools,
-#          calib_dir/step2b_schools.csv (coverage per school per run),
+#            score_gap           ((hesitancy_gap - exemption rate) / 0.005)^2
+#            score_concentration ((concentration - target) / 0.05)^2
+#          so 0.5 percentage point on the gap weighs as much as 5 points on the
+#          concentration. County coverage (DPH 88.8%, PK-12) is printed as a check only.
+#          Only t = 0 is needed: every run lasts 1 day and writes
+#          population_snapshot.csv (age, school and immunity of every person).
+# INPUTS   step 1 (population, number of cluster schools), step 2 (disease file,
+#          only needed to start STRIDE); exemption rate and school targets (STEP 0)
+# OUTPUTS  calib_dir/step2b_schools.csv (coverage per school per run),
 #          calib_dir/step2b_runs.csv (one row per run),
 #          calib_dir/step2b_scores.csv (one row per combination, best first),
-#          calib_dir/step2b_best.csv (chosen uptake, number of clusters, cluster rate),
+#          calib_dir/step2b_best.csv (chosen uptake and cluster rate; number of clusters),
 #          calib_dir/step2b_school_coverage.pdf (sorted school coverage: DPH vs best combination)
 #
 # CHECK BEFORE CONTINUING
-#   - best row: county coverage within ~1 point of DPH, unvaccinated students
-#     and schools below 90% close to DPH (both printed)
-#   - the plot: the low tail (most hesitant schools) and the median close to DPH
+#   - best row: hesitancy_gap within ~0.5 point of the exemption rate (5.6%),
+#     concentration within ~5 points of 46.8%
+#   - check: coverage_3_18 close to the DPH coverage (88.8%)
 #   - the chosen values are not at the edge of their grids
-#   - if the low tail of the plot is clearly off, the fixed share of cluster
-#     schools may not suit this county (try another share, e.g. 11/93 or 43/93)
 #   - compare the top rows: if their scores are close, seed noise can decide the
-#     order; prefer the simpler pattern or rerun the top rows with more seeds
+#     order; prefer the middle of that group or rerun with more seeds
 
+if (county_code != "SC") stop("step 2b calibrates SC; other counties get their values in step 6")
 step1_result <- read.csv(file.path(calib_dir, "step1_population.csv"), stringsAsFactors = FALSE)
 step2_result <- read.csv(file.path(calib_dir, "step2_disease.csv"), stringsAsFactors = FALSE)
 
-# 2b-1. DPH school coverage
-if (grepl("\\.csv$", school_data_file)) {
-  school_data <- read.csv(school_data_file, stringsAsFactors = FALSE, check.names = FALSE)
-} else {
-  school_data <- as.data.frame(readxl::read_excel(school_data_file))
-}
-school_data <- school_data[!is.na(school_data$County) & school_data$County == school_data_county, ]
-school_data$students <- suppressWarnings(as.numeric(school_data$`Total Students`))   # "<10" becomes NA
-school_data$coverage <- as.numeric(school_data$Immunizations)
-school_data <- school_data[!is.na(school_data$students) & !is.na(school_data$coverage), ]
-data_county_coverage <- sum(school_data$students * school_data$coverage) / sum(school_data$students)
-data_unvaccinated    <- sum(school_data$students * (1 - school_data$coverage))
-data_quantiles       <- quantile(school_data$coverage, school_coverage_probs)
-q_cols               <- paste0("q", round(100 * school_coverage_probs))
-write.csv(school_data[, c("School Name", "Type", "Grade Range", "students", "coverage")],
-          file.path(calib_dir, "step2b_data_schools.csv"), row.names = FALSE)
-cat(sprintf("[step 2b] DPH %s: %d schools, %d students, coverage %.3f, unvaccinated %.0f, below 90%%: %d, lowest %.2f\n",
-            school_data_county, nrow(school_data), sum(school_data$students), data_county_coverage,
-            data_unvaccinated, sum(school_data$coverage < 0.9), min(school_data$coverage)))
-print(round(data_quantiles, 3))
+# 2b-1. targets
+target_gap           <- county_inputs[[county_code]]$exemption_rate
+target_concentration <- school_targets$value[school_targets$target == "unvaccinated_share_in_clusters"]
+check_coverage       <- school_targets[school_targets$target == "coverage", ]
+cov_cols             <- sprintf("coverage_%d_%d", check_coverage$age_min, check_coverage$age_max)
+
+# immunity at ages 5-6 without hesitancy: child immunity file, weighted by the
+# number of school attendees of each age in the population
+child_txt   <- readLines(child_file, warn = FALSE)
+child_m     <- regmatches(child_txt, regexec("<age([0-9]+)>([-0-9.eE]+)</age[0-9]+>", child_txt))
+child_m     <- child_m[lengths(child_m) == 3]
+child_imm   <- setNames(as.numeric(sapply(child_m, `[`, 3)), sapply(child_m, `[`, 2))
+pop_ages    <- read.csv(step1_result$pop_file, colClasses = c("integer", "NULL", "integer", "NULL", "NULL", "NULL"))
+pop_ages    <- pop_ages$age[!is.na(pop_ages$school_id) & pop_ages$school_id != 0 & pop_ages$age %in% exemption_ages]
+base_immunity_5_6 <- mean(child_imm[as.character(pop_ages)])
+cat(sprintf("[step 2b] SC targets: hesitancy gap at ages %s = %.3f (exemption rate); concentration %.3f\n",
+            paste(exemption_ages, collapse = "-"), target_gap, target_concentration))
+cat(sprintf("[step 2b] immunity at ages %s without hesitancy (child file): %.4f -> target immunity with hesitancy %.4f\n",
+            paste(exemption_ages, collapse = "-"), base_immunity_5_6, base_immunity_5_6 - target_gap))
 
 # 2b-2. number of cluster schools: from step 1 (cluster_school_share x schools)
 if (is.null(step1_result$cluster_schools)) stop("step1_population.csv has no cluster_schools: rerun step 1")
@@ -377,91 +418,108 @@ step2b_numeric <- unlist(step2b_param[sapply(step2b_param, is.numeric)])
 if (any(abs(step2b_numeric) >= 1e5, na.rm = TRUE)) stop("a numeric parameter >= 1e5 would be written as 1e+05 (read as 1 by STRIDE)")
 set.seed(2026)   # fixes which rng seeds go to which combination, so a rerun gives the same result
 step2b_design  <- .rstride$get_full_grid_exp_design(exp_param_list = step2b_param, num_rng_seeds = step2b_param$num_rng_seeds)
-step2b_project <- run_rStride(step2b_design, '_calib_SC_step2b_school_coverage', remove_run_output = FALSE,
-                              num_parallel_workers = num_parallel_workers)
+step2b_project <- run_rStride(step2b_design, paste0('_calib_', county_code, '_step2b_school_coverage'),
+                              remove_run_output = FALSE, num_parallel_workers = num_parallel_workers)
 
-# 2b-4. coverage per school in every run (schools with >= min_school_size students)
+# 2b-4. per run: hesitancy gap at ages 5-6, concentration in the lowest schools, school coverage
 step2b_summary <- read.csv(file.path(step2b_project, paste0(basename(step2b_project), "_summary.csv")), stringsAsFactors = FALSE)
 step2b_runs    <- data.frame()
 step2b_schools <- data.frame()
 for (i in seq_len(nrow(step2b_summary))) {
   snap_file <- file.path(step2b_summary$output_prefix[i], "population_snapshot.csv")
   snap <- read.csv(snap_file, colClasses = c("integer", "NULL", "integer", "NULL", "NULL", "NULL", "character"))
-  snap <- snap[snap$school_id != 0, ]
+  snap <- snap[snap$school_id != 0, ]                       # school attendees
+  snap$immune <- snap$immunity_status == "immune"
+  # schools with >= min_school_size students, sorted by coverage
   sch_students <- as.numeric(table(snap$school_id))
-  sch_immune   <- as.numeric(tapply(snap$immunity_status == "immune", snap$school_id, sum))
+  sch_immune   <- as.numeric(tapply(snap$immune, snap$school_id, sum))
   sch_id       <- sort(unique(snap$school_id))
   keep         <- sch_students >= min_school_size
-  sch_coverage <- sch_immune[keep] / sch_students[keep]
+  sch_students <- sch_students[keep]; sch_immune <- sch_immune[keep]; sch_id <- sch_id[keep]
+  sch_coverage <- sch_immune / sch_students
+  is_low       <- seq_along(sch_id) %in% order(sch_coverage)[seq_len(round(cluster_school_share * length(sch_id)))]  # lowest schools
+  # coverage at the ages of the check targets
+  run_cov <- numeric(0)
+  for (k in seq_len(nrow(check_coverage))) {
+    at_age  <- snap$age >= check_coverage$age_min[k] & snap$age <= check_coverage$age_max[k] & snap$school_id %in% sch_id
+    run_cov <- c(run_cov, mean(snap$immune[at_age]))
+  }
+  immunity_5_6 <- mean(snap$immune[snap$age %in% exemption_ages])
   step2b_runs <- rbind(step2b_runs, data.frame(
-    run             = basename(step2b_summary$output_prefix[i]),
-    uptake          = step2b_summary$vaccine_hesitancy_uptake[i],
-    num_clusters    = step2b_summary$vaccine_hesitancy_num_clusters[i],
-    cluster_rate    = step2b_summary$vaccine_hesitancy_cluster_rate[i],
-    schools         = sum(keep),
-    students        = sum(sch_students[keep]),
-    county_coverage = sum(sch_immune[keep]) / sum(sch_students[keep]),
-    unvaccinated    = sum(sch_students[keep]) - sum(sch_immune[keep]),
-    below_90        = sum(sch_coverage < 0.9),
-    below_85        = sum(sch_coverage < 0.85),
-    lowest          = min(sch_coverage),
-    t(setNames(quantile(sch_coverage, school_coverage_probs), q_cols))))
+    run                 = basename(step2b_summary$output_prefix[i]),
+    uptake              = step2b_summary$vaccine_hesitancy_uptake[i],
+    num_clusters        = step2b_summary$vaccine_hesitancy_num_clusters[i],
+    cluster_rate        = step2b_summary$vaccine_hesitancy_cluster_rate[i],
+    immunity_5_6        = immunity_5_6,
+    hesitancy_gap       = base_immunity_5_6 - immunity_5_6,
+    concentration       = sum(sch_students[is_low] - sch_immune[is_low]) / sum(sch_students - sch_immune),
+    coverage_all        = sum(sch_immune) / sum(sch_students),
+    coverage_low        = sum(sch_immune[is_low]) / sum(sch_students[is_low]),
+    coverage_rest       = sum(sch_immune[!is_low]) / sum(sch_students[!is_low]),
+    below_90            = sum(sch_coverage < 0.90),
+    below_85            = sum(sch_coverage < 0.85),
+    lowest              = min(sch_coverage),
+    t(setNames(run_cov, cov_cols))))
   step2b_schools <- rbind(step2b_schools, data.frame(
     run = basename(step2b_summary$output_prefix[i]), uptake = step2b_summary$vaccine_hesitancy_uptake[i],
-    num_clusters = step2b_summary$vaccine_hesitancy_num_clusters[i],
     cluster_rate = step2b_summary$vaccine_hesitancy_cluster_rate[i],
-    school_id = sch_id[keep], students = sch_students[keep], coverage = sch_coverage))
+    school_id = sch_id, students = sch_students, coverage = sch_coverage))
   if (step2b_delete_snapshots) file.remove(snap_file)
 }
 write.csv(step2b_runs, file.path(calib_dir, "step2b_runs.csv"), row.names = FALSE)
 write.csv(step2b_schools, file.path(calib_dir, "step2b_schools.csv"), row.names = FALSE)
 
 # 2b-5. medians per combination and score
-step2b_scores <- aggregate(step2b_runs[, c("county_coverage", "unvaccinated", "below_90", "below_85", "lowest", q_cols)],
-                           by = list(uptake = step2b_runs$uptake, num_clusters = step2b_runs$num_clusters,
-                                     cluster_rate = step2b_runs$cluster_rate),
+step2b_scores <- aggregate(step2b_runs[, c("hesitancy_gap", "concentration", cov_cols, "coverage_low", "coverage_rest",
+                                           "below_90", "below_85", "lowest")],
+                           by = list(uptake = step2b_runs$uptake, cluster_rate = step2b_runs$cluster_rate),
                            FUN = median)
-step2b_scores$score_county    <- ((step2b_scores$county_coverage - data_county_coverage) / 0.01)^2
-step2b_scores$score_quantiles <- rowMeans(((as.matrix(step2b_scores[, q_cols]) -
-                                            matrix(data_quantiles, nrow(step2b_scores), length(q_cols), byrow = TRUE)) / 0.05)^2)
-step2b_scores$score           <- step2b_scores$score_county + step2b_scores$score_quantiles
+step2b_scores$score_gap           <- ((step2b_scores$hesitancy_gap - target_gap) / 0.005)^2
+step2b_scores$score_concentration <- ((step2b_scores$concentration - target_concentration) / 0.05)^2
+step2b_scores$score               <- step2b_scores$score_gap + step2b_scores$score_concentration
 step2b_scores <- step2b_scores[order(step2b_scores$score), ]
 write.csv(step2b_scores, file.path(calib_dir, "step2b_scores.csv"), row.names = FALSE)
-cat(sprintf("DPH: coverage %.3f, unvaccinated %.0f, below 90%%: %d, below 85%%: %d, lowest %.2f, quantiles %s\n",
-            data_county_coverage, data_unvaccinated, sum(school_data$coverage < 0.9), sum(school_data$coverage < 0.85),
-            min(school_data$coverage),
-            paste(round(data_quantiles, 3), collapse = " ")))
+cat(sprintf("targets: hesitancy gap %.3f, concentration %.3f; check: %s\n", target_gap, target_concentration,
+            paste(sprintf("coverage ages %d-%d %.3f", check_coverage$age_min, check_coverage$age_max, check_coverage$value), collapse = ", ")))
 print(head(step2b_scores, 10), row.names = FALSE, digits = 3)
 
 # 2b-6. best combination
-step2b_best <- data.frame(vaccine_hesitancy_rate           = fixed$vaccine_hesitancy_rate,
+step2b_best <- data.frame(county_code                      = county_code,
+                          vaccine_hesitancy_rate           = fixed$vaccine_hesitancy_rate,
                           vaccine_hesitancy_uptake         = step2b_scores$uptake[1],
-                          vaccine_hesitancy_num_clusters   = step2b_scores$num_clusters[1],
+                          vaccine_hesitancy_num_clusters   = step2b_num_clusters,
                           vaccine_hesitancy_cluster_rate   = step2b_scores$cluster_rate[1],
                           vaccine_hesitancy_cluster_uptake = fixed$vaccine_hesitancy_cluster_uptake,
                           cluster_school_share = step1_result$cluster_school_share, schools_in_population = step1_result$schools,
+                          exemption_rate = target_gap, base_immunity_5_6 = base_immunity_5_6,
+                          hesitancy_gap = step2b_scores$hesitancy_gap[1], concentration = step2b_scores$concentration[1],
                           score = step2b_scores$score[1], project = basename(step2b_project))
 write.csv(step2b_best, file.path(calib_dir, "step2b_best.csv"), row.names = FALSE)
 print(step2b_best)
 if (step2b_best$vaccine_hesitancy_uptake %in% range(grid_hesitancy_uptake))          message("CHECK: uptake is at the edge of its grid")
 if (step2b_best$vaccine_hesitancy_cluster_rate %in% range(grid_cluster_rate_school)) message("CHECK: cluster rate is at the edge of its grid")
 
-# 2b-7. sorted school coverage: DPH (red) vs the runs of the best combination (grey)
-step2b_best_schools <- step2b_schools[step2b_schools$uptake == step2b_best$vaccine_hesitancy_uptake &
-                                      step2b_schools$num_clusters == step2b_best$vaccine_hesitancy_num_clusters &
-                                      step2b_schools$cluster_rate == step2b_best$vaccine_hesitancy_cluster_rate, ]
+# 2b-7. sorted school coverage, DPH (red) vs the runs of the best combination (grey)
+school_data <- read.csv(school_data_file, stringsAsFactors = FALSE, check.names = FALSE)
+school_data <- school_data[!is.na(school_data$County) & school_data$County == school_data_county, ]
+school_data$students <- suppressWarnings(as.numeric(school_data$`Total Students`))   # "<10" becomes NA
+school_data <- school_data[!is.na(school_data$students) & !is.na(school_data$Immunizations), ]
+dph_coverage <- sort(as.numeric(school_data$Immunizations))
+best_schools <- step2b_schools[step2b_schools$uptake == step2b_best$vaccine_hesitancy_uptake &
+                               step2b_schools$cluster_rate == step2b_best$vaccine_hesitancy_cluster_rate, ]
 pdf(file.path(calib_dir, "step2b_school_coverage.pdf"), 8, 5)
-plot(seq_along(school_data$coverage) / nrow(school_data), sort(school_data$coverage), type = "n", ylim = c(0, 1),
+plot(seq_along(dph_coverage) / length(dph_coverage), dph_coverage, type = "n", ylim = c(0, 1),
      xlab = "schools, sorted by coverage (share of schools)", ylab = "coverage",
-     main = sprintf("uptake %.1f, %d clusters, cluster rate %.1f", step2b_best$vaccine_hesitancy_uptake,
+     main = sprintf("uptake %.2f, %d clusters, cluster rate %.2f", step2b_best$vaccine_hesitancy_uptake,
                     step2b_best$vaccine_hesitancy_num_clusters, step2b_best$vaccine_hesitancy_cluster_rate))
-for (r in unique(step2b_best_schools$run)) {
-  cv <- sort(step2b_best_schools$coverage[step2b_best_schools$run == r])
+for (r in unique(best_schools$run)) {
+  cv <- sort(best_schools$coverage[best_schools$run == r])
   lines(seq_along(cv) / length(cv), cv, col = "grey60")
 }
-lines(seq_along(school_data$coverage) / nrow(school_data), sort(school_data$coverage), col = "red", lwd = 2)
-abline(h = 0.9, lty = 3)
-legend("bottomright", c("model runs, best combination", "DPH 45-Day report"), col = c("grey60", "red"), lwd = c(1, 2), bty = "n")
+lines(seq_along(dph_coverage) / length(dph_coverage), dph_coverage, col = "red", lwd = 2)
+abline(h = 0.85, lty = 3); abline(v = cluster_school_share, lty = 3)
+legend("bottomright", c("model runs, best combination", "DPH 45-Day report 2025-26"),
+       col = c("grey60", "red"), lwd = c(1, 2), bty = "n")
 dev.off()
 
 
@@ -472,7 +530,7 @@ dev.off()
 #          cases: immunity_new = 1 - f * (1 - immunity_raw) for ages >= 18.
 #          Simulates every factor in grid_adult_factor and interpolates the
 #          factor at the target share.
-# INPUTS   step 1 (population), step 2 (disease file), step 2b (hesitancy and
+# INPUTS   SC only. step 1 (population), step 2 (disease file), step 2b (hesitancy and
 #          school clusters); adult_raw_file; tracing "other": start value (first
 #          round) or calib_dir/step4_best.csv (second round)
 # OUTPUTS  one adult file per factor (..._calib_fXXX.xml, scan only);
@@ -487,6 +545,7 @@ dev.off()
 #   - each factor has >= 10 outbreak runs (n_outbreak); otherwise add seeds
 #   - the chosen factor is not the lowest or highest grid value
 
+if (county_code != "SC") stop("steps 3-5 calibrate to the SC outbreak data: for other counties run steps 1, 2 and 2b only")
 step1_result <- read.csv(file.path(calib_dir, "step1_population.csv"), stringsAsFactors = FALSE)
 step2_result <- read.csv(file.path(calib_dir, "step2_disease.csv"), stringsAsFactors = FALSE)
 
@@ -623,6 +682,7 @@ if (any(step3_by_factor$n_outbreak < min_outbreak_runs)) message("CHECK: some fa
 #     seed noise can decide the order; prefer values in the middle of that group
 #     or rerun the top rows with more seeds
 
+if (county_code != "SC") stop("steps 3-5 calibrate to the SC outbreak data: for other counties run steps 1, 2 and 2b only")
 step1_result <- read.csv(file.path(calib_dir, "step1_population.csv"), stringsAsFactors = FALSE)
 step2_result <- read.csv(file.path(calib_dir, "step2_disease.csv"), stringsAsFactors = FALSE)
 step3_result <- read.csv(file.path(calib_dir, "step3_adult_factor.csv"), stringsAsFactors = FALSE)
@@ -739,6 +799,7 @@ if (step4_best$tracing_other %in% range(grid_tracing_other)) message("CHECK: tra
 #     surge (accepted limitation); the plot shows how far it is off
 #   - coverage ages 5-17 vs 88.8% (DPH 2025-26; 82% before step 2b was added, Nov 2026)
 
+if (county_code != "SC") stop("steps 3-5 calibrate to the SC outbreak data: for other counties run steps 1, 2 and 2b only")
 step1_result <- read.csv(file.path(calib_dir, "step1_population.csv"), stringsAsFactors = FALSE)
 step2_result <- read.csv(file.path(calib_dir, "step2_disease.csv"), stringsAsFactors = FALSE)
 step3_result <- read.csv(file.path(calib_dir, "step3_adult_factor.csv"), stringsAsFactors = FALSE)
@@ -835,18 +896,169 @@ dev.off()
 calibrated_parameters <- data.frame(
   parameter = c("population_file", "age_contact_matrix_file", "disease_config_file", "transmission_probability (r0 = 12)",
                 "immunity_distribution_file", "adult susceptibility factor", "vaccine_distribution_file",
+                "non-medical exemption rate (CDC SchoolVaxView 2025)", "cluster_school_share",
                 "vaccine_hesitancy_rate", "vaccine_hesitancy_uptake", "vaccine_hesitancy_num_clusters",
                 "vaccine_hesitancy_cluster_rate", "vaccine_hesitancy_cluster_uptake", "tracing_efficiency_other",
                 "tracing_efficiency_household", "detection_probability", "case_finding_capacity",
                 "start_date", "num_days", "contact_tracing_date"),
   value = c(step1_result$pop_file, contact_file, step2_result$disease_file, round(step2_result$transmission_probability, 4),
             step3_result$adult_file, step3_result$factor, child_file,
+            county_inputs[[county_code]]$exemption_rate, cluster_school_share,
             fixed$vaccine_hesitancy_rate, step2b_best$vaccine_hesitancy_uptake, step2b_best$vaccine_hesitancy_num_clusters,
             step2b_best$vaccine_hesitancy_cluster_rate, fixed$vaccine_hesitancy_cluster_uptake, step4_best$tracing_other,
             fixed$tracing_efficiency_household, fixed$detection_probability, fixed$case_finding_capacity,
             fixed$start_date, fixed$num_days, fixed$contact_tracing_date),
   source = c("step 1", "input", "step 2", "step 2", "step 3", "step 3", "input",
-             "fixed", step2b_source, step2b_source, step2b_source, "fixed", "step 4", "fixed", "fixed", "fixed",
+             "input", "input (school data)",
+             "fixed", step2b_source, step2b_source, step2b_source, "fixed (scenario parameter)", "step 4", "fixed", "fixed", "fixed",
              "fixed", "fixed", "fixed"))
 write.csv(calibrated_parameters, file.path(calib_dir, "calibrated_parameters.csv"), row.names = FALSE)
 print(calibrated_parameters, row.names = FALSE)
+
+
+#############################################################################
+## STEP 6: TRANSFER TO THE OTHER REGIONS (vaccine hesitancy uptake)       ####
+#############################################################################
+# PURPOSE  Set the hesitancy parameters of CT, ME, MN, OH and TX from the SC
+#          calibration, with exemption policy acting through the uptake:
+#            vaccine_hesitancy_rate          the region's ASPE value          (data)
+#            cluster_school_share            the region's school data (CT) or
+#                                            the SC value (others)            (data / SC)
+#            vaccine_hesitancy_cluster_rate  the SC value from step 2b        (SC)
+#            vaccine_hesitancy_cluster_uptake 0, as in SC (scenario parameter) (SC)
+#            vaccine_hesitancy_uptake        chosen so that the hesitancy gap at
+#                                            ages 5-6 equals the region's
+#                                            non-medical exemption rate       (same rule as SC)
+#          The same rule as in step 2b: children left unvaccinated by hesitancy
+#          = children with a non-medical exemption. A stricter policy (fewer
+#          exemptions) therefore gives a higher uptake.
+#          For every region: 1-day runs for every uptake in grid_uptake_transfer;
+#          the uptake is interpolated where the median gap equals the exemption rate.
+#          If the clusters alone already leave more children unvaccinated than the
+#          exemption rate (gap at uptake 1 > exemption rate), the uptake is set to
+#          1 and flagged: the clusters, not the policy, then set the gap.
+#          The regions' coverage data are printed as a check, not used as targets.
+# INPUTS   SC step 2b (calib_dir/step2b_best.csv) and step 2 (disease file, only
+#          needed to start STRIDE); for every region: its _hhdense population
+#          (run step 1 with that county_code once), contact matrix, child and adult
+#          immunity files, ASPE rate and exemption rate (county_inputs, STEP 0)
+#          and its school targets (school_coverage_targets_2025-26.csv)
+# OUTPUTS  calib_dir/step6_runs.csv (one row per run),
+#          calib_dir/step6_region_parameters.csv (one row per region, SC included):
+#          the hesitancy values to use in the region and policy scenario scripts
+#
+# CHECK BEFORE USING THE VALUES
+#   - uptake is ordered by policy: medical-only states (CT, ME) highest
+#   - flagged regions (uptake set to 1): their gap is set by the clusters
+#   - coverage at the data ages next to the regions' data: large differences
+#     point to the ASPE rate, the child immunity file or the cluster pattern
+
+if (county_code != "SC") stop("step 6 starts from the SC calibration: set county_code <- \"SC\" and rerun STEP 0")
+step2_result <- read.csv(file.path(calib_dir, "step2_disease.csv"), stringsAsFactors = FALSE)
+step2b_best  <- read.csv(file.path(calib_dir, "step2b_best.csv"), stringsAsFactors = FALSE)
+all_targets  <- read.csv(school_targets_file, stringsAsFactors = FALSE)
+
+step6_runs    <- data.frame()
+step6_regions <- data.frame(region = "SC", hesitancy_rate = step2b_best$vaccine_hesitancy_rate,
+                            exemption_rate = step2b_best$exemption_rate,
+                            uptake = step2b_best$vaccine_hesitancy_uptake,
+                            cluster_school_share = step2b_best$cluster_school_share,
+                            num_clusters = step2b_best$vaccine_hesitancy_num_clusters,
+                            cluster_rate = step2b_best$vaccine_hesitancy_cluster_rate,
+                            cluster_uptake = step2b_best$vaccine_hesitancy_cluster_uptake,
+                            gap_at_uptake_1 = NA, flag = "calibrated (step 2b)")
+
+for (region in regions_transfer) {
+  # 6a. inputs of this region
+  r_pop      <- sub("\\.csv$", "_hhdense.csv", file.path("data/population_6region", county_inputs[[region]]$pop))
+  if (!file.exists(r_pop)) stop(r_pop, " not found: run step 1 with county_code <- \"", region, "\" first")
+  r_child    <- sprintf("data/immunity_6region/immunity_measles_child_%s.xml", region)
+  r_adult    <- sprintf("data/immunity_6region/immunity_measles_adult_%s.xml", region)
+  r_targets  <- all_targets[all_targets$county_code == region, ]
+  r_share    <- r_targets$value[r_targets$target == "cluster_school_share"]
+  r_coverage <- r_targets[r_targets$target == "coverage", ]
+  r_exempt   <- county_inputs[[region]]$exemption_rate
+  r_rate     <- county_inputs[[region]]$hesitancy_rate
+
+  # schools and cluster schools in the region's population; immunity at ages 5-6 without hesitancy
+  r_pop_ages <- read.csv(r_pop, colClasses = c("integer", "NULL", "integer", "NULL", "NULL", "NULL"))
+  r_pop_ages <- r_pop_ages[!is.na(r_pop_ages$school_id) & r_pop_ages$school_id != 0, ]
+  r_schools  <- length(unique(r_pop_ages$school_id))
+  r_clusters <- round(r_share * r_schools)
+  child_txt  <- readLines(r_child, warn = FALSE)
+  child_m    <- regmatches(child_txt, regexec("<age([0-9]+)>([-0-9.eE]+)</age[0-9]+>", child_txt))
+  child_m    <- child_m[lengths(child_m) == 3]
+  child_imm  <- setNames(as.numeric(sapply(child_m, `[`, 3)), sapply(child_m, `[`, 2))
+  r_base     <- mean(child_imm[as.character(r_pop_ages$age[r_pop_ages$age %in% exemption_ages])])
+  cat(sprintf("[step 6] %s: ASPE %.3f, exemption rate %.3f, %d schools -> %d cluster schools (share %.3f), immunity at ages %s without hesitancy %.4f\n",
+              region, r_rate, r_exempt, r_schools, r_clusters, r_share, paste(exemption_ages, collapse = "-"), r_base))
+
+  # 6b. run STRIDE for 1 day for every uptake
+  step6_param <- sc_param_base
+  step6_param$num_rng_seeds                    <- num_seeds_transfer
+  step6_param$num_days                         <- 1
+  step6_param$population_file                  <- r_pop
+  step6_param$age_contact_matrix_file          <- file.path("data/contacts_usa", county_inputs[[region]]$contacts)
+  step6_param$disease_config_file              <- step2_result$disease_file   # only needed to start STRIDE
+  step6_param$immunity_distribution_file       <- r_adult
+  step6_param$vaccine_distribution_file        <- r_child
+  step6_param$tracing_efficiency_other         <- start_tracing_other
+  step6_param$vaccine_hesitancy_rate           <- r_rate
+  step6_param$vaccine_hesitancy_num_clusters   <- r_clusters
+  step6_param$vaccine_hesitancy_cluster_rate   <- step2b_best$vaccine_hesitancy_cluster_rate
+  step6_param$vaccine_hesitancy_cluster_uptake <- step2b_best$vaccine_hesitancy_cluster_uptake
+  step6_param$vaccine_hesitancy_uptake         <- grid_uptake_transfer         # scanned
+  if (r_clusters == 0) step6_param$vaccine_hesitancy_cluster_pooltype <- "None"
+  set.seed(2026)
+  step6_design  <- .rstride$get_full_grid_exp_design(exp_param_list = step6_param, num_rng_seeds = step6_param$num_rng_seeds)
+  step6_project <- run_rStride(step6_design, paste0('_calib_', region, '_step6_transfer'),
+                               remove_run_output = FALSE, num_parallel_workers = num_parallel_workers)
+
+  # 6c. per run: hesitancy gap at ages 5-6 and coverage at the ages of the region's data
+  step6_summary <- read.csv(file.path(step6_project, paste0(basename(step6_project), "_summary.csv")), stringsAsFactors = FALSE)
+  for (i in seq_len(nrow(step6_summary))) {
+    snap_file <- file.path(step6_summary$output_prefix[i], "population_snapshot.csv")
+    snap <- read.csv(snap_file, colClasses = c("integer", "NULL", "integer", "NULL", "NULL", "NULL", "character"))
+    snap <- snap[snap$school_id != 0, ]
+    snap$immune <- snap$immunity_status == "immune"
+    immunity_5_6 <- mean(snap$immune[snap$age %in% exemption_ages])
+    run_cov <- numeric(0)
+    for (k in seq_len(nrow(r_coverage))) {
+      run_cov <- c(run_cov, mean(snap$immune[snap$age >= r_coverage$age_min[k] & snap$age <= r_coverage$age_max[k]]))
+    }
+    step6_runs <- rbind(step6_runs, data.frame(
+      region = region, run = basename(step6_summary$output_prefix[i]),
+      uptake = step6_summary$vaccine_hesitancy_uptake[i],
+      immunity_5_6 = immunity_5_6, hesitancy_gap = r_base - immunity_5_6,
+      coverage_check = paste(sprintf("ages %d-%d: model %.3f / data %.3f", r_coverage$age_min, r_coverage$age_max,
+                                     run_cov, r_coverage$value), collapse = "; ")))
+    if (step2b_delete_snapshots) file.remove(snap_file)
+  }
+
+  # 6d. uptake where the median gap equals the exemption rate
+  r_runs <- step6_runs[step6_runs$region == region, ]
+  r_gap  <- aggregate(hesitancy_gap ~ uptake, data = r_runs, FUN = median)
+  print(r_gap, row.names = FALSE, digits = 3)
+  gap_at_1 <- r_gap$hesitancy_gap[r_gap$uptake == max(r_gap$uptake)]
+  gap_at_0 <- r_gap$hesitancy_gap[r_gap$uptake == min(r_gap$uptake)]
+  if (r_exempt <= gap_at_1) {
+    r_uptake <- 1;  r_flag <- "uptake 1: the clusters alone leave more children unvaccinated than the exemption rate"
+  } else if (r_exempt >= gap_at_0) {
+    r_uptake <- 0;  r_flag <- "uptake 0: even no uptake leaves fewer children unvaccinated than the exemption rate"
+  } else {
+    r_uptake <- approx(r_gap$hesitancy_gap, r_gap$uptake, xout = r_exempt, ties = mean)$y
+    r_flag   <- "interpolated"
+  }
+  step6_regions <- rbind(step6_regions, data.frame(region = region, hesitancy_rate = r_rate, exemption_rate = r_exempt,
+                                                   uptake = round(r_uptake, 3), cluster_school_share = r_share,
+                                                   num_clusters = r_clusters,
+                                                   cluster_rate = step2b_best$vaccine_hesitancy_cluster_rate,
+                                                   cluster_uptake = step2b_best$vaccine_hesitancy_cluster_uptake,
+                                                   gap_at_uptake_1 = round(gap_at_1, 4), flag = r_flag))
+  cat(sprintf("[step 6] %s: uptake %.3f (%s)\n", region, r_uptake, r_flag))
+  print(unique(r_runs$coverage_check[r_runs$uptake == r_runs$uptake[which.min(abs(r_runs$uptake - r_uptake))]])[1])
+}
+
+write.csv(step6_runs, file.path(calib_dir, "step6_runs.csv"), row.names = FALSE)
+write.csv(step6_regions, file.path(calib_dir, "step6_region_parameters.csv"), row.names = FALSE)
+print(step6_regions, row.names = FALSE)
