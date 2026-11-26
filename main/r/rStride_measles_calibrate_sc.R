@@ -24,7 +24,7 @@
 # Key mechanisms: vaccine hesitancy (households) and school clustering of
 # children from hesitant households. Exemption policy acts through the uptake
 # in hesitant households: children left unvaccinated by hesitancy = children
-# with a non-medical exemption (CDC SchoolVaxView 2025). SC is calibrated in
+# with a non-medical exemption (county level, Fattah et al. JAMA 2026). SC is calibrated in
 # steps 2b-5; step 6 transfers the hesitancy values to the other regions.
 # Targets and sources: doc/markdown/measles_sc_calibration.md
 #
@@ -33,7 +33,7 @@
 #   STEP 2  R0 -> transmission probability (new disease file)
 #   STEP 2b hesitancy uptake and school-cluster rate (SC)
 #           (number of cluster schools fixed as a share of schools)
-#                                           targets: hesitancy gap = exemption rate (5.6%),
+#                                           targets: hesitancy gap = exemption rate (SC 8%),
 #                                           share of unvaccinated students in the
 #                                           cluster schools (46.8%)
 #   STEP 3  adult susceptibility factor     target: adult share of cases
@@ -87,16 +87,18 @@ dir.create(calib_dir, showWarnings = FALSE, recursive = TRUE)
 
 ## ---- input files and rates per county (the ones that may be updated) ----
 # hesitancy_rate: ASPE county "estimated hesitant" (COVID-19, Household Pulse Survey; data.cdc.gov q9mh-h2tw)
-# exemption_rate: non-medical exemptions among kindergarteners, state level, CDC SchoolVaxView 2025
-#   (policy: CT, ME medical only; SC religious; MN personal; OH, TX personal and religious;
-#    ME has no non-medical exemptions since 2021 -> 0)
+# exemption_rate: non-medical exemptions (personal belief or religious) among kindergarteners,
+#   COUNTY level, Fattah et al., JAMA 2026;335(6):546-549 ("Trends in County-Level Childhood
+#   Vaccination Exemptions in the US"), 2024 (CT: 2023); values rounded to whole percents.
+#   State level CDC SchoolVaxView 2025 for comparison: SC 5.6%, CT 0.1%, ME 0, MN 6.8%, OH 5.5%, TX 5.0%.
+#   (policy: CT, ME medical only; SC religious; MN personal; OH, TX personal and religious)
 county_inputs <- list(
-  SC = list(pop = "pop_usa_sc_spartanburg_c1000.csv", contacts = "contact_matrix_usa_sc_spartanburg_c1000_v2.xml", hesitancy_rate = 0.14,  exemption_rate = 0.056),
-  CT = list(pop = "pop_usa_ct_fairfield_c1000.csv",   contacts = "contact_matrix_usa_ct_fairfield_c1000_v2.xml",   hesitancy_rate = 0.05,  exemption_rate = 0.001),
-  ME = list(pop = "pop_usa_me_piscataquis_c1000.csv", contacts = "contact_matrix_usa_me_piscataquis_c1000_v2.xml", hesitancy_rate = 0.105, exemption_rate = 0.000),
-  MN = list(pop = "pop_usa_mn_hennepin_c1000.csv",    contacts = "contact_matrix_usa_mn_hennepin_c1000_v2.xml",    hesitancy_rate = 0.062, exemption_rate = 0.068),
-  OH = list(pop = "pop_usa_oh_cuyahoga_c1000.csv",    contacts = "contact_matrix_usa_oh_cuyahoga_c1000_v2.xml",    hesitancy_rate = 0.122, exemption_rate = 0.055),
-  TX = list(pop = "pop_usa_tx_gaines_c1000.csv",      contacts = "contact_matrix_usa_tx_gaines_c1000_v2.xml",      hesitancy_rate = 0.117, exemption_rate = 0.050))
+  SC = list(pop = "pop_usa_sc_spartanburg_c1000.csv", contacts = "contact_matrix_usa_sc_spartanburg_c1000_v2.xml", hesitancy_rate = 0.14,  exemption_rate = 0.08),
+  CT = list(pop = "pop_usa_ct_fairfield_c1000.csv",   contacts = "contact_matrix_usa_ct_fairfield_c1000_v2.xml",   hesitancy_rate = 0.05,  exemption_rate = 0.00),
+  ME = list(pop = "pop_usa_me_piscataquis_c1000.csv", contacts = "contact_matrix_usa_me_piscataquis_c1000_v2.xml", hesitancy_rate = 0.105, exemption_rate = 0.00),
+  MN = list(pop = "pop_usa_mn_hennepin_c1000.csv",    contacts = "contact_matrix_usa_mn_hennepin_c1000_v2.xml",    hesitancy_rate = 0.062, exemption_rate = 0.05),
+  OH = list(pop = "pop_usa_oh_cuyahoga_c1000.csv",    contacts = "contact_matrix_usa_oh_cuyahoga_c1000_v2.xml",    hesitancy_rate = 0.122, exemption_rate = 0.03),
+  TX = list(pop = "pop_usa_tx_gaines_c1000.csv",      contacts = "contact_matrix_usa_tx_gaines_c1000_v2.xml",      hesitancy_rate = 0.117, exemption_rate = 0.19))
 exemption_ages <- c(5, 6)   # kindergarten: the ages at which the exemption rate is compared (steps 2b and 6)
 pop_file_in      <- file.path("data/population_6region", county_inputs[[county_code]]$pop)  # from social_contacts_usa2026.R
 contact_file     <- file.path("data/contacts_usa", county_inputs[[county_code]]$contacts)
@@ -343,8 +345,8 @@ print(step2_result)
 #          Targets:
 #            hesitancy_gap   = immunity at ages 5-6 without hesitancy (from the child
 #                              immunity file) minus immunity at ages 5-6 with hesitancy
-#                            = the non-medical exemption rate (kindergarten, CDC
-#                              SchoolVaxView 2025; SC 5.6%).
+#                            = the non-medical exemption rate (kindergarten,
+#                              county level, Fattah et al. JAMA 2026, 2024; SC 8%).
 #                              Assumption: children unvaccinated because of hesitancy
 #                              are the children with a non-medical exemption.
 #            concentration   = share of all non-immune school attendees who are in the
@@ -366,7 +368,7 @@ print(step2_result)
 #          calib_dir/step2b_school_coverage.pdf (sorted school coverage: DPH vs best combination)
 #
 # CHECK BEFORE CONTINUING
-#   - best row: hesitancy_gap within ~0.5 point of the exemption rate (5.6%),
+#   - best row: hesitancy_gap within ~0.5 point of the exemption rate (SC 8%),
 #     concentration within ~5 points of 46.8%
 #   - check: coverage_3_18 close to the DPH coverage (88.8%)
 #   - the chosen values are not at the edge of their grids
@@ -896,7 +898,7 @@ dev.off()
 calibrated_parameters <- data.frame(
   parameter = c("population_file", "age_contact_matrix_file", "disease_config_file", "transmission_probability (r0 = 12)",
                 "immunity_distribution_file", "adult susceptibility factor", "vaccine_distribution_file",
-                "non-medical exemption rate (CDC SchoolVaxView 2025)", "cluster_school_share",
+                "non-medical exemption rate (county, Fattah et al. JAMA 2026; 2024)", "cluster_school_share",
                 "vaccine_hesitancy_rate", "vaccine_hesitancy_uptake", "vaccine_hesitancy_num_clusters",
                 "vaccine_hesitancy_cluster_rate", "vaccine_hesitancy_cluster_uptake", "tracing_efficiency_other",
                 "tracing_efficiency_household", "detection_probability", "case_finding_capacity",
